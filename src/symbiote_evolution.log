@@ -1,0 +1,844 @@
+2025-02-28 23:39:58,800 - INFO - Created race 1 with trait adaptive
+2025-02-28 23:39:58,800 - INFO - Created race 2 with trait expansive
+2025-02-28 23:39:58,800 - INFO - Created race 3 with trait selective
+2025-02-28 23:39:58,801 - INFO - Notification: Welcome to Mining Asteroids!
+2025-02-28 23:39:58,801 - INFO - Notification: Press N to toggle notification panel
+2025-02-28 23:39:58,801 - INFO - Notification: Press S to open the shop
+2025-02-28 23:39:58,801 - INFO - Notification: Use + and - to zoom in/out
+2025-02-28 23:39:58,801 - INFO - Notification: Press M to toggle minimap
+2025-02-28 23:39:58,858 - INFO - Notification: Fast move left
+2025-02-28 23:39:58,858 - INFO - Notification: Manual seeding activated.
+2025-02-28 23:39:58,858 - INFO - Notification: Fast move right
+2025-02-28 23:39:58,884 - CRITICAL - Error in game loop: 'Game' object has no attribute 'rare_grid'
+2025-02-28 23:39:58,887 - CRITICAL - Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/RETARD/src/RADS.py", line 2145, in run
+    self.draw()
+  File "/Users/deadcoast/PycharmProjects/RETARD/src/RADS.py", line 2077, in draw
+    self.draw_minimap(self.screen)
+  File "/Users/deadcoast/PycharmProjects/RETARD/src/RADS.py", line 2177, in draw_minimap
+    if self.rare_grid[y, x] == 1:
+       ^^^^^^^^^^^^^^
+AttributeError: 'Game' object has no attribute 'rare_grid'
+
+2025-03-01 01:06:18,920 - INFO - Created race 1 with trait adaptive
+2025-03-01 01:06:18,921 - INFO - Created race 2 with trait expansive
+2025-03-01 01:06:18,921 - INFO - Created race 3 with trait selective
+2025-03-01 01:06:18,922 - INFO - Notification: Welcome to Mining Asteroids!
+2025-03-01 01:06:18,922 - INFO - Notification: Press N to toggle notification panel
+2025-03-01 01:06:18,922 - INFO - Notification: Press S to open the shop
+2025-03-01 01:06:18,922 - INFO - Notification: Use + and - to zoom in/out
+2025-03-01 01:06:18,922 - INFO - Notification: Press M to toggle minimap
+2025-03-01 01:06:30,542 - INFO - Notification: Mining fleet income: +429 minerals
+2025-03-01 01:06:31,641 - INFO - Notification: Mining fleet income: +282 minerals
+2025-03-01 01:06:37,077 - INFO - Notification: Mining fleet income: +209 minerals
+2025-03-01 01:06:42,445 - INFO - Notification: Mining fleet income: +264 minerals
+2025-03-01 01:06:48,073 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:48,944 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:49,428 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:50,001 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:50,951 - INFO - Notification: Mining fleet income: +288 minerals
+2025-03-01 01:06:51,041 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:51,659 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:52,190 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:52,456 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:52,725 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:52,998 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:06:53,098 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:11,506 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:12,850 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:13,178 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:13,397 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:13,614 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:13,724 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:13,942 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:14,055 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:14,279 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:14,391 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:14,608 - INFO - Notification: Not enough credits!
+2025-03-01 01:07:17,435 - INFO - Notification: Mining fleet income: +882 minerals
+2025-03-01 01:07:20,295 - INFO - Notification: Mining fleet income: +936 minerals
+2025-03-01 01:07:21,230 - INFO - Notification: Mining fleet income: +789 minerals
+2025-03-01 01:07:24,077 - INFO - Notification: Mining fleet income: +282 minerals
+2025-03-01 01:07:27,990 - INFO - Notification: Mining fleet income: +265 minerals
+2025-03-01 01:07:28,997 - INFO - Notification: Mining fleet income: +897 minerals
+2025-03-01 01:07:30,950 - INFO - Notification: Mining fleet income: +239 minerals
+2025-03-01 01:07:31,932 - INFO - Notification: Mining fleet income: +168 minerals
+2025-03-01 01:07:34,744 - INFO - Notification: Mining fleet income: +280 minerals
+2025-03-01 01:07:35,687 - INFO - Notification: Mining fleet income: +177 minerals
+2025-03-01 01:07:37,557 - INFO - Notification: Mining fleet income: +729 minerals
+2025-03-01 01:07:40,341 - INFO - Notification: Mining fleet income: +150 minerals
+2025-03-01 01:07:40,595 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:41,279 - INFO - Notification: Mining fleet income: +292 minerals
+2025-03-01 01:07:41,451 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:41,791 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:42,129 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:42,471 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:43,345 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:43,701 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:43,968 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:07:45,117 - INFO - Notification: Mining fleet income: +204 minerals
+2025-03-01 01:07:49,793 - INFO - Notification: Mining fleet income: +222 minerals
+2025-03-01 01:07:50,737 - INFO - Notification: Mining fleet income: +498 minerals
+2025-03-01 01:07:56,062 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:56,603 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:57,139 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:57,462 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:57,785 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:58,107 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:58,322 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:58,644 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:58,753 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,075 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,075 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:59,290 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,290 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:59,506 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,506 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:59,721 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,722 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:07:59,937 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:07:59,937 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:00,152 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:00,152 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:00,372 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:00,372 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:00,588 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:00,588 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:00,804 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:00,804 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:00,911 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:01,020 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,239 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,239 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:01,348 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,457 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:01,566 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,566 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:01,781 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,781 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:01,997 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:01,997 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:02,212 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:02,212 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:02,427 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:02,427 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:02,643 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:02,643 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:02,858 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:03,180 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:03,180 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:03,395 - INFO - Notification: Purchased: Upgrade Mining Efficiency (+0.1)
+2025-03-01 01:08:03,396 - INFO - Notification: Purchased: Buy Auto-Mining Drone
+2025-03-01 01:08:03,610 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:03,825 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:03,932 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:04,148 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:04,364 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:04,475 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:04,693 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:04,910 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,128 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,237 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,454 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,670 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,888 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:05,997 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:06,213 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:06,430 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:06,646 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:06,865 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:06,974 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:07,192 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:07,408 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:07,627 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:07,843 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:08,059 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:08,275 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:08,384 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:08,600 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:08,817 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:09,034 - INFO - Notification: Purchased: Upgrade Mining Range (+1)
+2025-03-01 01:08:09,251 - INFO - Notification: Not enough credits!
+2025-03-01 01:08:12,800 - INFO - Notification: Mining fleet income: +72010 minerals
+2025-03-01 01:08:13,774 - INFO - Notification: Mining fleet income: +15904 minerals
+2025-03-01 01:08:14,753 - INFO - Notification: Mining fleet income: +70603 minerals
+2025-03-01 01:08:15,742 - INFO - Notification: Mining fleet income: +117943 minerals
+2025-03-01 01:08:19,588 - INFO - Notification: Mining fleet income: +44528 minerals
+2025-03-01 01:08:20,539 - INFO - Notification: Mining fleet income: +67881 minerals
+2025-03-01 01:08:21,485 - INFO - Notification: Mining fleet income: +89989 minerals
+2025-03-01 01:08:27,161 - INFO - Notification: Mining fleet income: +81288 minerals
+2025-03-01 01:08:28,101 - INFO - Notification: Mining fleet income: +2034 minerals
+2025-03-01 01:08:29,063 - INFO - Notification: Mining fleet income: +17636 minerals
+2025-03-01 01:08:30,011 - INFO - Notification: Mining fleet income: +8690 minerals
+2025-03-01 01:08:30,972 - INFO - Notification: Mining fleet income: +42109 minerals
+2025-03-01 01:08:31,965 - INFO - Notification: Mining fleet income: +44463 minerals
+2025-03-01 01:08:32,942 - INFO - Notification: Mining fleet income: +39618 minerals
+2025-03-01 01:08:33,891 - INFO - Notification: Mining fleet income: +65527 minerals
+2025-03-01 01:08:35,779 - INFO - Notification: Mining fleet income: +67413 minerals
+2025-03-01 01:08:37,659 - INFO - Notification: Mining fleet income: +36115 minerals
+2025-03-01 01:08:38,614 - INFO - Notification: Mining fleet income: +62218 minerals
+2025-03-01 01:08:39,569 - INFO - Notification: Mining fleet income: +33015 minerals
+2025-03-01 01:08:40,167 - INFO - Notification: Fast move left
+2025-03-01 01:08:40,925 - INFO - Notification: Fast move left
+2025-03-01 01:08:41,414 - INFO - Notification: Mining fleet income: +101005 minerals
+2025-03-01 01:08:41,734 - INFO - Notification: Fast move left
+2025-03-01 01:08:42,285 - INFO - Notification: Mining fleet income: +100389 minerals
+2025-03-01 01:08:42,515 - INFO - Notification: Fast move left
+2025-03-01 01:08:43,031 - INFO - Notification: Fast move left
+2025-03-01 01:08:43,193 - INFO - Notification: Fast move left
+2025-03-01 01:08:43,909 - INFO - Notification: Mining fleet income: +6789 minerals
+2025-03-01 01:08:44,691 - INFO - Notification: Mining fleet income: +31824 minerals
+2025-03-01 01:08:45,479 - INFO - Notification: Mining fleet income: +84387 minerals
+2025-03-01 01:08:46,253 - INFO - Notification: Mining fleet income: +94986 minerals
+2025-03-01 01:08:46,875 - INFO - Notification: Fast move up
+2025-03-01 01:08:47,427 - INFO - Notification: Fast move up
+2025-03-01 01:08:47,618 - INFO - Notification: Fast move up
+2025-03-01 01:08:47,828 - INFO - Notification: Fast move up
+2025-03-01 01:08:48,120 - INFO - Notification: Fast move up
+2025-03-01 01:08:49,242 - INFO - Notification: Fast move right
+2025-03-01 01:08:49,731 - INFO - Notification: Mining fleet income: +35506 minerals
+2025-03-01 01:08:49,905 - INFO - Notification: Fast move right
+2025-03-01 01:08:50,201 - INFO - Notification: Fast move right
+2025-03-01 01:08:50,413 - INFO - Notification: Mining fleet income: +54086 minerals
+2025-03-01 01:08:52,850 - INFO - Notification: Mining fleet income: +55904 minerals
+2025-03-01 01:08:53,795 - INFO - Notification: Mining fleet income: +25588 minerals
+2025-03-01 01:08:54,748 - INFO - Notification: Mining fleet income: +22525 minerals
+2025-03-01 01:08:55,689 - INFO - Notification: Mining fleet income: +4978 minerals
+2025-03-01 01:08:56,635 - INFO - Notification: Mining fleet income: +72327 minerals
+2025-03-01 01:08:57,583 - INFO - Notification: Mining fleet income: +33685 minerals
+2025-03-01 01:08:58,527 - INFO - Notification: Mining fleet income: +403 minerals
+2025-03-01 01:09:10,315 - INFO - Discovering race 0
+2025-03-01 01:09:10,315 - INFO - Found game instance, available races: 3
+2025-03-01 01:09:10,315 - INFO - Adding race 1 to field
+2025-03-01 01:09:10,343 - INFO - Race 1 discovered and added to simulation
+2025-03-01 01:09:10,343 - INFO - Notification: Purchased: Discover Blue Race
+2025-03-01 01:09:13,316 - INFO - Discovering race 1
+2025-03-01 01:09:13,316 - INFO - Found game instance, available races: 3
+2025-03-01 01:09:13,316 - INFO - Adding race 2 to field
+2025-03-01 01:09:13,316 - ERROR - Error in populate method: cannot access local variable 'nx' where it is not associated with a value
+2025-03-01 01:09:13,318 - ERROR - Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/RETARD/src/RADS.py", line 1190, in populate
+    G = nx.Graph()
+        ^^
+UnboundLocalError: cannot access local variable 'nx' where it is not associated with a value
+
+2025-03-01 01:09:13,318 - INFO - Race 2 discovered and added to simulation
+2025-03-01 01:09:13,318 - INFO - Notification: Purchased: Discover Magenta Race
+2025-03-01 01:09:13,635 - INFO - Discovering race 2
+2025-03-01 01:09:13,635 - INFO - Found game instance, available races: 3
+2025-03-01 01:09:13,635 - INFO - Adding race 3 to field
+2025-03-01 01:09:13,779 - INFO - Race 3 discovered and added to simulation
+2025-03-01 01:09:13,780 - INFO - Notification: Purchased: Discover Orange Race
+2025-03-01 01:09:14,850 - INFO - Race 1 mutation: intelligence decreased by 7.3%
+2025-03-01 01:09:14,850 - INFO - Race 1 mutation: intelligence decreased by 4.0%
+2025-03-01 01:09:14,850 - INFO - Race 1 mutation: intelligence increased by 4.4%
+2025-03-01 01:09:14,850 - INFO - Race 1 mutation: aggression increased by 18.6%
+2025-03-01 01:09:14,850 - INFO - Race 3 experienced significant mutation: expansion_drive changed from 0.61 to 0.70
+2025-03-01 01:09:14,850 - INFO - Race 3 mutation: expansion_drive increased by 14.8%
+2025-03-01 01:09:14,850 - INFO - Race 3 mutation: expansion_drive decreased by 8.3%
+2025-03-01 01:09:14,850 - INFO - Race 3 mutation: territory_size increased by 14.9%
+2025-03-01 01:09:14,852 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:14,852 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:14,852 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:15,787 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:15,787 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:15,787 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:16,735 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:16,735 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:16,735 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:17,711 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:17,711 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:17,711 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:18,684 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:18,684 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:18,684 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:19,654 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:19,654 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:19,654 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:20,619 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:20,619 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:20,619 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:21,590 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:21,590 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:21,590 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:22,557 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:22,557 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:22,557 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:23,525 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:23,525 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:23,525 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:24,485 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:24,485 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:24,485 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:25,451 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:25,451 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:25,451 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:26,417 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:26,417 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:26,417 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:27,346 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:27,346 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:27,346 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:28,272 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:28,272 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:28,272 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:28,443 - INFO - Notification: Fast move right
+2025-03-01 01:09:28,873 - INFO - Notification: Fast move right
+2025-03-01 01:09:29,218 - INFO - Notification: Mining fleet income: +97570 minerals
+2025-03-01 01:09:29,218 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:29,218 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:29,218 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:29,387 - INFO - Notification: Fast move right
+2025-03-01 01:09:30,146 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:30,146 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:30,146 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:30,317 - INFO - Notification: Fast move right
+2025-03-01 01:09:30,653 - INFO - Notification: Fast move right
+2025-03-01 01:09:30,987 - INFO - Notification: Fast move right
+2025-03-01 01:09:31,081 - INFO - Notification: Mining fleet income: +98877 minerals
+2025-03-01 01:09:31,081 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:31,081 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:31,081 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:31,250 - INFO - Notification: Fast move right
+2025-03-01 01:09:32,013 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:32,013 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:32,013 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:32,958 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:32,958 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:32,958 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:33,046 - INFO - Notification: Fast move right
+2025-03-01 01:09:33,880 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:33,880 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:33,880 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:34,047 - INFO - Notification: Fast move right
+2025-03-01 01:09:34,286 - INFO - Notification: Fast move right
+2025-03-01 01:09:34,593 - INFO - Notification: Fast move right
+2025-03-01 01:09:34,761 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:34,761 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:34,761 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:34,837 - INFO - Notification: Fast move right
+2025-03-01 01:09:35,125 - INFO - Notification: Fast move right
+2025-03-01 01:09:35,564 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:35,564 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:35,564 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:35,771 - INFO - Notification: Fast move right
+2025-03-01 01:09:36,346 - INFO - Notification: Mining fleet income: +20570 minerals
+2025-03-01 01:09:36,346 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:36,346 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:36,346 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:36,759 - INFO - Notification: Fast move right
+2025-03-01 01:09:37,128 - INFO - Notification: Mining fleet income: +41799 minerals
+2025-03-01 01:09:37,128 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:37,128 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:37,128 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:37,199 - INFO - Notification: Fast move right
+2025-03-01 01:09:37,543 - INFO - Notification: Fast move left
+2025-03-01 01:09:37,919 - INFO - Notification: Mining fleet income: +16513 minerals
+2025-03-01 01:09:37,919 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:37,919 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:37,919 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:38,063 - INFO - Notification: Fast move left
+2025-03-01 01:09:38,504 - INFO - Notification: Fast move left
+2025-03-01 01:09:38,749 - INFO - Notification: Mining fleet income: +107622 minerals
+2025-03-01 01:09:38,749 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:38,749 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:38,749 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:39,215 - INFO - Notification: Fast move left
+2025-03-01 01:09:39,625 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:39,625 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:39,625 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,073 - INFO - Notification: Mining fleet income: +116168 minerals
+2025-03-01 01:09:44,073 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,073 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,074 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,961 - INFO - Notification: Mining fleet income: +38937 minerals
+2025-03-01 01:09:44,961 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,961 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:44,961 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:45,848 - INFO - Notification: Mining fleet income: +2970 minerals
+2025-03-01 01:09:45,848 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:45,848 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:45,848 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:46,757 - INFO - Notification: Mining fleet income: +37141 minerals
+2025-03-01 01:09:46,757 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:46,757 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:46,757 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:47,687 - INFO - Notification: Mining fleet income: +19083 minerals
+2025-03-01 01:09:47,687 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:47,687 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:47,687 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:48,612 - INFO - Notification: Mining fleet income: +7858 minerals
+2025-03-01 01:09:48,612 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:48,612 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:48,612 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:49,493 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:49,493 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:49,493 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:50,047 - INFO - Notification: Fast move left
+2025-03-01 01:09:50,386 - INFO - Notification: Mining fleet income: +15505 minerals
+2025-03-01 01:09:50,386 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:50,386 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:50,386 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:50,551 - INFO - Notification: Fast move left
+2025-03-01 01:09:50,886 - INFO - Notification: Fast move left
+2025-03-01 01:09:51,138 - INFO - Notification: Fast move left
+2025-03-01 01:09:51,315 - INFO - Notification: Mining fleet income: +66913 minerals
+2025-03-01 01:09:51,315 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:51,315 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:51,315 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:51,649 - INFO - Notification: Fast move left
+2025-03-01 01:09:52,246 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:52,246 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:52,246 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:53,178 - INFO - Notification: Mining fleet income: +97318 minerals
+2025-03-01 01:09:53,178 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:53,178 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:53,178 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:53,846 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:54,108 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:54,109 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:54,109 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:54,278 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:54,531 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:54,785 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:55,046 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:55,046 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:55,046 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:55,132 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:55,975 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:55,975 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:55,975 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:56,503 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:56,768 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:56,949 - INFO - Notification: Mining fleet income: +83221 minerals
+2025-03-01 01:09:56,949 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:56,950 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:56,950 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:57,128 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:57,741 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:57,923 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:57,923 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:57,923 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:58,551 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:58,910 - INFO - Notification: Mining fleet income: +45504 minerals
+2025-03-01 01:09:58,910 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:58,910 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:58,910 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:59,001 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:59,356 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:59,621 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:09:59,890 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:59,890 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:09:59,890 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:00,513 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:00,871 - INFO - Notification: Mining fleet income: +15166 minerals
+2025-03-01 01:10:00,871 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:00,871 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:00,871 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:00,962 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:01,142 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:01,412 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:01,678 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:01,860 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:01,860 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:01,860 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:01,950 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:02,650 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:02,831 - INFO - Notification: Mining fleet income: +22687 minerals
+2025-03-01 01:10:02,832 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:02,832 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:02,832 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:03,096 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:03,536 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:03,805 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:03,805 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:03,805 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:03,982 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:04,248 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:04,441 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:04,707 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:04,800 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:04,800 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:04,800 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:04,890 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:05,151 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:05,766 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:05,767 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:05,767 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:06,736 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:06,736 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:06,736 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:07,708 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:07,708 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:07,708 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:08,675 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:08,675 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:08,676 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:09,640 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:09,640 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:09,640 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:10,599 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:10,599 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:10,600 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:11,567 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:11,567 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:11,567 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:12,533 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:12,534 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:12,534 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:13,500 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:13,500 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:13,500 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:14,436 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:14,436 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:14,436 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:29,689 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:29,689 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:29,689 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:30,443 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:30,621 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:30,621 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:30,622 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:30,707 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:30,960 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:31,557 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:31,557 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:31,557 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:32,310 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:32,487 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:32,487 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:32,487 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:32,572 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:32,822 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:32,988 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:33,155 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:33,322 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:33,417 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:33,417 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:33,417 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:33,587 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:34,003 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:34,252 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:34,346 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:34,346 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:34,346 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:34,430 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:34,681 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:34,930 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:35,272 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:35,272 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:35,272 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:35,871 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:36,134 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:36,227 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:36,228 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:36,228 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:36,403 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:36,579 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:36,840 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:37,102 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:37,196 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:37,196 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:37,196 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:37,373 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:37,635 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:38,164 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:38,164 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:38,164 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:38,602 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:38,865 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:39,135 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:39,135 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:39,135 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:39,223 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:39,399 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:39,661 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:39,836 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:40,104 - INFO - Notification: Mining fleet income: +16196 minerals
+2025-03-01 01:10:40,104 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:40,104 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:40,104 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:40,194 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:40,370 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:40,547 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:41,081 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:41,081 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:41,081 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:41,257 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:41,345 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:41,608 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:41,784 - INFO - Notification: Mined asteroids: +11631 credits
+2025-03-01 01:10:42,056 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:42,056 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:42,056 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:42,147 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:42,147 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:42,325 - INFO - Notification: Mined asteroids: +10576 credits
+2025-03-01 01:10:42,414 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:42,680 - INFO - Notification: Mined asteroids: +9514 credits
+2025-03-01 01:10:42,680 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:42,858 - INFO - Notification: Mined asteroids: +9043 credits
+2025-03-01 01:10:43,040 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:43,040 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:43,040 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:43,129 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:43,306 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:43,657 - INFO - Notification: Mined asteroids: +12567 credits
+2025-03-01 01:10:43,658 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:43,927 - INFO - Notification: Mined asteroids: +11113 credits
+2025-03-01 01:10:44,021 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:44,021 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:44,021 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:44,111 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:44,201 - INFO - Notification: Mined asteroids: +9554 credits
+2025-03-01 01:10:44,289 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:44,554 - INFO - Notification: Mined asteroids: +8719 credits
+2025-03-01 01:10:44,555 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:44,820 - INFO - Notification: Mined asteroids: +9003 credits
+2025-03-01 01:10:44,820 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:45,001 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:45,001 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:45,001 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:45,092 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:45,445 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:45,623 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:45,890 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:45,983 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:45,984 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:45,984 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:46,161 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:46,338 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:46,861 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:46,955 - INFO - Notification: Mining fleet income: +48592 minerals
+2025-03-01 01:10:46,956 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:46,956 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:46,956 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:47,045 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:47,310 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:47,311 - INFO - Notification: Mined asteroids: +11170 credits
+2025-03-01 01:10:47,488 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:47,577 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:47,754 - INFO - Notification: Mined asteroids: +10119 credits
+2025-03-01 01:10:47,842 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:47,937 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:47,937 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:47,937 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:48,291 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:48,292 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:48,557 - INFO - Notification: Mined asteroids: +9324 credits
+2025-03-01 01:10:48,557 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:48,735 - INFO - Notification: Mined asteroids: +9262 credits
+2025-03-01 01:10:48,735 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:48,916 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:48,916 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:48,916 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:49,006 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:49,006 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:49,270 - INFO - Notification: Mined asteroids: +9331 credits
+2025-03-01 01:10:49,270 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:49,446 - INFO - Notification: Mined asteroids: +9846 credits
+2025-03-01 01:10:49,534 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:49,711 - INFO - Notification: Mined asteroids: +7556 credits
+2025-03-01 01:10:49,711 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:49,893 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:49,893 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:49,893 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:49,983 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:49,983 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:50,162 - INFO - Notification: Mined asteroids: +9612 credits
+2025-03-01 01:10:50,162 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:50,426 - INFO - Notification: Mined asteroids: +9853 credits
+2025-03-01 01:10:50,426 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:50,604 - INFO - Notification: Mined asteroids: +10076 credits
+2025-03-01 01:10:50,604 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:50,784 - INFO - Notification: Mined asteroids: +10591 credits
+2025-03-01 01:10:50,878 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:50,878 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:50,878 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:50,969 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:51,061 - INFO - Notification: Mined asteroids: +9046 credits
+2025-03-01 01:10:51,062 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:51,241 - INFO - Notification: Mined asteroids: +9806 credits
+2025-03-01 01:10:51,331 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:51,508 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:51,509 - INFO - Notification: Mined asteroids: +10972 credits
+2025-03-01 01:10:51,773 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:51,774 - INFO - Notification: Mined asteroids: +9187 credits
+2025-03-01 01:10:51,868 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:51,868 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:51,868 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:51,958 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:52,048 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:52,226 - INFO - Notification: Mined asteroids: +9244 credits
+2025-03-01 01:10:52,491 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:52,581 - INFO - Notification: Mined asteroids: +10692 credits
+2025-03-01 01:10:52,671 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:52,854 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:52,854 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:52,854 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:52,945 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:52,945 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:53,123 - INFO - Notification: Mined asteroids: +10335 credits
+2025-03-01 01:10:53,123 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:53,387 - INFO - Notification: Mined asteroids: +9403 credits
+2025-03-01 01:10:53,388 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:53,653 - INFO - Notification: Mined asteroids: +10281 credits
+2025-03-01 01:10:53,653 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:53,835 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:53,835 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:53,835 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:53,927 - INFO - Notification: Mined asteroids: +0 credits
+2025-03-01 01:10:54,018 - INFO - Notification: Manual seeding activated.
+2025-03-01 01:10:54,821 - INFO - Notification: Mining fleet income: +24364 minerals
+2025-03-01 01:10:54,821 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:54,821 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:54,821 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:55,797 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:55,797 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:55,797 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:56,778 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:56,778 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:10:56,778 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:03,492 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:03,492 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:03,492 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:04,458 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:04,458 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:04,458 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:05,441 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:05,442 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:05,442 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:06,436 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:06,436 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:06,436 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:07,418 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:07,418 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:07,418 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:08,388 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:08,388 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:08,388 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:09,359 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:09,359 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:09,359 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:10,319 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:10,319 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:10,319 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:11,282 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:11,282 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:11,282 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:12,246 - INFO - Notification: Mining fleet income: +14270 minerals
+2025-03-01 01:11:12,247 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:12,247 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:12,247 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:13,219 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:13,219 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:13,219 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:14,205 - INFO - Notification: Mining fleet income: +39866 minerals
+2025-03-01 01:11:14,205 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:14,205 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:14,205 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:15,185 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:15,185 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:15,185 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:16,166 - INFO - Notification: Mining fleet income: +98506 minerals
+2025-03-01 01:11:16,167 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:16,167 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:16,167 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:17,145 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:17,146 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:17,146 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:18,138 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:18,138 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:18,138 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:19,136 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:19,136 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:19,136 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:20,112 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:20,112 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:20,113 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:21,076 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:21,076 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:21,076 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:22,048 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:22,048 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:22,048 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,017 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,018 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,018 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,996 - INFO - Notification: Mining fleet income: +28191 minerals
+2025-03-01 01:11:23,997 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,997 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:23,997 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:24,978 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:24,979 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:24,979 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:25,972 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:25,972 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:25,972 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:26,960 - INFO - Notification: Mining fleet income: +109746 minerals
+2025-03-01 01:11:26,960 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:26,960 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:26,960 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:27,943 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:27,944 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:27,944 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:28,918 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:28,918 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:28,918 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:29,911 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:29,913 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:29,913 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:30,884 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:30,885 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:30,885 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:31,857 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:31,857 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:31,857 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:32,821 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:32,822 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:32,822 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:38,295 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:38,295 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:38,295 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:39,267 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:39,267 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:39,267 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:40,239 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:40,239 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:40,239 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:41,215 - INFO - Notification: Mining fleet income: +10728 minerals
+2025-03-01 01:11:41,215 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:41,215 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:41,215 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:42,193 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:42,194 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:42,194 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:43,127 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:43,127 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:43,127 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:44,070 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:44,070 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:44,070 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,019 - INFO - Notification: Mining fleet income: +115974 minerals
+2025-03-01 01:11:45,019 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,019 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,019 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,964 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,964 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:45,964 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:46,897 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:46,897 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:46,897 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:47,832 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:47,832 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:47,832 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:48,762 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:48,762 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:48,762 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:49,691 - INFO - Notification: Mining fleet income: +7603 minerals
+2025-03-01 01:11:49,691 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:49,691 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:49,691 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:50,631 - INFO - Notification: Race 1: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:50,631 - INFO - Notification: Race 2: 0 symbiotes, Status: Satiated
+2025-03-01 01:11:50,631 - INFO - Notification: Race 3: 0 symbiotes, Status: Satiated
