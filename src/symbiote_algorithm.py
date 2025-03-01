@@ -196,8 +196,6 @@ class SymbioteEvolutionAlgorithm:
                     "magnitude": surge,
                     "source": "anomaly",
                 }
-                mutations.append(mutation)
-
             elif effect < 0.5:  # 25% chance: temporary docility
                 calm_factor = random.uniform(0.3, 0.6)
                 new_aggression = max(0.0, new_aggression - calm_factor)
@@ -206,8 +204,6 @@ class SymbioteEvolutionAlgorithm:
                     "magnitude": calm_factor,
                     "source": "anomaly",
                 }
-                mutations.append(mutation)
-
             elif effect < 0.75:  # 25% chance: aggression spike
                 spike_factor = random.uniform(0.2, 0.4)
                 new_aggression = min(1.0, new_aggression + spike_factor)
@@ -216,8 +212,6 @@ class SymbioteEvolutionAlgorithm:
                     "magnitude": spike_factor,
                     "source": "anomaly",
                 }
-                mutations.append(mutation)
-
             else:  # 25% chance: boss mutation
                 # A special "boss" symbiote appears
                 mutation = {
@@ -225,8 +219,9 @@ class SymbioteEvolutionAlgorithm:
                     "strength_multiplier": random.uniform(2.0, 5.0),
                     "source": "anomaly",
                 }
-                mutations.append(mutation)
                 new_population += 1  # Add the boss to population
+
+            mutations.append(mutation)
 
         # Apply the feeding effect on aggression (satiation reduces aggression)
         satiation_effect = min(0.5, total_nutrition / max(10, current_population))
@@ -291,9 +286,7 @@ class SymbioteEvolutionAlgorithm:
                 if random.random() < 0.4:
                     int_growth -= random.randint(1, max(1, population // 20))
 
-        # Final population calculation
-        new_population = max(0, population + int_growth)
-        return new_population
+        return max(0, population + int_growth)
 
     def update_aggression(
         self,
@@ -349,9 +342,8 @@ class SymbioteEvolutionAlgorithm:
         # 5. Apply machine learning adjustments if enabled
         if self.learning_enabled and len(self.ml_memory["attack_outcomes"]) > 5:
             # Calculate success rate of recent attacks
-            success_rate = sum(
-                1 for outcome in self.ml_memory["attack_outcomes"] if outcome
-            ) / len(self.ml_memory["attack_outcomes"])
+            success_rate = sum(bool(outcome)
+                           for outcome in self.ml_memory["attack_outcomes"]) / len(self.ml_memory["attack_outcomes"])
 
             # If attacks have been successful, symbiotes become bolder
             if success_rate > 0.7:
@@ -420,13 +412,11 @@ class SymbioteEvolutionAlgorithm:
             attack_strength = base_strength * variance
 
             # Apply machine learning adjustments if enabled
-            if self.learning_enabled:
-                # If previously successful, attack might be stronger
-                if (
-                    self.ml_memory["successful_attacks"]
-                    > self.ml_memory["failed_attacks"]
-                ):
-                    attack_strength *= 1.1
+            if self.learning_enabled and (
+                                self.ml_memory["successful_attacks"]
+                                > self.ml_memory["failed_attacks"]
+                            ):
+                attack_strength *= 1.1
 
         return attack_occurs, attack_strength
 
@@ -606,10 +596,8 @@ class SymbioteEvolutionAlgorithm:
 
         # Modify rules based on genome traits
         expansion_drive = genome.get("expansion_drive", 1.0)
-        if expansion_drive > 1.3:  # High expansion drive
-            # More aggressive expansion, can birth with fewer neighbors
-            if random.random() < 0.3:
-                birth_set.add(2)
+        if expansion_drive > 1.3 and random.random() < 0.3:
+            birth_set.add(2)
 
         intelligence = genome.get("intelligence", 1.0)
         if intelligence > 1.5:  # Highly intelligent
@@ -631,14 +619,11 @@ class SymbioteEvolutionAlgorithm:
 
             # 50% chance to add a birth rule, 50% to add a survival rule
             if random.random() < 0.5 and len(birth_set) < 4:
-                candidates = list(possible_rules - birth_set)
-                if candidates:
+                if candidates := list(possible_rules - birth_set):
                     birth_set.add(random.choice(candidates))
-            else:
-                if len(survival_set) < 4:
-                    candidates = list(possible_rules - survival_set)
-                    if candidates:
-                        survival_set.add(random.choice(candidates))
+            elif len(survival_set) < 4:
+                if candidates := list(possible_rules - survival_set):
+                    survival_set.add(random.choice(candidates))
 
         return birth_set, survival_set
 
@@ -730,13 +715,16 @@ class SymbioteEvolutionAlgorithm:
         Returns:
             Dictionary with counts of common patterns detected
         """
-        patterns = {"blinker": 0, "glider": 0, "block": 0, "beehive": 0, "loaf": 0}
-
         # Detect blocks (2x2 stable patterns)
         block_kernel = np.array([[1, 1], [1, 1]])
         block_matches = ndimage.binary_hit_or_miss(grid, block_kernel)
-        patterns["block"] = np.sum(block_matches)
-
+        patterns = {
+            "blinker": 0,
+            "glider": 0,
+            "beehive": 0,
+            "loaf": 0,
+            "block": np.sum(block_matches),
+        }
         # Detect blinkers (horizontal line of 3)
         blinker_h_kernel = np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]])
         blinker_v_kernel = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]])
@@ -791,10 +779,7 @@ class SymbioteEvolutionAlgorithm:
             if previous_count > 0:
                 growth_rate = (total_cells - previous_count) / previous_count
 
-        # Combine edge ratio and growth rate for expansion index
-        expansion_index = (edge_ratio * 0.7) + (max(0, growth_rate) * 0.3)
-
-        return expansion_index
+        return (edge_ratio * 0.7) + (max(0, growth_rate) * 0.3)
 
     def apply_environmental_effects(
         self,
@@ -1017,13 +1002,14 @@ class SymbioteEvolutionAlgorithm:
         # Base carrying capacity adjusted by resource availability
         K = self.carrying_capacity * (0.5 + resource_availability)
 
-        # Competition adjusted growth rate
+        # Competition adjusted growth rate (used to modify pressure calculation)
         r = self.growth_rate * (1 - competition_factor)
 
         # Calculate pressure using a modified logistic function
         if population > 0:
             # P = 1 / (1 + exp(-k * (N/K - threshold)))
-            pressure = 1.0 / (1.0 + math.exp(-5.0 * (population / K - 0.7)))
+            # Use growth rate to influence the steepness of the logistic curve
+            pressure = 1.0 / (1.0 + math.exp(-5.0 * r * (population / K - 0.7)))
         else:
             pressure = 0.0
 
@@ -1083,14 +1069,12 @@ class SymbioteEvolutionAlgorithm:
         # Negative population trend increases mutation rate
         trend_factor = 1.0 - min(0.5, max(-0.5, population_trend)) * 0.5
 
-        # Calculate final mutation probabilities
-        mutation_probs = {}
-        for trait, base_rate in base_rates.items():
-            mutation_probs[trait] = min(
+        return {
+            trait: min(
                 0.8, base_rate * mineral_factor * time_factor * trend_factor
             )
-
-        return mutation_probs
+            for trait, base_rate in base_rates.items()
+        }
 
     def apply_differential_evolution(
         self,

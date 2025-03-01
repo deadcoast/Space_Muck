@@ -8,6 +8,8 @@ Theme:
   that not only improve your ship but also let you influence the procedural generation.
 """
 
+
+import itertools
 import math
 import numpy as np
 import pygame
@@ -25,7 +27,6 @@ from sklearn.cluster import KMeans
 import networkx as nx
 from perlin_noise import PerlinNoise
 
-# Add to your imports at the top
 from symbiote_algorithm import SymbioteEvolutionAlgorithm
 
 # -------------------------------------
@@ -65,6 +66,8 @@ COLOR_RACE_3: Tuple[int, int, int] = (255, 165, 0)  # Orange race
 
 # Game States
 STATE_PLAY: str = "PLAY"
+STATE_SHOP: str = "SHOP"
+STATE_MAP: str = "MAP"
 STATE_SHOP: str = "SHOP"
 STATE_MAP: str = "MAP"
 
@@ -303,53 +306,31 @@ class AsteroidField:
                     # Asteroid dies (turns to energy)
                     new_energy_grid[y, x] += 0.3
 
-                # Apply rules based on cell state and neighbors
-                if has_asteroid:
-                    # Survival depends on neighbors and energy
-                    energy_survival_boost = min(2, int(local_energy * 3))
-                    survival_set = self.survival_set.union(
-                        {n + energy_survival_boost for n in self.survival_set}
-                    )
-                    # Birth chance modified by energy
-                    birth_chance = self.regen_rate + (local_energy * 0.2)
+                # Survival depends on neighbors and energy
+                energy_survival_boost = min(2, int(local_energy * 3))
+                survival_set = self.survival_set.union(
+                    {n + energy_survival_boost for n in self.survival_set}
+                )
+                # Birth chance modified by energy
+                birth_chance = self.regen_rate + (local_energy * 0.2)
 
-                    if neighbors in birth_set or random.random() < birth_chance:
-                        # Create new asteroid
-                        new_grid[y, x] = random.randint(50, 200)
-                        # Rare asteroid chance
-                        if random.random() < self.rare_chance:
-                            new_rare_grid[y, x] = 1
-                        new_rare_grid[y, x] = self.rare_grid[y, x]
-                        # Survival grants energy
-                        new_energy_grid[y, x] += 0.1
-                    else:
-                        # Cell dies - energy release
-                        new_energy_grid[y, x] += local_energy * 0.3
+                # Need to define birth_set for this condition
+                birth_set = self.birth_set.union(
+                    {n + energy_survival_boost for n in self.birth_set}
+                )
+
+                if neighbors in birth_set or random.random() < birth_chance:
+                    # Create new asteroid
+                    new_grid[y, x] = random.randint(50, 200)
+                    # Rare asteroid chance
+                    if random.random() < self.rare_chance:
+                        new_rare_grid[y, x] = 1
+                    new_rare_grid[y, x] = self.rare_grid[y, x]
+                    # Survival grants energy
+                    new_energy_grid[y, x] += 0.1
                 else:
-                    # Birth depends on neighbors and energy
-                    energy_birth_boost = min(2, int(local_energy * 3))
-                    birth_set = self.birth_set.union(
-                        {n + energy_birth_boost for n in self.birth_set}
-                    )
-
-                    # Birth chance modified by energy
-                    birth_chance = self.regen_rate + (local_energy * 0.2)
-
-                    if neighbors in birth_set or random.random() < birth_chance:
-                        # New asteroid born - value based on neighbors and energy
-                        value_factor = 1.0 + (neighbors / 8.0) + local_energy
-                        value = int(random.randint(50, 150) * value_factor)
-                        new_grid[y, x] = value
-
-                        # Higher energy increases rare chance
-                        rare_chance = self.rare_chance + (local_energy * 0.2)
-                        if random.random() < rare_chance:
-                            new_rare_grid[y, x] = 1
-                            new_grid[y, x] = int(value * self.rare_bonus_multiplier)
-
-                        # Birth consumes energy
-                        new_energy_grid[y, x] -= 0.2
-
+                    # Cell dies - energy release
+                    new_energy_grid[y, x] += local_energy * 0.3
                 # Store energy in grid with bounds check
                 new_energy_grid[y, x] += new_energy
                 new_energy_grid[y, x] = max(0.0, min(1.0, new_energy_grid[y, x]))
@@ -373,347 +354,331 @@ class AsteroidField:
 
         # Balance symbiotes and mining
         self.balance_symbiotes_and_mining()
-
-    # Enhance update_entities to use the evolution algorithm
     def update_entities(self) -> Dict[int, int]:
         """Update symbiote races with enhanced mathematical modeling"""
         try:
-            if not self.races:
-                return {}
-
-            race_income = {race.race_id: 0 for race in self.races}
-
-            # Reset fed status
-            for race in self.races:
-                race.fed_this_turn = False
-
-            # Create new entity grid
-            new_entity_grid = np.zeros_like(self.entity_grid)
-
-            # Using scipy.ndimage for spatial analysis of entity distributions
-            # This creates labeled regions of connected components for each race
-            for race in self.races:
-                # Create a binary mask for this race's entities
-                race_mask = self.entity_grid == race.race_id
-
-                # Find connected regions (colonies) using ndimage
-                labeled_regions, num_regions = ndimage.label(race_mask)
-
-                if num_regions > 0:
-                    # Calculate size of each colony
-                    region_sizes = ndimage.sum(
-                        race_mask, labeled_regions, range(1, num_regions + 1)
-                    )
-
-                    # Find center of mass for each colony
-                    centers = ndimage.center_of_mass(
-                        race_mask, labeled_regions, range(1, num_regions + 1)
-                    )
-
-                    # Find distance transform (distance to nearest zero)
-                    # This helps identify the core vs. edge of colonies
-                    distance_map = ndimage.distance_transform_edt(race_mask)
-
-                    # Get all entity locations for this race
-                    entity_locations = list(zip(*np.where(race_mask)))
-
-                    # Calculate colony density based on distance map
-                    total_distance = np.sum(distance_map)
-                    self.territory_density = total_distance / max(
-                        1, len(entity_locations)
-                    )
-
-                    # Use scipy.stats to model colony growth based on size distribution
-                    # Larger colonies have better survival chances (normal distribution)
-                    size_mean = np.mean(region_sizes)
-                    size_std = max(1, np.std(region_sizes))
-                    growth_factors = stats.norm.cdf(
-                        region_sizes, loc=size_mean, scale=size_std
-                    )
-
-                    # Store this information for behavior decisions
-                    race.colony_data = {
-                        "num_regions": num_regions,
-                        "region_sizes": region_sizes,
-                        "centers": centers,
-                        "growth_factors": growth_factors,
-                    }
-
-                    # Update race's territory metrics
-                    if centers and len(centers) > 0:
-                        # Find the largest colony
-                        largest_idx = np.argmax(region_sizes)
-                        race.territory_center = (
-                            int(centers[largest_idx][1]),
-                            int(centers[largest_idx][0]),
-                        )
-
-                        # The radius is approximated by sqrt(size/π)
-                        race.territory_radius = int(
-                            np.sqrt(region_sizes[largest_idx] / np.pi)
-                        )
-
-            # Process symbiote cell-by-cell interactions using ndimage filters
-            # These operations can calculate neighbor counts very efficiently
-            for race in self.races:
-                race_mask = self.entity_grid == race.race_id
-
-                # Calculate neighbor counts using convolution
-                neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-                own_neighbors = ndimage.convolve(
-                    race_mask.astype(np.int8), neighbors_kernel, mode="constant", cval=0
-                )
-
-                # Apply Game of Life rules based on hunger level
-                # Calculate survival mask - cells that survive
-                hunger_modifier = int(race.hunger * 2)
-                adjusted_survival_set = race.survival_set.union(
-                    {n + hunger_modifier for n in race.survival_set}
-                )
-
-                # Create a mask of cells that survive
-                survival_mask = np.zeros_like(race_mask, dtype=bool)
-                for n in adjusted_survival_set:
-                    survival_mask |= (own_neighbors == n) & race_mask
-
-                # Add these cells to the new grid
-                new_entity_grid[survival_mask] = race.race_id
-
-                # Handle birth using similar approach
-                # Calculate birth mask - empty cells that should become new entities
-                empty_mask = self.entity_grid == 0
-
-                # Adjust birth rules based on hunger and behavior
-                adjusted_birth_set = race.birth_set
-                if race.current_behavior == "expanding" or race.hunger > 0.7:
-                    adjusted_birth_set = adjusted_birth_set.union(
-                        {n - 1 for n in adjusted_birth_set if n > 1}
-                    )
-
-                # Create birth mask
-                birth_mask = np.zeros_like(empty_mask, dtype=bool)
-                for n in adjusted_birth_set:
-                    birth_mask |= (own_neighbors == n) & empty_mask
-
-                # Apply probabilistic birth based on influence and expansion drive
-                if race.race_id in self.influence_grids:
-                    influence = self.influence_grids[race.race_id]
-                    # Calculate birth probability based on influence and hunger
-                    birth_probs = np.zeros_like(birth_mask, dtype=np.float32)
-                    birth_probs[birth_mask] = (
-                        0.6 + influence[birth_mask] * race.genome["expansion_drive"]
-                    )
-
-                    # Apply random sampling using scipy.stats
-                    random_field = stats.uniform.rvs(0, 1, size=birth_mask.shape)
-                    successful_births = (random_field < birth_probs) & birth_mask
-
-                    # Add new births to the grid if no conflict with other births
-                    # Consume asteroid
-                    self.grid[y, x] = 0
-                    if self.rare_grid[y, x] == 1:
-                        race_income[current_race] += int(
-                            mined_value * field.rare_bonus_multiplier
-                        )
-                        self.rare_grid[y, x] = 0
-                # Process each race's mining and interactions with asteroids
-                for y in range(self.height):
-                    for x in range(self.width):
-                        # Skip empty cells
-                        # Check for evolution
-                        if (
-                            current_race_obj.evolution_points
-                            >= current_race_obj.evolution_threshold
-                        ):
-                            current_race_obj.evolve()
-
-                    current_race = self.entity_grid[y, x]
-                    current_race_obj = next(
-                        (r for r in self.races if r.race_id == current_race), None
-                    )
-
-                    if not current_race_obj:
-                        continue
-
-                    # Process mining
-                    if self.grid[y, x] > 0:
-                        # Mine asteroid with efficiency
-                        mined_value = int(
-                            self.grid[y, x] * current_race_obj.mining_efficiency
-                        )
-                        race_income[current_race] += mined_value
-
-                        # Consume asteroid
-                        self.grid[y, x] = 0
-                        if self.rare_grid[y, x] == 1:
-                            self.rare_grid[y, x] = 0
-                            mined_value *= 2  # Bonus for rare asteroids
-
-                        # Update evolution points
-                        current_race_obj.evolution_points += mined_value * 0.05
-
-                        # Check for evolution
-                        if (
-                            current_race_obj.evolution_points
-                            >= current_race_obj.evolution_threshold
-                        ):
-                            current_race_obj.evolve()
-                            logging.info(
-                                f"Race {current_race} evolved to stage {current_race_obj.evolution_stage}!"
-                            )
-
-            # Apply complex dynamics based on statstics
-            for race in self.races:
-                new_mask = new_entity_grid == race.race_id
-                population = np.sum(new_mask)
-
-                # Use statistical models to simulate natural phenomena
-                if population > 0:
-                    # Apply carrying capacity using logistic growth model
-                    # dN/dt = rN(1-N/K) - simplified discrete version
-                    K = 1000  # Carrying capacity
-                    r = 0.05  # Growth rate
-
-                    growth_pressure = r * (1 - population / K)
-
-                    if growth_pressure < 0:  # Over carrying capacity
-                        # Use distance transform to find perimeter cells (lowest distance values)
-                        distance = ndimage.distance_transform_edt(new_mask)
-
-                        # Find cells on the edge (lowest distance)
-                        perimeter_mask = (distance == 1) & new_mask
-
-                        # Remove some perimeter cells based on overcrowding pressure
-                        removal_count = int(abs(growth_pressure) * population * 0.1)
-                        perimeter_indices = np.where(perimeter_mask)
-
-                        if len(perimeter_indices[0]) > 0:
-                            # Remove a random sample of perimeter cells
-                            indices_to_remove = np.random.choice(
-                                len(perimeter_indices[0]),
-                                size=min(removal_count, len(perimeter_indices[0])),
-                                replace=False,
-                            )
-                            for idx in indices_to_remove:
-                                y, x = (
-                                    perimeter_indices[0][idx],
-                                    perimeter_indices[1][idx],
-                                )
-                                new_entity_grid[y, x] = 0
-
-            # NEW CODE: Process mineral availability for the evolution algorithm
-            for race in self.races:
-                # Analyze mineral distribution around race colonies
-                race_mask = self.entity_grid == race.race_id
-                if np.sum(race_mask) == 0:
-                    continue
-
-                # Calculate mineral availability in race territory
-                minerals_available = {
-                    "common": 0,
-                    "rare": 0,
-                    # For the algorithm's precious and anomaly types,
-                    # we'll consider high-value asteroids as precious
-                    "precious": 0,
-                    "anomaly": 0,
-                }
-
-                # Find all race entity locations
-                entity_locations = np.where(race_mask)
-                for i in range(len(entity_locations[0])):
-                    y, x = entity_locations[0][i], entity_locations[1][i]
-
-                    # Check surrounding area for minerals
-                    search_radius = 3  # Look in a 3-cell radius
-                    for dy in range(-search_radius, search_radius + 1):
-                        for dx in range(-search_radius, search_radius + 1):
-                            nx, ny = x + dx, y + dy
-                            if 0 <= nx < self.width and 0 <= ny < self.height:
-                                if self.grid[ny, nx] > 0:
-                                    # Categorize minerals by value
-                                    value = self.grid[ny, nx]
-                                    if self.rare_grid[ny, nx] == 1:
-                                        if value > 500:
-                                            minerals_available["anomaly"] += 1
-                                        else:
-                                            minerals_available["rare"] += 1
-                                    else:
-                                        if value > 300:
-                                            minerals_available["precious"] += 1
-                                        else:
-                                            minerals_available["common"] += 1
-
-                # Process minerals through evolution algorithm
-                # Only process a portion of available minerals
-                minerals_to_process = {
-                    k: min(v, 10)
-                    for k, v in minerals_available.items()  # Cap to avoid overwhelming
-                }
-
-                if any(minerals_to_process.values()):
-                    population_change, mutations = race.process_minerals(
-                        minerals_to_process
-                    )
-
-                    if mutations:
-                        for mutation in mutations:
-                            if (
-                                mutation.get("type") == "significant"
-                                or mutation.get("type") == "beneficial"
-                            ):
-                                # Log significant mutations for player awareness
-                                attr = mutation.get("attribute", "unknown")
-                                mag = mutation.get("magnitude", 1.0)
-                                direction = "increased" if mag > 1 else "decreased"
-                                pct = abs((mag - 1) * 100)
-
-                                logging.info(
-                                    f"Race {race.race_id} mutation: {attr} {direction} by {pct:.1f}%"
-                                )
-
-            # Update entity grid
-            self.entity_grid = new_entity_grid
-
-            # Update population stats and behavior
-            for race in self.races:
-                race.population = np.sum(self.entity_grid == race.race_id)
-                race.last_income = race_income.get(race.race_id, 0)
-
-                # Record history
-                race.income_history.append(race.last_income)
-                race.population_history.append(race.population)
-
-                # Apply statistical analysis to historical data
-                if len(race.population_history) > 20:
-                    # Use linear regression to analyze population trend
-                    x = np.arange(len(race.population_history[-20:]))
-                    y = np.array(race.population_history[-20:])
-
-                    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-
-                    # Adjust behavior based on population trend
-                    if slope < -0.5:  # Rapidly declining
-                        # Increase expansion drive to recover
-                        race.genome["expansion_drive"] *= 1.05
-                        race.genome["aggression_base"] *= 1.05
-                    elif slope > 1.0:  # Rapidly growing
-                        # Can afford to be more selective
-                        race.genome["intelligence"] *= 1.05
-
-                # Trim history if too long
-                if len(race.income_history) > 100:
-                    race.income_history.pop(0)
-                if len(race.population_history) > 100:
-                    race.population_history.pop(0)
-
-            return race_income
-
+            return self._extracted_from_update_entities_4()
         except Exception as e:
             logging.critical(f"Error in update_entities: {str(e)}")
             import traceback
 
             logging.critical(traceback.format_exc())
             return {}
+
+    # TODO Rename this here and in `update_entities`
+    def _extracted_from_update_entities_4(self):
+        if not self.races:
+            return {}
+
+        race_income = {race.race_id: 0 for race in self.races}
+
+        # Reset fed status
+        for race in self.races:
+            race.fed_this_turn = False
+
+        # Create new entity grid
+        new_entity_grid = np.zeros_like(self.entity_grid)
+
+        # Using scipy.ndimage for spatial analysis of entity distributions
+        # This creates labeled regions of connected components for each race
+        for race in self.races:
+            # Create a binary mask for this race's entities
+            race_mask = self.entity_grid == race.race_id
+
+            # Find connected regions (colonies) using ndimage
+            labeled_regions, num_regions = ndimage.label(race_mask)
+
+            if num_regions > 0:
+                # Calculate size of each colony
+                region_sizes = ndimage.sum(
+                    race_mask, labeled_regions, range(1, num_regions + 1)
+                )
+
+                # Find center of mass for each colony
+                centers = ndimage.center_of_mass(
+                    race_mask, labeled_regions, range(1, num_regions + 1)
+                )
+
+                # Find distance transform (distance to nearest zero)
+                # This helps identify the core vs. edge of colonies
+                distance_map = ndimage.distance_transform_edt(race_mask)
+
+                # Get all entity locations for this race
+                entity_locations = list(zip(*np.where(race_mask)))
+
+                # Calculate colony density based on distance map
+                total_distance = np.sum(distance_map)
+                self.territory_density = total_distance / max(
+                    1, len(entity_locations)
+                )
+
+                # Use scipy.stats to model colony growth based on size distribution
+                # Larger colonies have better survival chances (normal distribution)
+                size_mean = np.mean(region_sizes)
+                size_std = max(1, np.std(region_sizes))
+                growth_factors = stats.norm.cdf(
+                    region_sizes, loc=size_mean, scale=size_std
+                )
+
+                # Store this information for behavior decisions
+                race.colony_data = {
+                    "num_regions": num_regions,
+                    "region_sizes": region_sizes,
+                    "centers": centers,
+                    "growth_factors": growth_factors,
+                }
+
+                # Update race's territory metrics
+                if centers and len(centers) > 0:
+                    # Find the largest colony
+                    largest_idx = np.argmax(region_sizes)
+                    race.territory_center = (
+                        int(centers[largest_idx][1]),
+                        int(centers[largest_idx][0]),
+                    )
+
+                    # The radius is approximated by sqrt(size/π)
+                    race.territory_radius = int(
+                        np.sqrt(region_sizes[largest_idx] / np.pi)
+                    )
+
+        # Process symbiote cell-by-cell interactions using ndimage filters
+        # These operations can calculate neighbor counts very efficiently
+        for race in self.races:
+            race_mask = self.entity_grid == race.race_id
+
+            # Calculate neighbor counts using convolution
+            neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+            own_neighbors = ndimage.convolve(
+                race_mask.astype(np.int8), neighbors_kernel, mode="constant", cval=0
+            )
+
+            # Apply Game of Life rules based on hunger level
+            # Calculate survival mask - cells that survive
+            hunger_modifier = int(race.hunger * 2)
+            adjusted_survival_set = race.survival_set.union(
+                {n + hunger_modifier for n in race.survival_set}
+            )
+
+            # Create a mask of cells that survive
+            survival_mask = np.zeros_like(race_mask, dtype=bool)
+            for n in adjusted_survival_set:
+                survival_mask |= (own_neighbors == n) & race_mask
+
+            # Add these cells to the new grid
+            new_entity_grid[survival_mask] = race.race_id
+
+            # Handle birth using similar approach
+            # Calculate birth mask - empty cells that should become new entities
+            empty_mask = self.entity_grid == 0
+
+            # Adjust birth rules based on hunger and behavior
+            adjusted_birth_set = race.birth_set
+            if race.current_behavior == "expanding" or race.hunger > 0.7:
+                adjusted_birth_set = adjusted_birth_set.union(
+                    {n - 1 for n in adjusted_birth_set if n > 1}
+                )
+
+            # Create birth mask
+            birth_mask = np.zeros_like(empty_mask, dtype=bool)
+            for n in adjusted_birth_set:
+                birth_mask |= (own_neighbors == n) & empty_mask
+
+            # Apply probabilistic birth based on influence and expansion drive
+            if race.race_id in self.influence_grids:
+                influence = self.influence_grids[race.race_id]
+                # Calculate birth probability based on influence and hunger
+                birth_probs = np.zeros_like(birth_mask, dtype=np.float32)
+                birth_probs[birth_mask] = (
+                    0.6 + influence[birth_mask] * race.genome["expansion_drive"]
+                )
+
+                # Apply random sampling using scipy.stats
+                random_field = stats.uniform.rvs(0, 1, size=birth_mask.shape)
+                successful_births = (random_field < birth_probs) & birth_mask
+
+                # Add new births to the grid
+                new_entity_grid[successful_births] = race.race_id
+
+        # Process each race's mining and interactions with asteroids
+        for y in range(self.height):
+            for x in range(self.width):
+                current_race = self.entity_grid[y, x]
+                if current_race == 0:  # Skip empty cells
+                    continue
+
+                current_race_obj = next(
+                    (r for r in self.races if r.race_id == current_race), None
+                )
+
+                if not current_race_obj:
+                    continue
+
+                # Process mining
+                if self.grid[y, x] > 0:
+                    # Mine asteroid with efficiency
+                    mined_value = int(
+                        self.grid[y, x] * current_race_obj.mining_efficiency
+                    )
+                    race_income[current_race] += mined_value
+
+                    # Consume asteroid
+                    self.grid[y, x] = 0
+                    if self.rare_grid[y, x] == 1:
+                        self.rare_grid[y, x] = 0
+                        mined_value *= 2  # Bonus for rare asteroids
+
+                    # Update evolution points
+                    current_race_obj.evolution_points += mined_value * 0.05
+
+                    # Check for evolution
+                    if (
+                        current_race_obj.evolution_points
+                        >= current_race_obj.evolution_threshold
+                    ):
+                        current_race_obj.evolve()
+                        logging.info(
+                            f"Race {current_race} evolved to stage {current_race_obj.evolution_stage}!"
+                        )
+
+        # Apply complex dynamics based on statstics
+        for race in self.races:
+            new_mask = new_entity_grid == race.race_id
+            population = np.sum(new_mask)
+
+            # Use statistical models to simulate natural phenomena
+            if population > 0:
+                # Apply carrying capacity using logistic growth model
+                # dN/dt = rN(1-N/K) - simplified discrete version
+                K = 1000  # Carrying capacity
+                r = 0.05  # Growth rate
+
+                growth_pressure = r * (1 - population / K)
+
+                if growth_pressure < 0:  # Over carrying capacity
+                    # Use distance transform to find perimeter cells (lowest distance values)
+                    distance = ndimage.distance_transform_edt(new_mask)
+
+                    # Find cells on the edge (lowest distance)
+                    perimeter_mask = (distance == 1) & new_mask
+
+                    # Remove some perimeter cells based on overcrowding pressure
+                    removal_count = int(abs(growth_pressure) * population * 0.1)
+                    perimeter_indices = np.where(perimeter_mask)
+
+                    if len(perimeter_indices[0]) > 0:
+                        # Remove a random sample of perimeter cells
+                        indices_to_remove = np.random.choice(
+                            len(perimeter_indices[0]),
+                            size=min(removal_count, len(perimeter_indices[0])),
+                            replace=False,
+                        )
+                        for idx in indices_to_remove:
+                            y, x = (
+                                perimeter_indices[0][idx],
+                                perimeter_indices[1][idx],
+                            )
+                            new_entity_grid[y, x] = 0
+
+            # Process mineral availability for the evolution algorithm
+        for race in self.races:
+            # Analyze mineral distribution around race colonies
+            race_mask = self.entity_grid == race.race_id
+            if np.sum(race_mask) == 0:
+                continue
+
+            # Calculate mineral availability in race territory
+            minerals_available = {
+                "common": 0,
+                "rare": 0,
+                # For the algorithm's precious and anomaly types,
+                # we'll consider high-value asteroids as precious
+                "precious": 0,
+                "anomaly": 0,
+            }
+
+            # Find all race entity locations
+            entity_locations = np.where(race_mask)
+            # Check surrounding area for minerals
+            search_radius = 3  # Look in a 3-cell radius
+            for i in range(len(entity_locations[0])):
+                y, x = entity_locations[0][i], entity_locations[1][i]
+
+                for dy, dx in itertools.product(range(-search_radius, search_radius + 1), range(-search_radius, search_radius + 1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < self.width and 0 <= ny < self.height and self.grid[ny, nx] > 0:
+                        value = self.grid[ny, nx]
+                        if self.rare_grid[ny, nx] == 1:
+                            if value > 500:
+                                minerals_available["anomaly"] += 1
+                            else:
+                                minerals_available["rare"] += 1
+                        elif value > 300:
+                            minerals_available["precious"] += 1
+                        else:
+                            minerals_available["common"] += 1
+
+            # Process minerals through evolution algorithm
+            # Only process a portion of available minerals
+            minerals_to_process = {
+                k: min(v, 10)
+                for k, v in minerals_available.items()  # Cap to avoid overwhelming
+            }
+
+            if any(minerals_to_process.values()):
+                population_change, mutations = race.process_minerals(
+                    minerals_to_process
+                )
+
+                if mutations:
+                    for mutation in mutations:
+                        if mutation.get("type") in ["significant", "beneficial"]:
+                            # Log significant mutations for player awareness
+                            attr = mutation.get("attribute", "unknown")
+                            mag = mutation.get("magnitude", 1.0)
+                            direction = "increased" if mag > 1 else "decreased"
+                            pct = abs((mag - 1) * 100)
+
+                            logging.info(
+                                f"Race {race.race_id} mutation: {attr} {direction} by {pct:.1f}%"
+                            )
+
+        # Update entity grid
+        self.entity_grid = new_entity_grid
+
+        # Update population stats and behavior
+        for race in self.races:
+            race.population = np.sum(self.entity_grid == race.race_id)
+            race.last_income = race_income.get(race.race_id, 0)
+
+            # Record history
+            race.income_history.append(race.last_income)
+            race.population_history.append(race.population)
+
+            # Apply statistical analysis to historical data
+            if len(race.population_history) > 20:
+                # Use linear regression to analyze population trend
+                x = np.arange(len(race.population_history[-20:]))
+                y = np.array(race.population_history[-20:])
+
+                slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+
+                # Adjust behavior based on population trend
+                if slope < -0.5:  # Rapidly declining
+                    # Increase expansion drive to recover
+                    race.genome["expansion_drive"] *= 1.05
+                    race.genome["aggression_base"] *= 1.05
+                elif slope > 1.0:  # Rapidly growing
+                    # Can afford to be more selective
+                    race.genome["intelligence"] *= 1.05
+
+            # Trim history if too long
+            if len(race.income_history) > 100:
+                race.income_history.pop(0)
+            if len(race.population_history) > 100:
+                race.population_history.pop(0)
+
+        return race_income
 
     def balance_symbiotes_and_mining(self):
         """Balance symbiote growth with resource availability"""
@@ -722,11 +687,7 @@ class AsteroidField:
         grid_area = self.width * self.height
         resource_density = total_minerals / (grid_area * 100)  # Normalize
 
-        # Calculate total symbiote population
-        total_symbiotes = 0
-        for race in self.races:
-            total_symbiotes += race.population
-
+        total_symbiotes = sum(race.population for race in self.races)
         # Calculate symbiote density
         symbiote_density = total_symbiotes / grid_area
 
@@ -781,96 +742,90 @@ class AsteroidField:
         # Use try/except to catch any index errors
         try:
             # Draw visible grid
-            for y in range(view_y1, view_y2):
-                for x in range(view_x1, view_x2):
-                    # Calculate screen position
-                    screen_x = int((x - view_x1) * screen_cell_size)
-                    screen_y = int((y - view_y1) * screen_cell_size)
+            for y, x in itertools.product(range(view_y1, view_y2), range(view_x1, view_x2)):
+                # Calculate screen position
+                screen_x = int((x - view_x1) * screen_cell_size)
+                screen_y = int((y - view_y1) * screen_cell_size)
 
-                    # Create cell rectangle
-                    rect = pygame.Rect(
-                        screen_x, screen_y, screen_cell_size, screen_cell_size
-                    )
+                # Create cell rectangle
+                rect = pygame.Rect(
+                    screen_x, screen_y, screen_cell_size, screen_cell_size
+                )
 
-                    # Draw cell content - ensure all array accesses use comma notation for numpy
-                    if self.grid[y, x] > 0:
-                        # Asteroid
-                        if self.rare_grid[y, x] == 1:
-                            # Rare asteroid with value-based color shade
-                            value = self.grid[y, x]
-                            intensity = min(255, 180 + value)
-                            color = (intensity, intensity * 0.8, 0)
-                            pygame.draw.rect(surface, color, rect)
-                        else:
-                            # Normal asteroid with value-based brightness
-                            value = self.grid[y, x]
-                            brightness = min(200, 80 + value * 2)
-                            color = (brightness, brightness, brightness)
-                            pygame.draw.rect(surface, color, rect)
+                # Draw cell content - ensure all array accesses use comma notation for numpy
+                if self.grid[y, x] > 0:
+                    # Rare asteroid with value-based color shade
+                    value = self.grid[y, x]
+                    # Asteroid
+                    if self.rare_grid[y, x] == 1:
+                        intensity = min(255, 180 + value)
+                        color = (intensity, intensity * 0.8, 0)
                     else:
-                        # Empty cell - visualize energy levels
-                        energy = self.energy_grid[y, x]
-                        if energy > 0.1:
-                            # Only show significant energy
-                            alpha = int(energy * 100)
-                            color = (0, 0, int(energy * 150), alpha)
-                            s = pygame.Surface(
-                                (rect.width, rect.height), pygame.SRCALPHA
-                            )
-                            s.fill(color)
-                            surface.blit(s, rect)
-
-                    # Draw entity on top if present
-                    entity = self.entity_grid[y, x]
-                    if entity > 0:
-                        race = next(
-                            (r for r in self.races if r.race_id == entity), None
+                        brightness = min(200, 80 + value * 2)
+                        color = (brightness, brightness, brightness)
+                    pygame.draw.rect(surface, color, rect)
+                else:
+                    # Empty cell - visualize energy levels
+                    energy = self.energy_grid[y, x]
+                    if energy > 0.1:
+                        # Only show significant energy
+                        alpha = int(energy * 100)
+                        color = (0, 0, int(energy * 150), alpha)
+                        s = pygame.Surface(
+                            (rect.width, rect.height), pygame.SRCALPHA
                         )
-                        if race:
-                            # Draw entity with race-specific shape
-                            if (
+                        s.fill(color)
+                        surface.blit(s, rect)
+
+                # Draw entity on top if present
+                entity = self.entity_grid[y, x]
+                if entity > 0:
+                    race = next(
+                        (r for r in self.races if r.race_id == entity), None
+                    )
+                    if race:  # Only draw shapes if cells are big enough
+                        if (
                                 screen_cell_size >= 4
-                            ):  # Only draw shapes if cells are big enough
-                                if race.trait == "adaptive":
-                                    # Triangle
-                                    points = [
-                                        (screen_x + screen_cell_size // 2, screen_y),
-                                        (screen_x, screen_y + screen_cell_size),
-                                        (
-                                            screen_x + screen_cell_size,
-                                            screen_y + screen_cell_size,
-                                        ),
-                                    ]
-                                    pygame.draw.polygon(surface, race.color, points)
+                            ):
+                            if race.trait == "adaptive":
+                                # Triangle
+                                points = [
+                                    (screen_x + screen_cell_size // 2, screen_y),
+                                    (screen_x, screen_y + screen_cell_size),
+                                    (
+                                        screen_x + screen_cell_size,
+                                        screen_y + screen_cell_size,
+                                    ),
+                                ]
+                                pygame.draw.polygon(surface, race.color, points)
 
-                                elif race.trait == "expansive":
-                                    # Square with size based on evolution
-                                    size = int(
-                                        screen_cell_size
-                                        * (0.6 + race.evolution_stage * 0.08)
-                                    )
-                                    offset = (screen_cell_size - size) // 2
-                                    inner_rect = pygame.Rect(
-                                        screen_x + offset, screen_y + offset, size, size
-                                    )
-                                    pygame.draw.rect(surface, race.color, inner_rect)
+                            elif race.trait == "expansive":
+                                # Square with size based on evolution
+                                size = int(
+                                    screen_cell_size
+                                    * (0.6 + race.evolution_stage * 0.08)
+                                )
+                                offset = (screen_cell_size - size) // 2
+                                inner_rect = pygame.Rect(
+                                    screen_x + offset, screen_y + offset, size, size
+                                )
+                                pygame.draw.rect(surface, race.color, inner_rect)
 
-                                elif race.trait == "selective":
-                                    # Circle with radius based on evolution
-                                    radius = int(
-                                        screen_cell_size
-                                        * (0.3 + race.evolution_stage * 0.06)
-                                    )
-                                    center = (
-                                        screen_x + screen_cell_size // 2,
-                                        screen_y + screen_cell_size // 2,
-                                    )
-                                    pygame.draw.circle(
-                                        surface, race.color, center, radius
-                                    )
-                            else:
-                                # Small cells - just draw a pixel
-                                pygame.draw.rect(surface, race.color, rect)
+                            elif race.trait == "selective":
+                                center = (
+                                    screen_x + screen_cell_size // 2,
+                                    screen_y + screen_cell_size // 2,
+                                )
+                                radius = int(
+                                    screen_cell_size
+                                    * (0.3 + race.evolution_stage * 0.06)
+                                )
+                                pygame.draw.circle(
+                                    surface, race.color, center, radius
+                                )
+                        else:
+                            # Small cells - just draw a pixel
+                            pygame.draw.rect(surface, race.color, rect)
 
         except IndexError as e:
             logging.error(f"Index error in draw: {e}")
@@ -886,11 +841,9 @@ class AsteroidField:
                 if 0 <= y < self.height and 0 <= x < self.width:
                     entity_id = self.entity_grid[y, x]
                     if entity_id > 0:
-                        # Get corresponding race
-                        race = next(
+                        if race := next(
                             (r for r in self.races if r.race_id == entity_id), None
-                        )
-                        if race:
+                        ):
                             # Calculate screen position
                             screen_x = (x - viewport_x) * CELL_SIZE
                             screen_y = (y - viewport_y) * CELL_SIZE
@@ -928,8 +881,7 @@ class AsteroidField:
                                 hasattr(race, "colony_map")
                                 and race.colony_map is not None
                             ):
-                                colony_id = race.colony_map.get((y, x), 0)
-                                if colony_id:
+                                if colony_id := race.colony_map.get((y, x), 0):
                                     # Mark colony centers with a symbol
                                     is_center = race.colony_centers.get(
                                         colony_id, (0, 0)
@@ -945,6 +897,38 @@ class AsteroidField:
                                             CELL_SIZE // 3,
                                         )
 
+    def manual_seed(self, center_x: int, center_y: int, radius: int = 3) -> None:
+        """
+        Manually seed a cluster of asteroids at the specified location
+        
+        Args:
+            center_x: Center X coordinate
+            center_y: Center Y coordinate
+            radius: Radius of the asteroid cluster
+        """
+        for y in range(center_y - radius, center_y + radius + 1):
+            for x in range(center_x - radius, center_x + radius + 1):
+                # Check if coordinates are within bounds
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    # Check if cell is empty
+                    if self.grid[y, x] == 0:
+                        # Calculate distance from center
+                        dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+                        
+                        # Only place asteroids within the radius
+                        if dist <= radius:
+                            # Higher value near the center
+                            value = int(300 - (dist / radius) * 200)
+                            self.grid[y, x] = value
+                            
+                            # Add energy to seeded asteroids
+                            self.energy_grid[y, x] = 0.6 - (dist / radius) * 0.4
+                            
+                            # Small chance for rare asteroid
+                            if random.random() < self.rare_chance:
+                                self.rare_grid[y, x] = 1
+                                self.grid[y, x] = int(self.grid[y, x] * self.rare_bonus_multiplier)
+
 
 # -------------------------------------
 # Enhanced Symbiote Evolution System
@@ -959,6 +943,25 @@ class MinerEntity:
         self.birth_set = birth_set or {3}
         self.survival_set = survival_set or {2, 3}
         self.initial_density = initial_density
+        
+        # Add missing attributes
+        self.aggression = 0.2  # Default aggression level
+        self.hunger = 0.0  # Hunger level (0-1)
+        self.hunger_rate = 0.01  # Rate at which hunger increases
+        self.trait = random.choice(["adaptive", "expansive", "selective"])  # Random trait
+        self.population = 0
+        self.fed_this_turn = False
+        self.last_income = 0
+        self.income_history = []
+        self.population_history = []
+        self.evolution_points = 0
+        self.evolution_threshold = 100
+        self.evolution_stage = 1
+        self.current_behavior = "feeding"  # Default behavior
+        self.mining_efficiency = 0.5  # Base mining efficiency
+        
+        # Initialize genome
+        self.genome = self._initialize_genome_by_trait()
 
         # Spatial analysis data
         self.territory_center = None
@@ -1188,15 +1191,13 @@ class MinerEntity:
     def evolve(self) -> None:
         """Evolve the race to the next stage, improving its abilities"""
         self.evolution_stage += 1
-        # Returns metrics about territory distribution and resource access
-        entity_locations = []
-
-        # Find all entities of this race
-        for y in range(self.field.height):
-            for x in range(self.field.width):
-                if self.field.entity_grid[y, x] == self.race_id:
-                    entity_locations.append((x, y))
-
+        entity_locations = [
+            (x, y)
+            for y, x in itertools.product(
+                range(self.field.height), range(self.field.width)
+            )
+            if self.field.entity_grid[y, x] == self.race_id
+        ]
         if not entity_locations:
             return {
                 "center": None,
@@ -1212,82 +1213,85 @@ class MinerEntity:
         # K-means clustering to find centers of population
         k = min(3, len(points))  # Use up to 3 clusters
         if k > 0:
-            kmeans = KMeans(n_clusters=k).fit(points)
-            clusters = kmeans.labels_
-            centers = kmeans.cluster_centers_
-
-            # Find main cluster (largest population)
-            cluster_sizes = [np.sum(clusters == i) for i in range(k)]
-            main_cluster_idx = np.argmax(cluster_sizes)
-            main_center = centers[main_cluster_idx]
-
-            # Calculate territory metrics
-            self.territory_center = (int(main_center[0]), int(main_center[1]))
-
-            # Calculate radius as distance to furthest entity in main cluster
-            main_cluster_points = points[clusters == main_cluster_idx]
-            distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
-            self.territory_radius = int(np.max(distances))
-
-            # Calculate density as entities per unit area
-            area = max(1, np.pi * (self.territory_radius**2))
-            self.territory_density = len(main_cluster_points) / area
-
-            # Measure resource access (asteroids within territory)
-            resource_access = 0
-            for y in range(
-                max(0, int(main_center[1] - self.territory_radius)),
-                min(self.field.height, int(main_center[1] + self.territory_radius + 1)),
-            ):
-                for x in range(
-                    max(0, int(main_center[0] - self.territory_radius)),
-                    min(
-                        self.field.width,
-                        int(main_center[0] + self.territory_radius + 1),
-                    ),
-                ):
-                    if self.field.grid[y, x] > 0:
-                        distance = np.sqrt(
-                            (x - main_center[0]) ** 2 + (y - main_center[1]) ** 2
-                        )
-                        if distance <= self.territory_radius:
-                            resource_access += self.field.grid[y, x]
-
-            # Measure fragmentation using network analysis
-            # Create a graph where close entities are connected
-            G = nx.Graph()
-            for i, (x, y) in enumerate(entity_locations):
-                G.add_node(i, pos=(x, y))
-
-            # Connect entities that are close to each other
-            for i in range(len(entity_locations)):
-                for j in range(i + 1, len(entity_locations)):
-                    x1, y1 = entity_locations[i]
-                    x2, y2 = entity_locations[j]
-                    distance = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-                    if distance < 10:  # Connection threshold
-                        G.add_edge(i, j)
-
-            # Calculate fragmentation as number of connected components
-            if len(G.nodes) > 0:
-                fragmentation = nx.number_connected_components(G) / len(G.nodes)
-            else:
-                fragmentation = 0
-
-            return {
-                "center": self.territory_center,
-                "radius": self.territory_radius,
-                "density": self.territory_density,
-                "resource_access": resource_access,
-                "fragmentation": fragmentation,
-            }
-
+            return self._extracted_from_evolve_26(k, points, entity_locations)
         return {
             "center": None,
             "radius": 0,
             "density": 0,
             "resource_access": 0,
             "fragmentation": 0,
+        }
+
+    # TODO Rename this here and in `evolve`
+    def _extracted_from_evolve_26(self, k, points, entity_locations):
+        kmeans = KMeans(n_clusters=k).fit(points)
+        clusters = kmeans.labels()
+        centers = kmeans.cluster_centers()
+
+        # Find main cluster (largest population)
+        cluster_sizes = [np.sum(clusters == i) for i in range(k)]
+        main_cluster_idx = np.argmax(cluster_sizes)
+        main_center = centers[main_cluster_idx]
+
+        # Calculate territory metrics
+        self.territory_center = (int(main_center[0]), int(main_center[1]))
+
+        # Calculate radius as distance to furthest entity in main cluster
+        main_cluster_points = points[clusters == main_cluster_idx]
+        distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
+        self.territory_radius = int(np.max(distances))
+
+        # Calculate density as entities per unit area
+        area = max(1, np.pi * (self.territory_radius**2))
+        self.territory_density = len(main_cluster_points) / area
+
+        # Measure resource access (asteroids within territory)
+        resource_access = 0
+        for y in range(
+            max(0, int(main_center[1] - self.territory_radius)),
+            min(self.field.height, int(main_center[1] + self.territory_radius + 1)),
+        ):
+            for x in range(
+                max(0, int(main_center[0] - self.territory_radius)),
+                min(
+                    self.field.width,
+                    int(main_center[0] + self.territory_radius + 1),
+                ),
+            ):
+                if self.field.grid[y, x] > 0:
+                    distance = np.sqrt(
+                        (x - main_center[0]) ** 2 + (y - main_center[1]) ** 2
+                    )
+                    if distance <= self.territory_radius:
+                        resource_access += self.field.grid[y, x]
+
+        # Measure fragmentation using network analysis
+        # Create a graph where close entities are connected
+        G = nx.Graph()
+        for i, (x, y) in enumerate(entity_locations):
+            G.add_node(i, pos=(x, y))
+
+        # Connect entities that are close to each other
+        for i in range(len(entity_locations)):
+            for j in range(i + 1, len(entity_locations)):
+                x1, y1 = entity_locations[i]
+                x2, y2 = entity_locations[j]
+                distance = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+                if distance < 10:  # Connection threshold
+                    G.add_edge(i, j)
+
+            # Calculate fragmentation as number of connected components
+        fragmentation = (
+            nx.number_connected_components(G) / len(G.nodes)
+            if len(G.nodes) > 0
+            else 0
+        )
+        return {
+            "center": self.territory_center,
+            "radius": self.territory_radius,
+            "density": self.territory_density,
+            "resource_access": resource_access,
+            "fragmentation": fragmentation,
         }
 
     def populate(self, field: AsteroidField) -> None:
@@ -1348,95 +1352,19 @@ class MinerEntity:
                                     field.entity_grid[y, x] = self.race_id
 
             elif self.trait == "expansive":  # Magenta race - settle in networks/paths
-                # Create network-like structures using graph theory concepts
-
-                # Generate random nodes
-                num_nodes = random.randint(5, 10)
-                nodes = []
-                for _ in range(num_nodes):
-                    nodes.append(
-                        (
-                            random.randint(10, field.width - 10),
-                            random.randint(10, field.height - 10),
-                        )
-                    )
-
-                # Create a minimum spanning tree to connect nodes
-                G = nx.Graph()
-                for i, node in enumerate(nodes):
-                    G.add_node(i, pos=node)
-
-                # Connect all nodes with edges
-                for i in range(len(nodes)):
-                    for j in range(i + 1, len(nodes)):
-                        # Calculate euclidean distance
-                        dist = math.sqrt(
-                            (nodes[i][0] - nodes[j][0]) ** 2
-                            + (nodes[i][1] - nodes[j][1]) ** 2
-                        )
-                        G.add_edge(i, j, weight=dist)
-
-                # Get minimum spanning tree
-                mst = nx.minimum_spanning_tree(G)
-
-                # Draw paths along the edges
-                for u, v in mst.edges():
-                    start_x, start_y = nodes[u]
-                    end_x, end_y = nodes[v]
-
-                    # Draw line between points (Bresenham's line algorithm)
-                    dx = abs(end_x - start_x)
-                    dy = abs(end_y - start_y)
-                    sx = 1 if start_x < end_x else -1
-                    sy = 1 if start_y < end_y else -1
-                    err = dx - dy
-
-                    x, y = start_x, start_y
-                    while True:
-                        # Place entity with some randomness
-                        if 0 <= x < field.width and 0 <= y < field.height:
-                            if random.random() < 0.7 and field.entity_grid[y, x] == 0:
-                                field.entity_grid[y, x] = self.race_id
-
-                        if x == end_x and y == end_y:
-                            break
-
-                        e2 = 2 * err
-                        if e2 > -dy:
-                            err -= dy
-                            x += sx
-                        if e2 < dx:
-                            err += dx
-                            y += sy
-
-                # Add some random nodes near the paths
-                for y in range(field.height):
-                    for x in range(field.width):
-                        if field.entity_grid[y, x] == self.race_id:
-                            # Create potential spread points nearby
-                            for _ in range(2):
-                                nx = x + random.randint(-3, 3)
-                                ny = y + random.randint(-3, 3)
-                                if 0 <= nx < field.width and 0 <= ny < field.height:
-                                    if (
-                                        random.random() < 0.2
-                                        and field.entity_grid[ny, nx] == 0
-                                    ):
-                                        field.entity_grid[ny, nx] = self.race_id
-
+                self._generate_random_nodes(field)
             else:  # Orange race (selective) - settle near resource-rich areas
                 # First find high-value asteroid clusters using KMeans
                 asteroid_cells = []
                 asteroid_values = []
 
-                for y in range(self.field.height):
-                    for x in range(self.field.width):
-                        if self.field.grid[y, x] > 0:
-                            value = field.grid[y, x]
-                            if field.rare_grid[y, x] == 1:
-                                value *= field.rare_bonus_multiplier
-                            asteroid_cells.append((x, y))
-                            asteroid_values.append(value)
+                for y, x in itertools.product(range(self.field.height), range(self.field.width)):
+                    if self.field.grid[y, x] > 0:
+                        value = field.grid[y, x]
+                        if field.rare_grid[y, x] == 1:
+                            value *= field.rare_bonus_multiplier
+                        asteroid_cells.append((x, y))
+                        asteroid_values.append(value)
 
                 if not asteroid_cells:
                     # No asteroids found, place randomly
@@ -1495,29 +1423,103 @@ class MinerEntity:
 
                         # Place symbiotes near valuable asteroids
                         radius = int(3 + value / 100)  # Higher value = larger cluster
-                        for dy in range(-radius, radius + 1):
-                            for dx in range(-radius, radius + 1):
-                                nx, ny = x + dx, y + dy
-                                if 0 <= nx < field.width and 0 <= ny < field.height:
-                                    dist = math.sqrt(dx * dx + dy * dy)
-                                    if dist <= radius:
-                                        # Chance based on distance and asteroid value
-                                        chance = (
-                                            self.initial_density
-                                            * (value / 100)
-                                            * (1 - dist / radius)
-                                        )
-                                        if (
-                                            random.random() < chance
-                                            and field.entity_grid[ny, nx] == 0
-                                        ):
-                                            field.entity_grid[ny, nx] = self.race_id
+                        for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
+                            nx, ny = x + dx, y + dy
+                            if 0 <= nx < field.width and 0 <= ny < field.height:
+                                dist = math.sqrt(dx * dx + dy * dy)
+                                if dist <= radius:
+                                    # Chance based on distance and asteroid value
+                                    chance = (
+                                        self.initial_density
+                                        * (value / 100)
+                                        * (1 - dist / radius)
+                                    )
+                                    if (
+                                        random.random() < chance
+                                        and field.entity_grid[ny, nx] == 0
+                                    ):
+                                        field.entity_grid[ny, nx] = self.race_id
 
         except Exception as e:
             logging.error(f"Error in populate method: {str(e)}")
             import traceback
 
             logging.error(traceback.format_exc())
+
+    def _generate_random_nodes(self, field):
+        # Create network-like structures using graph theory concepts
+        import networkx as nx
+
+        # Generate random nodes
+        num_nodes = random.randint(5, 10)
+        nodes = [
+            (
+                random.randint(10, field.width - 10),
+                random.randint(10, field.height - 10),
+            )
+            for _ in range(num_nodes)
+        ]
+        # Create a minimum spanning tree to connect nodes
+        G = nx.Graph()
+        for i, node in enumerate(nodes):
+            G.add_node(i, pos=node)
+
+        # Connect all nodes with edges
+        for i in range(len(nodes)):
+            for j in range(i + 1, len(nodes)):
+                # Calculate euclidean distance
+                dist = math.sqrt(
+                    (nodes[i][0] - nodes[j][0]) ** 2
+                    + (nodes[i][1] - nodes[j][1]) ** 2
+                )
+                G.add_edge(i, j, weight=dist)
+
+        # Get minimum spanning tree
+        mst = nx.minimum_spanning_tree(G)
+
+        # Draw paths along the edges
+        for u, v in mst.edges():
+            start_x, start_y = nodes[u]
+            end_x, end_y = nodes[v]
+
+            # Draw line between points (Bresenham's line algorithm)
+            dx = abs(end_x - start_x)
+            dy = abs(end_y - start_y)
+            sx = 1 if start_x < end_x else -1
+            sy = 1 if start_y < end_y else -1
+            err = dx - dy
+
+            x, y = start_x, start_y
+            while True:
+                # Place entity with some randomness
+                if 0 <= x < field.width and 0 <= y < field.height and (random.random() < 0.7 and field.entity_grid[y, x] == 0):
+                    field.entity_grid[y, x] = self.race_id
+
+                if x == end_x and y == end_y:
+                    break
+
+                e2 = 2 * err
+                if e2 > -dy:
+                    err -= dy
+                    x += sx
+                if e2 < dx:
+                    err += dx
+                    y += sy
+
+        # Add some random nodes near the paths
+        for y in range(field.height):
+            for x in range(field.width):
+                if field.entity_grid[y, x] == self.race_id:
+                    # Create potential spread points nearby
+                    for _ in range(2):
+                        nx = x + random.randint(-3, 3)
+                        ny = y + random.randint(-3, 3)
+                        if 0 <= nx < field.width and 0 <= ny < field.height and (
+                                                                random.random() < 0.2
+                                                                and field.entity_grid[ny, nx] == 0
+                                                            ):
+                            field.entity_grid[ny, nx] = self.race_id
+                            field.entity_grid[ny, nx] = self.race_id
 
     # Enhance the MinerEntity class with better algorithm integration
 
@@ -1530,10 +1532,7 @@ class MinerEntity:
         elif self.trait == "aggressive":
             aggression_base = 0.4
 
-        growth_modifier = 1.0
-        if self.trait == "expansive":
-            growth_modifier = 1.2
-
+        growth_modifier = 1.2 if self.trait == "expansive" else 1.0
         # Initialize algorithm with race-specific parameters
         self.evolution_algorithm = SymbioteEvolutionAlgorithm(
             initial_aggression=aggression_base,
@@ -1596,10 +1595,9 @@ class MinerEntity:
             self.colony_centers[colony["id"]] = (cy, cx)
 
             # Mark cells in this colony
-            for y in range(field.height):
-                for x in range(field.width):
-                    if labeled_grid[y, x] == colony["id"]:
-                        self.colony_map[(y, x)] = colony["id"]
+            for y, x in itertools.product(range(field.height), range(field.width)):
+                if labeled_grid[y, x] == colony["id"]:
+                    self.colony_map[(y, x)] = colony["id"]
 
         # Calculate population based on actual grid cells
         self.population = np.sum(new_grid)
@@ -1676,17 +1674,15 @@ class Player:
         The asteroid is removed from the field.
         """
         total_value: int = 0
-        for dy in range(-self.mining_range, self.mining_range + 1):
-            for dx in range(-self.mining_range, self.mining_range + 1):
-                mx: int = self.x + dx
-                my: int = self.y + dy
-                if 0 <= mx < field.width and 0 <= my < field.height:
-                    if field.grid[my, mx] > 0:
-                        total_value += field.grid[my, mx]
-                        if field.rare_grid[my, mx] == 1:
-                            self.total_rare_mined += 1
-                        field.grid[my, mx] = 0
-                        field.rare_grid[my, mx] = 0
+        for dy, dx in itertools.product(range(-self.mining_range, self.mining_range + 1), range(-self.mining_range, self.mining_range + 1)):
+            mx: int = self.x + dx
+            my: int = self.y + dy
+            if 0 <= mx < field.width and 0 <= my < field.height and field.grid[my, mx] > 0:
+                total_value += field.grid[my, mx]
+                if field.rare_grid[my, mx] == 1:
+                    self.total_rare_mined += 1
+                field.grid[my, mx] = 0
+                field.rare_grid[my, mx] = 0
         reward: int = int(total_value * self.mining_efficiency)
         self.currency += reward
         self.total_mined += reward
@@ -1703,17 +1699,15 @@ class Player:
         if self.auto_miners <= 0:
             return 0
         total_value: int = 0
-        for dy in range(-self.mining_range, self.mining_range + 1):
-            for dx in range(-self.mining_range, self.mining_range + 1):
-                mx: int = self.x + dx
-                my: int = self.y + dy
-                if 0 <= mx < field.width and 0 <= my < field.height:
-                    if field.grid[my, mx] > 0:
-                        total_value += field.grid[my, mx]
-                        if field.rare_grid[my, mx] == 1:
-                            self.total_rare_mined += 1
-                        field.grid[my, mx] = 0
-                        field.rare_grid[my, mx] = 0
+        for dy, dx in itertools.product(range(-self.mining_range, self.mining_range + 1), range(-self.mining_range, self.mining_range + 1)):
+            mx: int = self.x + dx
+            my: int = self.y + dy
+            if 0 <= mx < field.width and 0 <= my < field.height and field.grid[my, mx] > 0:
+                total_value += field.grid[my, mx]
+                if field.rare_grid[my, mx] == 1:
+                    self.total_rare_mined += 1
+                field.grid[my, mx] = 0
+                field.rare_grid[my, mx] = 0
         reward: int = int(total_value * self.mining_efficiency * 0.5)
         total_reward: int = reward * self.auto_miners
         self.currency += total_reward
@@ -1804,7 +1798,6 @@ class Player:
                             nx, ny = ship_x + dx, ship_y + dy
                             if 0 <= nx < field.width and 0 <= ny < field.height:
                                 if field.entity_grid[ny, nx] == race.race_id:
-                                    # Calculate attack probability based on hunger and distance
                                     dist = max(1, abs(dx) + abs(dy))
                                     attack_chance += race.hunger * (4 - dist) * 0.05
 
@@ -1838,11 +1831,11 @@ class Player:
                 for dx in range(-self.mining_range, self.mining_range + 1):
                     nx, ny = ship_x + dx, ship_y + dy
                     if 0 <= nx < field.width and 0 <= ny < field.height:
-                        if self.grid[ny, nx] > 0:
+                        if field.grid[ny, nx] > 0:  # THIS IS THE FIX - using field.grid not self.grid
                             value = field.grid[ny, nx]
-                            if self.rare_grid[ny, nx] == 1:
+                            if field.rare_grid[ny, nx] == 1:
                                 self.total_rare_mined += 1
-
+                            
                             total_mined += value
                             field.grid[ny, nx] = 0
                             field.rare_grid[ny, nx] = 0
@@ -1960,12 +1953,9 @@ class Shop:
             # Access the global game instance
             import gc
 
-            game_instance = None
-            for obj in gc.get_objects():
-                if isinstance(obj, Game):
-                    game_instance = obj
-                    break
-
+            game_instance = next(
+                (obj for obj in gc.get_objects() if isinstance(obj, Game)), None
+            )
             logging.info(f"Discovering race {race_idx}")
             if game_instance:
                 logging.info(
@@ -2026,7 +2016,7 @@ class Shop:
                 color = (200, 200, 200)
 
             pygame.draw.rect(surface, (100, 100, 120), tab_rect, 2)  # Border
-            category_name = category.capitalize() + " Upgrades"
+            category_name = f"{category.capitalize()} Upgrades"
             draw_text(
                 surface, category_name, tab_x + 10, tab_y + 5, size=18, color=color
             )
@@ -2065,11 +2055,7 @@ class Shop:
 
             # Item background
             item_rect = pygame.Rect(60, y_pos, WINDOW_WIDTH - 120, item_height - 5)
-            if player.currency >= opt["cost"]:
-                bg_color = (40, 40, 60)  # Affordable
-            else:
-                bg_color = (60, 30, 30)  # Too expensive
-
+            bg_color = (40, 40, 60) if player.currency >= opt["cost"] else (60, 30, 30)
             pygame.draw.rect(surface, bg_color, item_rect)
             pygame.draw.rect(surface, (100, 100, 120), item_rect, 2)  # Border
 
@@ -2339,7 +2325,7 @@ class NotificationManager:
                     current_line = words[0]
 
                     for word in words[1:]:
-                        test_line = current_line + " " + word
+                        test_line = f"{current_line} {word}"
                         test_surface = font.render(test_line, True, text_color)
 
                         if test_surface.get_width() <= panel_width - 20:
@@ -2567,14 +2553,12 @@ class Game:
                         self.player.move(0, -self.player.move_speed, self.field)
                     elif event.key == pygame.K_DOWN:
                         self.player.move(0, self.player.move_speed, self.field)
-                    # Camera zoom controls
-                    elif event.key == pygame.K_EQUALS or event.key == pygame.K_PLUS:
+                    elif event.key in [pygame.K_EQUALS, pygame.K_PLUS]:
                         self.player.zoom_camera(self.field, 1.25)
                         self.notifier.add("Zoomed in", duration=60)
                     elif event.key == pygame.K_MINUS:
                         self.player.zoom_camera(self.field, 0.8)
                         self.notifier.add("Zoomed out", duration=60)
-                    # Quick move keys for larger jumps
                     elif event.key == pygame.K_w:
                         for _ in range(10):
                             self.player.move(0, -self.player.move_speed, self.field)
@@ -2594,7 +2578,6 @@ class Game:
                         for _ in range(10):
                             self.player.move(self.player.move_speed, 0, self.field)
                         self.notifier.add("Fast move right", duration=30)
-                    # Toggle auto-mine feature
                     elif (
                         event.key == pygame.K_m
                         and pygame.key.get_mods() & pygame.KMOD_SHIFT
@@ -2605,8 +2588,6 @@ class Game:
                         else:
                             self.auto_mine = True
                             self.notifier.add("Auto-mining enabled", duration=120)
-                    # N key is handled by notification manager
-                    # Add to the keydown handler in Game.handle_events
                     elif (
                         event.key == pygame.K_a
                         and pygame.key.get_mods() & pygame.KMOD_SHIFT
@@ -2620,7 +2601,6 @@ class Game:
                         else:
                             self.player.auto_upgrade = True
                             self.notifier.add("Auto-upgrades enabled", duration=120)
-                    # Add symbiote feeding controls
                     elif event.key == pygame.K_f:
                         # Feed a small amount
                         minerals_fed = self.player.feed_symbiotes(self.field, 50)
@@ -2631,7 +2611,6 @@ class Game:
                         minerals_fed = self.player.feed_symbiotes(self.field, 200)
                         self.notifier.add(f"Fed symbiotes: {minerals_fed} minerals")
 
-                    # Add fleet management
                     elif event.key == pygame.K_b:
                         # Build a new mining ship if resources allow
                         if (
@@ -2663,7 +2642,6 @@ class Game:
                     ):
                         self.state = STATE_PLAY
 
-            # Handle mouse wheel for zooming - Fixed indentation here
             elif event.type == pygame.MOUSEWHEEL:
                 if self.state == STATE_PLAY:
                     zoom_factor = 1.1 if event.y > 0 else 0.9
@@ -3018,6 +2996,11 @@ class Game:
         available_width = panel_width - 40
         race_height = 100
 
+        trait_x = 270
+        trait_width = 100
+        # Population history as mini-graph
+        graph_width = 150
+        graph_height = 40
         # Draw stats for each race
         for race in self.field.races:
             # Race header with colored background
@@ -3071,8 +3054,6 @@ class Game:
 
             # Genome traits visualization as small bar charts
             genome_y = stats_y + 20
-            trait_x = 270
-            trait_width = 100
             for i, (trait, value) in enumerate(race.genome.items()):
                 if i > 1:  # Only show a few traits
                     break
@@ -3102,9 +3083,6 @@ class Game:
                     size=14,
                 )
 
-            # Population history as mini-graph
-            graph_width = 150
-            graph_height = 40
             graph_x = 400 - graph_width // 2
             graph_y = stats_y
 
