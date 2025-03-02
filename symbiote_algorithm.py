@@ -342,8 +342,9 @@ class SymbioteEvolutionAlgorithm:
         # 5. Apply machine learning adjustments if enabled
         if self.learning_enabled and len(self.ml_memory["attack_outcomes"]) > 5:
             # Calculate success rate of recent attacks
-            success_rate = sum(bool(outcome)
-                           for outcome in self.ml_memory["attack_outcomes"]) / len(self.ml_memory["attack_outcomes"])
+            success_rate = sum(
+                bool(outcome) for outcome in self.ml_memory["attack_outcomes"]
+            ) / len(self.ml_memory["attack_outcomes"])
 
             # If attacks have been successful, symbiotes become bolder
             if success_rate > 0.7:
@@ -413,9 +414,8 @@ class SymbioteEvolutionAlgorithm:
 
             # Apply machine learning adjustments if enabled
             if self.learning_enabled and (
-                                self.ml_memory["successful_attacks"]
-                                > self.ml_memory["failed_attacks"]
-                            ):
+                self.ml_memory["successful_attacks"] > self.ml_memory["failed_attacks"]
+            ):
                 attack_strength *= 1.1
 
         return attack_occurs, attack_strength
@@ -1070,9 +1070,7 @@ class SymbioteEvolutionAlgorithm:
         trend_factor = 1.0 - min(0.5, max(-0.5, population_trend)) * 0.5
 
         return {
-            trait: min(
-                0.8, base_rate * mineral_factor * time_factor * trend_factor
-            )
+            trait: min(0.8, base_rate * mineral_factor * time_factor * trend_factor)
             for trait, base_rate in base_rates.items()
         }
 
