@@ -27,7 +27,7 @@ from sklearn.cluster import KMeans
 import networkx as nx
 from perlin_noise import PerlinNoise
 
-from symbiote_algorithm import SymbioteEvolutionAlgorithm
+from src.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
 # -------------------------------------
 # Logging Configuration
@@ -254,14 +254,14 @@ class AsteroidField:
         view_x2 = min(self.width, self.camera_x + half_width)
         view_y2 = min(self.height, self.camera_y + half_height)
 
+        # Ensure valid bounds
+        view_x2 = max(view_x1 + 1, view_x2)
+        view_y2 = max(view_y1 + 1, view_y2)
+
         return view_x1, view_y1, view_x2, view_y2
 
     def update(self) -> None:
-        """
-        Update the asteroid field using advanced cellular automata with
-        energy dynamics and pattern recognition
-        """
-        # Create new grids for next state
+        """Update the game state"""
         new_grid = np.zeros_like(self.grid)
         new_rare_grid = np.zeros_like(self.rare_grid)
         new_energy_grid = np.zeros_like(self.energy_grid)
@@ -355,7 +355,9 @@ class AsteroidField:
         # Balance symbiotes and mining
         self.balance_symbiotes_and_mining()
     def update_entities(self) -> Dict[int, int]:
-        """Update symbiote races with enhanced mathematical modeling"""
+        """
+        Update symbiote races with enhanced mathematical modeling
+        """
         try:
             return self._extracted_from_update_entities_4()
         except Exception as e:
@@ -725,110 +727,76 @@ class AsteroidField:
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the visible portion of the field"""
-        view_x1, view_y1, view_x2, view_y2 = self.get_view_bounds()
-
-        # Add safety checks to ensure view bounds are valid
-        view_x1 = max(0, min(view_x1, self.width - 1))
-        view_y1 = max(0, min(view_y1, self.height - 1))
-        view_x2 = max(view_x1 + 1, min(view_x2, self.width))
-        view_y2 = max(view_y1 + 1, min(view_y2, self.height))
-
-        # Calculate screen position and cell size based on zoom
-        screen_cell_size = int(CELL_SIZE * self.zoom)
-
-        # Clear entire surface
-        surface.fill(COLOR_BG)
-
-        # Use try/except to catch any index errors
         try:
+            # Get view bounds
+            view_x1, view_y1, view_x2, view_y2 = self.get_view_bounds()
+
+            # Add safety checks to ensure view bounds are valid
+            view_x1 = max(0, min(view_x1, self.width - 1))
+            view_y1 = max(0, min(view_y1, self.height - 1))
+            view_x2 = max(view_x1 + 1, min(view_x2, self.width))
+            view_y2 = max(view_y1 + 1, min(view_y2, self.height))
+
+            # Calculate screen position and cell size based on zoom
+            screen_cell_size = int(CELL_SIZE * self.zoom)
+
+            # Clear entire surface
+            surface.fill(COLOR_BG)
+
             # Draw visible grid
-            for y, x in itertools.product(range(view_y1, view_y2), range(view_x1, view_x2)):
-                # Calculate screen position
-                screen_x = int((x - view_x1) * screen_cell_size)
-                screen_y = int((y - view_y1) * screen_cell_size)
+            for y in range(view_y1, view_y2):
+                for x in range(view_x1, view_x2):
+                    # Calculate screen position
+                    screen_x = int((x - view_x1) * screen_cell_size)
+                    screen_y = int((y - view_y1) * screen_cell_size)
 
-                # Create cell rectangle
-                rect = pygame.Rect(
-                    screen_x, screen_y, screen_cell_size, screen_cell_size
-                )
-
-                # Draw cell content - ensure all array accesses use comma notation for numpy
-                if self.grid[y, x] > 0:
-                    # Rare asteroid with value-based color shade
-                    value = self.grid[y, x]
-                    # Asteroid
-                    if self.rare_grid[y, x] == 1:
-                        intensity = min(255, 180 + value)
-                        color = (intensity, intensity * 0.8, 0)
-                    else:
-                        brightness = min(200, 80 + value * 2)
-                        color = (brightness, brightness, brightness)
-                    pygame.draw.rect(surface, color, rect)
-                else:
-                    # Empty cell - visualize energy levels
-                    energy = self.energy_grid[y, x]
-                    if energy > 0.1:
-                        # Only show significant energy
-                        alpha = int(energy * 100)
-                        color = (0, 0, int(energy * 150), alpha)
-                        s = pygame.Surface(
-                            (rect.width, rect.height), pygame.SRCALPHA
-                        )
-                        s.fill(color)
-                        surface.blit(s, rect)
-
-                # Draw entity on top if present
-                entity = self.entity_grid[y, x]
-                if entity > 0:
-                    race = next(
-                        (r for r in self.races if r.race_id == entity), None
+                    # Create cell rectangle
+                    rect = pygame.Rect(
+                        screen_x, screen_y, screen_cell_size, screen_cell_size
                     )
-                    if race:  # Only draw shapes if cells are big enough
-                        if (
-                                screen_cell_size >= 4
-                            ):
-                            if race.trait == "adaptive":
-                                # Triangle
-                                points = [
-                                    (screen_x + screen_cell_size // 2, screen_y),
-                                    (screen_x, screen_y + screen_cell_size),
-                                    (
-                                        screen_x + screen_cell_size,
-                                        screen_y + screen_cell_size,
-                                    ),
-                                ]
-                                pygame.draw.polygon(surface, race.color, points)
 
-                            elif race.trait == "expansive":
-                                # Square with size based on evolution
-                                size = int(
-                                    screen_cell_size
-                                    * (0.6 + race.evolution_stage * 0.08)
-                                )
-                                offset = (screen_cell_size - size) // 2
-                                inner_rect = pygame.Rect(
-                                    screen_x + offset, screen_y + offset, size, size
-                                )
-                                pygame.draw.rect(surface, race.color, inner_rect)
-
-                            elif race.trait == "selective":
-                                center = (
-                                    screen_x + screen_cell_size // 2,
-                                    screen_y + screen_cell_size // 2,
-                                )
-                                radius = int(
-                                    screen_cell_size
-                                    * (0.3 + race.evolution_stage * 0.06)
-                                )
-                                pygame.draw.circle(
-                                    surface, race.color, center, radius
-                                )
+                    # Draw cell content
+                    if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
+                        if self.grid[y, x] > 0:
+                            # Asteroid
+                            value = self.grid[y, x]
+                            if self.rare_grid[y, x] == 1:
+                                # Rare asteroid with value-based color shade
+                                intensity = min(255, 180 + value // 3)
+                                color = (intensity, intensity * 0.8, 0)
+                            else:
+                                brightness = min(200, 80 + value // 3)
+                                color = (brightness, brightness, brightness)
+                            pygame.draw.rect(surface, color, rect)
                         else:
-                            # Small cells - just draw a pixel
-                            pygame.draw.rect(surface, race.color, rect)
+                            # Empty cell - visualize energy levels
+                            energy = self.energy_grid[y, x]
+                            if energy > 0.1:
+                                # Only show significant energy
+                                alpha = int(energy * 100)
+                                color = (0, 0, int(energy * 150))
+                                s = pygame.Surface(
+                                    (rect.width, rect.height)
+                                )
+                                s.fill(color)
+                                s.set_alpha(alpha)
+                                surface.blit(s, rect)
 
-        except IndexError as e:
-            logging.error(f"Index error in draw: {e}")
+                        # Draw entity on top if present
+                        if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
+                            entity = self.entity_grid[y, x]
+                            if entity > 0:
+                                race = next(
+                                    (r for r in self.races if r.race_id == entity), None
+                                )
+                                if race:
+                                    # Draw entity based on race
+                                    pygame.draw.rect(surface, race.color, rect)
+
+        except Exception as e:
+            logging.error(f"Error in AsteroidField.draw: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
 
     def draw_entities(self, surface, viewport_x, viewport_y, view_width, view_height):
         """Draw symbiote entities with enhanced visual clarity"""
