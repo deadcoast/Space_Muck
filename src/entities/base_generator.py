@@ -7,6 +7,7 @@ import contextlib
 # Standard library imports
 import logging
 import random
+import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
@@ -20,6 +21,20 @@ try:
 except ImportError:
     PERLIN_AVAILABLE = False
     print("PerlinNoise package is not available. Using fallback noise generator.")
+
+# GPU acceleration dependencies
+try:
+    from utils.gpu_utils import (
+        is_gpu_available,
+        get_available_backends,
+        to_gpu,
+        to_cpu,
+    )
+
+    GPU_UTILS_AVAILABLE = True
+except ImportError:
+    GPU_UTILS_AVAILABLE = False
+    logging.warning("GPU utilities not available. GPU acceleration will be disabled.")
 
 # Local application imports
 from entities.base_entity import BaseEntity
@@ -44,6 +59,8 @@ class BaseGenerator(BaseEntity):
         color: Tuple[int, int, int] = (100, 200, 100),
         position: Optional[Tuple[int, int]] = None,
         noise_generator: Optional[NoiseGenerator] = None,
+        use_gpu: bool = True,
+        gpu_backend: str = "auto",
     ) -> None:
         """
         Initialize a base generator entity.
@@ -57,6 +74,8 @@ class BaseGenerator(BaseEntity):
             color: RGB color tuple for visualization
             position: Initial position as (x, y) tuple
             noise_generator: Injected noise generator (defaults to auto-selected implementation)
+            use_gpu: Whether to use GPU acceleration when available
+            gpu_backend: GPU backend to use ('cuda', 'cupy', 'auto')
         """
         # Call the parent class constructor
         super().__init__(
@@ -87,6 +106,45 @@ class BaseGenerator(BaseEntity):
             "rare_chance": 0.1,  # Chance of rare elements
         }
 
+        # GPU acceleration configuration
+        self.use_gpu = use_gpu
+        self.gpu_backend = gpu_backend
+
+        # Check GPU availability
+        self.gpu_available = False
+        self.available_backends = ["cpu"]
+
+        if use_gpu and GPU_UTILS_AVAILABLE:
+            try:
+                self.gpu_available = is_gpu_available()
+                self.available_backends = get_available_backends()
+
+                if self.gpu_available:
+                    logging.info(
+                        f"GPU acceleration enabled for generator {self.entity_id} "
+                        f"with available backends: {', '.join(self.available_backends)}"
+                    )
+                else:
+                    logging.info(
+                        f"GPU acceleration requested but no GPU available for generator {self.entity_id}. "
+                        f"Falling back to CPU implementation."
+                    )
+            except Exception as e:
+                logging.warning(
+                    f"Error detecting GPU capabilities: {str(e)}. "
+                    f"Falling back to CPU implementation."
+                )
+                self.gpu_available = False
+                self.use_gpu = False
+        elif not use_gpu:
+            logging.info(f"GPU acceleration disabled for generator {self.entity_id}")
+        else:
+            logging.warning(
+                f"GPU utilities not available for generator {self.entity_id}. "
+                f"Falling back to CPU implementation."
+            )
+            self.use_gpu = False
+
         logging.info(
             f"Generator initialized: {self.entity_type} (ID: {self.entity_id}, Seed: {self.seed})"
         )
@@ -96,6 +154,7 @@ class BaseGenerator(BaseEntity):
     ) -> np.ndarray:
         """
         Generate a noise layer using the specified noise generator.
+        Uses GPU acceleration when available.
 
         Args:
             noise_type: Type of noise to use ("low", "medium", "high", "detail")
@@ -121,12 +180,57 @@ class BaseGenerator(BaseEntity):
         if cache_key in self._noise_cache:
             return self._noise_cache[cache_key]
 
-        # Performance optimization: Use multithreading for larger grids
+        # Get octaves for the specified noise type
         octaves = octaves_map[noise_type]
+
+        # Start timing
+        start_time = time.time()
+
+        # Try GPU acceleration if enabled and available
+        if self.use_gpu and self.gpu_available and GPU_UTILS_AVAILABLE:
+            try:
+                logging.info(
+                    f"Using GPU acceleration for noise generation (type: {noise_type}, "
+                    f"dimensions: {self.width}x{self.height})"
+                )
+
+                # Use the GPU-accelerated noise generation function
+                from src.utils.gpu_utils import apply_noise_generation_gpu
+
+                noise_grid = apply_noise_generation_gpu(
+                    width=self.width,
+                    height=self.height,
+                    scale=scale,
+                    octaves=octaves,
+                    persistence=0.5,  # Default persistence
+                    lacunarity=2.0,  # Default lacunarity
+                    seed=self.seed + octaves,
+                    backend=self.gpu_backend,
+                )
+
+                gpu_time = time.time() - start_time
+                logging.info(
+                    f"GPU noise generation completed in {gpu_time:.4f} seconds"
+                )
+
+                # Cache the result
+                self._noise_cache[cache_key] = noise_grid
+                return noise_grid
+
+            except Exception as e:
+                logging.warning(
+                    f"GPU noise generation failed: {str(e)}. Falling back to CPU implementation."
+                )
+                # Continue with CPU implementation
 
         # For larger grids, use optimized generation with parallel processing
         if self.width * self.height > 10000:  # Threshold for large grids
             try:
+                logging.info(
+                    f"Using parallel CPU processing for noise generation (type: {noise_type}, "
+                    f"dimensions: {self.width}x{self.height})"
+                )
+
                 # Use optimized noise generation with parallel processing
                 from concurrent.futures import ThreadPoolExecutor
                 import math
@@ -160,7 +264,9 @@ class BaseGenerator(BaseEntity):
 
             except Exception as e:
                 # Fall back to standard generation if parallel processing fails
-                logging.warning(f"Falling back to standard noise generation: {str(e)}")
+                logging.warning(
+                    f"Parallel noise generation failed: {str(e)}. Falling back to standard generation."
+                )
                 noise_grid = self.noise_generator.generate_noise(
                     width=self.width,
                     height=self.height,
@@ -170,6 +276,11 @@ class BaseGenerator(BaseEntity):
                 )
         else:
             # Standard generation for smaller grids
+            logging.info(
+                f"Using standard CPU processing for noise generation (type: {noise_type}, "
+                f"dimensions: {self.width}x{self.height})"
+            )
+
             noise_grid = self.noise_generator.generate_noise(
                 width=self.width,
                 height=self.height,
@@ -177,6 +288,10 @@ class BaseGenerator(BaseEntity):
                 octaves=octaves,
                 seed=self.seed + octaves,  # Use different seeds for different octaves
             )
+
+        # Log CPU processing time
+        cpu_time = time.time() - start_time
+        logging.info(f"CPU noise generation completed in {cpu_time:.4f} seconds")
 
         # Cache the result
         self._noise_cache[cache_key] = noise_grid
@@ -208,19 +323,6 @@ class BaseGenerator(BaseEntity):
         Returns:
             np.ndarray: Evolved grid with original values preserved where cells are alive.
         """
-        # Import the cellular automaton utilities
-        try:
-            from utils.cellular_automaton_utils import (
-                apply_cellular_automaton_optimized,
-            )
-
-            utils_available = True
-        except ImportError:
-            utils_available = False
-            logging.warning(
-                "cellular_automaton_utils module not available, using internal implementation"
-            )
-
         # Prepare the grid and parameters for cellular automaton processing
         binary_grid, prepared_birth_set, prepared_survival_set = (
             self._prepare_cellular_automaton_grid(grid, birth_set, survival_set)
@@ -239,30 +341,87 @@ class BaseGenerator(BaseEntity):
         # Process the cellular automaton
         result_grid = binary_grid.copy()
 
-        # Use the utility module if available
-        if utils_available:
+        # Try GPU acceleration first if enabled
+        if self.use_gpu and self.gpu_available and GPU_UTILS_AVAILABLE:
             try:
-                logging.info("Using optimized cellular automaton from utils module")
-                for _ in range(iterations):
-                    result_grid = apply_cellular_automaton_optimized(
-                        result_grid, prepared_birth_set, prepared_survival_set
-                    )
+                from utils.gpu_utils import apply_cellular_automaton_gpu
+
+                logging.info(
+                    f"Using GPU-accelerated cellular automaton with backend: {self.gpu_backend}"
+                )
+                start_time = time.time()
+
+                # Transfer grid to GPU
+                gpu_binary_grid = to_gpu(binary_grid, backend=self.gpu_backend)
+
+                # Apply cellular automaton using GPU
+                gpu_result_grid = apply_cellular_automaton_gpu(
+                    grid=gpu_binary_grid,
+                    birth_set=prepared_birth_set,
+                    survival_set=prepared_survival_set,
+                    iterations=iterations,
+                    wrap=wrap,
+                    backend=self.gpu_backend,
+                )
+
+                # Transfer result back to CPU
+                result_grid = to_cpu(gpu_result_grid)
+
+                end_time = time.time()
+                logging.info(
+                    f"GPU cellular automaton completed in {end_time - start_time:.4f} seconds"
+                )
+
+                # Cache the result
+                self._cache_ca_result(cache_key, result_grid)
+
+                # Preserve original values where cells are alive
+                return grid * result_grid
+
             except Exception as e:
                 logging.warning(
-                    f"Error using optimized cellular automaton: {str(e)}. Falling back to internal implementation."
+                    f"Error using GPU-accelerated cellular automaton: {str(e)}. "
+                    f"Falling back to CPU implementation."
                 )
-                # Fall back to internal implementation
+                # Reset result_grid for CPU processing
                 result_grid = binary_grid.copy()
-                for _ in range(iterations):
-                    result_grid = self._process_cellular_automaton_iteration(
-                        result_grid, prepared_birth_set, prepared_survival_set, wrap
-                    )
-        else:
-            # Use internal implementation
+
+        # Try optimized CPU implementation if GPU failed or is not available
+        try:
+            from utils.cellular_automaton_utils import (
+                apply_cellular_automaton_optimized,
+            )
+
+            logging.info("Using optimized CPU cellular automaton from utils module")
+            start_time = time.time()
+
+            for _ in range(iterations):
+                result_grid = apply_cellular_automaton_optimized(
+                    result_grid, prepared_birth_set, prepared_survival_set
+                )
+
+            end_time = time.time()
+            logging.info(
+                f"CPU cellular automaton completed in {end_time - start_time:.4f} seconds"
+            )
+
+        except Exception as e:
+            logging.warning(
+                f"Error using optimized cellular automaton: {str(e)}. Falling back to internal implementation."
+            )
+            # Fall back to internal implementation
+            result_grid = binary_grid.copy()
+            start_time = time.time()
+
             for _ in range(iterations):
                 result_grid = self._process_cellular_automaton_iteration(
                     result_grid, prepared_birth_set, prepared_survival_set, wrap
                 )
+
+            end_time = time.time()
+            logging.info(
+                f"Internal cellular automaton completed in {end_time - start_time:.4f} seconds"
+            )
 
         # Cache the result
         self._cache_ca_result(cache_key, result_grid)
@@ -807,17 +966,6 @@ class BaseGenerator(BaseEntity):
         Returns:
             np.ndarray: Grid with enhanced value clusters
         """
-        # Import the value generator utilities
-        try:
-            from utils.value_generator import add_value_clusters
-
-            utils_available = True
-        except ImportError:
-            utils_available = False
-            logging.warning(
-                "value_generator module not available, using internal implementation"
-            )
-
         # Validate parameters
         if num_clusters <= 0:
             logging.warning(
@@ -841,31 +989,54 @@ class BaseGenerator(BaseEntity):
         if cached_result is not None:
             return cached_result
 
-        # Use the utility module if available
-        if utils_available:
+        # Try GPU acceleration first if enabled
+        if self.use_gpu and self.gpu_available and GPU_UTILS_AVAILABLE:
             try:
-                logging.info("Using optimized clustering from value_generator module")
-                # Calculate a reasonable cluster radius based on grid dimensions
-                cluster_radius = int(min(grid.shape) * 0.1)
-
-                # Use the add_value_clusters function from value_generator
-                result_grid = add_value_clusters(
-                    grid,
-                    num_clusters=num_clusters,
-                    cluster_radius=cluster_radius,
-                    value_multiplier=cluster_value_multiplier,
+                return self._gpu_acceleration_handler(
+                    grid, num_clusters, cache_key, cluster_value_multiplier
                 )
-
-                # Cache the result
-                self._cache_cluster_result(cache_key, result_grid)
-                return result_grid
             except Exception as e:
                 logging.warning(
-                    f"Error using value_generator.add_value_clusters: {str(e)}. Falling back to internal implementation."
+                    f"Error using GPU-accelerated clustering: {str(e)}. "
+                    f"Falling back to CPU implementation."
                 )
-                # Continue with internal implementation
+                # Continue with CPU implementation
+
+        # Try optimized CPU implementation if GPU failed or is not available
+        try:
+            from utils.value_generator import add_value_clusters
+
+            logging.info("Using optimized clustering from value_generator module")
+            start_time = time.time()
+
+            # Calculate a reasonable cluster radius based on grid dimensions
+            cluster_radius = int(min(grid.shape) * 0.1)
+
+            # Use the add_value_clusters function from value_generator
+            result_grid = add_value_clusters(
+                grid,
+                num_clusters=num_clusters,
+                cluster_radius=cluster_radius,
+                value_multiplier=cluster_value_multiplier,
+            )
+
+            end_time = time.time()
+            logging.info(
+                f"CPU optimized clustering completed in {end_time - start_time:.4f} seconds"
+            )
+
+            # Cache the result
+            self._cache_cluster_result(cache_key, result_grid)
+            return result_grid
+
+        except Exception as e:
+            logging.warning(
+                f"Error using value_generator.add_value_clusters: {str(e)}. Falling back to internal implementation."
+            )
+            # Continue with internal implementation
 
         # Prepare the grid for clustering
+        start_time = time.time()
         result_grid, non_zero_coords = self._prepare_cluster_grid(grid)
 
         # If we don't have enough non-zero cells for the requested clusters, return the original grid
@@ -888,6 +1059,76 @@ class BaseGenerator(BaseEntity):
             result_grid = self._apply_manual_clustering(
                 grid, result_grid, cluster_centers, cluster_value_multiplier
             )
+
+        end_time = time.time()
+        logging.info(
+            f"Internal clustering completed in {end_time - start_time:.4f} seconds"
+        )
+
+        # Cache the result
+        self._cache_cluster_result(cache_key, result_grid)
+        return result_grid
+
+    def _gpu_acceleration_handler(
+        self, grid, num_clusters, cache_key, cluster_value_multiplier
+    ):
+        from utils.gpu_utils import apply_kmeans_clustering_gpu
+
+        logging.info(
+            f"Using GPU-accelerated clustering with backend: {self.gpu_backend}"
+        )
+        start_time = time.time()
+
+        # Prepare data for clustering
+        non_zero_coords = np.argwhere(grid > 0)
+
+        # If we don't have enough non-zero cells for the requested clusters, return the original grid
+        if len(non_zero_coords) < num_clusters:
+            result_grid = grid.copy()
+            self._cache_cluster_result(cache_key, result_grid)
+            return result_grid
+
+        # Transfer data to GPU for processing
+        gpu_coords = to_gpu(non_zero_coords, backend=self.gpu_backend)
+
+        # Apply K-means clustering to find optimal cluster centers
+        cluster_centers, _ = apply_kmeans_clustering_gpu(
+            data=gpu_coords, n_clusters=num_clusters, backend=self.gpu_backend
+        )
+
+        # Transfer cluster centers back to CPU
+        cluster_centers = to_cpu(cluster_centers)
+
+        # Create a copy of the grid to modify
+        result_grid = grid.copy()
+
+        # Calculate a reasonable cluster radius based on grid dimensions
+        cluster_radius = int(min(grid.shape) * 0.1)
+
+        # Apply clusters using vectorized operations
+        y_indices, x_indices = np.indices((self.height, self.width))
+        valid_mask = grid > 0
+
+        for center in cluster_centers:
+            cy, cx = center
+            radius = cluster_radius
+
+            # Calculate distances for all points at once
+            distances = np.sqrt((x_indices - cx) ** 2 + (y_indices - cy) ** 2)
+
+            # Create mask for points within radius
+            radius_mask = distances <= radius
+
+            # Combine with valid mask (non-zero cells)
+            combined_mask = radius_mask & valid_mask
+
+            # Calculate falloff for all affected points
+            falloff = 1 - (distances[combined_mask] / radius)
+
+            result_grid[combined_mask] *= 1 + (cluster_value_multiplier - 1) * falloff
+
+        end_time = time.time()
+        logging.info(f"GPU clustering completed in {end_time - start_time:.4f} seconds")
 
         # Cache the result
         self._cache_cluster_result(cache_key, result_grid)
@@ -1297,6 +1538,9 @@ class BaseGenerator(BaseEntity):
                 "width": self.width,
                 "height": self.height,
                 "parameters": self.parameters,
+                "use_gpu": self.use_gpu,
+                "gpu_backend": self.gpu_backend,
+                "gpu_available": self.gpu_available,
             }
         )
         return data
@@ -1309,6 +1553,7 @@ class BaseGenerator(BaseEntity):
     ) -> np.ndarray:
         """
         Generate multi-octave noise.
+        Uses GPU acceleration when available.
 
         Args:
             scale: Base scale of the noise
@@ -1333,7 +1578,106 @@ class BaseGenerator(BaseEntity):
         if cache_key in self._noise_cache:
             return self._noise_cache[cache_key]
 
-        # Generate the multi-octave noise
+        # Start timing
+        start_time = time.time()
+
+        # Try GPU acceleration if enabled and available
+        if self.use_gpu and self.gpu_available and GPU_UTILS_AVAILABLE:
+            try:
+                logging.info(
+                    f"Using GPU acceleration for multi-octave noise generation "
+                    f"(dimensions: {self.width}x{self.height})"
+                )
+
+                # Use the GPU-accelerated noise generation function
+                from src.utils.gpu_utils import apply_noise_generation_gpu
+
+                # Generate combined noise grid
+                noise_grid = np.zeros((self.height, self.width))
+
+                # Normalize weights
+                total_weight = sum(weights)
+                norm_weights = [w / total_weight for w in weights]
+
+                # Transfer the empty grid to GPU for accumulation if possible
+                gpu_noise_grid = to_gpu(noise_grid, backend=self.gpu_backend)
+
+                for i, (octave, weight) in enumerate(zip(octaves, norm_weights)):
+                    # Generate noise for this octave using GPU
+                    octave_scale = scale * (2**i)  # Scale increases with octave
+                    gpu_octave_noise = apply_noise_generation_gpu(
+                        width=self.width,
+                        height=self.height,
+                        scale=octave_scale,
+                        octaves=octave,  # Use the octave value as the number of octaves
+                        persistence=0.5,  # Default persistence
+                        lacunarity=2.0,  # Default lacunarity
+                        seed=self.seed + i,  # Different seed for each octave
+                        backend=self.gpu_backend,
+                    )
+
+                    # Scale the noise by weight while still on GPU
+                    try:
+                        # Try to perform the weighted addition on the GPU
+                        weighted_noise = (
+                            to_gpu(weight, backend=self.gpu_backend) * gpu_octave_noise
+                        )
+                        gpu_noise_grid += weighted_noise
+                    except Exception as e:
+                        # If GPU operation fails, fall back to CPU
+                        logging.debug(
+                            f"GPU weighted addition failed: {str(e)}. Using CPU fallback."
+                        )
+                        octave_noise = to_cpu(gpu_octave_noise)
+                        noise_grid += octave_noise * weight
+
+                # Transfer the final result back to CPU
+                try:
+                    noise_grid = to_cpu(gpu_noise_grid)
+                except Exception as e:
+                    logging.debug(
+                        f"GPU to CPU transfer failed: {str(e)}. Using existing CPU grid."
+                    )
+
+                # Ensure values are in [0, 1]
+                try:
+                    # Try to perform clipping on GPU if the data is still on GPU
+                    if "gpu_noise_grid" in locals() and gpu_noise_grid is not None:
+                        gpu_noise_grid = to_gpu(
+                            np.array([0, 1]), backend=self.gpu_backend
+                        )[:2]
+                        noise_grid = to_cpu(
+                            np.clip(
+                                gpu_noise_grid, gpu_noise_grid[0], gpu_noise_grid[1]
+                            )
+                        )
+                    else:
+                        noise_grid = np.clip(noise_grid, 0, 1)
+                except Exception as e:
+                    # Fall back to CPU clipping if GPU operation fails
+                    logging.debug(f"GPU clipping failed: {str(e)}. Using CPU fallback.")
+                    noise_grid = np.clip(noise_grid, 0, 1)
+
+                return self._cpu_acceleration_validator(
+                    start_time,
+                    "GPU multi-octave noise generation completed in ",
+                    noise_grid,
+                    cache_key,
+                )
+            except Exception as e:
+                logging.warning(
+                    f"GPU multi-octave noise generation failed: {str(e)}. "
+                    f"Falling back to CPU implementation."
+                )
+                # Continue with CPU implementation
+
+        # Use CPU implementation
+        logging.info(
+            f"Using CPU implementation for multi-octave noise generation "
+            f"(dimensions: {self.width}x{self.height})"
+        )
+
+        # Generate the multi-octave noise using the CPU implementation
         noise_grid = self.noise_generator.generate_multi_octave_noise(
             width=self.width,
             height=self.height,
@@ -1343,9 +1687,19 @@ class BaseGenerator(BaseEntity):
             seed=self.seed,
         )
 
+        return self._cpu_acceleration_validator(
+            start_time,
+            "CPU multi-octave noise generation completed in ",
+            noise_grid,
+            cache_key,
+        )
+
+    def _cpu_acceleration_validator(self, start_time, arg1, noise_grid, cache_key):
+        gpu_time = time.time() - start_time
+        logging.info(f"{arg1}{gpu_time:.4f} seconds")
+
         # Cache the result
         self._noise_cache[cache_key] = noise_grid
-
         return noise_grid
 
     @classmethod
@@ -1365,6 +1719,36 @@ class BaseGenerator(BaseEntity):
         generator.width = data.get("width", 100)
         generator.height = data.get("height", 100)
         generator.parameters = data.get("parameters", {})
+
+        # Load GPU-related attributes
+        generator.use_gpu = data.get("use_gpu", True)
+        generator.gpu_backend = data.get("gpu_backend", "auto")
+        generator.gpu_available = data.get("gpu_available", False)
+        generator.available_backends = data.get("available_backends", ["cpu"])
+
+        # Re-check GPU availability if use_gpu is True
+        if generator.use_gpu and GPU_UTILS_AVAILABLE:
+            try:
+                generator.gpu_available = is_gpu_available()
+                generator.available_backends = get_available_backends()
+
+                if generator.gpu_available:
+                    logging.info(
+                        f"GPU acceleration enabled for loaded generator {generator.entity_id} "
+                        f"with available backends: {', '.join(generator.available_backends)}"
+                    )
+                else:
+                    logging.info(
+                        f"GPU acceleration requested but no GPU available for loaded generator {generator.entity_id}. "
+                        f"Falling back to CPU implementation."
+                    )
+            except Exception as e:
+                logging.warning(
+                    f"Error detecting GPU capabilities during loading: {str(e)}. "
+                    f"Falling back to CPU implementation."
+                )
+                generator.gpu_available = False
+                generator.use_gpu = False
 
         # Reinitialize noise generators with the loaded seed
         random.seed(generator.seed)

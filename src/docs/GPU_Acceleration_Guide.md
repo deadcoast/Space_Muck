@@ -10,12 +10,16 @@ The GPU acceleration system has the following optional dependencies:
 
 - **Numba**: For CUDA-based acceleration on NVIDIA GPUs
 - **CuPy**: For more general GPU acceleration with a NumPy-compatible API
+- **PyTorch**: For Metal Performance Shaders (MPS) acceleration on macOS with Apple Silicon or AMD GPUs
+- **metalgpu**: For direct Metal API access on macOS (experimental)
 
 These dependencies are optional - the system will automatically fall back to CPU implementations if they are not available.
 
 ## Installation
 
-To enable GPU acceleration, install the optional dependencies:
+To enable GPU acceleration, install the optional dependencies based on your platform:
+
+### For NVIDIA GPUs (Windows/Linux)
 
 ```bash
 # For NVIDIA CUDA support via Numba
@@ -23,6 +27,16 @@ pip install numba
 
 # For more general GPU support via CuPy
 pip install cupy
+```
+
+### For macOS (Apple Silicon or AMD GPUs)
+
+```bash
+# For Metal Performance Shaders (MPS) support via PyTorch
+pip install torch
+
+# For experimental direct Metal API access (optional)
+pip install metalgpu
 ```
 
 ## Basic Usage
@@ -78,24 +92,39 @@ For more complex operations, you can manually transfer data to and from the GPU:
 
 ```python
 import numpy as np
-from src.utils.gpu_utils import to_gpu, to_cpu, is_gpu_available
+from src.utils.gpu_utils import to_gpu, to_cpu, is_gpu_available, get_available_backends
 
-# Only proceed with GPU operations if available
+# Check if GPU is available and get the best backend
 if is_gpu_available():
+    backends = get_available_backends()
+    preferred_backend = backends[0]  # Use the first available backend
+    
     # Create a NumPy array
     cpu_array = np.random.random((1000, 1000))
     
-    # Transfer to GPU
-    gpu_array = to_gpu(cpu_array)
+    # Transfer to GPU with specific backend
+    gpu_array = to_gpu(cpu_array, backend=preferred_backend)
     
-    # Perform operations on the GPU array
-    # (The exact operations depend on the backend)
-    
-    # Transfer back to CPU
-    result_cpu = to_cpu(gpu_array)
+    try:
+        # Perform operations on the GPU array
+        # Example: multiply by a scalar
+        gpu_result = gpu_array * 2.0
+        
+        # For more complex operations, try to keep data on GPU
+        # Example: perform multiple operations without transferring back to CPU
+        gpu_intermediate = gpu_result + 1.0
+        gpu_final = gpu_intermediate ** 2
+        
+        # Only transfer the final result back to CPU
+        result_cpu = to_cpu(gpu_final)
+    except Exception as e:
+        logging.warning(f"GPU operation failed: {e}. Falling back to CPU.")
+        # Fallback to CPU implementation
+        result_cpu = cpu_array * 2.0 + 1.0
 else:
     # Fallback to CPU implementation
-    pass
+    cpu_array = np.random.random((1000, 1000))
+    result_cpu = cpu_array * 2.0 + 1.0
 ```
 
 ## Integration Examples
@@ -152,9 +181,73 @@ def generate_terrain(width, height, scale):
 
 2. **Batch Processing**: When processing multiple grids, batch them together when possible to maximize GPU utilization.
 
-3. **Memory Management**: Minimize transfers between CPU and GPU memory, as these transfers can be expensive.
+3. **Memory Management**: Minimize transfers between CPU and GPU memory, as these transfers can be expensive. Whenever possible, perform operations on the GPU without transferring intermediate results back to the CPU.
+
+## Testing GPU Acceleration
+
+The Space Muck codebase includes several test scripts to verify GPU acceleration functionality:
+
+### Basic Testing
+
+Use the `test_gpu_acceleration.py` script to verify that GPU acceleration is working correctly:
+
+```bash
+python test_gpu_acceleration.py
+```
+
+This script performs the following tests:
+
+1. **GPU Availability Detection**: Checks if GPU acceleration is available on the system
+2. **GPU Utility Functions**: Tests core GPU utility functions like `to_gpu` and `to_cpu`
+3. **BaseGenerator GPU Integration**: Tests GPU acceleration in the BaseGenerator class
+4. **Multi-Octave Noise Generation**: Verifies that GPU-accelerated noise generation produces valid results
+5. **Platform-Specific Tests**: Runs additional tests for specific backends (CUDA, CuPy, MPS) based on your hardware
+
+#### macOS-Specific Testing
+
+On macOS systems, the test script will automatically detect and test Metal Performance Shaders (MPS) support:
+
+```bash
+# Run with verbose output to see detailed MPS test results
+python test_gpu_acceleration.py -v
+```
+
+The macOS tests include:
+- MPS backend availability detection
+- Noise generation using PyTorch MPS
+- K-means clustering using PyTorch MPS
+- Verification of data transfer between CPU and MPS device
+
+### Comprehensive Testing
+
+For more comprehensive testing, use the dedicated test modules:
+
+```bash
+python -m src.tests.test_gpu_utils
+python -m src.tests.test_gpu_clustering
+python -m src.tests.test_value_generator_gpu
+```
+
+These modules provide comprehensive test coverage for all GPU-accelerated components.
+
+### Benchmarking
+
+To measure performance improvements from GPU acceleration, use the benchmark scripts:
+
+```bash
+python -m src.tests.benchmark_gpu_acceleration
+python -m src.tests.benchmark_gpu_noise_generation
+```
+
+These scripts compare CPU and GPU performance across different grid sizes and operations, generating performance metrics and visualization plots.
 
 4. **Backend Selection**: Different backends may perform better for different operations. Use the benchmarking tools to determine the optimal backend for your specific use case.
+
+5. **Efficient Data Transfer**: Use the `to_gpu` and `to_cpu` functions for all data transfers between CPU and GPU memory. These functions handle the complexities of different backends and provide a consistent interface.
+
+6. **Error Handling**: Always implement robust error handling with graceful fallbacks to CPU implementations when GPU operations fail. This ensures your code works reliably across different hardware configurations.
+
+7. **GPU Memory Optimization**: For operations involving multiple steps, try to keep data on the GPU throughout the entire process. For example, when generating multi-octave noise, perform the weighted addition of octaves directly on the GPU rather than transferring each octave back to the CPU.
 
 ## Benchmarking
 
@@ -182,6 +275,57 @@ from src.tests.benchmark_gpu_acceleration import plot_benchmark_results
 plot_benchmark_results(results_ca, "cellular_automaton_benchmark.png")
 plot_benchmark_results(results_noise, "noise_generation_benchmark.png")
 ```
+
+## macOS GPU Acceleration
+
+Space Muck provides robust GPU acceleration support for macOS systems through two main backends:
+
+### Metal Performance Shaders (MPS)
+
+The primary GPU acceleration method for macOS uses PyTorch's Metal Performance Shaders (MPS) backend, which provides excellent performance on both Apple Silicon (M1/M2/M3) and AMD GPUs.
+
+```python
+from src.utils.gpu_utils import apply_noise_generation_gpu
+
+# Generate noise using MPS backend
+noise = apply_noise_generation_gpu(
+    width=512, height=512,
+    scale=0.1, octaves=4,
+    backend="mps"  # Explicitly request MPS backend
+)
+```
+
+Key features of the MPS backend:
+- Optimized for Apple Silicon (M1/M2/M3) chips
+- Compatible with AMD GPUs in Intel Macs
+- Provides acceleration for noise generation, cellular automata, and clustering
+- Automatically selected on macOS when available
+
+### metalgpu (Experimental)
+
+For more direct access to Metal API, Space Muck also supports the experimental `metalgpu` backend:
+
+```python
+# Check if metalgpu is available
+from src.utils.gpu_utils import METALGPU_AVAILABLE
+
+if METALGPU_AVAILABLE:
+    # Use metalgpu backend
+    result = apply_function_gpu(data, backend="metalgpu")
+```
+
+### Performance Considerations
+
+1. **Grid Size**: MPS acceleration provides the most benefit for larger grids (>256x256)
+2. **Memory Transfer**: Minimize transfers between CPU and GPU memory
+3. **Operation Complexity**: Complex operations like multi-octave noise generation benefit most from GPU acceleration
+4. **Tensor Operations**: MPS excels at tensor operations and matrix multiplications
+
+### Limitations
+
+1. **Feature Support**: Some advanced CUDA features may not be available in MPS
+2. **Precision**: MPS may use different precision than CUDA implementations
+3. **Compatibility**: Older macOS versions may have limited or no MPS support
 
 ## Troubleshooting
 

@@ -166,7 +166,10 @@ class TestGPUUtils(unittest.TestCase):
     @patch("src.utils.gpu_utils.CUPY_AVAILABLE", False)
     def test_fallback_when_gpu_unavailable(self):
         """Test fallback to CPU when GPU is unavailable."""
-        with patch("src.utils.gpu_utils.apply_cellular_automaton") as mock_cpu_fn:
+        # Create a mock function to be called when GPU is unavailable
+        with patch(
+            "src.utils.cellular_automaton_utils.apply_cellular_automaton"
+        ) as mock_cpu_fn:
             mock_cpu_fn.return_value = np.zeros((10, 10))
 
             # This should use the CPU implementation

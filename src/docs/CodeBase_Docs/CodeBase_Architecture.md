@@ -1126,7 +1126,20 @@ Provides GPU-accelerated implementations of cellular automaton operations:
 Provides GPU-accelerated implementations of noise generation:
 
 - **CuPy Implementation**: Uses CuPy's FFT capabilities for efficient noise generation
+- **CUDA Implementation**: Uses Numba CUDA for parallel noise computation
 - **CPU Fallback**: Uses the existing CPU-based noise generator
+
+In BaseGenerator, this is implemented through:
+
+- **generate_noise_layer()**: GPU-accelerated single noise layer generation
+  * Supports different noise types (perlin, simplex, etc.)
+  * Automatic backend selection based on availability
+  * Performance logging for both CPU and GPU implementations
+
+- **generate_multi_octave_noise()**: GPU-accelerated multi-octave noise generation
+  * Optimized for parallel computation of multiple octaves
+  * Efficient memory management to minimize transfer overhead
+  * Maintains caching mechanisms for repeated noise patterns
 
 ### Performance Considerations
 
@@ -1138,8 +1151,36 @@ Provides GPU-accelerated implementations of noise generation:
 ### Testing and Benchmarking
 
 1. **Unit Tests**: Comprehensive tests ensure consistent results across backends
+   - `test_gpu_utils.py`: Tests core GPU utility functions
+     * Tests for backend detection and selection
+     * Tests for memory transfer operations
+     * Tests for cellular automaton operations
+     * Tests for noise generation
+     * Tests for graceful fallback when GPU is unavailable
+   - `test_gpu_clustering.py`: Tests GPU-accelerated clustering algorithms
+     * Tests for K-means clustering on CPU and GPU
+     * Tests for DBSCAN clustering on CPU and GPU
+     * Tests for consistency between CPU and GPU implementations
+     * Robust dependency handling for matplotlib and scikit-learn
+   - `test_value_generator_gpu.py`: Tests GPU-accelerated value generation functions
+     * Tests for value distribution generation on CPU and GPU
+     * Tests for value clustering on CPU and GPU
+     * Consistency tests between CPU and GPU implementations
+     * Tests for graceful fallback when GPU is unavailable
+     * Tests for handling edge cases like empty grids
+
 2. **Benchmark Suite**: Tools for measuring performance across different grid sizes and configurations
+   - `benchmark_gpu_acceleration.py`: General GPU acceleration benchmarking
+   - `benchmark_gpu_noise_generation.py`: Specific benchmarking for noise generation
+     * Tests single noise layer generation performance
+     * Tests multi-octave noise generation performance
+     * Compares CPU vs GPU implementations across different grid sizes
+     * Generates performance and speedup visualization plots
+
 3. **Visualization**: Performance comparison plots to identify optimal configurations
+   - Grid size vs. execution time plots
+   - Speedup factor analysis
+   - Backend comparison visualizations
 
 ### Integration Points
 
@@ -1155,16 +1196,6 @@ The GPU acceleration system integrates with the following components:
 2. **Multi-GPU Support**: Support for systems with multiple GPUs
 3. **Adaptive Selection**: Dynamically choose optimal backend based on operation characteristics
 4. **Tensor Operations**: Support for machine learning operations using GPU acceleration
-    "allied": 0.75      # 25% discount
-}
-```
-
-### Future Expansion
-
-The trading system is designed to be easily expandable with:
-
-1. **Advanced Economic Features**
-   - Market simulation with AI traders
    - Economic cycles and trends
    - Player-owned trading stations
    - Commodity futures and investments

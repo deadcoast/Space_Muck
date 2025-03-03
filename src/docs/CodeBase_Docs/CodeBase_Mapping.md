@@ -57,8 +57,10 @@ CODEBASE MAPPING REFERENCE
 49. [test_gpu_utils.py](#unit_testing)
 50. [benchmark_gpu_acceleration.py](#testing)
 51. [test_gpu_clustering.py](#unit_testing)
-52. [GPU_Acceleration_Guide.md](#documentation)
-53. [GPU_Hardware_Compatibility.md](#documentation)
+52. [benchmark_gpu_noise_generation.py](#testing)
+53. [GPU_Acceleration_Guide.md](#documentation)
+54. [GPU_Hardware_Compatibility.md](#documentation)
+55. [value_generator_gpu.py](#utils)
 
 ---
 
@@ -172,6 +174,7 @@ CODEBASE MAPPING REFERENCE
     - from src.utils import cellular_automaton_utils
     - from src.utils import value_generator
     - from src.entities.noise_generator import NoiseGenerator
+    - from utils.gpu_utils import is_gpu_available, get_available_backends, to_gpu, to_cpu
   - **File Dependencies**: 
     - import random
     - import logging
@@ -188,6 +191,13 @@ CODEBASE MAPPING REFERENCE
     - Intelligent caching system for performance optimization
     - Parameter validation and error handling
     - Comprehensive logging
+    - GPU acceleration for computationally intensive operations
+    - Efficient data transfer between CPU and GPU using to_gpu and to_cpu utilities
+    - Optimized GPU memory usage with minimized transfers
+    - Robust error handling with graceful CPU fallbacks
+    - Performance monitoring for GPU operations
+    - Automatic backend selection based on availability
+    - GPU-accelerated multi-octave noise generation with on-GPU operations
 
 ## 7. [procedural_generator.py](#generator_system)
 
@@ -1257,10 +1267,12 @@ CODEBASE MAPPING REFERENCE
 ## 48. [gpu_utils.py](#utils)
 
 - `src/utils/gpu_utils.py`
-  - **Purpose**: Provides GPU-accelerated implementations of computationally intensive operations with fallback mechanisms for systems without GPU support
+  - **Purpose**: Provides GPU-accelerated implementations of computationally intensive operations with fallback mechanisms for systems without GPU support, including macOS-specific acceleration via Metal Performance Shaders (MPS) and metalgpu
   - **File Imports**: None
   - **File Dependencies**: 
     - import numpy as np
+    - import torch (for MPS support)
+    - import metalgpu (optional, for direct Metal API access)
     - try: import numba, from numba import cuda
     - try: import cupy as cp
     - import logging
@@ -1271,7 +1283,11 @@ CODEBASE MAPPING REFERENCE
     - GPU-accelerated cellular automaton operations
     - GPU-accelerated noise generation
     - GPU-accelerated clustering algorithms (K-means, DBSCAN)
-    - Memory management utilities (to_gpu, to_cpu)
+    - Efficient memory management utilities (to_gpu, to_cpu) with backend-specific optimizations
+    - Optimized data transfer between CPU and GPU to minimize overhead
+    - Support for complex operations while keeping data on GPU
+    - Comprehensive error handling with graceful CPU fallbacks
+    - Performance monitoring and logging
     - Graceful degradation when GPU support is unavailable
 
 ## 49. [test_gpu_utils.py](#unit_testing)
@@ -1283,16 +1299,24 @@ CODEBASE MAPPING REFERENCE
   - **File Dependencies**: 
     - import unittest
     - import numpy as np
-    - import matplotlib.pyplot as plt
+    - from unittest.mock import patch, MagicMock
   - **Required Components**: 
     - gpu_utils.py
+    - cellular_automaton_utils.py (for fallback tests)
   - **Key Features**:
+    - Robust dependency handling for optional libraries
+    - Graceful test skipping when dependencies are unavailable
+    - Comprehensive testing of GPU acceleration functions
+    - Mock-based testing for fallback mechanisms
+    - Verification of data integrity during transfer operations
     - Tests for backend detection and selection
     - Tests for memory transfer utilities
     - Tests for GPU-accelerated cellular automaton
     - Tests for GPU-accelerated noise generation
     - Compatibility tests across different backends
     - Result consistency validation between CPU and GPU implementations
+    - Proper mocking of dependencies for robust testing
+    - Graceful handling of missing GPU backends
 
 ## 50. [benchmark_gpu_acceleration.py](#testing)
 
@@ -1322,18 +1346,53 @@ CODEBASE MAPPING REFERENCE
   - **File Dependencies**: 
     - import unittest
     - import numpy as np
-    - import matplotlib.pyplot as plt
     - from pathlib import Path
+    - Optional: matplotlib (for visualization)
+    - Optional: scikit-learn (for DBSCAN implementation)
   - **Required Components**: 
     - gpu_utils.py
   - **Key Features**:
     - Tests for K-means clustering on CPU and GPU
     - Tests for DBSCAN clustering on CPU and GPU
     - Consistency tests across backends
-    - Visualization of clustering results
+    - Visualization of clustering results (when matplotlib is available)
+    - Robust dependency handling for optional packages
+    - Graceful test skipping when required dependencies are unavailable
+
+## 52. [benchmark_gpu_noise_generation.py](#testing)
+
+- `src/tests/benchmark_gpu_noise_generation.py`
+  - **Purpose**: Benchmark script for comparing GPU-accelerated noise generation with CPU implementation across different grid sizes
+  - **File Imports**: 
+    - from src.entities.base_generator import BaseGenerator
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends
+
+- `test_gpu_acceleration.py`
+  - **Purpose**: Test script to verify GPU acceleration implementation, including GPU utilities testing and BaseGenerator GPU functionality checks, with platform-specific tests for macOS (MPS) and NVIDIA (CUDA/CuPy) systems
+  - **File Imports**: 
+    - import os
+    - import sys
+    - import platform
+    - from src.utils.gpu_utils import CUDA_AVAILABLE, CUPY_AVAILABLE, MPS_AVAILABLE, METALGPU_AVAILABLE
+    - import numpy as np
+    - from src.entities.base_generator import BaseGenerator
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends, to_gpu, to_cpu
+  - **File Dependencies**: 
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+    - import time
+    - import logging
+  - **Required Components**: 
+    - base_generator.py
+    - gpu_utils.py
+  - **Key Features**:
+    - Performance comparison between GPU and CPU noise generation
+    - Tests for single noise layer and multi-octave noise generation
+    - Visualization of performance metrics and speedup factors
+    - Support for testing across multiple grid sizes
     - Performance validation
 
-## 52. [GPU_Acceleration_Guide.md](#documentation)
+## 53. [GPU_Acceleration_Guide.md](#documentation)
 
 - `src/docs/GPU_Acceleration_Guide.md`
   - **Purpose**: Comprehensive guide for integrating GPU acceleration into Space Muck components
@@ -1348,7 +1407,7 @@ CODEBASE MAPPING REFERENCE
     - Troubleshooting common issues
     - Advanced usage patterns
 
-## 53. [GPU_Hardware_Compatibility.md](#documentation)
+## 54. [GPU_Hardware_Compatibility.md](#documentation)
 
 - `src/docs/GPU_Hardware_Compatibility.md`
   - **Purpose**: Hardware requirements and compatibility information for GPU acceleration features
@@ -1363,3 +1422,43 @@ CODEBASE MAPPING REFERENCE
     - Installation requirements for different GPU platforms
     - Troubleshooting common hardware-related issues
     - Benchmarking instructions for specific hardware configurations
+
+## 55. [value_generator_gpu.py](#utils)
+
+- `src/utils/value_generator_gpu.py`
+  - **Purpose**: Provides GPU-accelerated implementations of value generation functions for improved performance
+  - **File Imports**: 
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends, to_gpu, to_cpu
+    - from src.utils.value_generator import generate_value_distribution, add_value_clusters, generate_rare_resource_distribution
+  - **File Dependencies**: 
+    - import numpy as np
+    - import numba (optional)
+    - import cupy as cp (optional)
+
+## 56. [test_value_generator_gpu.py](#unit_testing)
+
+- `src/tests/test_value_generator_gpu.py`
+  - **Purpose**: Comprehensive unit tests for GPU-accelerated value generation functions
+  - **File Imports**: 
+    - from src.utils.value_generator_gpu import generate_value_distribution_gpu, add_value_clusters_gpu
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends
+  - **File Dependencies**: 
+    - import unittest
+    - import numpy as np
+    - from unittest.mock import patch, MagicMock
+  - **Required Components**: 
+    - value_generator_gpu.py
+    - gpu_utils.py
+    - value_generator.py (for fallback tests)
+  - **Key Features**:
+    - Tests for value distribution generation on CPU and GPU
+    - Tests for value clustering on CPU and GPU
+    - Consistency tests between CPU and GPU implementations
+    - Tests for graceful fallback when GPU is unavailable
+    - Tests for handling edge cases like empty grids
+    - Proper mocking of dependencies for robust testing
+    - Graceful test skipping when required GPU backends are unavailable
+    - GPU-accelerated value clustering
+    - Support for multiple GPU backends (CUDA, CuPy)
+    - Graceful fallback to CPU implementations
+    - Performance optimization for large grids
