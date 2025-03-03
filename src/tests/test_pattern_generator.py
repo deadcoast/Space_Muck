@@ -175,10 +175,7 @@ class TestPatternGenerator(unittest.TestCase):
             self.width, self.height, pattern_functions, pattern_weights
         )
 
-        # Check shape and range
-        self.assertEqual(combined.shape, (self.height, self.width))
-        self.assertTrue(np.all(combined >= 0))
-        self.assertTrue(np.all(combined <= 1))
+        self._pattern_handler(combined)
 
     def test_apply_weighted_patterns_with_args(self):
         """Test applying weighted patterns with custom arguments."""
@@ -197,7 +194,9 @@ class TestPatternGenerator(unittest.TestCase):
             self.width, self.height, pattern_functions, pattern_weights, pattern_args
         )
 
-        # Check shape and range
+        self._pattern_handler(combined)
+
+    def _pattern_handler(self, combined):
         self.assertEqual(combined.shape, (self.height, self.width))
         self.assertTrue(np.all(combined >= 0))
         self.assertTrue(np.all(combined <= 1))

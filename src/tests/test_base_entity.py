@@ -7,7 +7,6 @@ import unittest
 import sys
 import os
 import uuid
-from unittest.mock import patch, MagicMock
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -45,17 +44,14 @@ class TestBaseEntity(unittest.TestCase):
         # Test with default values
         default_entity = BaseEntity()
         self.assertIsNotNone(default_entity.entity_id)
-        self.assertEqual(default_entity.entity_type, "generic")
-        self.assertEqual(default_entity.color, (255, 255, 255))
-        self.assertIsNone(default_entity.position)
-        self.assertTrue(default_entity.active)
+        self._default_value_handler(default_entity)
 
     def test_uuid_generation(self):
         """Test that a UUID is generated when entity_id is not provided."""
         entity = BaseEntity()
         # Verify that the entity_id is a valid UUID string
         try:
-            uuid_obj = uuid.UUID(entity.entity_id)
+            uuid.UUID(entity.entity_id)  # Verify it's a valid UUID
             is_valid_uuid = True
         except ValueError:
             is_valid_uuid = False
@@ -142,9 +138,7 @@ class TestBaseEntity(unittest.TestCase):
         self.assertEqual(new_entity.color, (255, 0, 0))
         self.assertEqual(new_entity.position, (10, 20))
         self.assertTrue(new_entity.active)
-        self.assertEqual(new_entity.health, 100)
-        self.assertEqual(new_entity.max_health, 100)
-        self.assertEqual(new_entity.level, 1)
+        self._entity_verification_handler(new_entity)
         self.assertEqual(new_entity.tags, {"important", "test"})
 
     def test_from_dict_with_missing_values(self):
@@ -157,14 +151,20 @@ class TestBaseEntity(unittest.TestCase):
 
         # Verify default values are used for missing fields
         self.assertEqual(entity.entity_id, "minimal-123")
-        self.assertEqual(entity.entity_type, "generic")
-        self.assertEqual(entity.color, (255, 255, 255))
-        self.assertIsNone(entity.position)
-        self.assertTrue(entity.active)
-        self.assertEqual(entity.health, 100)
-        self.assertEqual(entity.max_health, 100)
-        self.assertEqual(entity.level, 1)
+        self._default_value_handler(entity)
+        self._entity_verification_handler(entity)
         self.assertEqual(entity.tags, set())
+
+    def _entity_verification_handler(self, arg0):
+        self.assertEqual(arg0.health, 100)
+        self.assertEqual(arg0.max_health, 100)
+        self.assertEqual(arg0.level, 1)
+
+    def _default_value_handler(self, arg0):
+        self.assertEqual(arg0.entity_type, "generic")
+        self.assertEqual(arg0.color, (255, 255, 255))
+        self.assertIsNone(arg0.position)
+        self.assertTrue(arg0.active)
 
     def test_health_management(self):
         """Test health-related functionality."""
@@ -233,16 +233,8 @@ class TestBaseEntity(unittest.TestCase):
         # For now, we're just testing that it accepts the values
         self.assertEqual(entity.color, (300, -10, 1000))
 
-        # Test with very large position values
-        large_pos = (1000000, 2000000)
-        entity.set_position(*large_pos)
-        self.assertEqual(entity.get_position(), large_pos)
-
-        # Test with negative position values
-        neg_pos = (-500, -300)
-        entity.set_position(*neg_pos)
-        self.assertEqual(entity.get_position(), neg_pos)
-
+        self._large_value_handler(1000000, 2000000, entity)
+        self._large_value_handler(-500, -300, entity)
         # Test with very long entity_type
         long_type = "a" * 1000
         entity = BaseEntity(entity_type=long_type)
@@ -252,6 +244,12 @@ class TestBaseEntity(unittest.TestCase):
         entity.tags = set()
         self.assertEqual(len(entity.tags), 0)
         self.assertFalse(entity.has_tag("any_tag"))
+
+    def _large_value_handler(self, arg0, arg1, entity):
+        # Test with very large position values
+        large_pos = arg0, arg1
+        entity.set_position(*large_pos)
+        self.assertEqual(entity.get_position(), large_pos)
 
     def test_performance_large_scale(self):
         """Test performance with large number of entities."""

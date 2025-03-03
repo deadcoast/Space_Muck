@@ -27,7 +27,7 @@ from src.utils.noise_generator import NoiseGenerator
 # Save the original container
 original_container = container
 # Replace it with our app_container
-import src.utils.dependency_injection
+import src.utils.dependency_injection  # noqa: E402
 
 src.utils.dependency_injection.container = app_container
 
