@@ -56,19 +56,15 @@ def benchmark_cellular_automaton(
             times = []
 
             for _ in range(repetitions):
+                # Benchmark CPU implementation
+                start_time = time.time()
                 if backend == "cpu":
-                    # Benchmark CPU implementation
-                    start_time = time.time()
                     apply_cellular_automaton(grid, iterations=iterations)
-                    end_time = time.time()
                 else:
-                    # Benchmark GPU implementation
-                    start_time = time.time()
                     apply_cellular_automaton_gpu(
                         grid, backend=backend, iterations=iterations
                     )
-                    end_time = time.time()
-
+                end_time = time.time()
                 times.append(end_time - start_time)
 
             # Record average time

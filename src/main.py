@@ -2078,7 +2078,7 @@ class Game:
             # Handle keyboard input
             if event.type == pygame.KEYDOWN:
                 # Global hotkeys (work in any state)
-                if event.key == pygame.K_F1 or event.key == pygame.K_h:
+                if event.key in [pygame.K_F1, pygame.K_h]:
                     self.show_help = not self.show_help
                 elif event.key == pygame.K_m:
                     self.show_minimap = not self.show_minimap
@@ -2392,9 +2392,7 @@ class Game:
                     hunger_status = (
                         "Starving"
                         if race.hunger > 0.8
-                        else "Hungry"
-                        if race.hunger > 0.4
-                        else "Satiated"
+                        else "Hungry" if race.hunger > 0.4 else "Satiated"
                     )
 
                     behavior_desc = {

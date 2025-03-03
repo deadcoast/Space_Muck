@@ -161,11 +161,7 @@ class GeneratorVisualizer:
         cmap = self.default_cmaps.get(colormap, plt.cm.terrain)
 
         # Flatten axes for easy iteration if there are multiple
-        if n > 1:
-            axes = axes.flatten()
-        else:
-            axes = [axes]
-
+        axes = axes.flatten() if n > 1 else [axes]
         # Plot each grid
         for i, (grid, title) in enumerate(zip(grids, titles)):
             if i < len(axes):

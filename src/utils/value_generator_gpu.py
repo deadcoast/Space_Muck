@@ -254,7 +254,9 @@ def add_value_clusters_gpu(
                         ),
                     ][mask]
                     * multipliers[mask]
-                ).astype(cp.int32)
+                ).astype(
+                    cp.int32
+                )
 
             # Transfer back to CPU
             return cp.asnumpy(result_grid_gpu)

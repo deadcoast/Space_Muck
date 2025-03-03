@@ -67,9 +67,8 @@ def apply_life_rules(
                 if grid[y, x] > 0:  # Cell is alive
                     if neighbor_counts[y, x] in survival_set:
                         new_grid[y, x] = grid[y, x]  # Cell survives
-                else:  # Cell is dead
-                    if neighbor_counts[y, x] in birth_set:
-                        new_grid[y, x] = 1  # Cell is born
+                elif neighbor_counts[y, x] in birth_set:
+                    new_grid[y, x] = 1  # Cell is born
 
     return new_grid
 

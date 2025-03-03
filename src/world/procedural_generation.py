@@ -388,11 +388,11 @@ class ProceduralGenerator:
                 # Use Bresenham's line algorithm to connect nodes
                 dx = abs(x2 - x1)
                 dy = abs(y2 - y1)
-                sy = 1 if y1 < y2 else -1
                 err = dx - dy
 
                 x, y = x1, y1
                 sx = 1 if x1 < x2 else -1
+                sy = 1 if y1 < y2 else -1
                 while True:
                     # Place symbiote at this point with some randomness
                     if random.random() < initial_density * 5:
@@ -1320,11 +1320,11 @@ class ProceduralGenerator:
                 # Use Bresenham's line algorithm to connect nodes
                 dx = abs(x2 - x1)
                 dy = abs(y2 - y1)
-                sy = 1 if y1 < y2 else -1
                 err = dx - dy
 
                 x, y = x1, y1
                 sx = 1 if x1 < x2 else -1
+                sy = 1 if y1 < y2 else -1
                 while True:
                     # Place symbiote at this point with some randomness
                     if random.random() < initial_density * 5:
@@ -2802,10 +2802,9 @@ class SymbioteEvolutionGenerator:
             # Find asteroid clusters using KMeans
             asteroid_points = []
             for y in range(self.height):
-                for x in range(self.width):
-                    if asteroid_grid[y, x] > 0:
-                        asteroid_points.append((x, y))
-
+                asteroid_points.extend(
+                    (x, y) for x in range(self.width) if asteroid_grid[y, x] > 0
+                )
             if len(asteroid_points) > 10:
                 # Convert to numpy array for KMeans
                 points_array = np.array(asteroid_points)
@@ -3579,10 +3578,9 @@ class SymbioteEvolutionGenerator:
             # Find asteroid clusters using KMeans
             asteroid_points = []
             for y in range(self.height):
-                for x in range(self.width):
-                    if asteroid_grid[y, x] > 0:
-                        asteroid_points.append((x, y))
-
+                asteroid_points.extend(
+                    (x, y) for x in range(self.width) if asteroid_grid[y, x] > 0
+                )
             if len(asteroid_points) > 10:
                 # Convert to numpy array for KMeans
                 points_array = np.array(asteroid_points)

@@ -72,12 +72,10 @@ class CombatSystem:
             level = max(1, min(5, self.player.level + level_variation))
 
         # If no faction specified, determine based on location or random
-        if faction is None:
-            # 30% chance of faction-aligned enemy
-            if random.random() < 0.3:
-                from src.entities.player import GAME_FACTIONS
-
-                faction = random.choice(GAME_FACTIONS)
+        if faction is None and random.random() < 0.3:
+            from src.entities.player import GAME_FACTIONS
+        
+            faction = random.choice(GAME_FACTIONS)
 
         # Determine ship type based on difficulty and faction
         if difficulty == "elite":
@@ -88,11 +86,7 @@ class CombatSystem:
             ship_type = "pirate"
         else:
             # Weight toward pirates for harder difficulties
-            if difficulty == "hard":
-                weights = [0.6, 0.2, 0.2]  # pirate, patrol, mercenary
-            else:
-                weights = [0.4, 0.3, 0.3]  # pirate, patrol, mercenary
-
+            weights = [0.6, 0.2, 0.2] if difficulty == "hard" else [0.4, 0.3, 0.3]
             ship_type = random.choices(
                 ["pirate", "patrol", "mercenary"], weights=weights, k=1
             )[0]
@@ -124,9 +118,9 @@ class CombatSystem:
             return {
                 "success": False,
                 "reason": "Already in combat",
-                "current_enemy": self.current_enemy.get_stats()
-                if self.current_enemy
-                else None,
+                "current_enemy": (
+                    self.current_enemy.get_stats() if self.current_enemy else None
+                ),
             }
 
         # Generate enemy if none provided
@@ -248,7 +242,7 @@ class CombatSystem:
 
         # Log the attack
         if attack_result.get("evaded", False):
-            log_message = f"Enemy attack missed! Player evaded."
+            log_message = "Enemy attack missed! Player evaded."
         elif attack_result.get("critical_hit", False):
             log_message = f"Enemy scored a CRITICAL HIT! Dealt {attack_result.get('damage_dealt', 0)} damage to player."
         else:
@@ -328,9 +322,9 @@ class CombatSystem:
             "player_shield_recharged": player_recharge,
             "enemy_shield_recharged": enemy_recharge,
             "combat_log": self.combat_log[-5:],  # Last 5 log entries
-            "enemy_stats": self.current_enemy.get_stats()
-            if self.current_enemy
-            else None,
+            "enemy_stats": (
+                self.current_enemy.get_stats() if self.current_enemy else None
+            ),
             "player_stats": self.player.get_combat_stats(),
         }
 
@@ -497,18 +491,15 @@ class CombatSystem:
 
         # Update reputation if enemy had faction alignment
         reputation_change = None
-        if self.current_enemy.faction:
-            # Being defeated by a faction ship slightly increases reputation with that faction
-            # (they spared you)
-            if self.current_enemy.faction in [
-                "galactic_navy",
-                "traders_coalition",
-                "miners_guild",
-                "explorers_union",
-            ]:
-                reputation_change = self.player.change_reputation(
-                    self.current_enemy.faction, 1
-                )
+        if self.current_enemy.faction and self.current_enemy.faction in [
+                        "galactic_navy",
+                        "traders_coalition",
+                        "miners_guild",
+                        "explorers_union",
+                    ]:
+            reputation_change = self.player.change_reputation(
+                self.current_enemy.faction, 1
+            )
 
         # End the combat
         end_result = self.end_combat("Player defeated")

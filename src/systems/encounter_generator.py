@@ -45,8 +45,7 @@ class EncounterGenerator:
         map_size = GAME_MAP_SIZE
         mid_x, mid_y = map_size[0] // 2, map_size[1] // 2
 
-        # Create zones with different danger levels
-        zones = {
+        return {
             "center": {
                 "x_range": (mid_x - 10, mid_x + 10),
                 "y_range": (mid_y - 10, mid_y + 10),
@@ -104,8 +103,6 @@ class EncounterGenerator:
             },
         }
 
-        return zones
-
     def _get_zone_danger(self, position: Tuple[int, int]) -> float:
         """
         Get the danger level for a specific position.
@@ -138,7 +135,7 @@ class EncounterGenerator:
             return 1.0  # Default danger level
 
         # If position is in multiple zones, use the highest danger level
-        return max([danger for _, danger in applicable_zones])
+        return max(danger for _, danger in applicable_zones)
 
     def check_for_encounter(self) -> Dict[str, Any]:
         """
@@ -274,40 +271,39 @@ class EncounterGenerator:
         Returns:
             Dict with quest encounter details
         """
-        if quest_type == "combat":
-            # Get quest details
-            quest = self.player.current_quest
-            if not quest or quest.get("type") != "combat":
-                return {"encounter": False, "reason": "No active combat quest"}
+        if quest_type != "combat":
+            return {"encounter": False, "reason": f"Unknown quest type: {quest_type}"}
+        # Get quest details
+        quest = self.player.current_quest
+        if not quest or quest.get("type") != "combat":
+            return {"encounter": False, "reason": "No active combat quest"}
 
-            # Determine enemy parameters based on quest
-            difficulty = quest.get("difficulty", "medium")
-            faction = quest.get("target_faction")
-            ship_type = quest.get("target_type")
+        # Determine enemy parameters based on quest
+        difficulty = quest.get("difficulty", "medium")
+        faction = quest.get("target_faction")
+        ship_type = quest.get("target_type")
 
-            # Generate appropriate enemy
-            enemy = self.combat_system.generate_enemy(
-                difficulty=difficulty, faction=faction, position=self.player.position
-            )
+        # Generate appropriate enemy
+        enemy = self.combat_system.generate_enemy(
+            difficulty=difficulty, faction=faction, position=self.player.position
+        )
 
-            # Override ship type if specified in quest
-            if ship_type:
-                enemy.ship_type = ship_type
+        # Override ship type if specified in quest
+        if ship_type:
+            enemy.ship_type = ship_type
 
-            # Start combat
-            combat_result = self.combat_system.start_combat(enemy)
+        # Start combat
+        combat_result = self.combat_system.start_combat(enemy)
 
-            # Create encounter message
-            encounter_message = f"You've encountered a quest target: {enemy.difficulty} {enemy.ship_type} ship!"
+        # Create encounter message
+        encounter_message = f"You've encountered a quest target: {enemy.difficulty} {enemy.ship_type} ship!"
 
-            return {
-                "encounter": True,
-                "type": "quest_combat",
-                "message": encounter_message,
-                "enemy": enemy.get_stats(),
-                "combat_started": combat_result["success"],
-                "combat_system": self.combat_system,
-                "quest_related": True,
-            }
-
-        return {"encounter": False, "reason": f"Unknown quest type: {quest_type}"}
+        return {
+            "encounter": True,
+            "type": "quest_combat",
+            "message": encounter_message,
+            "enemy": enemy.get_stats(),
+            "combat_started": combat_result["success"],
+            "combat_system": self.combat_system,
+            "quest_related": True,
+        }

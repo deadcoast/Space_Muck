@@ -26,15 +26,7 @@ except ImportError:
     )
 
 
-def apply_cellular_automaton(
-    grid: np.ndarray,
-    birth_set: Set[int] = {3},
-    survival_set: Set[int] = {2, 3},
-    iterations: int = 3,
-    wrap: bool = True,
-    width: int = None,
-    height: int = None,
-) -> np.ndarray:
+def apply_cellular_automaton(grid: np.ndarray, birth_set: Set[int] = None, survival_set: Set[int] = None, iterations: int = 3, wrap: bool = True, width: int = None, height: int = None) -> np.ndarray:
     """
     Apply cellular automaton rules to a grid.
 
@@ -50,6 +42,10 @@ def apply_cellular_automaton(
     Returns:
         np.ndarray: Evolved grid
     """
+    if birth_set is None:
+        birth_set = {3}
+    if survival_set is None:
+        survival_set = {2, 3}
     if width is None:
         height, width = grid.shape
 

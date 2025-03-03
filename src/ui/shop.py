@@ -325,9 +325,9 @@ class Shop:
                 "name": "Anomaly Detector",
                 "cost": 800,
                 "description": "Detects spatial anomalies in the asteroid field.\nReveals hidden resources and phenomena.",
-                "action": lambda player,
-                field,
-                notifier: self._unlock_anomaly_detection(player, field, notifier),
+                "action": lambda player, field, notifier: self._unlock_anomaly_detection(
+                    player, field, notifier
+                ),
                 "category": "special",
                 "icon": "📡",
                 "max_level": 1,
@@ -340,9 +340,9 @@ class Shop:
                 "name": "Symbiote Communication",
                 "cost": 1200,
                 "description": "Establish direct communication with symbiotic races.\nUnlocks trading and special missions.",
-                "action": lambda player,
-                field,
-                notifier: self._unlock_symbiote_communication(player, field, notifier),
+                "action": lambda player, field, notifier: self._unlock_symbiote_communication(
+                    player, field, notifier
+                ),
                 "category": "race",
                 "icon": "🔊",
                 "max_level": 1,
@@ -844,9 +844,7 @@ class Shop:
             bg_color = (
                 (60, 60, 80)
                 if is_selected
-                else (50, 50, 70)
-                if is_hovered
-                else (40, 40, 55)
+                else (50, 50, 70) if is_hovered else (40, 40, 55)
             )
 
             # Get cost and check if affordable

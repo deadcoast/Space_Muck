@@ -502,9 +502,7 @@ def draw_minimap(
             color = (
                 (50, 100, 255)
                 if entity_id == 1
-                else (255, 50, 150)
-                if entity_id == 2
-                else (255, 165, 0)
+                else (255, 50, 150) if entity_id == 2 else (255, 165, 0)
             )
 
             for y in range(0, entity_grid.shape[0], step_y):

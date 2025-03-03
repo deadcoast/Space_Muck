@@ -111,11 +111,11 @@ class DependencyContainer:
                 param_type = type_hints[param.name]
                 try:
                     kwargs[param.name] = self.resolve(param_type)
-                except KeyError:
+                except KeyError as e:
                     # If we can't resolve a required dependency, raise an error
                     raise KeyError(
                         f"Cannot resolve dependency {param.name} of type {param_type.__name__} for {cls.__name__}"
-                    )
+                    ) from e
 
         # Instantiate the class with resolved dependencies
         return cls(**kwargs)

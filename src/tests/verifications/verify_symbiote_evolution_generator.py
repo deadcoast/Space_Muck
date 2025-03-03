@@ -80,20 +80,20 @@ def test_symbiote_evolution_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert generator.entity_type == "symbiote", (
-        f"Expected entity_type 'symbiote', got {generator.entity_type}"
-    )
+    assert (
+        generator.entity_type == "symbiote"
+    ), f"Expected entity_type 'symbiote', got {generator.entity_type}"
 
     # Verify SymbioteEvolutionAlgorithm integration
-    assert hasattr(generator, "evolution_algorithm"), (
-        "Missing evolution_algorithm attribute"
-    )
-    assert isinstance(generator.evolution_algorithm, SymbioteEvolutionAlgorithm), (
-        f"evolution_algorithm is not an instance of SymbioteEvolutionAlgorithm"
-    )
-    assert generator.evolution_algorithm.aggression == 0.3, (
-        f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}"
-    )
+    assert hasattr(
+        generator, "evolution_algorithm"
+    ), "Missing evolution_algorithm attribute"
+    assert isinstance(
+        generator.evolution_algorithm, SymbioteEvolutionAlgorithm
+    ), "evolution_algorithm is not an instance of SymbioteEvolutionAlgorithm"
+    assert (
+        generator.evolution_algorithm.aggression == 0.3
+    ), f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}"
 
     # Test noise generation
     print("Testing noise generation...")
@@ -103,47 +103,51 @@ def test_symbiote_evolution_generator():
     # Test initial colony generation
     print("Testing initial colony generation...")
     colony_grid, metadata = generator.generate_initial_colonies(num_colonies=3)
-    assert colony_grid.shape == (100, 100), (
-        f"Expected shape (100, 100), got {colony_grid.shape}"
-    )
+    assert colony_grid.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {colony_grid.shape}"
     assert np.sum(colony_grid > 0) > 0, "No colonies were generated"
     assert "seed" in metadata, "Metadata missing seed information"
     assert "num_colonies" in metadata, "Metadata missing num_colonies information"
-    assert "colony_population" in metadata, (
-        "Metadata missing colony_population information"
-    )
+    assert (
+        "colony_population" in metadata
+    ), "Metadata missing colony_population information"
 
     # Test mineral distribution generation
     print("Testing mineral distribution generation...")
     mineral_grid = generator.generate_mineral_distribution()
-    assert mineral_grid.shape == (100, 100), (
-        f"Expected shape (100, 100), got {mineral_grid.shape}"
-    )
-    assert np.min(mineral_grid) >= 0, (
-        f"Expected min value >= 0, got {np.min(mineral_grid)}"
-    )
-    assert np.max(mineral_grid) <= 1, (
-        f"Expected max value <= 1, got {np.max(mineral_grid)}"
-    )
+    assert mineral_grid.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {mineral_grid.shape}"
+    assert (
+        np.min(mineral_grid) >= 0
+    ), f"Expected min value >= 0, got {np.min(mineral_grid)}"
+    assert (
+        np.max(mineral_grid) <= 1
+    ), f"Expected max value <= 1, got {np.max(mineral_grid)}"
 
     # Test evolution simulation
     print("Testing evolution simulation...")
     evolved_grid, evolution_history = generator.simulate_evolution(
         colony_grid, mineral_grid, iterations=5
     )
-    assert evolved_grid.shape == (100, 100), (
-        f"Expected shape (100, 100), got {evolved_grid.shape}"
-    )
-    assert len(evolution_history) == 5, (
-        f"Expected 5 evolution steps, got {len(evolution_history)}"
-    )
+    assert evolved_grid.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {evolved_grid.shape}"
+    assert (
+        len(evolution_history) == 5
+    ), f"Expected 5 evolution steps, got {len(evolution_history)}"
 
     # Test mutation map generation
     print("Testing mutation map generation...")
     mutation_map = generator.generate_mutation_map(evolved_grid, evolution_history)
-    assert mutation_map.shape == (100, 100), (
-        f"Expected shape (100, 100), got {mutation_map.shape}"
-    )
+    assert mutation_map.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {mutation_map.shape}"
 
     print("All basic tests passed!")
     return (
@@ -173,9 +177,9 @@ def test_evolution_over_time():
     )
 
     # Check that evolution history contains expected data
-    assert len(evolution_history) == 10, (
-        f"Expected 10 evolution steps, got {len(evolution_history)}"
-    )
+    assert (
+        len(evolution_history) == 10
+    ), f"Expected 10 evolution steps, got {len(evolution_history)}"
 
     # Check that each step in history has required fields
     for i, step in enumerate(evolution_history):
@@ -184,9 +188,9 @@ def test_evolution_over_time():
         assert "aggression" in step, f"Step {i} missing 'aggression' field"
         assert "genome" in step, f"Step {i} missing 'genome' field"
         assert "mutations" in step, f"Step {i} missing 'mutations' field"
-        assert "mineral_consumption" in step, (
-            f"Step {i} missing 'mineral_consumption' field"
-        )
+        assert (
+            "mineral_consumption" in step
+        ), f"Step {i} missing 'mineral_consumption' field"
 
     # Verify population changes over time
     populations = [step["population"] for step in evolution_history]
@@ -441,12 +445,9 @@ def perform_code_review():
 if __name__ == "__main__":
     print("=== SymbioteEvolutionGenerator Verification ===")
 
-    # Check if we can run the full tests
-    can_run_full_tests = (
+    if can_run_full_tests := (
         NUMPY_AVAILABLE and SCIPY_AVAILABLE and SYMBIOTE_GENERATOR_AVAILABLE
-    )
-
-    if can_run_full_tests:
+    ):
         print("\nRunning full functionality tests...")
 
         # Run the basic tests
@@ -487,10 +488,7 @@ if __name__ == "__main__":
             f"  - matplotlib: {'✓' if MATPLOTLIB_AVAILABLE else '✗'} (optional, for visualization)"
         )
 
-        # Even without dependencies, we can still perform a code review
-        code_review_success = perform_code_review()
-
-        if code_review_success:
+        if code_review_success := perform_code_review():
             print("\nCode review completed successfully.")
         else:
             print("\nCode review failed.")

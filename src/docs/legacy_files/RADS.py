@@ -2685,9 +2685,7 @@ class Game:
                 hunger_status = (
                     "Starving"
                     if race.hunger > 0.8
-                    else "Hungry"
-                    if race.hunger > 0.4
-                    else "Satiated"
+                    else "Hungry" if race.hunger > 0.4 else "Satiated"
                 )
 
                 self.notifier.add(

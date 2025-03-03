@@ -58,10 +58,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         # Verify values are only assigned to non-zero cells
         np.testing.assert_array_equal(value_grid > 0, self.small_grid > 0)
 
-        # Verify minimum value constraint
-        min_value = 1
         mask = self.small_grid > 0
         if np.any(mask):
+            # Verify minimum value constraint
+            min_value = 1
             self.assertTrue(np.all(value_grid[mask] >= min_value))
 
     @unittest.skipIf(not CUPY_AVAILABLE, "CuPy not available")
@@ -79,10 +79,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         # Verify values are only assigned to non-zero cells
         np.testing.assert_array_equal(value_grid > 0, self.small_grid > 0)
 
-        # Verify minimum value constraint
-        min_value = 1
         mask = self.small_grid > 0
         if np.any(mask):
+            # Verify minimum value constraint
+            min_value = 1
             self.assertTrue(np.all(value_grid[mask] >= min_value))
 
     @unittest.skipIf(not CUDA_AVAILABLE, "CUDA not available")
@@ -100,10 +100,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         # Verify values are only assigned to non-zero cells
         np.testing.assert_array_equal(value_grid > 0, self.small_grid > 0)
 
-        # Verify minimum value constraint
-        min_value = 1
         mask = self.small_grid > 0
         if np.any(mask):
+            # Verify minimum value constraint
+            min_value = 1
             self.assertTrue(np.all(value_grid[mask] >= min_value))
 
     def test_generate_value_distribution_auto(self):
