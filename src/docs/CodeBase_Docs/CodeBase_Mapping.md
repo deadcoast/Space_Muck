@@ -17,25 +17,31 @@ CODEBASE MAPPING REFERENCE
 11. [verify_fleet.py](#testing)
 12. [verify_procedural_generator.py](#testing)
 13. [verify_asteroid_generator_simple.py](#testing)
-14. [verify_symbiote_evolution_generator.py](#testing)
-15. [symbiote_evolution_demo.py](#demo)
-16. [asteroid_field.py](#world_system)
-17. [test_base_entity.py](#unit_testing)
-18. [test_base_generator.py](#unit_testing)
-19. [test_miner_entity.py](#unit_testing)
-20. [test_player.py](#unit_testing)
-21. [test_fleet.py](#unit_testing)
-22. [test_procedural_generator.py](#unit_testing)
-23. [test_asteroid_generator.py](#unit_testing)
-24. [test_symbiote_evolution_generator.py](#unit_testing)
-25. [dependency_injection.py](#utils)
-26. [noise_generator.py](#utils)
-27. [dependency_config.py](#utils)
-28. [pattern_generator.py](#utils)
-29. [value_generator.py](#utils)
-30. [cellular_automaton_utils.py](#utils)
-31. [import_standards.py](#utils)
-32. [dependency_config_example.py](#examples)
+14. [verify_asteroid_generator.py](#testing)
+15. [verify_base_generator_optimizations.py](#testing)
+16. [verify_symbiote_evolution_generator.py](#testing)
+17. [symbiote_evolution_demo.py](#demo)
+18. [asteroid_field.py](#world_system)
+19. [test_base_entity.py](#unit_testing)
+20. [test_base_generator.py](#unit_testing)
+21. [test_miner_entity.py](#unit_testing)
+22. [test_player.py](#unit_testing)
+23. [test_fleet.py](#unit_testing)
+24. [test_procedural_generator.py](#unit_testing)
+25. [test_asteroid_generator.py](#unit_testing)
+26. [test_symbiote_evolution_generator.py](#unit_testing)
+27. [dependency_injection.py](#utils)
+28. [noise_generator.py](#utils)
+29. [dependency_config.py](#utils)
+30. [pattern_generator.py](#utils)
+31. [value_generator.py](#utils)
+32. [cellular_automaton_utils.py](#utils)
+33. [import_standards.py](#utils)
+34. [visualization.py](#utils)
+35. [test_pattern_generator.py](#unit_testing)
+36. [test_value_generator.py](#unit_testing)
+37. [test_visualization.py](#testing)
+38. [dependency_config_example.py](#examples)
 
 ---
 
@@ -316,32 +322,80 @@ CODEBASE MAPPING REFERENCE
     - SymbioteEvolutionGenerator class
     - Fallback mechanisms for missing dependencies
     - Text-based visualization
-## 14. [verify_asteroid_generator_simple.py](#testing)
+## 14. [verify_asteroid_generator.py](#testing)
 
-- `src/tests/verify_asteroid_generator_simple.py`
-  - **Purpose**: Simple verification script to check the structure and inheritance of the AsteroidGenerator class
+- `src/tests/verify_asteroid_generator.py`
+  - **Purpose**: Comprehensive verification script for AsteroidGenerator performance and optimization
   - **File Imports**: 
-    - None (uses file path checks)
+    - from src.generators.asteroid_generator import AsteroidGenerator
+    - from src.entities.base_generator import BaseGenerator
   - **File Dependencies**: 
-    - import os
-    - import sys
+    - import numpy as np
+    - import time
+    - import matplotlib.pyplot as plt (optional)
+    - import logging
+    - from typing import Dict, List, Tuple, Optional, Any, Callable
   - **Required Components**: 
-    - AsteroidGenerator class file
-    - BaseGenerator class file
+    - AsteroidGenerator class
+    - BaseGenerator class with caching mechanism
+    - Performance measurement utilities
+    - Visualization capabilities
+  - **Key Features**:
+    - Performance testing for generator methods
+    - Caching verification
+    - Visualization of generator outputs
+    - Comparison of cached vs. non-cached operations
+    - Flexible seed-based testing
 
-## 15. [verify_symbiote_evolution_generator_simple.py](#testing)
+## 15. [verify_base_generator_optimizations.py](#testing)
 
-- `src/tests/verify_symbiote_evolution_generator_simple.py`
-  - **Purpose**: Simple verification script to check the structure and inheritance of the SymbioteEvolutionGenerator class
+- `src/tests/verify_base_generator_optimizations.py`
+  - **Purpose**: Standalone verification script for BaseGenerator optimization techniques
   - **File Imports**: 
-    - None (uses file path checks)
+    - None (implements a standalone BaseGenerator)
   - **File Dependencies**: 
-    - import os
-    - import sys
+    - import numpy as np
+    - import time
+    - import matplotlib.pyplot as plt (optional)
+    - import logging
+    - from typing import Dict, List, Tuple, Optional, Any, Callable
+    - from functools import lru_cache, wraps
   - **Required Components**: 
-    - SymbioteEvolutionGenerator class file
-    - BaseGenerator class file
-    - SymbioteEvolutionAlgorithm class file
+    - Standalone BaseGenerator implementation
+    - Caching mechanism
+    - Performance measurement utilities
+    - Visualization capabilities
+  - **Key Features**:
+    - Benchmarking of caching mechanisms
+    - Comparison of different optimization techniques
+    - Visualization of performance improvements
+    - Flexible seed-based testing
+    - Isolated testing environment
+
+## 16. [verify_symbiote_evolution_generator.py](#testing)
+
+- `src/tests/verify_symbiote_evolution_generator.py`
+  - **Purpose**: Comprehensive verification script for SymbioteEvolutionGenerator performance and optimization
+  - **File Imports**: 
+    - from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
+    - from src.entities.base_generator import BaseGenerator
+  - **File Dependencies**: 
+    - import numpy as np
+    - import time
+    - import matplotlib.pyplot as plt (optional)
+    - import logging
+    - from typing import Dict, List, Tuple, Optional, Any, Callable
+  - **Required Components**: 
+    - SymbioteEvolutionGenerator class
+    - BaseGenerator class with caching mechanism
+    - Performance measurement utilities
+    - Visualization capabilities
+  - **Key Features**:
+    - Performance testing for symbiote evolution methods
+    - Caching verification
+    - Visualization of evolution patterns
+    - Comparison of cached vs. non-cached operations
+    - Flexible seed-based testing
 
 ## 17. [test_base_entity.py](#unit_testing)
 
@@ -715,6 +769,95 @@ CODEBASE MAPPING REFERENCE
     - apply_environmental_effects: Applies environmental effects to entities
 
 ## 32. [dependency_config_example.py](#examples)
+
+## 32. [visualization.py](#utils)
+
+- `src/utils/visualization.py`
+  - **Purpose**: Comprehensive visualization tools for generator outputs and grid analysis
+  - **File Imports**:
+    - None (standalone utility module)
+  - **File Dependencies**:
+    - import os
+    - import logging
+    - import numpy as np
+    - import matplotlib.pyplot as plt (optional with fallback)
+    - from matplotlib import colors, cm (optional with fallback)
+    - from PIL import Image (optional with fallback)
+  - **Required Components**:
+    - None (works with any numpy grid data)
+  - **Key Features**:
+    - Grid visualization with customizable colormaps
+    - Multi-grid comparison for side-by-side analysis
+    - Evolution visualization with animation support
+    - Image export capabilities
+    - Fallback mechanisms for environments without matplotlib/PIL
+
+## 33. [test_pattern_generator.py](#unit_testing)
+
+- `src/tests/test_pattern_generator.py`
+  - **Purpose**: Comprehensive unit tests for pattern generation utilities
+  - **File Imports**:
+    - from src.utils.pattern_generator import (
+        generate_circle_pattern,
+        generate_rectangle_pattern,
+        generate_random_pattern,
+        generate_perlin_noise_pattern,
+        generate_cellular_automaton_pattern
+    )
+  - **File Dependencies**:
+    - import unittest
+    - import numpy as np
+  - **Required Components**:
+    - pattern_generator.py utility module
+  - **Key Tests**:
+    - Test pattern dimensions and shapes
+    - Test parameter validation
+    - Test pattern characteristics (density, distribution)
+    - Test edge cases and boundary conditions
+
+## 34. [test_value_generator.py](#unit_testing)
+
+- `src/tests/test_value_generator.py`
+  - **Purpose**: Comprehensive unit tests for value generation utilities
+  - **File Imports**:
+    - from src.utils.value_generator import (
+        generate_value_grid,
+        generate_clustered_values,
+        generate_resource_distribution,
+        apply_distance_falloff
+    )
+  - **File Dependencies**:
+    - import unittest
+    - import numpy as np
+  - **Required Components**:
+    - value_generator.py utility module
+  - **Key Tests**:
+    - Test grid properties (dimensions, value ranges)
+    - Test clustering behavior
+    - Test resource distribution patterns
+    - Test falloff application
+    - Test statistical properties of generated values
+
+## 35. [test_visualization.py](#testing)
+
+- `src/tests/test_visualization.py`
+  - **Purpose**: Demonstration and validation of visualization capabilities
+  - **File Imports**:
+    - from src.utils.visualization import GeneratorVisualizer
+    - from src.utils.pattern_generator import generate_perlin_noise_pattern
+  - **File Dependencies**:
+    - import numpy as np
+    - import os
+  - **Required Components**:
+    - visualization.py utility module
+    - pattern_generator.py for test data generation
+  - **Key Features**:
+    - Demonstrates various visualization methods
+    - Tests export capabilities
+    - Validates colormap support
+    - Shows evolution visualization
+
+## 36. [dependency_config_example.py](#examples)
 
 - `src/examples/dependency_config_example.py`
   - **Purpose**: Example script demonstrating the dependency configuration system
