@@ -82,25 +82,25 @@ def benchmark_complete_generation(
 
     for size in grid_sizes:
         logging.info(f"Benchmarking grid size {size}x{size}...")
-        
+
         noise_times = []
         ca_times = []
         cluster_times = []
         total_times = []
-        
+
         for _ in range(repetitions):
             # Create a generator with the specified size
             generator = generator_class(width=size, height=size)
-            
+
             # Benchmark the complete generation process
             start_total = time.time()
-            
+
             # Noise generation
             start_time = time.time()
             noise_grid = generator.generate_noise_layer(noise_type="medium", scale=0.1)
             noise_time = time.time() - start_time
             noise_times.append(noise_time)
-            
+
             # Cellular automaton
             start_time = time.time()
             ca_grid = generator.apply_cellular_automaton(
@@ -112,7 +112,7 @@ def benchmark_complete_generation(
             )
             ca_time = time.time() - start_time
             ca_times.append(ca_time)
-            
+
             # Clustering
             start_time = time.time()
             final_grid = generator.create_clusters(
@@ -122,21 +122,25 @@ def benchmark_complete_generation(
             )
             cluster_time = time.time() - start_time
             cluster_times.append(cluster_time)
-            
+
             total_time = time.time() - start_total
             total_times.append(total_time)
-        
+
         # Record average times
         results["noise_generation"].append(sum(noise_times) / repetitions)
         results["cellular_automaton"].append(sum(ca_times) / repetitions)
         results["clustering"].append(sum(cluster_times) / repetitions)
         results["total"].append(sum(total_times) / repetitions)
-        
-        logging.info(f"  Noise Generation: {results['noise_generation'][-1]:.4f} seconds")
-        logging.info(f"  Cellular Automaton: {results['cellular_automaton'][-1]:.4f} seconds")
+
+        logging.info(
+            f"  Noise Generation: {results['noise_generation'][-1]:.4f} seconds"
+        )
+        logging.info(
+            f"  Cellular Automaton: {results['cellular_automaton'][-1]:.4f} seconds"
+        )
         logging.info(f"  Clustering: {results['clustering'][-1]:.4f} seconds")
         logging.info(f"  Total: {results['total'][-1]:.4f} seconds")
-    
+
     return results
 
 
@@ -161,19 +165,19 @@ def benchmark_noise_generation(
         backends = get_available_backends()
         if "cpu" not in backends:
             backends.append("cpu")
-    
+
     # Initialize results dictionary
     results = {backend: [] for backend in backends}
     results["grid_sizes"] = grid_sizes
-    
+
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking noise generation for size {size}x{size}...")
-        
+
         # Benchmark each backend
         for backend in backends:
             times = []
-            
+
             for _ in range(repetitions):
                 start_time = time.time()
                 if backend == "cpu":
@@ -182,16 +186,18 @@ def benchmark_noise_generation(
                     noise_gen.generate_noise(size, size, scale=0.1, octaves=5)
                 else:
                     # Use GPU-accelerated noise generation
-                    apply_noise_generation_gpu(size, size, scale=0.1, octaves=5, backend=backend)
-                
+                    apply_noise_generation_gpu(
+                        size, size, scale=0.1, octaves=5, backend=backend
+                    )
+
                 end_time = time.time()
                 times.append(end_time - start_time)
-            
+
             # Record average time
             avg_time = sum(times) / len(times)
             results[backend].append(avg_time)
             logging.info(f"  {backend}: {avg_time:.4f} seconds")
-    
+
     return results
 
 
@@ -216,22 +222,22 @@ def benchmark_cellular_automaton(
         backends = get_available_backends()
         if "cpu" not in backends:
             backends.append("cpu")
-    
+
     # Initialize results dictionary
     results = {backend: [] for backend in backends}
     results["grid_sizes"] = grid_sizes
-    
+
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking cellular automaton for size {size}x{size}...")
-        
+
         # Create a random grid
         grid = np.random.choice([0, 1], size=(size, size), p=[0.7, 0.3])
-        
+
         # Benchmark each backend
         for backend in backends:
             times = []
-            
+
             for _ in range(repetitions):
                 if backend == "cpu":
                     # Benchmark CPU implementation
@@ -243,14 +249,14 @@ def benchmark_cellular_automaton(
                     start_time = time.time()
                     apply_cellular_automaton_gpu(grid, backend=backend, iterations=3)
                     end_time = time.time()
-                
+
                 times.append(end_time - start_time)
-            
+
             # Record average time
             avg_time = sum(times) / len(times)
             results[backend].append(avg_time)
             logging.info(f"  {backend}: {avg_time:.4f} seconds")
-    
+
     return results
 
 
@@ -274,45 +280,49 @@ def benchmark_clustering(
         "sequential": [],
         "parallel": [],
     }
-    
+
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking clustering for size {size}x{size}...")
-        
+
         # Create a generator with the specified size
         generator = BaseGenerator(width=size, height=size)
-        
+
         # Create a random grid
         grid = np.random.random((size, size))
-        
+
         # Benchmark sequential clustering
         seq_times = []
         for _ in range(repetitions):
             # Set a very high threshold to force sequential processing
             generator._parallel_clustering_threshold = size * size * 10
             start_time = time.time()
-            generator.create_clusters(grid, num_clusters=5, cluster_value_multiplier=2.0)
+            generator.create_clusters(
+                grid, num_clusters=5, cluster_value_multiplier=2.0
+            )
             end_time = time.time()
             seq_times.append(end_time - start_time)
-        
+
         avg_seq_time = sum(seq_times) / len(seq_times)
         results["sequential"].append(avg_seq_time)
         logging.info(f"  Sequential: {avg_seq_time:.4f} seconds")
-        
+
         # Benchmark parallel clustering
         par_times = []
         for _ in range(repetitions):
             # Set a very low threshold to force parallel processing
             generator._parallel_clustering_threshold = 1
             start_time = time.time()
-            generator.create_clusters(grid, num_clusters=5, cluster_value_multiplier=2.0)
+            generator.create_clusters(
+                grid, num_clusters=5, cluster_value_multiplier=2.0
+            )
             end_time = time.time()
             par_times.append(end_time - start_time)
-        
+
         avg_par_time = sum(par_times) / len(par_times)
         results["parallel"].append(avg_par_time)
         logging.info(f"  Parallel: {avg_par_time:.4f} seconds")
-    
+
     return results
 
 
@@ -329,17 +339,31 @@ def plot_results(
     """
     # Create a figure with subplots
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    
+
     # Plot complete generation results
     if "complete" in results:
         complete_results = results["complete"]
         grid_sizes = complete_results["grid_sizes"]
-        
-        axes[0, 0].plot(grid_sizes, complete_results["noise_generation"], marker="o", label="Noise Generation")
-        axes[0, 0].plot(grid_sizes, complete_results["cellular_automaton"], marker="s", label="Cellular Automaton")
-        axes[0, 0].plot(grid_sizes, complete_results["clustering"], marker="^", label="Clustering")
-        axes[0, 0].plot(grid_sizes, complete_results["total"], marker="*", label="Total")
-        
+
+        axes[0, 0].plot(
+            grid_sizes,
+            complete_results["noise_generation"],
+            marker="o",
+            label="Noise Generation",
+        )
+        axes[0, 0].plot(
+            grid_sizes,
+            complete_results["cellular_automaton"],
+            marker="s",
+            label="Cellular Automaton",
+        )
+        axes[0, 0].plot(
+            grid_sizes, complete_results["clustering"], marker="^", label="Clustering"
+        )
+        axes[0, 0].plot(
+            grid_sizes, complete_results["total"], marker="*", label="Total"
+        )
+
         axes[0, 0].set_title("Complete Generation Performance")
         axes[0, 0].set_xlabel("Grid Size")
         axes[0, 0].set_ylabel("Execution Time (seconds)")
@@ -347,16 +371,16 @@ def plot_results(
         axes[0, 0].set_yscale("log")
         axes[0, 0].grid(True)
         axes[0, 0].legend()
-    
+
     # Plot noise generation results
     if "noise" in results:
         noise_results = results["noise"]
         grid_sizes = noise_results["grid_sizes"]
-        
+
         for backend, times in noise_results.items():
             if backend != "grid_sizes":
                 axes[0, 1].plot(grid_sizes, times, marker="o", label=backend)
-        
+
         axes[0, 1].set_title("Noise Generation Performance")
         axes[0, 1].set_xlabel("Grid Size")
         axes[0, 1].set_ylabel("Execution Time (seconds)")
@@ -364,16 +388,16 @@ def plot_results(
         axes[0, 1].set_yscale("log")
         axes[0, 1].grid(True)
         axes[0, 1].legend()
-    
+
     # Plot cellular automaton results
     if "cellular_automaton" in results:
         ca_results = results["cellular_automaton"]
         grid_sizes = ca_results["grid_sizes"]
-        
+
         for backend, times in ca_results.items():
             if backend != "grid_sizes":
                 axes[1, 0].plot(grid_sizes, times, marker="o", label=backend)
-        
+
         axes[1, 0].set_title("Cellular Automaton Performance")
         axes[1, 0].set_xlabel("Grid Size")
         axes[1, 0].set_ylabel("Execution Time (seconds)")
@@ -381,15 +405,19 @@ def plot_results(
         axes[1, 0].set_yscale("log")
         axes[1, 0].grid(True)
         axes[1, 0].legend()
-    
+
     # Plot clustering results
     if "clustering" in results:
         cluster_results = results["clustering"]
         grid_sizes = cluster_results["grid_sizes"]
-        
-        axes[1, 1].plot(grid_sizes, cluster_results["sequential"], marker="o", label="Sequential")
-        axes[1, 1].plot(grid_sizes, cluster_results["parallel"], marker="s", label="Parallel")
-        
+
+        axes[1, 1].plot(
+            grid_sizes, cluster_results["sequential"], marker="o", label="Sequential"
+        )
+        axes[1, 1].plot(
+            grid_sizes, cluster_results["parallel"], marker="s", label="Parallel"
+        )
+
         axes[1, 1].set_title("Clustering Performance")
         axes[1, 1].set_xlabel("Grid Size")
         axes[1, 1].set_ylabel("Execution Time (seconds)")
@@ -397,7 +425,7 @@ def plot_results(
         axes[1, 1].set_yscale("log")
         axes[1, 1].grid(True)
         axes[1, 1].legend()
-    
+
     plt.tight_layout()
     plt.savefig(output_file)
     logging.info(f"Results saved to {output_file}")
@@ -433,17 +461,17 @@ def main():
         help="Components to benchmark",
     )
     args = parser.parse_args()
-    
+
     logging.info("Procedural Generation Benchmark")
     logging.info("==============================")
     logging.info(f"Available backends: {get_available_backends()}")
     logging.info(f"GPU available: {is_gpu_available()}")
     logging.info(f"CPU cores: {multiprocessing.cpu_count()}")
     logging.info("")
-    
+
     # Run benchmarks
     results = {}
-    
+
     if "complete" in args.components:
         logging.info("Benchmarking complete generation process...")
         results["complete"] = benchmark_complete_generation(
@@ -451,28 +479,28 @@ def main():
             args.sizes,
             repetitions=args.repetitions,
         )
-    
+
     if "noise" in args.components:
         logging.info("Benchmarking noise generation...")
         results["noise"] = benchmark_noise_generation(
             args.sizes,
             repetitions=args.repetitions,
         )
-    
+
     if "cellular_automaton" in args.components:
         logging.info("Benchmarking cellular automaton...")
         results["cellular_automaton"] = benchmark_cellular_automaton(
             args.sizes,
             repetitions=args.repetitions,
         )
-    
+
     if "clustering" in args.components:
         logging.info("Benchmarking clustering...")
         results["clustering"] = benchmark_clustering(
             args.sizes,
             repetitions=args.repetitions,
         )
-    
+
     # Plot results
     plot_results(results, args.output)
 

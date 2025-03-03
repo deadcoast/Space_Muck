@@ -5,8 +5,24 @@ Unit tests for GPU-based clustering algorithms.
 
 import unittest
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
+import logging
+
+# Try to import matplotlib, but don't fail if it's not available
+try:
+    import matplotlib.pyplot as plt
+
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+
+# Try to import scikit-learn, but don't fail if it's not available
+try:
+    from sklearn.cluster import DBSCAN
+
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
 
 from src.utils.gpu_utils import (
     apply_kmeans_clustering_gpu,
@@ -96,6 +112,9 @@ class TestGPUClustering(unittest.TestCase):
 
     def test_dbscan_clustering_cpu(self):
         """Test DBSCAN clustering using CPU backend."""
+        if not SKLEARN_AVAILABLE:
+            self.skipTest("scikit-learn not available for DBSCAN testing")
+
         labels = apply_dbscan_clustering_gpu(
             self.data_with_noise, eps=0.8, min_samples=5, backend="cpu"
         )
@@ -169,6 +188,9 @@ class TestGPUClustering(unittest.TestCase):
 
     def test_dbscan_consistency(self):
         """Test that DBSCAN results are consistent across backends."""
+        if not SKLEARN_AVAILABLE:
+            self.skipTest("scikit-learn not available for DBSCAN testing")
+
         if not is_gpu_available():
             self.skipTest("GPU not available for testing")
 
@@ -203,6 +225,9 @@ class TestGPUClustering(unittest.TestCase):
 
     def _plot_kmeans_results(self, data, labels, centroids, filename):
         """Helper to visualize K-means results."""
+        if not MATPLOTLIB_AVAILABLE:
+            return
+
         plt.figure(figsize=(10, 8))
 
         # Plot points colored by cluster
@@ -233,6 +258,9 @@ class TestGPUClustering(unittest.TestCase):
 
     def _plot_dbscan_results(self, data, labels, filename):
         """Helper to visualize DBSCAN results."""
+        if not MATPLOTLIB_AVAILABLE:
+            return
+
         plt.figure(figsize=(10, 8))
 
         # Get unique labels

@@ -7,6 +7,8 @@ used throughout the codebase, with fallback mechanisms for systems without
 GPU support.
 """
 
+import itertools
+
 # Standard library imports
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -20,8 +22,7 @@ try:
     from numba import cuda
 
     NUMBA_AVAILABLE = True
-    CUDA_AVAILABLE = cuda.is_available()
-    if CUDA_AVAILABLE:
+    if CUDA_AVAILABLE := cuda.is_available():
         logging.info("CUDA is available for GPU acceleration")
     else:
         logging.info("Numba is available but CUDA is not detected")
@@ -39,6 +40,38 @@ except ImportError:
     CUPY_AVAILABLE = False
     logging.warning("CuPy not available. Some GPU operations will be disabled.")
 
+# Try to import PyTorch with MPS support for macOS
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+    if (
+        MPS_AVAILABLE := hasattr(torch.backends, "mps")
+        and torch.backends.mps.is_available()
+    ):
+        logging.info("PyTorch with MPS is available for GPU acceleration on macOS")
+        # Create MPS device
+        mps_device = torch.device("mps")
+    else:
+        logging.info("PyTorch is available but MPS is not detected")
+
+except ImportError:
+    TORCH_AVAILABLE = False
+    MPS_AVAILABLE = False
+    logging.warning("PyTorch not available. macOS GPU acceleration will be disabled.")
+
+# Try to import metalgpu as another option for macOS
+try:
+    import metalgpu
+
+    METALGPU_AVAILABLE = True
+    logging.info("metalgpu is available for GPU acceleration on macOS")
+except ImportError:
+    METALGPU_AVAILABLE = False
+    logging.warning(
+        "metalgpu not available. Alternative macOS GPU acceleration will be disabled."
+    )
+
 
 def is_gpu_available() -> bool:
     """
@@ -47,7 +80,7 @@ def is_gpu_available() -> bool:
     Returns:
         bool: True if any GPU acceleration is available
     """
-    return CUDA_AVAILABLE or CUPY_AVAILABLE
+    return CUDA_AVAILABLE or CUPY_AVAILABLE or MPS_AVAILABLE or METALGPU_AVAILABLE
 
 
 def get_available_backends() -> List[str]:
@@ -64,6 +97,10 @@ def get_available_backends() -> List[str]:
         backends.append("cupy")
     if NUMBA_AVAILABLE:
         backends.append("numba")
+    if MPS_AVAILABLE:
+        backends.append("mps")
+    if METALGPU_AVAILABLE:
+        backends.append("metalgpu")
     if not backends:
         backends.append("cpu")
     return backends
@@ -79,8 +116,19 @@ def to_gpu(array: np.ndarray) -> Union[np.ndarray, Any]:
     Returns:
         Union[np.ndarray, Any]: Array on GPU if available, otherwise original array
     """
+    # Try CuPy first (NVIDIA/AMD GPUs)
     if CUPY_AVAILABLE:
         return cp.asarray(array)
+
+    # Try PyTorch MPS for macOS
+    if MPS_AVAILABLE and TORCH_AVAILABLE:
+        try:
+            # Convert numpy array to PyTorch tensor and move to MPS device
+            return torch.from_numpy(array).to(device=mps_device)
+        except Exception as e:
+            logging.warning(f"Failed to transfer array to MPS: {e}")
+
+    # If no GPU transfer was successful, return the original array
     return array
 
 
@@ -94,8 +142,22 @@ def to_cpu(array: Any) -> np.ndarray:
     Returns:
         np.ndarray: Array on CPU
     """
+    # Handle CuPy arrays
     if CUPY_AVAILABLE and isinstance(array, cp.ndarray):
         return array.get()
+
+    # Handle PyTorch tensors (including those on MPS device)
+    if TORCH_AVAILABLE and isinstance(array, torch.Tensor):
+        try:
+            # Move tensor to CPU and convert to numpy
+            return array.detach().cpu().numpy()
+        except Exception as e:
+            logging.warning(f"Failed to transfer tensor from GPU to CPU: {e}")
+            # If conversion fails, try to get the tensor values directly
+            if hasattr(array, "numpy"):
+                return array.numpy()
+
+    # If it's already a numpy array or another type, return as is
     return array
 
 
@@ -112,14 +174,13 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
             # Count live neighbors
             neighbors = 0
 
-            for dy in range(-1, 2):
-                for dx in range(-1, 2):
-                    if dx == 0 and dy == 0:
-                        continue
+            for dy, dx in itertools.product(range(-1, 2), range(-1, 2)):
+                if dx == 0 and dy == 0:
+                    continue
 
-                    nx, ny = (x + dx) % width, (y + dy) % height
-                    if grid[ny, nx] > 0:
-                        neighbors += 1
+                nx, ny = (x + dx) % width, (y + dy) % height
+                if grid[ny, nx] > 0:
+                    neighbors += 1
 
             # Apply rules
             if grid[y, x] > 0:
@@ -158,14 +219,14 @@ def apply_cellular_automaton_gpu(
     birth_list = list(birth_set)
     survival_list = list(survival_set)
 
-    # Choose backend
-    if backend == "auto":
-        if CUDA_AVAILABLE:
+    if CUDA_AVAILABLE:
+        if backend == "auto":
             backend = "cuda"
-        elif CUPY_AVAILABLE:
+    elif CUPY_AVAILABLE:
+        if backend == "auto":
             backend = "cupy"
-        else:
-            backend = "cpu"
+    elif backend == "auto":
+        backend = "cpu"
 
     # Use CPU implementation if no GPU is available or requested
     if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
@@ -215,11 +276,10 @@ def apply_cellular_automaton_gpu(
                 ).real.astype(cp.int8)
             else:
                 neighbor_count = cp.zeros_like(d_grid)
-                for dy in range(-1, 2):
-                    for dx in range(-1, 2):
-                        if dx == 0 and dy == 0:
-                            continue
-                        neighbor_count += cp.roll(d_grid, (dy, dx), axis=(0, 1))
+                for dy, dx in itertools.product(range(-1, 2), range(-1, 2)):
+                    if dx == 0 and dy == 0:
+                        continue
+                    neighbor_count += cp.roll(d_grid, (dy, dx), axis=(0, 1))
 
             # Apply rules
             new_grid = cp.zeros_like(d_grid)
@@ -267,22 +327,33 @@ def apply_noise_generation_gpu(
         persistence: Persistence parameter
         lacunarity: Lacunarity parameter
         seed: Random seed
-        backend: GPU backend to use ('cuda', 'cupy', 'auto')
+        backend: GPU backend to use ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
 
     Returns:
         np.ndarray: Generated noise grid
     """
-    # Choose backend
-    if backend == "auto":
-        if CUPY_AVAILABLE:
+    if CUPY_AVAILABLE:
+        if backend == "auto":
             backend = "cupy"
-        elif CUDA_AVAILABLE:
+    elif CUDA_AVAILABLE:
+        if backend == "auto":
             backend = "cuda"
-        else:
-            backend = "cpu"
+    elif MPS_AVAILABLE:
+        if backend == "auto":
+            backend = "mps"
+    elif METALGPU_AVAILABLE:
+        if backend == "auto":
+            backend = "metalgpu"
+    elif backend == "auto":
+        backend = "cpu"
 
     # Use CPU implementation if no GPU is available or requested
-    if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
+    if backend == "cpu" or (
+        not CUDA_AVAILABLE
+        and not CUPY_AVAILABLE
+        and not MPS_AVAILABLE
+        and not METALGPU_AVAILABLE
+    ):
         try:
             from src.utils.noise_generator import generate_perlin_noise
 
@@ -290,10 +361,7 @@ def apply_noise_generation_gpu(
                 width, height, scale, octaves, persistence, lacunarity, seed
             )
         except ImportError:
-            logging.warning("Noise generator not available. Using random noise.")
-            rng = np.random.RandomState(seed)
-            return rng.random((height, width))
-
+            return _extracted_from_apply_noise_generation_gpu_49(seed, height, width)
     # CuPy implementation
     if backend == "cupy" and CUPY_AVAILABLE:
         if seed is not None:
@@ -345,6 +413,76 @@ def apply_noise_generation_gpu(
         # Transfer back to CPU
         return cp.asnumpy(noise)
 
+    # MPS implementation (for macOS with Apple Silicon or AMD GPUs)
+    if backend == "mps" and MPS_AVAILABLE and TORCH_AVAILABLE:
+        try:
+            if seed is not None:
+                torch.manual_seed(seed)
+
+            noise = torch.zeros((height, width), dtype=torch.float32, device=mps_device)
+
+            # Generate noise with multiple octaves
+            max_amplitude = 0
+            amplitude = 1.0
+            frequency = scale
+
+            for _ in range(octaves):
+                # Generate base noise
+                noise_layer = torch.rand(
+                    (height, width), dtype=torch.float32, device=mps_device
+                )
+
+                # Apply frequency domain filtering (simplified for MPS)
+                # We use a Gaussian blur as a substitute for frequency domain filtering
+                # since FFT operations might not be fully optimized on MPS
+                blur_size = int(1.0 / frequency)
+                if blur_size > 0:
+                    # Ensure blur_size is odd
+                    blur_size = blur_size * 2 + 1 if blur_size > 0 else 3
+                    # Apply blur using average pooling with appropriate padding
+                    padded = torch.nn.functional.pad(
+                        noise_layer.unsqueeze(0).unsqueeze(0),
+                        (
+                            blur_size // 2,
+                            blur_size // 2,
+                            blur_size // 2,
+                            blur_size // 2,
+                        ),
+                        mode="reflect",
+                    )
+                    noise_layer = (
+                        torch.nn.functional.avg_pool2d(padded, blur_size, stride=1)
+                        .squeeze(0)
+                        .squeeze(0)
+                    )
+
+                # Normalize
+                min_val = torch.min(noise_layer)
+                max_val = torch.max(noise_layer)
+                noise_layer = (noise_layer - min_val) / (max_val - min_val + 1e-8)
+
+                # Add to final noise
+                noise += amplitude * noise_layer
+
+                # Update parameters for next octave
+                max_amplitude += amplitude
+                amplitude *= persistence
+                frequency *= lacunarity
+
+            # Normalize the final noise
+            noise /= max_amplitude
+
+            # Transfer back to CPU
+            return to_cpu(noise)
+        except Exception as e:
+            logging.warning(
+                f"MPS noise generation failed: {e}. Falling back to CPU implementation."
+            )
+
+    # metalgpu implementation could be added here for more advanced Metal API usage
+    # if backend == "metalgpu" and METALGPU_AVAILABLE:
+    #     # Implementation would go here
+
     # CUDA implementation not provided for noise generation due to complexity
     # Fallback to CPU implementation
     try:
@@ -354,9 +492,14 @@ def apply_noise_generation_gpu(
             width, height, scale, octaves, persistence, lacunarity, seed
         )
     except ImportError:
-        logging.warning("Noise generator not available. Using random noise.")
-        rng = np.random.RandomState(seed)
-        return rng.random((height, width))
+        return _extracted_from_apply_noise_generation_gpu_49(seed, height, width)
+
+
+# TODO Rename this here and in `apply_noise_generation_gpu`
+def _extracted_from_apply_noise_generation_gpu_49(seed, height, width):
+    logging.warning("Noise generator not available. Using random noise.")
+    rng = np.random.RandomState(seed)
+    return rng.random((height, width))
 
 
 def apply_kmeans_clustering_gpu(
@@ -376,7 +519,7 @@ def apply_kmeans_clustering_gpu(
         max_iterations: Maximum number of iterations
         tolerance: Convergence tolerance
         seed: Random seed
-        backend: GPU backend to use ('cuda', 'cupy', 'auto')
+        backend: GPU backend to use ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
 
     Returns:
         Tuple[np.ndarray, np.ndarray]: (cluster_centers, labels)
@@ -549,45 +692,176 @@ def apply_kmeans_clustering_gpu(
 
         return centroids, labels
 
-    # If we reach here, fallback to CPU implementation
-    try:
-        from sklearn.cluster import KMeans
+    # MPS implementation for macOS
+    if backend == "mps" and MPS_AVAILABLE:
+        try:
+            # Set random seed
+            if seed is not None:
+                torch.manual_seed(seed)
+            torch.backends.cudnn.deterministic = True
 
-        kmeans = KMeans(
-            n_clusters=n_clusters,
-            max_iter=max_iterations,
-            tol=tolerance,
-            random_state=seed,
-            n_init=10,
-        )
-        labels = kmeans.fit_predict(data)
-        return kmeans.cluster_centers_, labels
-    except ImportError:
-        logging.warning(
-            "scikit-learn not available. Using simple K-means implementation."
-        )
-        # Simple K-means implementation (same as above)
-        rng = np.random.RandomState(seed)
-        idx = rng.choice(n_samples, n_clusters, replace=False)
-        centroids = data[idx].copy()
+            # Create MPS device
+            mps_device = torch.device("mps")
 
+            # Set random seed
+            if seed is not None:
+                torch.manual_seed(seed)
+            torch.backends.cudnn.deterministic = True
+
+            # Create MPS tensor
+            mps_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
+
+            # Initialize centroids randomly
+            idx = torch.randperm(n_samples, device=mps_device)[:n_clusters]
+            centroids = mps_data[idx].clone()
+
+            # K-means iterations
+            for _ in range(max_iterations):
+                # Compute distances to centroids
+                distances = torch.zeros(
+                    (n_samples, n_clusters), dtype=torch.float32, device=mps_device
+                )
+                for i in range(n_clusters):
+                    # Vectorized distance calculation
+                    diff = mps_data - centroids[i]
+                    distances[:, i] = torch.sum(diff * diff, dim=1)
+
+                # Assign points to nearest centroid
+                labels = torch.argmin(distances, dim=1)
+
+                # Update centroids
+                new_centroids = torch.zeros(
+                    (n_clusters, n_features), dtype=torch.float32, device=mps_device
+                )
+                for i in range(n_clusters):
+                    cluster_points = mps_data[labels == i]
+                    if len(cluster_points) > 0:
+                        new_centroids[i] = torch.mean(cluster_points, dim=0)
+                    else:
+                        # If a cluster is empty, reinitialize it
+                        new_centroids[i] = mps_data[
+                            torch.randint(0, n_samples, (1,), device=mps_device)
+                        ]
+
+                # Check for convergence
+                if torch.sum((new_centroids - centroids) ** 2) < tolerance:
+                    break
+
+                centroids = new_centroids
+
+            # Transfer results back to CPU
+            centroids = to_cpu(centroids)
+            labels = to_cpu(labels)
+
+            return centroids, labels
+        except Exception as e:
+            logging.warning(f"Error in MPS implementation: {e}")
+            return np.full(n_samples, -1), np.arange(n_samples)
+
+    # MPS implementation for macOS
+    if backend == "mps" and MPS_AVAILABLE:
+        # Set random seed
+        if seed is not None:
+            torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+        # Create MPS device
+        mps_device = torch.device("mps")
+
+        # Set random seed
+        if seed is not None:
+            torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+        # Create MPS tensor
+        mps_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
+
+        # Metal implementation for macOS
+        if backend == "metalgpu" and METALGPU_AVAILABLE:
+            # Set random seed
+            if seed is not None:
+                torch.manual_seed(seed)
+
+            # Transfer data to MPS device
+            d_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
+
+            # Initialize centroids randomly
+            idx = torch.randperm(n_samples, device=mps_device)[:n_clusters]
+            centroids = d_data[idx].clone()
+
+            # K-means iterations
+            for _ in range(max_iterations):
+                # Compute distances to centroids
+                distances = torch.zeros(
+                    (n_samples, n_clusters), dtype=torch.float32, device=mps_device
+                )
+                for i in range(n_clusters):
+                    # Vectorized distance calculation
+                    diff = d_data - centroids[i]
+                    distances[:, i] = torch.sum(diff * diff, dim=1)
+
+                # Assign points to nearest centroid
+                labels = torch.argmin(distances, dim=1)
+
+                # Update centroids
+                new_centroids = torch.zeros(
+                    (n_clusters, n_features), dtype=torch.float32, device=mps_device
+                )
+                for i in range(n_clusters):
+                    cluster_points = d_data[labels == i]
+                    if len(cluster_points) > 0:
+                        new_centroids[i] = torch.mean(cluster_points, dim=0)
+                    else:
+                        # If a cluster is empty, reinitialize it
+                        new_centroids[i] = d_data[
+                            torch.randint(0, n_samples, (1,), device=mps_device)
+                        ]
+
+                # Check for convergence
+                if torch.sum((new_centroids - centroids) ** 2) < tolerance:
+                    break
+
+                centroids = new_centroids
+
+            # Transfer results back to CPU
+            centroids = to_cpu(centroids)
+            labels = to_cpu(labels)
+
+            return centroids, labels
+        else:
+            # Return all points as noise if scikit-learn is not available
+            return np.full(n_samples, -1), np.arange(n_samples)
+
+    # Metal implementation for macOS
+    if backend == "metalgpu" and METALGPU_AVAILABLE:
+        # Set random seed
+        if seed is not None:
+            torch.manual_seed(seed)
+
+        # Transfer data to Metal device
+        d_data = torch.tensor(data, dtype=torch.float32, device=metal_device)
+
+        # Initialize centroids randomly
+        idx = torch.randperm(n_samples, device=metal_device)[:n_clusters]
+        centroids = d_data[idx].clone()
+
+        # K-means iterations
         for _ in range(max_iterations):
-            distances = np.zeros((n_samples, n_clusters))
+            # Compute distances to centroids
+            distances = torch.zeros(
+                (n_samples, n_clusters), dtype=torch.float32, device=metal_device
+            )
             for i in range(n_clusters):
-                distances[:, i] = np.sum((data - centroids[i]) ** 2, axis=1)
-            labels = np.argmin(distances, axis=1)
+                # Vectorized distance calculation
+                diff = d_data - centroids[i]
+                distances[:, i] = torch.sum(diff * diff, dim=1)
 
-            new_centroids = np.zeros((n_clusters, n_features))
-            for i in range(n_clusters):
-                if np.sum(labels == i) > 0:
-                    new_centroids[i] = np.mean(data[labels == i], axis=0)
-                else:
-                    new_centroids[i] = data[rng.choice(n_samples)]
+            # Assign points to nearest centroid
+            labels = torch.argmin(distances, dim=1)
 
-            if np.sum((new_centroids - centroids) ** 2) < tolerance:
-                break
-
-            centroids = new_centroids
+        # Transfer results back to CPU
+        centroids = to_cpu(centroids)
+        labels = to_cpu(labels)
 
         return centroids, labels
 
@@ -646,7 +920,7 @@ def apply_dbscan_clustering_gpu(
             distances[i] = cp.sum(diff * diff, axis=1)
 
         # Find neighbors
-        neighbors = distances <= eps * eps
+        neighbors = distances <= eps**2
 
         # Count neighbors
         n_neighbors = cp.sum(neighbors, axis=1)
@@ -729,12 +1003,63 @@ def apply_dbscan_clustering_gpu(
         distances = d_distances.copy_to_host()
 
         # Find neighbors
-        neighbors = distances <= eps * eps
+        neighbors = distances <= eps**2
 
         # Count neighbors
         n_neighbors = np.sum(neighbors, axis=1)
 
         # Find core points
+        core_points = n_neighbors >= min_samples
+
+        # Initialize labels
+        labels = np.full(n_samples, -1, dtype=np.int32)
+
+        # Cluster ID counter
+        cluster_id = 0
+
+        # Perform clustering
+        for i in range(n_samples):
+            if not core_points[i] or labels[i] != -1:
+                continue
+
+            # Start a new cluster
+            labels[i] = cluster_id
+
+            # Find all points reachable from this core point
+            stack = [i]
+            while stack:
+                current = stack.pop()
+
+                # Get neighbors
+                current_neighbors = np.where(neighbors[current])[0]
+
+                # Process neighbors
+                for neighbor in current_neighbors:
+                    # If not yet assigned to a cluster
+                    if labels[neighbor] == -1:
+                        labels[neighbor] = cluster_id
+
+                        # If it's a core point, add to stack for further expansion
+                        if core_points[neighbor]:
+                            stack.append(neighbor)
+
+            # Move to next cluster
+            cluster_id += 1
+
+        return labels
+
+    # If we reach here, fallback to CPU implementation
+    try:
+        from sklearn.cluster import DBSCAN
+
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        return dbscan.fit_predict(data)
+    except ImportError:
+        logging.warning(
+            "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
+        )
+        # Return all points as noise if scikit-learn is not available
+        return np.full(n_samples, -1)
         core_points = n_neighbors >= min_samples
 
         # Initialize labels
