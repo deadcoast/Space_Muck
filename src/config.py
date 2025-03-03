@@ -4,6 +4,7 @@ Game configuration and constants for Space Muck.
 This file centralizes all game constants and configuration values to make
 adjustments and balancing easier across the entire codebase.
 """
+
 from typing import Tuple, Dict, Any, List
 
 # Version information
@@ -57,6 +58,13 @@ COLOR_RACE_2: Tuple[int, int, int] = (255, 50, 150)  # Magenta race
 COLOR_RACE_3: Tuple[int, int, int] = (255, 165, 0)  # Orange race
 COLOR_RACE_4: Tuple[int, int, int] = (0, 200, 80)  # Green race - for future expansion
 COLOR_RACE_5: Tuple[int, int, int] = (200, 50, 50)  # Red race - for future expansion
+
+# Entity behavior colors
+COLOR_ENTITY_DEFAULT: Tuple[int, int, int] = (180, 180, 180)  # Default gray
+COLOR_ENTITY_FEEDING: Tuple[int, int, int] = (0, 200, 0)      # Green for feeding
+COLOR_ENTITY_EXPANDING: Tuple[int, int, int] = (0, 100, 255)  # Blue for expanding
+COLOR_ENTITY_MIGRATING: Tuple[int, int, int] = (255, 165, 0)  # Orange for migrating
+COLOR_ENTITY_AGGRESSIVE: Tuple[int, int, int] = (255, 0, 0)   # Red for aggressive
 
 # Game States
 STATE_PLAY: str = "PLAY"
@@ -139,23 +147,23 @@ MINERAL_TYPES: Dict[str, Dict[str, Any]] = {
     "common": {
         "value_multiplier": 1.0,
         "color": COLOR_ASTEROID,
-        "rarity": 0.0  # Base threshold
+        "rarity": 0.0,  # Base threshold
     },
     "rare": {
         "value_multiplier": RARE_BONUS_MULTIPLIER,
         "color": COLOR_ASTEROID_RARE,
-        "rarity": RARE_THRESHOLD
+        "rarity": RARE_THRESHOLD,
     },
     "precious": {
         "value_multiplier": PRECIOUS_BONUS_MULTIPLIER,
         "color": COLOR_ASTEROID_PRECIOUS,
-        "rarity": PRECIOUS_THRESHOLD
+        "rarity": PRECIOUS_THRESHOLD,
     },
     "anomaly": {
         "value_multiplier": ANOMALY_BONUS_MULTIPLIER,
         "color": COLOR_ASTEROID_ANOMALY,
-        "rarity": ANOMALY_THRESHOLD
-    }
+        "rarity": ANOMALY_THRESHOLD,
+    },
 }
 
 # Debug settings

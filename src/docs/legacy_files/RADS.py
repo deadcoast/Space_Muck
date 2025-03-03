@@ -8,7 +8,6 @@ Theme:
   that not only improve your ship but also let you influence the procedural generation.
 """
 
-
 import itertools
 import math
 import numpy as np
@@ -354,6 +353,7 @@ class AsteroidField:
 
         # Balance symbiotes and mining
         self.balance_symbiotes_and_mining()
+
     def update_entities(self) -> Dict[int, int]:
         """
         Update symbiote races with enhanced mathematical modeling
@@ -410,9 +410,7 @@ class AsteroidField:
 
                 # Calculate colony density based on distance map
                 total_distance = np.sum(distance_map)
-                self.territory_density = total_distance / max(
-                    1, len(entity_locations)
-                )
+                self.territory_density = total_distance / max(1, len(entity_locations))
 
                 # Use scipy.stats to model colony growth based on size distribution
                 # Larger colonies have better survival chances (normal distribution)
@@ -606,9 +604,16 @@ class AsteroidField:
             for i in range(len(entity_locations[0])):
                 y, x = entity_locations[0][i], entity_locations[1][i]
 
-                for dy, dx in itertools.product(range(-search_radius, search_radius + 1), range(-search_radius, search_radius + 1)):
+                for dy, dx in itertools.product(
+                    range(-search_radius, search_radius + 1),
+                    range(-search_radius, search_radius + 1),
+                ):
                     nx, ny = x + dx, y + dy
-                    if 0 <= nx < self.width and 0 <= ny < self.height and self.grid[ny, nx] > 0:
+                    if (
+                        0 <= nx < self.width
+                        and 0 <= ny < self.height
+                        and self.grid[ny, nx] > 0
+                    ):
                         value = self.grid[ny, nx]
                         if self.rare_grid[ny, nx] == 1:
                             if value > 500:
@@ -744,58 +749,57 @@ class AsteroidField:
             surface.fill(COLOR_BG)
 
             # Draw visible grid
-            for y in range(view_y1, view_y2):
-                for x in range(view_x1, view_x2):
-                    # Calculate screen position
-                    screen_x = int((x - view_x1) * screen_cell_size)
-                    screen_y = int((y - view_y1) * screen_cell_size)
+            for y, x in itertools.product(
+                range(view_y1, view_y2), range(view_x1, view_x2)
+            ):
+                # Calculate screen position
+                screen_x = int((x - view_x1) * screen_cell_size)
+                screen_y = int((y - view_y1) * screen_cell_size)
 
-                    # Create cell rectangle
-                    rect = pygame.Rect(
-                        screen_x, screen_y, screen_cell_size, screen_cell_size
-                    )
+                # Create cell rectangle
+                rect = pygame.Rect(
+                    screen_x, screen_y, screen_cell_size, screen_cell_size
+                )
 
-                    # Draw cell content
-                    if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
-                        if self.grid[y, x] > 0:
-                            # Asteroid
-                            value = self.grid[y, x]
-                            if self.rare_grid[y, x] == 1:
-                                # Rare asteroid with value-based color shade
-                                intensity = min(255, 180 + value // 3)
-                                color = (intensity, intensity * 0.8, 0)
-                            else:
-                                brightness = min(200, 80 + value // 3)
-                                color = (brightness, brightness, brightness)
-                            pygame.draw.rect(surface, color, rect)
+                # Draw cell content
+                if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
+                    if self.grid[y, x] > 0:
+                        # Asteroid
+                        value = self.grid[y, x]
+                        if self.rare_grid[y, x] == 1:
+                            # Rare asteroid with value-based color shade
+                            intensity = min(255, 180 + value // 3)
+                            color = (intensity, intensity * 0.8, 0)
                         else:
-                            # Empty cell - visualize energy levels
-                            energy = self.energy_grid[y, x]
-                            if energy > 0.1:
-                                # Only show significant energy
-                                alpha = int(energy * 100)
-                                color = (0, 0, int(energy * 150))
-                                s = pygame.Surface(
-                                    (rect.width, rect.height)
-                                )
-                                s.fill(color)
-                                s.set_alpha(alpha)
-                                surface.blit(s, rect)
+                            brightness = min(200, 80 + value // 3)
+                            color = (brightness, brightness, brightness)
+                        pygame.draw.rect(surface, color, rect)
+                    else:
+                        # Empty cell - visualize energy levels
+                        energy = self.energy_grid[y, x]
+                        if energy > 0.1:
+                            # Only show significant energy
+                            alpha = int(energy * 100)
+                            color = (0, 0, int(energy * 150))
+                            s = pygame.Surface((rect.width, rect.height))
+                            s.fill(color)
+                            s.set_alpha(alpha)
+                            surface.blit(s, rect)
 
                         # Draw entity on top if present
-                        if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
-                            entity = self.entity_grid[y, x]
-                            if entity > 0:
-                                race = next(
-                                    (r for r in self.races if r.race_id == entity), None
-                                )
-                                if race:
-                                    # Draw entity based on race
-                                    pygame.draw.rect(surface, race.color, rect)
+                if 0 <= y < self.height and 0 <= x < self.width:  # Extra bounds check
+                    entity = self.entity_grid[y, x]
+                    if entity > 0:
+                        if race := next(
+                            (r for r in self.races if r.race_id == entity), None
+                        ):
+                            # Draw entity based on race
+                            pygame.draw.rect(surface, race.color, rect)
 
         except Exception as e:
             logging.error(f"Error in AsteroidField.draw: {str(e)}")
             import traceback
+
             logging.error(traceback.format_exc())
 
     def draw_entities(self, surface, viewport_x, viewport_y, view_width, view_height):
@@ -868,34 +872,35 @@ class AsteroidField:
     def manual_seed(self, center_x: int, center_y: int, radius: int = 3) -> None:
         """
         Manually seed a cluster of asteroids at the specified location
-        
+
         Args:
             center_x: Center X coordinate
             center_y: Center Y coordinate
             radius: Radius of the asteroid cluster
         """
-        for y in range(center_y - radius, center_y + radius + 1):
-            for x in range(center_x - radius, center_x + radius + 1):
-                # Check if coordinates are within bounds
-                if 0 <= x < self.width and 0 <= y < self.height:
-                    # Check if cell is empty
-                    if self.grid[y, x] == 0:
-                        # Calculate distance from center
-                        dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-                        
-                        # Only place asteroids within the radius
-                        if dist <= radius:
-                            # Higher value near the center
-                            value = int(300 - (dist / radius) * 200)
-                            self.grid[y, x] = value
-                            
-                            # Add energy to seeded asteroids
-                            self.energy_grid[y, x] = 0.6 - (dist / radius) * 0.4
-                            
-                            # Small chance for rare asteroid
-                            if random.random() < self.rare_chance:
-                                self.rare_grid[y, x] = 1
-                                self.grid[y, x] = int(self.grid[y, x] * self.rare_bonus_multiplier)
+        for y, x in itertools.product(
+            range(center_y - radius, center_y + radius + 1),
+            range(center_x - radius, center_x + radius + 1),
+        ):
+            # Check if coordinates are within bounds
+            if 0 <= x < self.width and 0 <= y < self.height and self.grid[y, x] == 0:
+                dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+
+                # Only place asteroids within the radius
+                if dist <= radius:
+                    # Higher value near the center
+                    value = int(300 - (dist / radius) * 200)
+                    self.grid[y, x] = value
+
+                    # Add energy to seeded asteroids
+                    self.energy_grid[y, x] = 0.6 - (dist / radius) * 0.4
+
+                    # Small chance for rare asteroid
+                    if random.random() < self.rare_chance:
+                        self.rare_grid[y, x] = 1
+                        self.grid[y, x] = int(
+                            self.grid[y, x] * self.rare_bonus_multiplier
+                        )
 
 
 # -------------------------------------
@@ -911,12 +916,14 @@ class MinerEntity:
         self.birth_set = birth_set or {3}
         self.survival_set = survival_set or {2, 3}
         self.initial_density = initial_density
-        
+
         # Add missing attributes
         self.aggression = 0.2  # Default aggression level
         self.hunger = 0.0  # Hunger level (0-1)
         self.hunger_rate = 0.01  # Rate at which hunger increases
-        self.trait = random.choice(["adaptive", "expansive", "selective"])  # Random trait
+        self.trait = random.choice(
+            ["adaptive", "expansive", "selective"]
+        )  # Random trait
         self.population = 0
         self.fed_this_turn = False
         self.last_income = 0
@@ -927,7 +934,7 @@ class MinerEntity:
         self.evolution_stage = 1
         self.current_behavior = "feeding"  # Default behavior
         self.mining_efficiency = 0.5  # Base mining efficiency
-        
+
         # Initialize genome
         self.genome = self._initialize_genome_by_trait()
 
@@ -1250,9 +1257,7 @@ class MinerEntity:
 
             # Calculate fragmentation as number of connected components
         fragmentation = (
-            nx.number_connected_components(G) / len(G.nodes)
-            if len(G.nodes) > 0
-            else 0
+            nx.number_connected_components(G) / len(G.nodes) if len(G.nodes) > 0 else 0
         )
         return {
             "center": self.territory_center,
@@ -1326,7 +1331,9 @@ class MinerEntity:
                 asteroid_cells = []
                 asteroid_values = []
 
-                for y, x in itertools.product(range(self.field.height), range(self.field.width)):
+                for y, x in itertools.product(
+                    range(self.field.height), range(self.field.width)
+                ):
                     if self.field.grid[y, x] > 0:
                         value = field.grid[y, x]
                         if field.rare_grid[y, x] == 1:
@@ -1391,7 +1398,9 @@ class MinerEntity:
 
                         # Place symbiotes near valuable asteroids
                         radius = int(3 + value / 100)  # Higher value = larger cluster
-                        for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
+                        for dy, dx in itertools.product(
+                            range(-radius, radius + 1), range(-radius, radius + 1)
+                        ):
                             nx, ny = x + dx, y + dy
                             if 0 <= nx < field.width and 0 <= ny < field.height:
                                 dist = math.sqrt(dx * dx + dy * dy)
@@ -1437,8 +1446,7 @@ class MinerEntity:
             for j in range(i + 1, len(nodes)):
                 # Calculate euclidean distance
                 dist = math.sqrt(
-                    (nodes[i][0] - nodes[j][0]) ** 2
-                    + (nodes[i][1] - nodes[j][1]) ** 2
+                    (nodes[i][0] - nodes[j][0]) ** 2 + (nodes[i][1] - nodes[j][1]) ** 2
                 )
                 G.add_edge(i, j, weight=dist)
 
@@ -1460,7 +1468,11 @@ class MinerEntity:
             x, y = start_x, start_y
             while True:
                 # Place entity with some randomness
-                if 0 <= x < field.width and 0 <= y < field.height and (random.random() < 0.7 and field.entity_grid[y, x] == 0):
+                if (
+                    0 <= x < field.width
+                    and 0 <= y < field.height
+                    and (random.random() < 0.7 and field.entity_grid[y, x] == 0)
+                ):
                     field.entity_grid[y, x] = self.race_id
 
                 if x == end_x and y == end_y:
@@ -1482,10 +1494,13 @@ class MinerEntity:
                     for _ in range(2):
                         nx = x + random.randint(-3, 3)
                         ny = y + random.randint(-3, 3)
-                        if 0 <= nx < field.width and 0 <= ny < field.height and (
-                                                                random.random() < 0.2
-                                                                and field.entity_grid[ny, nx] == 0
-                                                            ):
+                        if (
+                            0 <= nx < field.width
+                            and 0 <= ny < field.height
+                            and (
+                                random.random() < 0.2 and field.entity_grid[ny, nx] == 0
+                            )
+                        ):
                             field.entity_grid[ny, nx] = self.race_id
                             field.entity_grid[ny, nx] = self.race_id
 
@@ -1642,10 +1657,17 @@ class Player:
         The asteroid is removed from the field.
         """
         total_value: int = 0
-        for dy, dx in itertools.product(range(-self.mining_range, self.mining_range + 1), range(-self.mining_range, self.mining_range + 1)):
+        for dy, dx in itertools.product(
+            range(-self.mining_range, self.mining_range + 1),
+            range(-self.mining_range, self.mining_range + 1),
+        ):
             mx: int = self.x + dx
             my: int = self.y + dy
-            if 0 <= mx < field.width and 0 <= my < field.height and field.grid[my, mx] > 0:
+            if (
+                0 <= mx < field.width
+                and 0 <= my < field.height
+                and field.grid[my, mx] > 0
+            ):
                 total_value += field.grid[my, mx]
                 if field.rare_grid[my, mx] == 1:
                     self.total_rare_mined += 1
@@ -1667,10 +1689,17 @@ class Player:
         if self.auto_miners <= 0:
             return 0
         total_value: int = 0
-        for dy, dx in itertools.product(range(-self.mining_range, self.mining_range + 1), range(-self.mining_range, self.mining_range + 1)):
+        for dy, dx in itertools.product(
+            range(-self.mining_range, self.mining_range + 1),
+            range(-self.mining_range, self.mining_range + 1),
+        ):
             mx: int = self.x + dx
             my: int = self.y + dy
-            if 0 <= mx < field.width and 0 <= my < field.height and field.grid[my, mx] > 0:
+            if (
+                0 <= mx < field.width
+                and 0 <= my < field.height
+                and field.grid[my, mx] > 0
+            ):
                 total_value += field.grid[my, mx]
                 if field.rare_grid[my, mx] == 1:
                     self.total_rare_mined += 1
@@ -1761,13 +1790,15 @@ class Player:
                 # Only hungry symbiotes attack
                 if race.hunger > 0.6 and not race.fed_this_turn:
                     # Check cells around ship
-                    for dy in range(-3, 4):
-                        for dx in range(-3, 4):
-                            nx, ny = ship_x + dx, ship_y + dy
-                            if 0 <= nx < field.width and 0 <= ny < field.height:
-                                if field.entity_grid[ny, nx] == race.race_id:
-                                    dist = max(1, abs(dx) + abs(dy))
-                                    attack_chance += race.hunger * (4 - dist) * 0.05
+                    for dy, dx in itertools.product(range(-3, 4), range(-3, 4)):
+                        nx, ny = ship_x + dx, ship_y + dy
+                        if (
+                            0 <= nx < field.width
+                            and 0 <= ny < field.height
+                            and field.entity_grid[ny, nx] == race.race_id
+                        ):
+                            dist = max(1, abs(dx) + abs(dy))
+                            attack_chance += race.hunger * (4 - dist) * 0.05
 
             # Check if ship is attacked
             if random.random() < attack_chance:
@@ -1795,18 +1826,23 @@ class Player:
         # Each ship mines nearby asteroids
         total_mined = 0
         for ship_x, ship_y in self.ship_positions:
-            for dy in range(-self.mining_range, self.mining_range + 1):
-                for dx in range(-self.mining_range, self.mining_range + 1):
-                    nx, ny = ship_x + dx, ship_y + dy
-                    if 0 <= nx < field.width and 0 <= ny < field.height:
-                        if field.grid[ny, nx] > 0:  # THIS IS THE FIX - using field.grid not self.grid
-                            value = field.grid[ny, nx]
-                            if field.rare_grid[ny, nx] == 1:
-                                self.total_rare_mined += 1
-                            
-                            total_mined += value
-                            field.grid[ny, nx] = 0
-                            field.rare_grid[ny, nx] = 0
+            for dy, dx in itertools.product(
+                range(-self.mining_range, self.mining_range + 1),
+                range(-self.mining_range, self.mining_range + 1),
+            ):
+                nx, ny = ship_x + dx, ship_y + dy
+                if (
+                    0 <= nx < field.width
+                    and 0 <= ny < field.height
+                    and (field.grid[ny, nx] > 0)
+                ):
+                    value = field.grid[ny, nx]
+                    if field.rare_grid[ny, nx] == 1:
+                        self.total_rare_mined += 1
+
+                    total_mined += value
+                    field.grid[ny, nx] = 0
+                    field.rare_grid[ny, nx] = 0
 
         # Calculate mining reward
         reward = int(total_mined * self.mining_efficiency)
