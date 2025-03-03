@@ -1372,6 +1372,18 @@ CODEBASE MAPPING REFERENCE
   - **File Imports**: 
     - import os
     - import sys
+
+- `src/tests/bunchmarks/benchmark_comprehensive_gpu.py`
+  - **Purpose**: Comprehensive GPU benchmarking script that provides a unified framework for benchmarking all GPU-accelerated operations across different backends, grid sizes, and configurations
+  - **File Imports**: 
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+
+- `src/tests/bunchmarks/benchmark_comprehensive_gpu_main.py`
+  - **Purpose**: Main entry point for the comprehensive GPU benchmarking script with command-line interface
+  - **File Imports**: 
+    - from benchmark_comprehensive_gpu import run_all_benchmarks, benchmark_cellular_automaton, benchmark_noise_generation, benchmark_clustering, benchmark_value_generation, benchmark_memory_transfer, visualize_benchmark_results
     - import platform
     - from src.utils.gpu_utils import CUDA_AVAILABLE, CUPY_AVAILABLE, MPS_AVAILABLE, METALGPU_AVAILABLE
     - import numpy as np
