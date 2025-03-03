@@ -70,16 +70,11 @@ def main():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
 
-    # Print current configuration
-    print("Current Dependency Configuration:")
-    for key, value in DependencyConfig.to_dict().items():
-        print(f"  {key}: {value}")
-
-    # Create and use a demo instance with default configuration
-    print("\n=== Using Default Configuration ===")
-    demo1 = NoiseGeneratorDemo()
-    demo1.generate_sample()
-
+    _dependency_handler(
+        "Current Dependency Configuration:",
+        DependencyConfig,
+        "\n=== Using Default Configuration ===",
+    )
     # Change configuration
     print("\n=== Changing Configuration ===")
     DependencyConfig.NOISE_GENERATOR_TYPE = "fallback"
@@ -92,15 +87,24 @@ def main():
         print(f"\n=== Loading Configuration from {config_path} ===")
         load_config_from_file(config_path)
 
-    # Print updated configuration
-    print("\nUpdated Dependency Configuration:")
+    _dependency_handler(
+        "\nUpdated Dependency Configuration:",
+        DependencyConfig,
+        "\n=== Using Updated Configuration ===",
+    )
+
+
+# TODO Rename this here and in `main`
+def _dependency_handler(arg0, DependencyConfig, arg2):
+    # Print current configuration
+    print(arg0)
     for key, value in DependencyConfig.to_dict().items():
         print(f"  {key}: {value}")
 
-    # Create and use a demo instance with updated configuration
-    print("\n=== Using Updated Configuration ===")
-    demo2 = NoiseGeneratorDemo()
-    demo2.generate_sample()
+    # Create and use a demo instance with default configuration
+    print(arg2)
+    demo1 = NoiseGeneratorDemo()
+    demo1.generate_sample()
 
 
 if __name__ == "__main__":
