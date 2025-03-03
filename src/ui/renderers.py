@@ -5,8 +5,8 @@ This module contains classes and functions for rendering different game elements
 in a consistent and optimized way, separating the rendering logic from the game objects.
 """
 
-
 import itertools
+
 # Standard library imports
 import math
 import random
@@ -23,7 +23,7 @@ from src.config import (
     COLOR_GRID,
     COLOR_RACE_1,
     COLOR_RACE_2,
-    COLOR_RACE_3
+    COLOR_RACE_3,
 )
 from src.ui.draw_utils import draw_text, draw_minimap
 
@@ -1091,10 +1091,7 @@ class UIStateRenderer:
         )
 
     def _render_surface_handler(self, surface):
-        if (
-            not self.fade_overlay
-            or self.fade_overlay.get_size() != surface.get_size()
-        ):
+        if not self.fade_overlay or self.fade_overlay.get_size() != surface.get_size():
             self.fade_overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
         self.fade_overlay.fill((0, 0, 0, self.fade_alpha))

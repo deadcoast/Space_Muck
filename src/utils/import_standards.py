@@ -49,14 +49,33 @@ Guidelines:
 
 # Standard import categories
 STDLIB_MODULES = [
-    "abc", "argparse", "collections", "copy", "datetime", "functools", 
-    "inspect", "itertools", "json", "logging", "math", "os", "random", 
-    "re", "sys", "time", "uuid"
+    "abc",
+    "argparse",
+    "collections",
+    "copy",
+    "datetime",
+    "functools",
+    "inspect",
+    "itertools",
+    "json",
+    "logging",
+    "math",
+    "os",
+    "random",
+    "re",
+    "sys",
+    "time",
+    "uuid",
 ]
 
 # Common third-party libraries
 THIRD_PARTY_MODULES = [
-    "numpy", "scipy", "perlin_noise", "matplotlib", "pandas", "pytest"
+    "numpy",
+    "scipy",
+    "perlin_noise",
+    "matplotlib",
+    "pandas",
+    "pytest",
 ]
 
 # Optional dependencies and their fallbacks
@@ -64,41 +83,42 @@ OPTIONAL_DEPENDENCIES = {
     "perlin_noise": {
         "import_statement": "from perlin_noise import PerlinNoise",
         "availability_flag": "PERLIN_AVAILABLE",
-        "fallback_message": "PerlinNoise package is not available. Using fallback noise generator."
+        "fallback_message": "PerlinNoise package is not available. Using fallback noise generator.",
     },
     "scipy": {
         "import_statement": "import scipy.ndimage as ndimage",
         "availability_flag": "SCIPY_AVAILABLE",
-        "fallback_message": "scipy not available, using fallback implementation."
-    }
+        "fallback_message": "scipy not available, using fallback implementation.",
+    },
 }
+
 
 def generate_standard_imports(
     stdlib_imports: List[str],
     third_party_imports: List[str],
     local_imports: List[str],
-    optional_imports: List[str] = None
+    optional_imports: List[str] = None,
 ) -> str:
     """
     Generate standardized import statements.
-    
+
     Args:
         stdlib_imports: List of standard library imports
         third_party_imports: List of third-party library imports
         local_imports: List of local application imports
         optional_imports: List of optional dependencies to handle with try/except
-        
+
     Returns:
         String containing formatted import statements
     """
     import_str = "# Standard library imports\n"
     if stdlib_imports:
         import_str += "\n".join(sorted(stdlib_imports)) + "\n"
-    
+
     import_str += "\n# Third-party library imports\n"
     if third_party_imports:
         import_str += "\n".join(sorted(third_party_imports)) + "\n"
-    
+
     if optional_imports:
         import_str += "\n# Optional dependencies\n"
         for opt_import in optional_imports:
@@ -108,10 +128,10 @@ def generate_standard_imports(
                 import_str += f"    {dep_info['availability_flag']} = True\n"
                 import_str += "except ImportError:\n"
                 import_str += f"    {dep_info['availability_flag']} = False\n"
-                import_str += f"    print(\"{dep_info['fallback_message']}\")\n\n"
-    
+                import_str += f'    print("{dep_info["fallback_message"]}")\n\n'
+
     import_str += "\n# Local application imports\n"
     if local_imports:
         import_str += "\n".join(sorted(local_imports)) + "\n"
-    
+
     return import_str

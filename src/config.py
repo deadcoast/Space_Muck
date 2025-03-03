@@ -15,6 +15,7 @@ BUILD_DATE: str = "2025-03-01"
 CELL_SIZE: int = 8  # Smaller cells for larger world
 GRID_WIDTH: int = 400  # Much larger grid for extensive exploration
 GRID_HEIGHT: int = 300
+GAME_MAP_SIZE: Tuple[int, int] = (GRID_WIDTH, GRID_HEIGHT)  # Size of the game map
 WINDOW_WIDTH: int = 1600  # Fixed window size
 WINDOW_HEIGHT: int = 1200
 VIEW_WIDTH: int = WINDOW_WIDTH // CELL_SIZE  # Visible grid cells
@@ -61,10 +62,10 @@ COLOR_RACE_5: Tuple[int, int, int] = (200, 50, 50)  # Red race - for future expa
 
 # Entity behavior colors
 COLOR_ENTITY_DEFAULT: Tuple[int, int, int] = (180, 180, 180)  # Default gray
-COLOR_ENTITY_FEEDING: Tuple[int, int, int] = (0, 200, 0)      # Green for feeding
+COLOR_ENTITY_FEEDING: Tuple[int, int, int] = (0, 200, 0)  # Green for feeding
 COLOR_ENTITY_EXPANDING: Tuple[int, int, int] = (0, 100, 255)  # Blue for expanding
 COLOR_ENTITY_MIGRATING: Tuple[int, int, int] = (255, 165, 0)  # Orange for migrating
-COLOR_ENTITY_AGGRESSIVE: Tuple[int, int, int] = (255, 0, 0)   # Red for aggressive
+COLOR_ENTITY_AGGRESSIVE: Tuple[int, int, int] = (255, 0, 0)  # Red for aggressive
 
 # Game States
 STATE_PLAY: str = "PLAY"
@@ -97,6 +98,56 @@ DEFAULT_BIRTH_SET: set = {3}  # Default cells born with this many neighbors
 DEFAULT_SURVIVAL_SET: set = {2, 3}  # Default cells survive with this many neighbors
 ENERGY_DIFFUSION_RATE: float = 0.05  # Rate at which energy diffuses
 ENERGY_DECAY_RATE: float = 0.01  # Rate at which energy decays
+
+# Combat system settings
+COMBAT_BASE_ATTACK_POWER: int = 10  # Base attack power for level 1 weapons
+COMBAT_BASE_ATTACK_SPEED: float = 1.0  # Base attacks per time unit
+COMBAT_BASE_WEAPON_RANGE: int = 5  # Base weapon range in grid units
+COMBAT_BASE_CRIT_CHANCE: float = 0.05  # 5% base critical hit chance
+COMBAT_CRIT_MULTIPLIER: float = 2.0  # Critical hits do double damage
+
+COMBAT_BASE_SHIELD_STRENGTH: int = 50  # Base shield points
+COMBAT_BASE_SHIELD_RECHARGE: float = 1.0  # Shield points recharged per time unit
+COMBAT_BASE_HULL_STRENGTH: int = 100  # Base hull integrity points
+COMBAT_BASE_EVASION: float = 0.1  # 10% base chance to evade attacks
+COMBAT_BASE_ARMOR: float = 0.05  # 5% base damage reduction
+
+COMBAT_WEAPON_UPGRADE_COST: List[int] = [
+    0,
+    1500,
+    4000,
+    10000,
+    20000,
+]  # Costs for weapon levels 1-5
+COMBAT_SHIELD_UPGRADE_COST: List[int] = [
+    0,
+    2000,
+    5000,
+    12000,
+    25000,
+]  # Costs for shield levels 1-5
+COMBAT_HULL_UPGRADE_COST: List[int] = [
+    0,
+    3000,
+    7000,
+    15000,
+    30000,
+]  # Costs for hull levels 1-5
+
+COMBAT_ENEMY_TYPES: List[str] = [
+    "pirate",
+    "patrol",
+    "mercenary",
+    "elite",
+]  # Types of enemy ships
+COMBAT_DIFFICULTY_MULTIPLIER: Dict[
+    str, float
+] = {  # Difficulty multipliers for enemy stats
+    "easy": 0.8,
+    "medium": 1.0,
+    "hard": 1.3,
+    "elite": 1.8,
+}
 
 # Player settings
 PLAYER_START_CURRENCY: int = 100  # Starting currency

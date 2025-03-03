@@ -19,6 +19,7 @@ from sklearn.cluster import KMeans
 # Optional dependencies
 try:
     from perlin_noise import PerlinNoise
+
     PERLIN_AVAILABLE = True
 except ImportError:
     PERLIN_AVAILABLE = False
@@ -27,10 +28,17 @@ except ImportError:
 # Local application imports
 from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 from src.config import (
-    COLOR_RACE_1, COLOR_RACE_2, COLOR_RACE_3,
-    COLOR_ENTITY_DEFAULT, COLOR_ENTITY_FEEDING, COLOR_ENTITY_EXPANDING,
-    COLOR_ENTITY_MIGRATING, COLOR_ENTITY_AGGRESSIVE,
-    WINDOW_HEIGHT, WINDOW_WIDTH, CELL_SIZE as GRID_CELL_SIZE
+    COLOR_RACE_1,
+    COLOR_RACE_2,
+    COLOR_RACE_3,
+    COLOR_ENTITY_DEFAULT,
+    COLOR_ENTITY_FEEDING,
+    COLOR_ENTITY_EXPANDING,
+    COLOR_ENTITY_MIGRATING,
+    COLOR_ENTITY_AGGRESSIVE,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+    CELL_SIZE as GRID_CELL_SIZE,
 )
 from src.entities.base_entity import BaseEntity
 from src.utils.logging_setup import log_exception
@@ -80,8 +88,12 @@ class MinerEntity(BaseEntity):
                 color = COLOR_RACE_3
             else:
                 # Default color for any other race IDs
-                color = (random.randint(50, 200), random.randint(50, 200), random.randint(50, 200))
-        
+                color = (
+                    random.randint(50, 200),
+                    random.randint(50, 200),
+                    random.randint(50, 200),
+                )
+
         # Call the parent class constructor
         super().__init__(
             entity_id=str(race_id), entity_type="miner", color=color, position=position
@@ -327,35 +339,37 @@ class MinerEntity(BaseEntity):
 
     def _generate_random_nodes(self, field: AsteroidField) -> None:
         """Generate entities in a network pattern using NetworkX.
-        
+
         Creates a connected network of colony nodes and places entities along paths
         between nodes and in clusters around node centers.
-        
+
         Args:
             field: The asteroid field where entities will be placed
         """
         # Step 1: Generate colony network
         colony_graph, colony_centers = self._create_colony_network(field)
-        
+
         # Step 2: Place entities along network paths
         self._place_entities_on_paths(colony_graph, field)
-        
+
         # Step 3: Create clusters around colony centers
         self._create_colony_clusters(colony_graph, field)
-    
-    def _create_colony_network(self, field: AsteroidField) -> Tuple[nx.Graph, List[Tuple[int, int]]]:
+
+    def _create_colony_network(
+        self, field: AsteroidField
+    ) -> Tuple[nx.Graph, List[Tuple[int, int]]]:
         """Create a connected network of colony nodes.
-        
+
         Returns:
             Tuple containing (NetworkX graph, list of node positions)
         """
         # Create empty graph
         colony_graph = nx.Graph()
-        
+
         # Determine number of colony centers (3-8) using Poisson distribution
         num_nodes = stats.poisson.rvs(4)  # Mean of 4 nodes
         num_nodes = max(3, min(8, num_nodes))  # Ensure between 3-8 nodes
-        
+
         # Generate node positions
         colony_centers = []
         for _ in range(num_nodes):
@@ -364,74 +378,80 @@ class MinerEntity(BaseEntity):
             x_min, x_max = field.width // 5, field.width * 4 // 5
             x_a = (x_min - x_mean) / x_std
             x_b = (x_max - x_mean) / x_std
-            
+
             # Generate x position
             x = int(stats.truncnorm.rvs(x_a, x_b, loc=x_mean, scale=x_std))
-            
+
             # Similar calculation for y position
             y_mean, y_std = field.height // 2, field.height // 4
             y_min, y_max = field.height // 5, field.height * 4 // 5
             y_a = (y_min - y_mean) / y_std
             y_b = (y_max - y_mean) / y_std
-            
+
             # Generate y position
             y = int(stats.truncnorm.rvs(y_a, y_b, loc=y_mean, scale=y_std))
-            
+
             colony_centers.append((x, y))
             colony_graph.add_node((x, y))
-        
+
         # Connect nodes with 70% probability
         self._connect_nodes(colony_graph, colony_centers)
-        
+
         # Ensure the graph is fully connected
         self._ensure_connected_graph(colony_graph, colony_centers)
-        
+
         return colony_graph, colony_centers
-    
+
     def _connect_nodes(self, graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
         """Connect nodes with a 70% probability."""
         CONNECTION_PROBABILITY = 0.7
-        
+
         for i in range(len(nodes)):
             for j in range(i + 1, len(nodes)):
                 if random.random() < CONNECTION_PROBABILITY:
                     graph.add_edge(nodes[i], nodes[j])
-    
-    def _ensure_connected_graph(self, graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
+
+    def _ensure_connected_graph(
+        self, graph: nx.Graph, nodes: List[Tuple[int, int]]
+    ) -> None:
         """Ensure the graph is fully connected by connecting components."""
         # Skip if already connected or empty
         if len(nodes) <= 1 or nx.is_connected(graph):
             return
-        
+
         # Find connected components
         components = list(nx.connected_components(graph))
-        
+
         # Connect each component to the largest one
         largest_component = max(components, key=len)
-        
+
         for component in components:
             if component != largest_component:
                 self._connect_components(graph, component, largest_component)
-    
-    def _connect_components(self, graph: nx.Graph, component1: Set, component2: Set) -> None:
+
+    def _connect_components(
+        self, graph: nx.Graph, component1: Set, component2: Set
+    ) -> None:
         """Connect two components by adding an edge between their closest nodes."""
         min_dist = float("inf")
         closest_pair = None
-        
+
         # Find the closest pair of nodes between components
         for node1 in component1:
             for node2 in component2:
                 # Calculate Euclidean distance
-                dist = math.sqrt((node1[0] - node2[0])**2 + (node1[1] - node2[1])**2)
-                
+                dist = math.sqrt(
+                    (node1[0] - node2[0]) ** 2 + (node1[1] - node2[1]) ** 2
+                )
+
                 if dist < min_dist:
                     min_dist = dist
                     closest_pair = (node1, node2)
-        
+
         # Connect the closest nodes
         if closest_pair:
             graph.add_edge(closest_pair[0], closest_pair[1])
-    
+
     def _place_entities_on_paths(self, graph: nx.Graph, field: AsteroidField) -> None:
         """Place entities along the paths between colony nodes."""
         PATH_DENSITY_MULTIPLIER = 5.0
@@ -451,37 +471,41 @@ class MinerEntity(BaseEntity):
                     nx, ny = x + dx, y + dy
 
                     # Check if position is valid and empty
-                    if (self._is_valid_position(nx, ny, field) and 
-                            field.entity_grid[ny, nx] == 0 and
-                            random.random() < self.initial_density * PATH_DENSITY_MULTIPLIER):
+                    if (
+                        self._is_valid_position(nx, ny, field)
+                        and field.entity_grid[ny, nx] == 0
+                        and random.random()
+                        < self.initial_density * PATH_DENSITY_MULTIPLIER
+                    ):
                         field.entity_grid[ny, nx] = self.race_id
-    
-    def _get_line_points(self, start: Tuple[int, int], end: Tuple[int, int], 
-                         field: AsteroidField) -> List[Tuple[int, int]]:
+
+    def _get_line_points(
+        self, start: Tuple[int, int], end: Tuple[int, int], field: AsteroidField
+    ) -> List[Tuple[int, int]]:
         """Get points along a line using Bresenham's line algorithm."""
         x1, y1 = start
         x2, y2 = end
         line_points = []
-        
+
         # Bresenham's line algorithm
         dx = abs(x2 - x1)
         dy = abs(y2 - y1)
         sx = 1 if x1 < x2 else -1
         sy = 1 if y1 < y2 else -1
         err = dx - dy
-        
+
         # Current position
         x, y = x1, y1
-        
+
         while True:
             # Add point if within field boundaries
             if self._is_valid_position(x, y, field):
                 line_points.append((x, y))
-            
+
             # Exit condition
             if x == x2 and y == y2:
                 break
-            
+
             # Update position
             e2 = 2 * err
             if e2 > -dy:
@@ -490,9 +514,9 @@ class MinerEntity(BaseEntity):
             if e2 < dx:
                 err += dx
                 y += sy
-        
+
         return line_points
-    
+
     def _create_colony_clusters(self, graph: nx.Graph, field: AsteroidField) -> None:
         """Create clusters of entities around colony centers."""
         CLUSTER_DENSITY_MULTIPLIER = 2.0
@@ -502,20 +526,29 @@ class MinerEntity(BaseEntity):
             radius = random.randint(3, 6)
 
             # Create a circular cluster around the node
-            for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
+            for dy, dx in itertools.product(
+                range(-radius, radius + 1), range(-radius, radius + 1)
+            ):
                 nx, ny = x + dx, y + dy
 
                 # Check if position is valid and empty
-                if self._is_valid_position(nx, ny, field) and field.entity_grid[ny, nx] == 0:
+                if (
+                    self._is_valid_position(nx, ny, field)
+                    and field.entity_grid[ny, nx] == 0
+                ):
                     # Calculate distance from center
                     dist = math.sqrt(dx**2 + dy**2)
 
                     # Higher probability closer to center
-                    if (dist <= radius and 
-                            random.random() < self.initial_density * 
-                            CLUSTER_DENSITY_MULTIPLIER * (1 - dist/radius)):
+                    if (
+                        dist <= radius
+                        and random.random()
+                        < self.initial_density
+                        * CLUSTER_DENSITY_MULTIPLIER
+                        * (1 - dist / radius)
+                    ):
                         field.entity_grid[ny, nx] = self.race_id
-    
+
     def _is_valid_position(self, x: int, y: int, field: AsteroidField) -> bool:
         """Check if a position is within field boundaries."""
         return 0 <= x < field.width and 0 <= y < field.height
@@ -566,14 +599,16 @@ class MinerEntity(BaseEntity):
                         f"Race {self.race_id} {mutation_type} {attr} "
                         f"from {old_value:.2f} to {self.genome[attr]:.2f}"
                     )
-                    
+
     def mutate(self) -> None:
         """Mutate the entity's genome with a small probability using scipy.stats distributions."""
         for key in self.genome:
             # Use scipy.stats for more sophisticated mutation probability
             # Beta distribution gives more control over mutation frequency
-            mutation_probability = stats.beta.rvs(2, 18)  # Using scipy.stats beta distribution
-            
+            mutation_probability = stats.beta.rvs(
+                2, 18
+            )  # Using scipy.stats beta distribution
+
             if random.random() < mutation_probability:  # Typically around 10% chance
                 # Use scipy.stats normal distribution for mutation strength
                 mutation_strength = stats.norm.rvs(loc=1.0, scale=0.1)
@@ -688,25 +723,25 @@ class MinerEntity(BaseEntity):
         distances = np.sqrt(
             np.sum((points - np.array([center_x, center_y])) ** 2, axis=1)
         )
-        
+
         # Use scipy.stats to analyze the distribution of entity distances
         # Calculate statistical properties of the territory
         distance_stats = {
-            'mean': np.mean(distances),
-            'median': np.median(distances),
-            'std': np.std(distances),
-            'skewness': stats.skew(distances),  # Using scipy.stats for skewness
-            'kurtosis': stats.kurtosis(distances)  # Using scipy.stats for kurtosis
+            "mean": np.mean(distances),
+            "median": np.median(distances),
+            "std": np.std(distances),
+            "skewness": stats.skew(distances),  # Using scipy.stats for skewness
+            "kurtosis": stats.kurtosis(distances),  # Using scipy.stats for kurtosis
         }
-        
+
         # Store territory metrics based on statistical analysis
         self.territory_center = (int(center_x), int(center_y))
         self.territory_radius = int(np.max(distances))
         self.territory_density = len(points) / (math.pi * self.territory_radius**2)
-        
+
         # Use skewness to determine if entities are clustered toward center or edge
         # Negative skew means more entities near the edge
-        self.territory_centrality = -distance_stats['skewness']
+        self.territory_centrality = -distance_stats["skewness"]
 
         return {
             "center": self.territory_center,
@@ -715,7 +750,7 @@ class MinerEntity(BaseEntity):
             "resource_access": 0,
             "fragmentation": 0,
             "centrality": self.territory_centrality,
-            "distance_stats": distance_stats
+            "distance_stats": distance_stats,
         }
 
     # Helper method for territory analysis
@@ -797,7 +832,9 @@ class MinerEntity(BaseEntity):
         if self.hunger < 0.5 and self.population < 100:
             # Use beta distribution to model expansion probability
             # Higher when hunger is low and population is low
-            expansion_factor = stats.beta.pdf(self.hunger, 2, 5) * stats.beta.pdf(self.population/200, 2, 5)
+            expansion_factor = stats.beta.pdf(self.hunger, 2, 5) * stats.beta.pdf(
+                self.population / 200, 2, 5
+            )
             behavior_probabilities["expanding"] = expansion_factor
 
         # Calculate resource density if we have territory data
@@ -852,7 +889,9 @@ class MinerEntity(BaseEntity):
 
             # Use exponential distribution to model migration probability
             # Higher when resources are scarce
-            migration_factor = stats.expon.pdf(resource_density * 20) * stats.norm.cdf(self.population, loc=150, scale=50)
+            migration_factor = stats.expon.pdf(resource_density * 20) * stats.norm.cdf(
+                self.population, loc=150, scale=50
+            )
             behavior_probabilities["migrating"] = migration_factor
 
     def evolve(self) -> Dict[str, Any]:
@@ -910,7 +949,7 @@ class MinerEntity(BaseEntity):
         # Random mutations to other traits using scipy.stats distributions
         for key in self.genome:
             # Use scipy.stats beta distribution for more controlled mutation rate
-            if random.random() < stats.beta.rvs(self.genome["mutation_rate"]*20, 2):
+            if random.random() < stats.beta.rvs(self.genome["mutation_rate"] * 20, 2):
                 # Use scipy.stats normal distribution for mutation strength
                 mutation_strength = stats.norm.rvs(loc=1.0, scale=0.1)
                 self.genome[key] = max(
@@ -921,7 +960,7 @@ class MinerEntity(BaseEntity):
         """Draw race specific information on the surface."""
         # Get the appropriate color based on current behavior
         behavior_color = COLOR_ENTITY_DEFAULT  # Default gray
-        
+
         if self.current_behavior == "feeding":
             behavior_color = COLOR_ENTITY_FEEDING  # Green for feeding
         elif self.current_behavior == "expanding":
@@ -930,22 +969,28 @@ class MinerEntity(BaseEntity):
             behavior_color = COLOR_ENTITY_MIGRATING  # Orange for migrating
         elif self.current_behavior == "aggressive":
             behavior_color = COLOR_ENTITY_AGGRESSIVE  # Red for aggressive
-            
+
         # Draw entity with behavior color
         if self.territory_center:
             cx, cy = self.territory_center
-            pygame.draw.circle(surface, behavior_color, (cx * GRID_CELL_SIZE, cy * GRID_CELL_SIZE), 5)
-            
+            pygame.draw.circle(
+                surface, behavior_color, (cx * GRID_CELL_SIZE, cy * GRID_CELL_SIZE), 5
+            )
+
         # Draw status bar at the top of the screen using WINDOW_WIDTH for positioning
         self.draw_status_bar(surface)
 
     def draw_population(self, surface: pygame.Surface, index: int) -> None:
         """Draw population stats on the surface."""
-        if not self.territory_center or not hasattr(self, 'population') or self.population <= 0:
+        if (
+            not self.territory_center
+            or not hasattr(self, "population")
+            or self.population <= 0
+        ):
             return
 
         # Calculate statistical properties for visualization
-        if hasattr(self, 'entity_locations') and self.entity_locations is not None:
+        if hasattr(self, "entity_locations") and self.entity_locations is not None:
             entity_count = np.sum(self.entity_locations > 0)
             if entity_count > 5:
                 self._draw_population_handler(index, surface)
@@ -953,9 +998,7 @@ class MinerEntity(BaseEntity):
     def _draw_population_handler(self, index, surface):
         # Use scipy.stats to generate a kernel density estimate for visualization
         # This would show the distribution of entities in the territory
-        points = np.column_stack(
-            np.where(self.entity_locations > 0)
-        )
+        points = np.column_stack(np.where(self.entity_locations > 0))
 
         # Draw basic stats
         # Position stats in the bottom-left corner with proper spacing
@@ -991,45 +1034,64 @@ class MinerEntity(BaseEntity):
 
     def _confidence_interval_handler(self, points, surface, x_offset, y_offset):
         # Calculate confidence intervals using scipy.stats
-        density_ci = stats.norm.interval(0.95, 
-                                        loc=self.territory_density,
-                                        scale=self.territory_density/math.sqrt(len(points)))
+        density_ci = stats.norm.interval(
+            0.95,
+            loc=self.territory_density,
+            scale=self.territory_density / math.sqrt(len(points)),
+        )
 
         # Format and display statistics with confidence interval and behavior
         ci_lower, ci_upper = density_ci
         stats_text = f"Race {self.race_id}: Pop {self.population} | Behavior: {self.current_behavior} | Density: {self.territory_density:.2f} [{ci_lower:.2f}-{ci_upper:.2f}]"
         pygame.font.init()
-        font = pygame.font.SysFont('Arial', 12)
+        font = pygame.font.SysFont("Arial", 12)
         text_surface = font.render(stats_text, True, (255, 255, 255))
         surface.blit(text_surface, (x_offset + 20, y_offset))
-        
+
     def draw_status_bar(self, surface: pygame.Surface) -> None:
         """Draw a status bar at the top of the screen showing entity metrics."""
         if self.population <= 0:
             return
-            
+
         # Use WINDOW_WIDTH to position the status bar
         bar_width = 200
         bar_height = 15
         x_position = WINDOW_WIDTH - bar_width - 20 - (self.race_id * 220)
         y_position = 10
-        
+
         # Draw background
-        pygame.draw.rect(surface, (50, 50, 50), (x_position, y_position, bar_width, bar_height))
-        
+        pygame.draw.rect(
+            surface, (50, 50, 50), (x_position, y_position, bar_width, bar_height)
+        )
+
         # Calculate metrics
         hunger_width = int(self.hunger * bar_width)
         aggression_width = int(self.aggression * bar_width)
-        
+
         # Draw hunger bar (red)
-        pygame.draw.rect(surface, (200, 0, 0), (x_position, y_position, hunger_width, bar_height // 2))
-        
+        pygame.draw.rect(
+            surface,
+            (200, 0, 0),
+            (x_position, y_position, hunger_width, bar_height // 2),
+        )
+
         # Draw aggression bar (orange)
-        pygame.draw.rect(surface, (255, 165, 0), (x_position, y_position + bar_height // 2, aggression_width, bar_height // 2))
-        
+        pygame.draw.rect(
+            surface,
+            (255, 165, 0),
+            (
+                x_position,
+                y_position + bar_height // 2,
+                aggression_width,
+                bar_height // 2,
+            ),
+        )
+
         # Draw race indicator
-        pygame.draw.rect(surface, self.color, (x_position - 20, y_position, 15, bar_height))
-        
+        pygame.draw.rect(
+            surface, self.color, (x_position - 20, y_position, 15, bar_height)
+        )
+
         # Draw behavior indicator
         behavior_color = COLOR_ENTITY_DEFAULT
         if self.current_behavior == "feeding":
@@ -1040,12 +1102,16 @@ class MinerEntity(BaseEntity):
             behavior_color = COLOR_ENTITY_MIGRATING
         elif self.current_behavior == "aggressive":
             behavior_color = COLOR_ENTITY_AGGRESSIVE
-            
-        pygame.draw.rect(surface, behavior_color, (x_position - 20, y_position + bar_height + 5, 15, bar_height))
-        
+
+        pygame.draw.rect(
+            surface,
+            behavior_color,
+            (x_position - 20, y_position + bar_height + 5, 15, bar_height),
+        )
+
         # Draw text
         pygame.font.init()
-        font = pygame.font.SysFont('Arial', 10)
+        font = pygame.font.SysFont("Arial", 10)
         text = f"Race {self.race_id}: {self.population}"
         text_surface = font.render(text, True, (255, 255, 255))
         surface.blit(text_surface, (x_position, y_position + bar_height + 5))

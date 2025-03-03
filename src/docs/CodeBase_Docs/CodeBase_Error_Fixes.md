@@ -268,7 +268,59 @@ if self.width * self.height > 10000:  # Threshold for large grids
 - All optimizations include fallback mechanisms for environments without required dependencies
 - The optimizations maintain backward compatibility with existing code
 
-## 10. [cellular_automaton_optimization.py](#entity_system)
+## 10. [test_miner_entity.py](#unit_testing)
+
+ERROR: Inefficient test patterns and linting warnings in MinerEntity test suite
+CORRECTION: Refactored tests to address Sourcery linting warnings and improve test efficiency
+
+## 11. [trading_system.py](#systems) and [test_player.py](#unit_testing)
+
+ERROR: Linting warnings for unused imports and unused variable assignments
+CORRECTION: Removed unused imports (Set) and commented out unused variables (faction_id). Removed unused variable assignments in test files where the result of function calls was stored but never used.
+
+```python
+# Before: Using loops in tests (anti-pattern)
+def test_process_minerals(self):
+    minerals_list = [1, 5, 10, 20, 50]
+    for minerals in minerals_list:
+        # Test logic with conditional checks
+        if minerals < 10:
+            # Assertions for small mineral amounts
+            self.assertLess(result, threshold)
+        else:
+            # Assertions for large mineral amounts
+            self.assertGreater(result, threshold)
+
+# After: Using individual test methods and vectorized operations
+def test_process_minerals(self):
+    # Test each case with a dedicated helper method
+    self._process_minerals_handler(1, False, -1)
+    self._process_minerals_handler(5, False, -1)
+    self._process_minerals_handler(10, True, 0)
+    self._process_minerals_handler(20, True, 1)
+    self._process_minerals_handler(50, True, 2)
+
+# Helper method for cleaner testing
+def _process_minerals_handler(self, minerals, expected_fed, expected_population_change):
+    # Direct assertions without conditionals
+    miner = self._create_test_miner()
+    initial_population = miner.population
+    miner.process_minerals(minerals)
+    self.assertEqual(miner.fed, expected_fed)
+    self.assertEqual(miner.population, initial_population + expected_population_change)
+```
+
+### Additional Notes
+
+- Replaced loops in test methods with individual test calls to ensure test independence
+- Removed conditional statements in tests to make failures more explicit
+- Used vectorized operations with numpy instead of loops for resource creation
+- Fixed unused variable warnings by ensuring all variables are properly used
+- Added proper error handling and more descriptive assertions
+- Set up linting tools (ruff, flake8, pylint, sourcery) in a virtual environment
+- These improvements make the tests more reliable and maintainable
+
+## 11. [cellular_automaton_optimization.py](#entity_system)
 
 ERROR: Inefficient cellular automaton implementation using nested loops
 CORRECTION: Implemented vectorized operations using NumPy for significant performance improvements.

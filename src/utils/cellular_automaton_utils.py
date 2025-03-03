@@ -6,8 +6,8 @@ This module provides common cellular automaton functions that can be used
 by different generator classes to avoid code duplication.
 """
 
-
 import itertools
+
 # Standard library imports
 from typing import Any, Dict, Set, Tuple
 
@@ -17,10 +17,13 @@ import numpy as np
 # Optional dependencies
 try:
     import scipy.ndimage as ndimage
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-    print("Warning: scipy not available, using fallback implementation for optimized cellular automaton")
+    print(
+        "Warning: scipy not available, using fallback implementation for optimized cellular automaton"
+    )
 
 
 def apply_cellular_automaton(
@@ -126,8 +129,13 @@ def apply_cellular_automaton_optimized(
         # Fallback to standard implementation if scipy is not available
         height, width = grid.shape
         return apply_cellular_automaton(
-            grid, birth_set, survival_set, iterations=1, 
-            wrap=True, width=width, height=height
+            grid,
+            birth_set,
+            survival_set,
+            iterations=1,
+            wrap=True,
+            width=width,
+            height=height,
         )
 
 
