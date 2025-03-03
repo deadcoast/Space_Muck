@@ -4,6 +4,7 @@ SymbioteEvolutionAlgorithm: Advanced algorithm for symbiote race evolution.
 
 import numpy as np
 import scipy.ndimage as ndimage
+from typing import Tuple, List, cast
 
 
 class SymbioteEvolutionAlgorithm:
@@ -157,7 +158,10 @@ class SymbioteEvolutionAlgorithm:
     def simulate_colony_interaction(self, grid, genome, aggression):
         """Simulate interaction between different colonies of the same race."""
         # Identify colonies
-        labeled_grid, num_colonies = ndimage.label(grid)
+        # Use cast to tell type checker that ndimage.label returns a tuple of (ndarray, int)
+        label_result = cast(Tuple[np.ndarray, int], ndimage.label(grid))
+        labeled_grid = label_result[0]  # This is a numpy array
+        num_colonies = label_result[1]  # This is an integer
 
         if num_colonies <= 1:
             return grid
@@ -182,8 +186,12 @@ class SymbioteEvolutionAlgorithm:
                     grid[death_mask] = 0
         else:
             # Cooperation: colonies may bridge together
-            centers = ndimage.center_of_mass(
-                grid, labeled_grid, range(1, num_colonies + 1)
+            # Calculate centers of mass for each colony
+            centers = cast(
+                List[Tuple[float, float]],
+                ndimage.center_of_mass(
+                    grid, labeled_grid, range(1, num_colonies + 1)
+                )
             )
 
             # Try to connect nearby colonies
@@ -191,16 +199,43 @@ class SymbioteEvolutionAlgorithm:
                 for j in range(i + 1, num_colonies):
                     center1 = centers[i]
                     center2 = centers[j]
+                    # Calculate distance between colony centers
                     distance = np.sqrt(
-                        ((center1[0] - center2[0]) ** 2)
-                        + ((center1[1] - center2[1]) ** 2)
+                        ((center1[0] - center2[0]) ** 2) + 
+                        ((center1[1] - center2[1]) ** 2)
                     )
+                    
+                    # If colonies are close enough, create a bridge between them
+                    if distance < 20:  # Threshold for cooperation
+                        # Create a line between centers
+                        steps = int(distance * 1.5)  # More points for smoother line
+                        if steps > 0:
+                            x_points = np.linspace(center1[0], center2[0], steps)
+                            y_points = np.linspace(center1[1], center2[1], steps)
+                            
+                            # Create bridge with some randomness
+                            for k in range(steps):
+                                x = int(round(x_points[k]))
+                                y = int(round(y_points[k]))
+                                
+                                # Ensure coordinates are within grid bounds
+                                if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1] and np.random.random() < 0.7:
+                                    grid[x, y] = 1
 
         return grid
 
-    def identify_colonies(self, grid):
-        """Identify distinct colonies in the grid."""
-        return ndimage.label(grid)
+    def identify_colonies(self, grid) -> Tuple[np.ndarray, int]:
+        """Identify distinct colonies in the grid.
+        
+        Returns:
+            tuple: (labeled_grid, num_colonies) where labeled_grid is a numpy array 
+                  with the same shape as grid, and num_colonies is the number of colonies found.
+        """
+        # Use cast to tell type checker that ndimage.label returns a tuple of (ndarray, int)
+        label_result = cast(Tuple[np.ndarray, int], ndimage.label(grid))
+        labeled_grid = label_result[0]  # This is a numpy array
+        num_colonies = label_result[1]  # This is an integer
+        return labeled_grid, num_colonies
 
     def get_colony_stats(self, grid, labeled_grid, num_colonies):
         """Get statistics for each colony."""

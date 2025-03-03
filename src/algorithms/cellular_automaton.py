@@ -4,6 +4,7 @@ Cellular automaton algorithms for procedural generation.
 
 import numpy as np
 import scipy.signal as signal
+from typing import Optional
 
 
 def count_neighbors(grid: np.ndarray) -> np.ndarray:
@@ -23,7 +24,7 @@ def count_neighbors(grid: np.ndarray) -> np.ndarray:
 
 
 def apply_life_rules(
-    grid: np.ndarray, birth_set: set, survival_set: set, energy_grid: np.ndarray = None
+    grid: np.ndarray, birth_set: set, survival_set: set, energy_grid: Optional[np.ndarray] = None
 ) -> np.ndarray:
     """
     Apply Conway's Game of Life rules with custom birth and survival sets.

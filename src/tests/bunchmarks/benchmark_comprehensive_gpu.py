@@ -18,7 +18,12 @@ import platform
 import importlib.util
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, TYPE_CHECKING
+
+# For type checking only - these imports are not executed at runtime
+if TYPE_CHECKING:
+    import cupy
+    import torch
 
 # Note: This benchmarking script requires optional dependencies:
 # - cupy: For CUDA-based GPU acceleration
@@ -59,7 +64,7 @@ class DummyModule:
 cp = DummyModule()  # Default to dummy module
 if CUPY_AVAILABLE:
     try:
-        import cupy as cp
+        import cupy as cp  # type: ignore
         logging.info("Successfully imported CuPy for CUDA acceleration")
     except ImportError as e:
         logging.warning(f"Failed to import CuPy despite being found: {e}")
@@ -68,7 +73,7 @@ if CUPY_AVAILABLE:
 torch = DummyModule()  # Default to dummy module
 if TORCH_AVAILABLE:
     try:
-        import torch
+        import torch  # type: ignore
         logging.info(f"Successfully imported PyTorch {torch.__version__} for GPU acceleration")
     except ImportError as e:
         logging.warning(f"Failed to import PyTorch despite being found: {e}")

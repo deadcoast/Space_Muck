@@ -22,6 +22,8 @@ try:
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
+    # Define np as None to avoid unbound variable errors
+    np = None
     print("numpy not available. Using fallback random generation.")
 
 # Import the generator
@@ -124,26 +126,18 @@ def run_demo():
 
     # Debug information
     print(f"Colony grid type: {type(colony_grid)}")
-    if hasattr(colony_grid, "shape"):
+    # Check if numpy is available and colony_grid is a numpy array
+    if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
         print(f"Colony grid shape: {colony_grid.shape}")
-
-    # Visualize initial state
-    print("\nInitial Colony Grid (text representation):")
-    if NUMPY_AVAILABLE:
-        for row in colony_grid:
-            print("".join(["#" if float(cell) > 0.5 else "." for cell in row]))
     else:
-        for row in colony_grid:
-            print("".join(["#" if cell > 0.5 else "." for cell in row]))
+        print(f"Colony grid dimensions: {len(colony_grid)}x{len(colony_grid[0]) if colony_grid else 0}")
 
-    print("\nMineral Distribution Grid (text representation):")
-    if NUMPY_AVAILABLE:
-        for row in mineral_grid:
-            print("".join([str(min(9, int(float(cell) * 10))) for cell in row]))
-    else:
-        for row in mineral_grid:
-            print("".join([str(min(9, int(cell * 10))) for cell in row]))
-
+    _visualize_state_handler(
+        "\nInitial Colony Grid (text representation):",
+        colony_grid,
+        "\nMineral Distribution Grid (text representation):",
+        mineral_grid,
+    )
     # Simulate evolution
     print("\nSimulating evolution...")
     start_time = time.time()
@@ -174,12 +168,26 @@ def run_demo():
                     mutation_map = generator.generate_mutation_map(evolution_history)
                 except Exception as e:
                     print(f"Could not generate mutation map: {e}")
-                    mutation_map = np.zeros_like(colony_grid)
+                    # Create empty mutation map based on colony grid dimensions
+                    if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
+                        mutation_map = np.zeros_like(colony_grid)
+                    else:
+                        mutation_map = [[0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))]
         except Exception as e:
             print(f"Error during evolution simulation: {e}")
-            evolved_grid = colony_grid.copy()
-            evolution_history = [colony_grid.copy()]
-            mutation_map = np.zeros_like(colony_grid)
+            # Handle both numpy arrays and regular lists
+            if NUMPY_AVAILABLE and hasattr(colony_grid, "copy"):
+                evolved_grid = colony_grid.copy()
+                evolution_history = [colony_grid.copy()]
+            else:
+                # Deep copy for regular lists
+                evolved_grid = [row[:] for row in colony_grid]
+                evolution_history = [[row[:] for row in colony_grid]]
+            # Create empty mutation map based on colony grid dimensions
+            if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
+                mutation_map = np.zeros_like(colony_grid)
+            else:
+                mutation_map = [[0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))]
     else:
         print("Using fallback evolution simulation...")
         evolved_grid = fallback_grid(generator.parameters["grid_size"])
@@ -191,23 +199,12 @@ def run_demo():
             f"Evolution simulation completed in {time.time() - start_time:.2f} seconds"
         )
 
-    # Visualize final state
-    print("\nEvolved Colony Grid (text representation):")
-    if NUMPY_AVAILABLE:
-        for row in evolved_grid:
-            print("".join(["#" if float(cell) > 0.5 else "." for cell in row]))
-    else:
-        for row in evolved_grid:
-            print("".join(["#" if cell > 0.5 else "." for cell in row]))
-
-    print("\nMutation Intensity Map (text representation):")
-    if NUMPY_AVAILABLE:
-        for row in mutation_map:
-            print("".join([str(min(9, int(float(cell) * 10))) for cell in row]))
-    else:
-        for row in mutation_map:
-            print("".join([str(min(9, int(cell * 10))) for cell in row]))
-
+    _visualize_state_handler(
+        "\nEvolved Colony Grid (text representation):",
+        evolved_grid,
+        "\nMutation Intensity Map (text representation):",
+        mutation_map,
+    )
     # Display evolution statistics
     if NUMPY_AVAILABLE:
         print("\nEvolution Statistics:")
@@ -252,6 +249,24 @@ def run_demo():
     print(
         "For full functionality with visualizations, install numpy, scipy, and matplotlib."
     )
+
+
+def _visualize_state_handler(arg0, arg1, arg2, arg3):
+    # Visualize initial state
+    print(arg0)
+    for row in arg1:
+        if NUMPY_AVAILABLE:
+            print("".join(["#" if float(cell) > 0.5 else "." for cell in row]))
+        else:
+            print("".join(["#" if cell > 0.5 else "." for cell in row]))
+
+    print(arg2)
+    if NUMPY_AVAILABLE:
+        for row in arg3:
+            print("".join([str(min(9, int(float(cell) * 10))) for cell in row]))
+    else:
+        for row in arg3:
+            print("".join([str(min(9, int(cell * 10))) for cell in row]))
 
 
 if __name__ == "__main__":
