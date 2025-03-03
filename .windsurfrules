@@ -1,0 +1,45 @@
+# CodeBase Document Index (`CDI`)
+
+**IF A FILE IS NOT PRESENT IN THE DOCUMENTS, CREATE IT**
+
+## CodeBase_Docs
+
+1. **THE CODE BASE DOCUMENTS ALL HAVE A REQUIRED ORGANIZATIONAL STRUCTURE TO FOLLOW.** 
+2. **YOU WILL FIND TEMPLATES FOR EACH DOCUMENT AS THE FIRST ITEM ON THE TABLE OF CONTENTS.**
+3. **THE ONLY EXCEPTION TO THIS RULE IS THE `docs/CodeBase_Docs/CodeBase_Scratchpad.md` FILE.**
+
+- `docs/CodeBase_Docs/CodeBase_Architecture.md`: For Specifics on the CodeBase Structure, Methods, Best Practices, and Architecture.
+- `docs/CodeBase_Docs/CodeBase_Mapping.md`: A Living directory that is to be ONLY updated with specific files, their locations, and purpose to keep track of the code base.
+- `docs/CodeBase_Docs/CodeBase_Error_Fixes.md`: A File to log common issues while debugging, to AVOID them later in development.
+- `docs/CodeBase_Docs/CodeBase_Scratchpad.md`: A File to store your notes while working on the project.
+
+---
+
+# Workflow & Instructions(`WFI`)
+
+1. During your interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name, or methods used), especially about a fix to a mistake you made or a correction you received, you should take note in the `docs/CodeBase_Docs/CodeBase_Architecture.md` file so you will not make the same mistake again.
+
+2. You must update the `docs/CodeBase_Docs/CodeBase_Mapping` file as a navigation guide to easily navigate the codebase and its assets to circumvent duplication and codebase conflicts. a `docs/CodeBase_Docs/CodeBase_Mapping` file should be ADDITIVE, not destructive. The point is to maintain a complete map of the entire code base. Do not remove entries or information from the file.
+
+3. You will operate on a sctrict workflow called `Rule of Seven` or `RO7`.
+
+   1. Review the `docs/CodeBase_Docs/CodeBase_Scratchpad` for the current task and plan the steps to complete the task
+   2. Search `docs/CodeBase_Docs/CodeBase_Mapping` for existing implementations, if none found search the codebase and adjust the plan if necessary
+   3. Take action to complete the task
+   4. Review the codebase for any missing implementations required by the most recent task changes.
+   5. Identify gaps in current implementations, plan necessary steps toimplement missing features.
+   6. Update the `docs/CodeBase_Docs/CodeBase_Scratchpad` section.
+   7. Finally, update the `docs/CodeBase_Docs/CodeBase_Architecture.md` and `docs/CodeBase_Docs/CodeBase_Mapping` files for code base consistency.
+
+4. Use the `docs/CodeBase_Docs/CodeBase_Scratchpad` file as a `Scratchpad` to organize your thoughts. Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
+
+```
+[X] Task 1
+[ ] Task 2
+```
+
+Also update the progress of the task in the `docs/CodeBase_Docs/CodeBase_Scratchpad` when you finish a subtask.
+Especially when you finished a milestone, it will help to improve your depth of task accomplishment to use the `docs/CodeBase_Docs/CodeBase_Scratchpad` to reflect and plan. You should add only small and essential notes with the `Scratchpad` plan.
+The goal is to help you maintain a big picture as well as the progress of the task. Always refer to the `docs/CodeBase_Docs/CodeBase_Scratchpad` when you plan the next step.
+
+---
