@@ -34,6 +34,22 @@ from src.entities.miner_entity import MinerEntity
 from src.generators.procedural_generator import ProceduralGenerator
 from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
+# Try to import the optimized generators if available
+try:
+    from src.entities.asteroid_generator import AsteroidGenerator
+    ASTEROID_GENERATOR_AVAILABLE = True
+except ImportError:
+    ASTEROID_GENERATOR_AVAILABLE = False
+    logging.warning("AsteroidGenerator not available. Using ProceduralGenerator as fallback.")
+
+# Try to import scipy for optimized cellular automaton
+try:
+    import scipy.signal as signal
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    logging.warning("SciPy not available. Using manual implementation for cellular automaton.")
+
 
 # Forward references for type hints
 class NotificationManager:
@@ -158,24 +174,12 @@ class AsteroidField:
         using the ProceduralGenerator class.
         """
         with LogContext("Asteroid field initialization"):
-            # Clear grid
-            self.grid.fill(0)
-            self.rare_grid.fill(0)
-            self.energy_grid.fill(0)
-
+            self._initialize_handler()
             try:
                 # Use the ProceduralGenerator to generate the asteroid field
                 self.generate_field_with_procedural_generator()
 
-                # Add some Game of Life patterns at random locations
-                self.add_life_patterns()
-
-                # Update statistics
-                self.update_statistics()
-
-                # Mark for redraw
-                self.redraw_needed = True
-
+                self._extracted_from__legacy_initialize_patterns_17()
                 logging.info(
                     f"Field initialized with {self.total_asteroids} asteroids, "
                     + f"{self.total_rare} rare minerals."
@@ -188,14 +192,40 @@ class AsteroidField:
 
     def generate_field_with_procedural_generator(self) -> None:
         """
-        Generate asteroid field using the ProceduralGenerator class.
+        Generate asteroid field using either the optimized AsteroidGenerator class
+        or the ProceduralGenerator class as a fallback.
         """
         try:
-            # Create a ProceduralGenerator with the same dimensions as the field
+            self._asteroid_handler()
+        except Exception as e:
+            log_exception(e)
+            logging.error(f"Failed to generate field with generator: {str(e)}")
+            # Re-raise to trigger fallback in initialize_patterns
+            raise
+
+    # TODO Rename this here and in `generate_field_with_procedural_generator`
+    def _asteroid_handler(self):
+        # Use the optimized AsteroidGenerator if available, otherwise fall back to ProceduralGenerator
+        seed = random.randint(1, 10000)
+
+        # Common parameters for both generator types
+        common_params = {
+            "width": self.width,
+            "height": self.height,
+            "seed": seed,
+        }
+
+        # Performance tracking
+        start_time = log_performance_start("generate_field_with_generator")
+
+        if ASTEROID_GENERATOR_AVAILABLE:
+            self._extracted_from__asteroid_handler_22(
+                common_params, seed
+            )
+        else:
+            # Fall back to the original ProceduralGenerator
             generator = ProceduralGenerator(
-                width=self.width,
-                height=self.height,
-                seed=random.randint(1, 10000),
+                **common_params,
                 parameters={
                     "pattern_complexity": self.pattern_complexity,
                     "field_density": self.field_density,
@@ -226,19 +256,48 @@ class AsteroidField:
                 if np.all(self.rare_grid == 0):
                     self._generate_rare_minerals()
 
-            # Initialize energy grid based on asteroid values if not included in result
-            if np.all(self.energy_grid == 0):
-                self._initialize_energy_grid()
+            logging.info(f"Asteroid field generated using ProceduralGenerator (seed: {seed})")
 
-            logging.info("Asteroid field generated using ProceduralGenerator")
+        # Initialize energy grid based on asteroid values if not included in result
+        if np.all(self.energy_grid == 0):
+            self._initialize_energy_grid()
 
-        except Exception as e:
-            log_exception(e)
-            logging.error(
-                f"Failed to generate field with ProceduralGenerator: {str(e)}"
-            )
-            # Re-raise to trigger fallback in initialize_patterns
-            raise
+        # Log performance
+        log_performance_end("generate_field_with_generator", start_time)
+
+    # TODO Rename this here and in `generate_field_with_procedural_generator`
+    def _extracted_from__asteroid_handler_22(self, common_params, seed):
+        # Create an AsteroidGenerator with optimized caching
+        generator = AsteroidGenerator(**common_params)
+
+        # Set parameters
+        generator.set_parameter("density", self.field_density)
+        generator.set_parameter("pattern_strength", self.pattern_complexity)
+        generator.set_parameter("cluster_tendency", self.turbulence)
+        generator.set_parameter("rare_chance", self.rare_chance)
+
+        # Generate the asteroid field
+        asteroid_grid, metadata = generator.generate_field()
+
+        # Generate values for asteroids
+        value_grid = generator.generate_values(asteroid_grid)
+
+        # Generate rare resources
+        rare_grid = generator.generate_rare_resources(value_grid)
+
+        # Set the grids
+        self.grid = value_grid
+        self.rare_grid = rare_grid
+
+        # Generate energy grid based on asteroid values
+        self.energy_grid = value_grid.astype(np.float32) / 100.0
+
+        # Apply rare mineral bonuses to energy grid
+        for rare_level in range(1, 4):  # 1=rare, 2=precious, 3=anomaly
+            rare_mask = rare_grid == rare_level
+            self.energy_grid[rare_mask] *= self.rare_bonus_multiplier * rare_level
+
+        logging.info(f"Asteroid field generated using optimized AsteroidGenerator (seed: {seed})")
 
     def _generate_rare_minerals(self) -> None:
         """
@@ -360,11 +419,7 @@ class AsteroidField:
         """
         logging.warning("Using legacy pattern initialization method")
 
-        # Clear grid
-        self.grid.fill(0)
-        self.rare_grid.fill(0)
-        self.energy_grid.fill(0)
-
+        self._initialize_handler()
         # Create Perlin noise generators for different scales
         seed1 = random.randint(1, 1000)
         seed2 = random.randint(1, 1000)
@@ -448,13 +503,18 @@ class AsteroidField:
                             self.grid[y, x] * self.rare_bonus_multiplier * 2
                         )
 
-        # Add some Game of Life patterns at random locations
+        self._extracted_from__legacy_initialize_patterns_17()
+
+    # TODO Rename this here and in `initialize_patterns` and `_legacy_initialize_patterns`
+    def _initialize_handler(self):
+        self.grid.fill(0)
+        self.rare_grid.fill(0)
+        self.energy_grid.fill(0)
+
+    # TODO Rename this here and in `initialize_patterns` and `_legacy_initialize_patterns`
+    def _extracted_from__legacy_initialize_patterns_17(self):
         self.add_life_patterns()
-
-        # Update statistics
         self.update_statistics()
-
-        # Mark for redraw
         self.redraw_needed = True
 
     def add_life_patterns(self) -> None:
@@ -715,70 +775,364 @@ class AsteroidField:
 
         log_performance_end("field_update", perf_start)
 
+    def apply_cellular_automaton(self, grid, energy_grid=None, energy_boost=None, iterations=1):
+        """
+        Apply cellular automaton rules to a binary grid with energy influence.
+        
+        This method serves as the main entry point for cellular automaton operations,
+        delegating to specialized helper methods based on available dependencies and
+        optimization opportunities.
+        
+        Args:
+            grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
+            energy_grid (numpy.ndarray, optional): Grid of energy values between 0 and 1
+            energy_boost (numpy.ndarray, optional): Grid of integer boost values for survival rules
+            iterations (int, optional): Number of iterations to apply the cellular automaton rules
+            
+        Returns:
+            numpy.ndarray: Updated binary grid after applying cellular automaton rules
+        """
+        # Performance tracking
+        start_time = log_performance_start("apply_cellular_automaton")
+        
+        # Create a copy to avoid modifying the original
+        result_grid = grid.copy()
+        
+        # Create cache key for this operation if caching is enabled
+        if hasattr(self, "_ca_cache"):
+            # Create a hash of the grid and parameters for caching
+            grid_hash = hash(grid.tobytes())
+            birth_set_hash = hash(frozenset(self.birth_set))
+            survival_set_hash = hash(frozenset(self.survival_set))
+            
+            # Include energy parameters in cache key if provided
+            energy_key = ""
+            if energy_grid is not None and energy_boost is not None:
+                energy_key = f"_energy_{hash(energy_grid.tobytes())}_{hash(energy_boost.tobytes())}"
+                
+            cache_key = f"ca_{grid_hash}_{birth_set_hash}_{survival_set_hash}_{iterations}_{self.apply_edge_wrapping}{energy_key}"
+            
+            # Check if we have this result cached
+            if cache_key in self._ca_cache:
+                log_performance_end("apply_cellular_automaton", start_time, "cached")
+                return self._ca_cache[cache_key]
+        else:
+            # Initialize cache if not exists
+            self._ca_cache = {}
+            cache_key = None
+        
+        # Process each iteration
+        for _ in range(iterations):
+            result_grid = self._process_cellular_automaton_iteration(result_grid, energy_grid, energy_boost)
+        
+        # Cache the result if caching is enabled
+        if cache_key is not None:
+            self._ca_cache[cache_key] = result_grid
+        
+        log_performance_end("apply_cellular_automaton", start_time)
+        return result_grid
+        
+    def _process_cellular_automaton_iteration(self, grid, energy_grid=None, energy_boost=None):
+        """
+        Process a single iteration of the cellular automaton rules.
+        
+        Args:
+            grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
+            energy_grid (numpy.ndarray, optional): Grid of energy values between 0 and 1
+            energy_boost (numpy.ndarray, optional): Grid of integer boost values for survival rules
+            
+        Returns:
+            numpy.ndarray: Updated binary grid after applying cellular automaton rules
+        """
+        # Use the optimized scipy implementation if available
+        if SCIPY_AVAILABLE:
+            return self._apply_cellular_automaton_scipy(grid, energy_grid, energy_boost)
+        else:
+            # Fall back to manual implementation
+            return self._apply_cellular_automaton_manual(grid, energy_grid, energy_boost)
+    
+    def _apply_cellular_automaton_scipy(self, grid, energy_grid=None, energy_boost=None):
+        """
+        Apply cellular automaton rules using scipy for efficiency.
+        
+        Args:
+            grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
+            energy_grid (numpy.ndarray, optional): Grid of energy values between 0 and 1
+            energy_boost (numpy.ndarray, optional): Grid of integer boost values for survival rules
+            
+        Returns:
+            numpy.ndarray: Updated binary grid after applying cellular automaton rules
+        """
+        # Create a copy to avoid modifying the original
+        new_grid = np.zeros_like(grid)
+
+        # Count neighbors using convolution
+        kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+        neighbor_counts = signal.convolve2d(
+            grid,
+            kernel,
+            mode="same",
+            boundary="wrap" if self.apply_edge_wrapping else "fill",
+        )
+
+        # Apply rules vectorized
+        if energy_grid is not None and energy_boost is not None:
+            # For each cell, calculate its adjusted survival set based on energy
+            for y in range(self.height):
+                for x in range(self.width):
+                    # Get base survival set
+                    cell_survival_set = self.survival_set.copy()
+
+                    # Add energy-boosted values to the survival set
+                    boost = energy_boost[y, x]
+                    if boost > 0:
+                        for n in list(self.survival_set):
+                            cell_survival_set.add(n + boost)
+
+                    # Apply rules
+                    neighbors = neighbor_counts[y, x]
+                    if (
+                        grid[y, x] > 0
+                        and neighbors in cell_survival_set
+                        or grid[y, x] <= 0
+                        and neighbors in self.birth_set
+                    ):
+                        new_grid[y, x] = 1
+        else:
+            self._extracted_from__apply_cellular_automaton_scipy_51(
+                grid, neighbor_counts, new_grid
+            )
+        return new_grid
+
+    # TODO Rename this here and in `_apply_cellular_automaton_scipy`
+    def _extracted_from__apply_cellular_automaton_scipy_51(self, grid, neighbor_counts, new_grid):
+        # Simple rules without energy influence - fully vectorized approach
+        alive_mask = (grid > 0)
+        dead_mask = ~alive_mask
+
+        # Create masks for birth and survival based on neighbor counts
+        birth_mask = np.zeros_like(neighbor_counts, dtype=bool)
+        survival_mask = np.zeros_like(neighbor_counts, dtype=bool)
+
+        for n in self.birth_set:
+            birth_mask |= (neighbor_counts == n)
+
+        for n in self.survival_set:
+            survival_mask |= (neighbor_counts == n)
+
+        # Apply rules using vectorized operations
+        new_grid[alive_mask & survival_mask] = 1  # Cells that survive
+        new_grid[dead_mask & birth_mask] = 1      # Cells that are born
+    
+    def _apply_cellular_automaton_manual(self, grid, energy_grid=None, energy_boost=None):
+        """
+        Apply cellular automaton rules using manual implementation (fallback when scipy is unavailable).
+        
+        Args:
+            grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
+            energy_grid (numpy.ndarray, optional): Grid of energy values between 0 and 1
+            energy_boost (numpy.ndarray, optional): Grid of integer boost values for survival rules
+            
+        Returns:
+            numpy.ndarray: Updated binary grid after applying cellular automaton rules
+        """
+        # Create a copy to avoid modifying the original
+        new_grid = np.zeros_like(grid)
+
+        # Manual implementation without scipy
+        for y in range(self.height):
+            for x in range(self.width):
+                # Count live neighbors
+                neighbors = 0
+                for dy in [-1, 0, 1]:
+                    for dx in [-1, 0, 1]:
+                        if dx == 0 and dy == 0:
+                            continue
+
+                        nx, ny = x + dx, y + dy
+
+                        # Handle edge wrapping
+                        if self.apply_edge_wrapping:
+                            nx = nx % self.width
+                            ny = ny % self.height
+                        elif nx < 0 or nx >= self.width or ny < 0 or ny >= self.height:
+                            continue
+
+                        if grid[ny, nx] > 0:
+                            neighbors += 1
+
+                # Get cell survival set with energy boost if applicable
+                cell_survival_set = self.survival_set.copy()
+                if energy_grid is not None and energy_boost is not None:
+                    boost = energy_boost[y, x]
+                    if boost > 0:
+                        for n in list(self.survival_set):
+                            cell_survival_set.add(n + boost)
+
+                # Apply rules
+                if (
+                    grid[y, x] > 0
+                    and neighbors in cell_survival_set
+                    or grid[y, x] <= 0
+                    and neighbors in self.birth_set
+                ):
+                    new_grid[y, x] = 1
+        return new_grid
+
     def update_asteroids(self) -> None:
         """Update asteroid grid using cellular automaton rules and energy flow."""
+        # Performance tracking
+        start_time = log_performance_start("update_asteroids")
+        
+        # Create cache key for this operation
+        if hasattr(self, "_update_cache"):
+            grid_hash = hash(self.grid.tobytes())
+            energy_hash = hash(self.energy_grid.tobytes())
+            rare_hash = hash(self.rare_grid.tobytes())
+            cache_key = f"update_{grid_hash}_{energy_hash}_{rare_hash}_{self.energy_decay}_{self.energy_spread}"
+            
+            # Check if we have this result cached
+            if cache_key in self._update_cache:
+                self.grid, self.rare_grid, self.energy_grid = self._update_cache[cache_key]
+                log_performance_end("update_asteroids", start_time, "cached")
+                return
+        else:
+            # Initialize cache if not exists
+            self._update_cache = {}
+            cache_key = None
+
         # Create new grids to avoid affecting the update in progress
         new_grid = np.zeros_like(self.grid)
         new_rare_grid = np.zeros_like(self.rare_grid)
         new_energy_grid = np.zeros_like(self.energy_grid)
 
-        # Use convolution for neighbor counting (more efficient)
+        # Apply cellular automaton to the asteroid grid
+        binary_grid = (self.grid > 0).astype(np.int8)
+        
+        # Adjust survival set based on energy levels
+        energy_grid_normalized = np.clip(self.energy_grid, 0, 1)
+        energy_boost = np.minimum(2, (energy_grid_normalized * 3).astype(np.int8))
+        
+        # Apply cellular automaton with energy-adjusted rules
+        new_binary_grid = self.apply_cellular_automaton(
+            binary_grid,
+            energy_grid=energy_grid_normalized,
+            energy_boost=energy_boost
+        )
+        
+        # Calculate energy neighborhood using optimized methods
+        energy_neighborhood = self._calculate_energy_neighborhood(self.energy_grid)
+        
+        # Process grid updates using vectorized operations where possible
+        self._update_grid_values(binary_grid, new_binary_grid, new_grid, new_rare_grid, 
+                               new_energy_grid, energy_neighborhood)
+        
+        # Update grids
+        self.grid = new_grid
+        self.rare_grid = new_rare_grid
+        self.energy_grid = new_energy_grid
+        
+        # Add energy to low density areas (encouraging new growth)
+        self._add_energy_to_low_density_areas(binary_grid)
+        
+        # Cache the result if caching is enabled
+        if cache_key is not None:
+            self._update_cache[cache_key] = (self.grid.copy(), self.rare_grid.copy(), self.energy_grid.copy())
+            
+            # Limit cache size to prevent memory issues
+            if len(self._update_cache) > 10:  # Keep only the 10 most recent updates
+                oldest_key = next(iter(self._update_cache))
+                del self._update_cache[oldest_key]
+        
+        log_performance_end("update_asteroids", start_time)
+    
+    def _calculate_energy_neighborhood(self, energy_grid):
+        """Calculate the energy neighborhood for each cell using optimized methods."""
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
 
-        # Count asteroid neighbors using convolution
-        neighbor_counts = signal.convolve2d(
-            self.grid > 0,
-            kernel,
-            mode="same",
-            boundary="wrap" if self.apply_edge_wrapping else "fill",
-        )
+        # Use optimized convolution if available
+        if SCIPY_AVAILABLE:
+            energy_neighborhood = signal.convolve2d(
+                energy_grid,
+                kernel,
+                mode="same",
+                boundary="wrap" if self.apply_edge_wrapping else "fill",
+            )
+        else:
+            # Manual fallback for energy neighborhood calculation
+            energy_neighborhood = np.zeros_like(energy_grid)
+            for y in range(self.height):
+                for x in range(self.width):
+                    energy_sum = 0
+                    for dy in [-1, 0, 1]:
+                        for dx in [-1, 0, 1]:
+                            if dx == 0 and dy == 0:
+                                continue
+                            nx, ny = x + dx, y + dy
+                            if self.apply_edge_wrapping:
+                                nx = nx % self.width
+                                ny = ny % self.height
+                            elif 0 <= nx < self.width and 0 <= ny < self.height:
+                                energy_sum += energy_grid[ny, nx]
+                    energy_neighborhood[y, x] = energy_sum
 
-        # Count energy in neighborhood using convolution
-        energy_neighborhood = signal.convolve2d(
-            self.energy_grid,
-            kernel,
-            mode="same",
-            boundary="wrap" if self.apply_edge_wrapping else "fill",
-        )
+        return energy_neighborhood
+    
+    def _update_grid_values(self, binary_grid, new_binary_grid, new_grid, new_rare_grid, 
+                          new_energy_grid, energy_neighborhood):
+        """Update grid values based on cellular automaton results and energy distribution."""
+        # Try to use vectorized operations where possible
+        try:
+            # Calculate new energy levels (vectorized)
+            new_energy = self.energy_grid * (1.0 - self.energy_decay)
+            new_energy += energy_neighborhood * self.energy_spread / 8.0
 
-        # Apply Game of Life rules with energy dynamics
-        for y in range(self.height):
-            for x in range(self.width):
-                has_asteroid = self.grid[y, x] > 0
+            # Create masks for different cell states
+            old_alive = binary_grid > 0
+            new_alive = new_binary_grid > 0
+
+            # Survival mask: cells that were alive and remain alive
+            survival_mask = old_alive & new_alive
+
+            # Death mask: cells that were alive but died
+            death_mask = old_alive & ~new_alive
+
+            # Birth mask: cells that were dead but became alive
+            birth_mask = ~old_alive & new_alive
+
+            # Handle surviving cells (keep values and rare status)
+            new_grid[survival_mask] = self.grid[survival_mask]
+            new_rare_grid[survival_mask] = self.rare_grid[survival_mask]
+
+            # Handle dying cells (add energy)
+            new_energy[death_mask] += 0.2
+            
+            # Use birth_mask to pre-identify cells that need processing in the loop
+            # This helps optimize the loop by reducing iterations
+            birth_cells = np.argwhere(birth_mask)
+
+            # For births and random regeneration, we need to use loops
+            # as they involve random number generation
+            # Use the pre-calculated birth_mask to optimize loop iterations
+            for y, x in birth_cells:
+                # New asteroid born - calculate value based on energy
+                new_grid[y, x] = int(50 + energy_neighborhood[y, x] * 100)
+
+                # Small chance for rare asteroid in births
+                if random.random() < self.rare_chance:
+                    new_rare_grid[y, x] = 1
+                    new_grid[y, x] = int(
+                        new_grid[y, x] * self.rare_bonus_multiplier
+                    )
+            
+            # Handle random regeneration in dead cells that stay dead
+            # Create mask for cells that are dead and stay dead
+            regen_mask = ~old_alive & ~new_alive
+            regen_cells = np.argwhere(regen_mask)
+            
+            for y, x in regen_cells:
                 local_energy = self.energy_grid[y, x]
-                neighbors = neighbor_counts[y, x]
-
-                # New energy starts with decayed version of current energy
-                new_energy = local_energy * (1.0 - self.energy_decay)
-                new_energy += energy_neighborhood[y, x] * self.energy_spread / 8.0
-
-                # Survival depends on neighbors and energy
-                energy_survival_boost = min(2, int(local_energy * 3))
-                survival_set = self.survival_set.union(
-                    {n + energy_survival_boost for n in self.survival_set}
-                )
-
-                if has_asteroid:
-                    # Check if asteroid survives
-                    if neighbors in survival_set:
-                        # If it survives, keep its value and rare status
-                        new_grid[y, x] = self.grid[y, x]
-                        new_rare_grid[y, x] = self.rare_grid[y, x]
-                    else:
-                        # Dying asteroid adds energy
-                        new_energy += 0.2
-                elif neighbors in self.birth_set:
-                    # New asteroid born from energy and neighbors
-                    new_grid[y, x] = int(50 + energy_neighborhood[y, x] * 100)
-
-                    # Small chance for rare asteroid in births
-                    if random.random() < self.rare_chance:
-                        new_rare_grid[y, x] = 1
-                        new_grid[y, x] = int(
-                            new_grid[y, x] * self.rare_bonus_multiplier
-                        )
-
-                elif random.random() < self.regen_rate * local_energy:
+                if random.random() < self.regen_rate * local_energy:
                     new_grid[y, x] = int(30 + random.random() * 70)
                     if random.random() < self.rare_chance:
                         new_rare_grid[y, x] = 1
@@ -786,17 +1140,89 @@ class AsteroidField:
                             new_grid[y, x] * self.rare_bonus_multiplier
                         )
 
-                # Store new energy level
-                new_energy_grid[y, x] = min(1.0, new_energy)  # Cap energy at 1.0
+            # Cap energy at 1.0 (vectorized)
+            new_energy_grid[:] = np.minimum(1.0, new_energy)
 
-        # Update grids
-        self.grid = new_grid
-        self.rare_grid = new_rare_grid
-        self.energy_grid = new_energy_grid
+        except Exception as e:
+            # Fall back to non-vectorized approach if vectorization fails
+            log_exception(e)
+            logging.warning(f"Falling back to non-vectorized grid update: {str(e)}")
 
-        # Add energy to low density areas (encouraging new growth)
-        low_density_mask = neighbor_counts < 2
-        self.energy_grid[low_density_mask] += 0.05
+            # Process each cell to update values and energy
+            for y in range(self.height):
+                for x in range(self.width):
+                    old_has_asteroid = binary_grid[y, x] > 0
+                    new_has_asteroid = new_binary_grid[y, x] > 0
+                    local_energy = self.energy_grid[y, x]
+
+                    # New energy starts with decayed version of current energy
+                    new_energy = local_energy * (1.0 - self.energy_decay)
+                    new_energy += energy_neighborhood[y, x] * self.energy_spread / 8.0
+
+                    if old_has_asteroid and new_has_asteroid:
+                        # Asteroid survives - keep its value and rare status
+                        new_grid[y, x] = self.grid[y, x]
+                        new_rare_grid[y, x] = self.rare_grid[y, x]
+
+                    elif old_has_asteroid:
+                        # Asteroid dies - add energy
+                        new_energy += 0.2
+
+                    elif new_has_asteroid:
+                        # New asteroid born - calculate value based on energy
+                        new_grid[y, x] = int(50 + energy_neighborhood[y, x] * 100)
+
+                        # Small chance for rare asteroid in births
+                        if random.random() < self.rare_chance:
+                            new_rare_grid[y, x] = 1
+                            new_grid[y, x] = int(
+                                new_grid[y, x] * self.rare_bonus_multiplier
+                            )
+
+                    # Handle cells that are dead and stay dead
+                    elif not old_has_asteroid and not new_has_asteroid and random.random() < self.regen_rate * local_energy:
+                        # Random regeneration based on energy level
+                        new_grid[y, x] = int(30 + random.random() * 70)
+                        if random.random() < self.rare_chance:
+                            new_rare_grid[y, x] = 1
+                            new_grid[y, x] = int(
+                                new_grid[y, x] * self.rare_bonus_multiplier
+                            )
+
+                    # Store new energy level
+                    new_energy_grid[y, x] = min(1.0, new_energy)  # Cap energy at 1.0
+    
+    def _add_energy_to_low_density_areas(self, binary_grid):
+        """Add energy to low density areas to encourage new growth."""
+        kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+
+        if SCIPY_AVAILABLE:
+            # Use vectorized operations with scipy
+            neighbor_counts = signal.convolve2d(
+                binary_grid,
+                kernel,
+                mode="same",
+                boundary="wrap" if self.apply_edge_wrapping else "fill",
+            )
+            low_density_mask = neighbor_counts < 2
+            self.energy_grid[low_density_mask] += 0.05
+        else:
+            # Manual calculation of low density areas
+            for y, x in itertools.product(range(self.height), range(self.width)):
+                neighbors = 0
+                for dy in [-1, 0, 1]:
+                    for dx in [-1, 0, 1]:
+                        if dx == 0 and dy == 0:
+                            continue
+                        nx, ny = x + dx, y + dy
+                        if self.apply_edge_wrapping:
+                            nx = nx % self.width
+                            ny = ny % self.height
+                        elif 0 <= nx < self.width and 0 <= ny < self.height:
+                            if binary_grid[ny, nx] > 0:
+                                neighbors += 1
+                if neighbors < 2:
+                    self.energy_grid[y, x] += 0.05
 
     def update_entities(self) -> Dict[int, int]:
         """

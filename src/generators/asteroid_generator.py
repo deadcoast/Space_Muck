@@ -10,16 +10,16 @@ patterns and distributions.
 import logging
 import math
 import random
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
-from src.config import *
+# Note: Config constants are referenced via parameters instead of direct imports
 from src.entities.base_generator import BaseGenerator
 from src.utils.dependency_injection import inject
-from src.utils.noise_generator import NoiseGenerator, get_noise_generator
+from src.utils.noise_generator import NoiseGenerator
 from src.utils.pattern_generator import (
     generate_spiral_pattern,
     generate_ring_pattern,
@@ -36,7 +36,6 @@ from src.utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
-    LogContext,
 )
 
 

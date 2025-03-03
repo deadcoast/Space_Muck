@@ -6,6 +6,8 @@ This module provides common cellular automaton functions that can be used
 by different generator classes to avoid code duplication.
 """
 
+
+import itertools
 # Standard library imports
 from typing import Any, Dict, Set, Tuple
 
@@ -54,33 +56,32 @@ def apply_cellular_automaton(
     for _ in range(iterations):
         new_grid = result_grid.copy()
 
-        for y in range(height):
-            for x in range(width):
-                # Count live neighbors
-                neighbors = 0
+        for y, x in itertools.product(range(height), range(width)):
+            # Count live neighbors
+            neighbors = 0
 
-                for dy in [-1, 0, 1]:
-                    for dx in [-1, 0, 1]:
-                        if dx == 0 and dy == 0:
-                            continue
+            for dy in [-1, 0, 1]:
+                for dx in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue
 
-                        nx, ny = x + dx, y + dy
+                    nx, ny = x + dx, y + dy
 
-                        if wrap:
-                            nx = nx % width
-                            ny = ny % height
-                        elif nx < 0 or nx >= width or ny < 0 or ny >= height:
-                            continue
+                    if wrap:
+                        nx = nx % width
+                        ny = ny % height
+                    elif nx < 0 or nx >= width or ny < 0 or ny >= height:
+                        continue
 
-                        neighbors += result_grid[ny, nx]
+                    neighbors += result_grid[ny, nx]
 
-                # Apply rules
-                if result_grid[y, x] == 1:
-                    # Cell is alive
-                    if neighbors not in survival_set:
-                        new_grid[y, x] = 0  # Cell dies
-                elif neighbors in birth_set:
-                    new_grid[y, x] = 1  # Cell is born
+            # Apply rules
+            if result_grid[y, x] == 1:
+                # Cell is alive
+                if neighbors not in survival_set:
+                    new_grid[y, x] = 0  # Cell dies
+            elif neighbors in birth_set:
+                new_grid[y, x] = 1  # Cell is born
 
         result_grid = new_grid
 
