@@ -30,6 +30,8 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
+    # Define signal as None to avoid unbound variable errors
+    signal = None
     logging.warning(
         "SciPy not available. Using manual implementation for cellular automaton."
     )
@@ -138,7 +140,7 @@ class AsteroidGenerator(BaseGenerator):
         )
 
         # Check cache
-        cached_result = self._get_cached_result(cache_key)
+        cached_result = self._get_cached_result(key=cache_key)
         if cached_result is not None:
             log_performance_end("generate_field", start_time, "cached")
             return cached_result
@@ -210,7 +212,7 @@ class AsteroidGenerator(BaseGenerator):
         )
 
         # Check cache
-        cached_result = self._get_cached_result(cache_key)
+        cached_result = self._get_cached_result(key=cache_key)
         if cached_result is not None:
             log_performance_end("generate_values", start_time, "cached")
             return cached_result
@@ -298,7 +300,7 @@ class AsteroidGenerator(BaseGenerator):
         )
 
         # Check cache
-        cached_result = self._get_cached_result(cache_key)
+        cached_result = self._get_cached_result(key=cache_key)
         if cached_result is not None:
             log_performance_end("generate_rare_resources", start_time, "cached")
             return cached_result
@@ -397,8 +399,8 @@ class AsteroidGenerator(BaseGenerator):
     def _apply_cellular_automaton_scipy(
         self,
         grid: np.ndarray,
-        birth_set: Set[int] = None,
-        survival_set: Set[int] = None,
+        birth_set: Set[int] = {3},
+        survival_set: Set[int] = {2, 3},
         iterations: int = 1,
     ) -> np.ndarray:
         """
