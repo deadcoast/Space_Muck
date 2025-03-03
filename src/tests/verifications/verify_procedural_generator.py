@@ -31,9 +31,9 @@ def test_procedural_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert generator.entity_type == "procedural", (
-        f"Expected entity_type 'procedural', got {generator.entity_type}"
-    )
+    assert (
+        generator.entity_type == "procedural"
+    ), f"Expected entity_type 'procedural', got {generator.entity_type}"
 
     # Test noise generation
     print("Testing noise generation...")
@@ -43,17 +43,19 @@ def test_procedural_generator():
     # Test asteroid field generation
     print("Testing asteroid field generation...")
     asteroid_grid = generator.generate_asteroid_field(density=0.3)
-    assert asteroid_grid.shape == (100, 100), (
-        f"Expected shape (100, 100), got {asteroid_grid.shape}"
-    )
+    assert asteroid_grid.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {asteroid_grid.shape}"
     assert np.sum(asteroid_grid > 0) > 0, "No asteroids were generated"
 
     # Test rare mineral generation
     print("Testing rare mineral generation...")
     rare_grid = generator.generate_rare_minerals(asteroid_grid, rare_chance=0.2)
-    assert rare_grid.shape == (100, 100), (
-        f"Expected shape (100, 100), got {rare_grid.shape}"
-    )
+    assert rare_grid.shape == (
+        100,
+        100,
+    ), f"Expected shape (100, 100), got {rare_grid.shape}"
 
     print("All basic tests passed!")
     return generator, asteroid_grid, rare_grid
@@ -69,20 +71,23 @@ def test_create_field_function():
     )
 
     # Verify the field properties
-    assert isinstance(field, AsteroidField), (
-        f"Expected AsteroidField, got {type(field)}"
-    )
+    assert isinstance(
+        field, AsteroidField
+    ), f"Expected AsteroidField, got {type(field)}"
     assert field.width == 80, f"Expected width 80, got {field.width}"
     assert field.height == 80, f"Expected height 80, got {field.height}"
-    assert field.grid.shape == (80, 80), (
-        f"Expected grid shape (80, 80), got {field.grid.shape}"
-    )
-    assert field.rare_grid.shape == (80, 80), (
-        f"Expected rare_grid shape (80, 80), got {field.rare_grid.shape}"
-    )
-    assert field.energy_grid.shape == (80, 80), (
-        f"Expected energy_grid shape (80, 80), got {field.energy_grid.shape}"
-    )
+    assert field.grid.shape == (
+        80,
+        80,
+    ), f"Expected grid shape (80, 80), got {field.grid.shape}"
+    assert field.rare_grid.shape == (
+        80,
+        80,
+    ), f"Expected rare_grid shape (80, 80), got {field.rare_grid.shape}"
+    assert field.energy_grid.shape == (
+        80,
+        80,
+    ), f"Expected energy_grid shape (80, 80), got {field.energy_grid.shape}"
 
     # Check that we have asteroids and rare minerals
     assert np.sum(field.grid > 0) > 0, "No asteroids were generated"

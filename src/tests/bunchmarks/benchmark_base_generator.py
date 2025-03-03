@@ -130,7 +130,7 @@ def print_results(
 
     # Print header
     header = "Grid Size"
-    for label in results_dict.keys():
+    for label in results_dict:
         header += f" | {label}"
     print(header)
     print("-" * 60)
@@ -142,7 +142,7 @@ def print_results(
     # Print each row
     for i, size in enumerate(grid_sizes):
         row = f"{size:9d}"
-        for label, results in results_dict.items():
+        for results in results_dict.values():
             row += f" | {results['times'][i]:.6f}s"
         print(row)
 

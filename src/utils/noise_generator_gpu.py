@@ -96,26 +96,24 @@ class GPUNoiseGenerator(NoiseGenerator):
         Returns:
             A 2D numpy array of noise values between 0 and 1
         """
-        # Use GPU implementation if available
-        if self.backend != "cpu" and is_gpu_available():
-            try:
-                return apply_noise_generation_gpu(
-                    width=width,
-                    height=height,
-                    scale=scale,
-                    octaves=octaves,
-                    seed=seed,
-                    backend=self.backend,
-                )
-            except Exception as e:
-                logging.warning(
-                    f"GPU noise generation failed: {str(e)}. Falling back to CPU."
-                )
-                return self.cpu_generator.generate_noise(
-                    width=width, height=height, scale=scale, octaves=octaves, seed=seed
-                )
-        else:
+        if self.backend == "cpu" or not is_gpu_available():
             # Use CPU implementation
+            return self.cpu_generator.generate_noise(
+                width=width, height=height, scale=scale, octaves=octaves, seed=seed
+            )
+        try:
+            return apply_noise_generation_gpu(
+                width=width,
+                height=height,
+                scale=scale,
+                octaves=octaves,
+                seed=seed,
+                backend=self.backend,
+            )
+        except Exception as e:
+            logging.warning(
+                f"GPU noise generation failed: {str(e)}. Falling back to CPU."
+            )
             return self.cpu_generator.generate_noise(
                 width=width, height=height, scale=scale, octaves=octaves, seed=seed
             )
@@ -159,81 +157,79 @@ class GPUNoiseGenerator(NoiseGenerator):
             random.seed(seed)
             np.random.seed(seed)
 
-        # Use GPU implementation if available
-        if self.backend != "cpu" and is_gpu_available():
-            try:
-                # Generate noise for each octave and combine
-                if self.backend == "cupy" and CUPY_AVAILABLE:
-                    # CuPy implementation
-                    result = cp.zeros((height, width), dtype=cp.float32)
-
-                    for i, (octave, weight) in enumerate(
-                        zip(octaves, normalized_weights)
-                    ):
-                        octave_scale = scale * (2**i)
-                        octave_seed = seed + i if seed is not None else None
-
-                        # Generate noise for this octave
-                        octave_noise = apply_noise_generation_gpu(
-                            width=width,
-                            height=height,
-                            scale=octave_scale,
-                            octaves=octave,
-                            seed=octave_seed,
-                            backend="cupy",
-                        )
-
-                        # Add weighted noise to result
-                        result += cp.asarray(octave_noise) * weight
-
-                    # Ensure values are in [0, 1]
-                    result = cp.clip(result, 0, 1)
-                    return to_cpu(result)
-
-                elif self.backend == "cuda" and CUDA_AVAILABLE:
-                    # CUDA implementation
-                    result = np.zeros((height, width), dtype=np.float32)
-
-                    for i, (octave, weight) in enumerate(
-                        zip(octaves, normalized_weights)
-                    ):
-                        octave_scale = scale * (2**i)
-                        octave_seed = seed + i if seed is not None else None
-
-                        # Generate noise for this octave
-                        octave_noise = apply_noise_generation_gpu(
-                            width=width,
-                            height=height,
-                            scale=octave_scale,
-                            octaves=octave,
-                            seed=octave_seed,
-                            backend="cuda",
-                        )
-
-                        # Add weighted noise to result
-                        result += octave_noise * weight
-
-                    # Ensure values are in [0, 1]
-                    return np.clip(result, 0, 1)
-
-                else:
-                    # Fallback to CPU
-                    raise ValueError(f"Unsupported backend: {self.backend}")
-
-            except Exception as e:
-                logging.warning(
-                    f"GPU multi-octave noise generation failed: {str(e)}. Falling back to CPU."
-                )
-                return self.cpu_generator.generate_multi_octave_noise(
-                    width=width,
-                    height=height,
-                    scale=scale,
-                    octaves=octaves,
-                    weights=weights,
-                    seed=seed,
-                )
-        else:
+        if self.backend == "cpu" or not is_gpu_available():
             # Use CPU implementation
+            return self.cpu_generator.generate_multi_octave_noise(
+                width=width,
+                height=height,
+                scale=scale,
+                octaves=octaves,
+                weights=weights,
+                seed=seed,
+            )
+        try:
+            # Generate noise for each octave and combine
+            if self.backend == "cupy" and CUPY_AVAILABLE:
+                # CuPy implementation
+                result = cp.zeros((height, width), dtype=cp.float32)
+
+                for i, (octave, weight) in enumerate(
+                    zip(octaves, normalized_weights)
+                ):
+                    octave_scale = scale * (2**i)
+                    octave_seed = seed + i if seed is not None else None
+
+                    # Generate noise for this octave
+                    octave_noise = apply_noise_generation_gpu(
+                        width=width,
+                        height=height,
+                        scale=octave_scale,
+                        octaves=octave,
+                        seed=octave_seed,
+                        backend="cupy",
+                    )
+
+                    # Add weighted noise to result
+                    result += cp.asarray(octave_noise) * weight
+
+                # Ensure values are in [0, 1]
+                result = cp.clip(result, 0, 1)
+                return to_cpu(result)
+
+            elif self.backend == "cuda" and CUDA_AVAILABLE:
+                # CUDA implementation
+                result = np.zeros((height, width), dtype=np.float32)
+
+                for i, (octave, weight) in enumerate(
+                    zip(octaves, normalized_weights)
+                ):
+                    octave_scale = scale * (2**i)
+                    octave_seed = seed + i if seed is not None else None
+
+                    # Generate noise for this octave
+                    octave_noise = apply_noise_generation_gpu(
+                        width=width,
+                        height=height,
+                        scale=octave_scale,
+                        octaves=octave,
+                        seed=octave_seed,
+                        backend="cuda",
+                    )
+
+                    # Add weighted noise to result
+                    result += octave_noise * weight
+
+                # Ensure values are in [0, 1]
+                return np.clip(result, 0, 1)
+
+            else:
+                # Fallback to CPU
+                raise ValueError(f"Unsupported backend: {self.backend}")
+
+        except Exception as e:
+            logging.warning(
+                f"GPU multi-octave noise generation failed: {str(e)}. Falling back to CPU."
+            )
             return self.cpu_generator.generate_multi_octave_noise(
                 width=width,
                 height=height,
@@ -339,6 +335,8 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
                     warped_x_gpu = cp.asarray(warped_x)
                     warped_y_gpu = cp.asarray(warped_y)
 
+                    # Generate a random permutation table for noise
+                    perm_size = 256
                     # Generate noise for each octave
                     for i in range(octaves):
                         octave_scale = scale * (2**i)
@@ -349,8 +347,6 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
                         # This is a simplified version - in practice, you'd use a more sophisticated approach
                         noise_values = cp.zeros((height, width), dtype=cp.float32)
 
-                        # Generate a random permutation table for noise
-                        perm_size = 256
                         perm = cp.asarray(
                             np.random.permutation(perm_size), dtype=cp.int32
                         )
@@ -424,9 +420,8 @@ def get_gpu_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """
     if is_gpu_available():
         return GPUNoiseGenerator(backend=backend)
-    else:
-        logging.info("No GPU acceleration available, using CPU noise generator")
-        return get_noise_generator()
+    logging.info("No GPU acceleration available, using CPU noise generator")
+    return get_noise_generator()
 
 
 def get_fractal_noise_generator(backend: str = "auto") -> NoiseGenerator:
@@ -441,6 +436,5 @@ def get_fractal_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """
     if is_gpu_available():
         return FractalNoiseGenerator(backend=backend)
-    else:
-        logging.info("No GPU acceleration available, using CPU noise generator")
-        return get_noise_generator()
+    logging.info("No GPU acceleration available, using CPU noise generator")
+    return get_noise_generator()

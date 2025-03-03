@@ -21,9 +21,9 @@ sys.modules["sklearn.cluster"] = MagicMock()
 
 # Mock src modules
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules[
-    "src.algorithms.symbiote_algorithm"
-].SymbioteEvolutionAlgorithm = MagicMock()
+sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
+    MagicMock()
+)
 sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
@@ -58,15 +58,18 @@ def verify_base_entity():
     entity = BaseEntity(entity_type="test", color=(255, 0, 0), position=(10, 20))
 
     # Verify basic attributes
-    assert entity.entity_type == "test", (
-        f"Expected entity_type 'test', got {entity.entity_type}"
-    )
-    assert entity.color == (255, 0, 0), (
-        f"Expected color (255, 0, 0), got {entity.color}"
-    )
-    assert entity.position == (10, 20), (
-        f"Expected position (10, 20), got {entity.position}"
-    )
+    assert (
+        entity.entity_type == "test"
+    ), f"Expected entity_type 'test', got {entity.entity_type}"
+    assert entity.color == (
+        255,
+        0,
+        0,
+    ), f"Expected color (255, 0, 0), got {entity.color}"
+    assert entity.position == (
+        10,
+        20,
+    ), f"Expected position (10, 20), got {entity.position}"
     assert entity.active is True, f"Expected active True, got {entity.active}"
 
     # Test methods
@@ -74,9 +77,10 @@ def verify_base_entity():
     assert entity.has_tag("important"), "Tag 'important' should be present"
 
     entity.set_position(30, 40)
-    assert entity.get_position() == (30, 40), (
-        f"Expected position (30, 40), got {entity.get_position()}"
-    )
+    assert entity.get_position() == (
+        30,
+        40,
+    ), f"Expected position (30, 40), got {entity.get_position()}"
 
     entity.deactivate()
     assert not entity.is_active(), "Entity should be inactive after deactivate()"
@@ -86,14 +90,14 @@ def verify_base_entity():
 
     # Test serialization
     data = entity.to_dict()
-    assert data["entity_type"] == "test", (
-        f"Expected entity_type 'test', got {data['entity_type']}"
-    )
+    assert (
+        data["entity_type"] == "test"
+    ), f"Expected entity_type 'test', got {data['entity_type']}"
 
     new_entity = BaseEntity.from_dict(data)
-    assert new_entity.entity_type == entity.entity_type, (
-        "Entity types should match after deserialization"
-    )
+    assert (
+        new_entity.entity_type == entity.entity_type
+    ), "Entity types should match after deserialization"
 
     print("BaseEntity tests passed!")
     return True
@@ -109,32 +113,32 @@ def verify_inheritance():
     player = MockPlayer()
 
     # Verify inheritance
-    assert isinstance(miner, BaseEntity), (
-        "MockMinerEntity should be an instance of BaseEntity"
-    )
-    assert isinstance(player, MockMinerEntity), (
-        "MockPlayer should be an instance of MockMinerEntity"
-    )
-    assert isinstance(player, BaseEntity), (
-        "MockPlayer should be an instance of BaseEntity"
-    )
+    assert isinstance(
+        miner, BaseEntity
+    ), "MockMinerEntity should be an instance of BaseEntity"
+    assert isinstance(
+        player, MockMinerEntity
+    ), "MockPlayer should be an instance of MockMinerEntity"
+    assert isinstance(
+        player, BaseEntity
+    ), "MockPlayer should be an instance of BaseEntity"
 
     # Verify entity types
-    assert base.entity_type == "base", (
-        f"Expected entity_type 'base', got {base.entity_type}"
-    )
-    assert miner.entity_type == "miner", (
-        f"Expected entity_type 'miner', got {miner.entity_type}"
-    )
+    assert (
+        base.entity_type == "base"
+    ), f"Expected entity_type 'base', got {base.entity_type}"
+    assert (
+        miner.entity_type == "miner"
+    ), f"Expected entity_type 'miner', got {miner.entity_type}"
 
     # Verify player-specific attributes
     assert player.is_player is True, "Player should have is_player=True"
-    assert player.credits == 1000, (
-        f"Player should start with 1000 credits, got {player.credits}"
-    )
-    assert player.trait == "adaptive", (
-        f"Player should have 'adaptive' trait, got {player.trait}"
-    )
+    assert (
+        player.credits == 1000
+    ), f"Player should start with 1000 credits, got {player.credits}"
+    assert (
+        player.trait == "adaptive"
+    ), f"Player should have 'adaptive' trait, got {player.trait}"
 
     print("Inheritance tests passed!")
     return True

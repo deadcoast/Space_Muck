@@ -490,9 +490,7 @@ class PlayerRenderer:
                         (
                             (0, 255, 0)
                             if health > 50
-                            else (255, 255, 0)
-                            if health > 25
-                            else (255, 0, 0)
+                            else (255, 255, 0) if health > 25 else (255, 0, 0)
                         ),
                         (
                             screen_x,

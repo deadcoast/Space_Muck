@@ -25,9 +25,9 @@ sys.modules["sklearn.cluster"].KMeans = MagicMock()
 
 # Mock src modules
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules[
-    "src.algorithms.symbiote_algorithm"
-].SymbioteEvolutionAlgorithm = MagicMock()
+sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
+    MagicMock()
+)
 sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 

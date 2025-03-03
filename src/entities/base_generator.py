@@ -748,7 +748,8 @@ class BaseGenerator(BaseEntity):
             else:
                 # For non-wrap, we just need to match the original chunk size
                 result = result_chunk[
-                    process_start - start_row : process_start
+                    process_start
+                    - start_row : process_start
                     - start_row
                     + (end_row - start_row)
                 ]

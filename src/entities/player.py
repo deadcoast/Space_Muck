@@ -123,11 +123,7 @@ class Player(MinerEntity):
             5: (0.2, 0.4),  # Level 5: +20% efficiency, +40% speed
         }
 
-        # Reputation system
-        self.reputation = {}
-        # Initialize neutral reputation with all factions
-        for faction in GAME_FACTIONS:
-            self.reputation[faction] = 0
+        self.reputation = {faction: 0 for faction in GAME_FACTIONS}
         self.faction_quests_completed = {faction: 0 for faction in GAME_FACTIONS}
 
         # Override some MinerEntity defaults for the player
@@ -236,9 +232,11 @@ class Player(MinerEntity):
             "level": self.level,
             "xp": self.xp,
             "xp_to_next_level": self.xp_to_next_level,
-            "progress_percent": (self.xp / self.xp_to_next_level) * 100
-            if self.xp_to_next_level > 0
-            else 100,
+            "progress_percent": (
+                (self.xp / self.xp_to_next_level) * 100
+                if self.xp_to_next_level > 0
+                else 100
+            ),
             "mining_efficiency": self.mining_efficiency,
             "mining_speed": self.mining_speed,
         }
@@ -515,13 +513,14 @@ class Player(MinerEntity):
 
         rep_value = self.reputation[faction]
 
-        # Find the appropriate reputation level based on the value
-        for level, (min_val, max_val) in REPUTATION_LEVELS.items():
-            if min_val <= rep_value <= max_val:
-                return level
-
-        # Fallback (should never happen with proper bounds)
-        return "neutral"
+        return next(
+            (
+                level
+                for level, (min_val, max_val) in REPUTATION_LEVELS.items()
+                if min_val <= rep_value <= max_val
+            ),
+            "neutral",
+        )
 
     def change_reputation(self, faction: str, amount: int) -> Dict[str, Any]:
         """
@@ -900,7 +899,7 @@ class Player(MinerEntity):
         # Check if ship is destroyed
         destroyed = self.current_hull <= 0
         if destroyed:
-            logging.warning(f"Player ship destroyed!")
+            logging.warning("Player ship destroyed!")
             # Reset hull to 1 to prevent actual game over in this implementation
             self.current_hull = 1
 

@@ -140,14 +140,14 @@ COMBAT_ENEMY_TYPES: List[str] = [
     "mercenary",
     "elite",
 ]  # Types of enemy ships
-COMBAT_DIFFICULTY_MULTIPLIER: Dict[
-    str, float
-] = {  # Difficulty multipliers for enemy stats
-    "easy": 0.8,
-    "medium": 1.0,
-    "hard": 1.3,
-    "elite": 1.8,
-}
+COMBAT_DIFFICULTY_MULTIPLIER: Dict[str, float] = (
+    {  # Difficulty multipliers for enemy stats
+        "easy": 0.8,
+        "medium": 1.0,
+        "hard": 1.3,
+        "elite": 1.8,
+    }
+)
 
 # Player settings
 PLAYER_START_CURRENCY: int = 100  # Starting currency

@@ -191,14 +191,7 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
                 new_grid[y, x] = 1 if neighbors in birth_set else 0
 
 
-def apply_cellular_automaton_gpu(
-    grid: np.ndarray,
-    birth_set: Set[int] = {3},
-    survival_set: Set[int] = {2, 3},
-    iterations: int = 3,
-    wrap: bool = True,
-    backend: str = "auto",
-) -> np.ndarray:
+def apply_cellular_automaton_gpu(grid: np.ndarray, birth_set: Set[int] = None, survival_set: Set[int] = None, iterations: int = 3, wrap: bool = True, backend: str = "auto") -> np.ndarray:
     """
     Apply cellular automaton rules using GPU acceleration if available.
 
@@ -213,6 +206,10 @@ def apply_cellular_automaton_gpu(
     Returns:
         np.ndarray: Evolved grid
     """
+    if birth_set is None:
+        birth_set = {3}
+    if survival_set is None:
+        survival_set = {2, 3}
     height, width = grid.shape
 
     # Convert sets to lists for GPU compatibility
@@ -1060,45 +1057,6 @@ def apply_dbscan_clustering_gpu(
         )
         # Return all points as noise if scikit-learn is not available
         return np.full(n_samples, -1)
-        core_points = n_neighbors >= min_samples
-
-        # Initialize labels
-        labels = np.full(n_samples, -1, dtype=np.int32)
-
-        # Cluster ID counter
-        cluster_id = 0
-
-        # Perform clustering
-        for i in range(n_samples):
-            if not core_points[i] or labels[i] != -1:
-                continue
-
-            # Start a new cluster
-            labels[i] = cluster_id
-
-            # Find all points reachable from this core point
-            stack = [i]
-            while stack:
-                current = stack.pop()
-
-                # Get neighbors
-                current_neighbors = np.where(neighbors[current])[0]
-
-                # Process neighbors
-                for neighbor in current_neighbors:
-                    # If not yet assigned to a cluster
-                    if labels[neighbor] == -1:
-                        labels[neighbor] = cluster_id
-
-                        # If it's a core point, add to stack for further expansion
-                        if core_points[neighbor]:
-                            stack.append(neighbor)
-
-            # Move to next cluster
-            cluster_id += 1
-
-        return labels
-
     # If we reach here, fallback to CPU implementation
     try:
         from sklearn.cluster import DBSCAN

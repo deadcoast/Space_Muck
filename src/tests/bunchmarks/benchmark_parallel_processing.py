@@ -135,7 +135,7 @@ def benchmark_cellular_automaton(
 
         # Benchmark sequential implementation
         sequential_times = []
-        for run in range(runs):
+        for _ in range(runs):
             # Force sequential processing by temporarily setting a very high threshold
             original_threshold = generator._get_parallel_ca_threshold()
             generator._set_parallel_ca_threshold(
@@ -161,7 +161,7 @@ def benchmark_cellular_automaton(
 
         # Benchmark parallel implementation
         parallel_times = []
-        for run in range(runs):
+        for _ in range(runs):
             # Force parallel processing by temporarily setting a very low threshold
             original_threshold = generator._get_parallel_ca_threshold()
             generator._set_parallel_ca_threshold(
@@ -226,7 +226,7 @@ def benchmark_clustering(
 
         # Benchmark sequential implementation
         sequential_times = []
-        for run in range(runs):
+        for _ in range(runs):
             # Force sequential processing by temporarily setting a very high threshold
             original_threshold = generator._get_parallel_clustering_threshold()
             generator._set_parallel_clustering_threshold(
@@ -250,7 +250,7 @@ def benchmark_clustering(
 
         # Benchmark parallel implementation
         parallel_times = []
-        for run in range(runs):
+        for _ in range(runs):
             # Force parallel processing by temporarily setting a very low threshold
             original_threshold = generator._get_parallel_clustering_threshold()
             generator._set_parallel_clustering_threshold(

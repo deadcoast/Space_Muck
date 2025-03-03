@@ -246,10 +246,7 @@ class SimplexNoiseGenerator(NoiseGenerator):
         # Ensure the dimensions are correct
         noise_grid = noise_grid[:height, :width]
 
-        # Ensure values are in [0, 1]
-        noise_grid = np.clip(noise_grid, 0, 1)
-
-        return noise_grid
+        return np.clip(noise_grid, 0, 1)
 
     def generate_multi_octave_noise(
         self,

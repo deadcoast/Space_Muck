@@ -234,7 +234,7 @@ def run_demo():
 
                         # Display mineral consumption if available
                         if mineral_consumption:
-                            print(f"  Mineral consumption:")
+                            print("  Mineral consumption:")
                             for mineral, amount in mineral_consumption.items():
                                 print(f"    {mineral}: {amount:.4f}")
                     else:

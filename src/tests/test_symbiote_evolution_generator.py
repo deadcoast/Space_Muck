@@ -196,7 +196,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
 
         # Verify the child genome
         self.assertIsInstance(child, dict)
-        for key in parent1.keys():
+        for key in parent1:
             self.assertIn(key, child)
             # Child traits should be between parent traits or equal to one of them
             self.assertTrue(
@@ -228,13 +228,13 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
 
         # Verify the mutated genome
         self.assertIsInstance(mutated, dict)
-        for key in original.keys():
+        for key in original:
             self.assertIn(key, mutated)
             # With 100% mutation rate, at least some values should change
 
         # Test with 0% mutation rate (should not change)
         mutated = self.generator._mutate(genome, mutation_rate=0.0)
-        for key in original.keys():
+        for key in original:
             self.assertEqual(mutated[key], original[key])
 
     def test_fitness(self):

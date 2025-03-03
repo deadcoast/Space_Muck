@@ -393,9 +393,9 @@ def test_asteroid_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert generator.entity_type == "asteroid", (
-        f"Expected entity_type 'asteroid', got {generator.entity_type}"
-    )
+    assert (
+        generator.entity_type == "asteroid"
+    ), f"Expected entity_type 'asteroid', got {generator.entity_type}"
 
     # Test noise generation with performance measurement
     print("Testing noise generation performance...")
@@ -468,12 +468,13 @@ def test_pattern_generation():
     pattern_time = time.time() - start_time
     print(f"Pattern-based field generation time: {pattern_time:.4f} seconds")
 
-    assert asteroid_grid.shape == (80, 80), (
-        f"Expected shape (80, 80), got {asteroid_grid.shape}"
-    )
-    assert np.sum(asteroid_grid > 0) > 0, (
-        "No asteroids were generated with pattern weights"
-    )
+    assert asteroid_grid.shape == (
+        80,
+        80,
+    ), f"Expected shape (80, 80), got {asteroid_grid.shape}"
+    assert (
+        np.sum(asteroid_grid > 0) > 0
+    ), "No asteroids were generated with pattern weights"
 
     # Test individual pattern generation performance
     print("Testing individual pattern generation performance...")
@@ -497,9 +498,9 @@ def test_pattern_generation():
         f"Cached spiral pattern time: {spiral_time2:.4f} seconds (Speed improvement: {spiral_time / spiral_time2:.2f}x if > 1)"
     )
 
-    assert np.array_equal(spiral, spiral2), (
-        "Cached spiral pattern does not match original"
-    )
+    assert np.array_equal(
+        spiral, spiral2
+    ), "Cached spiral pattern does not match original"
 
     print("Pattern generation tests passed!")
     return asteroid_grid, spiral, rings
