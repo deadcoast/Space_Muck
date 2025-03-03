@@ -173,9 +173,7 @@ class GPUNoiseGenerator(NoiseGenerator):
                 # CuPy implementation
                 result = cp.zeros((height, width), dtype=cp.float32)
 
-                for i, (octave, weight) in enumerate(
-                    zip(octaves, normalized_weights)
-                ):
+                for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
                     octave_scale = scale * (2**i)
                     octave_seed = seed + i if seed is not None else None
 
@@ -200,9 +198,7 @@ class GPUNoiseGenerator(NoiseGenerator):
                 # CUDA implementation
                 result = np.zeros((height, width), dtype=np.float32)
 
-                for i, (octave, weight) in enumerate(
-                    zip(octaves, normalized_weights)
-                ):
+                for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
                     octave_scale = scale * (2**i)
                     octave_seed = seed + i if seed is not None else None
 

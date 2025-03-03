@@ -53,8 +53,8 @@ class TestPatternGenerator(unittest.TestCase):
         max_y, max_x = np.unravel_index(np.argmax(pattern), pattern.shape)
 
         # Should be close to the center (within a few pixels)
-        self.assertLess(abs(max_x - custom_center[0]), 5)
-        self.assertLess(abs(max_y - custom_center[1]), 5)
+        self.assertTrue(abs(max_x - custom_center[0]) < 5)
+        self.assertTrue(abs(max_y - custom_center[1]) < 5)
 
     def test_spiral_pattern_density(self):
         """Test that density parameter affects spiral pattern."""
@@ -62,7 +62,7 @@ class TestPatternGenerator(unittest.TestCase):
         high_density = generate_spiral_pattern(self.width, self.height, density=1.0)
 
         # Higher density should have more variation
-        self.assertGreater(np.std(high_density), np.std(low_density))
+        self.assertTrue(np.std(high_density) > np.std(low_density))
 
     def test_ring_pattern_shape(self):
         """Test that ring pattern has correct shape."""
@@ -103,7 +103,7 @@ class TestPatternGenerator(unittest.TestCase):
                     many_rings_count += 1
 
         # Many rings should have more local maxima than few rings
-        self.assertGreaterEqual(many_rings_count, few_rings_count)
+        self.assertTrue(many_rings_count >= few_rings_count)
 
     def test_gradient_pattern_shape(self):
         """Test that gradient pattern has correct shape."""
@@ -134,8 +134,8 @@ class TestPatternGenerator(unittest.TestCase):
         v_x_variation = np.mean(np.abs(np.diff(vertical, axis=1)))
         v_y_variation = np.mean(np.abs(np.diff(vertical, axis=0)))
 
-        self.assertGreater(h_x_variation, h_y_variation)
-        self.assertGreater(v_y_variation, v_x_variation)
+        self.assertTrue(h_x_variation > h_y_variation)
+        self.assertTrue(v_y_variation > v_x_variation)
 
     def test_void_pattern_shape(self):
         """Test that void pattern has correct shape."""
@@ -157,7 +157,7 @@ class TestPatternGenerator(unittest.TestCase):
         few_voids_low = np.sum(few_voids < 0.2)
         many_voids_low = np.sum(many_voids < 0.2)
 
-        self.assertGreaterEqual(many_voids_low, few_voids_low)
+        self.assertTrue(many_voids_low >= few_voids_low)
 
     def test_apply_weighted_patterns(self):
         """Test applying weighted patterns."""

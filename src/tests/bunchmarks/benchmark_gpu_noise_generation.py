@@ -27,7 +27,9 @@ from src.entities.base_generator import BaseGenerator
 from src.utils.gpu_utils import is_gpu_available, get_available_backends
 
 
-def run_noise_benchmark(sizes: List[int], noise_types: List[str] = None, iterations: int = 3) -> Dict[str, Dict[str, List[float]]]:
+def run_noise_benchmark(
+    sizes: List[int], noise_types: List[str] = None, iterations: int = 3
+) -> Dict[str, Dict[str, List[float]]]:
     """
     Run benchmark tests for noise generation with and without GPU acceleration.
 
@@ -108,7 +110,9 @@ def run_noise_benchmark(sizes: List[int], noise_types: List[str] = None, iterati
     return results
 
 
-def run_multi_octave_benchmark(sizes: List[int], octaves_list: List[List[int]] = None, iterations: int = 3) -> Dict[str, Dict[str, List[float]]]:
+def run_multi_octave_benchmark(
+    sizes: List[int], octaves_list: List[List[int]] = None, iterations: int = 3
+) -> Dict[str, Dict[str, List[float]]]:
     """
     Run benchmark tests for multi-octave noise generation with and without GPU acceleration.
 

@@ -1379,8 +1379,26 @@ CODEBASE MAPPING REFERENCE
   - **Purpose**: Comprehensive GPU benchmarking script that provides a unified framework for benchmarking all GPU-accelerated operations across different backends, grid sizes, and configurations
   - **File Imports**: 
     - from src.utils.gpu_utils import is_gpu_available, get_available_backends
+    - from src.utils.value_generator import generate_value_distribution, add_value_clusters
+    - from src.utils.value_generator_gpu import generate_value_distribution_gpu, add_value_clusters_gpu
+    - from typing import Dict, List, Any, Optional, Tuple, Union
     - import numpy as np
     - import matplotlib.pyplot as plt
+    - import time
+    - import os
+    - import logging
+  - **Key Functions**:
+    - generate_resource_distribution_cpu: Generates resource distribution using CPU implementation with proper grid inputs
+    - generate_resource_distribution_gpu: Generates resource distribution using GPU implementation with proper grid inputs
+    - generate_terrain_cpu: Generates terrain using CPU implementation with proper grid inputs
+    - generate_terrain_gpu: Generates terrain using GPU implementation with proper grid inputs
+    - benchmark_cellular_automaton: Benchmarks cellular automaton operations
+    - benchmark_clustering: Benchmarks clustering algorithms
+    - benchmark_value_generation: Benchmarks value generation operations
+    - benchmark_memory_transfer: Benchmarks memory transfer between CPU and GPU
+    - benchmark_noise_generation: Benchmarks noise generation operations
+    - run_all_benchmarks: Runs all benchmark functions with proper type handling for Optional parameters
+    - visualize_benchmark_results: Creates visualization plots for benchmark results
 
 - `src/tests/bunchmarks/benchmark_comprehensive_gpu_main.py`
   - **Purpose**: Main entry point for the comprehensive GPU benchmarking script with command-line interface

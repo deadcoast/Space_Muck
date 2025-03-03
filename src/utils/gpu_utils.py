@@ -191,7 +191,14 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
                 new_grid[y, x] = 1 if neighbors in birth_set else 0
 
 
-def apply_cellular_automaton_gpu(grid: np.ndarray, birth_set: Set[int] = None, survival_set: Set[int] = None, iterations: int = 3, wrap: bool = True, backend: str = "auto") -> np.ndarray:
+def apply_cellular_automaton_gpu(
+    grid: np.ndarray,
+    birth_set: Set[int] = None,
+    survival_set: Set[int] = None,
+    iterations: int = 3,
+    wrap: bool = True,
+    backend: str = "auto",
+) -> np.ndarray:
     """
     Apply cellular automaton rules using GPU acceleration if available.
 

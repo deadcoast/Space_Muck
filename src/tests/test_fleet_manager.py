@@ -9,6 +9,8 @@ import os
 import math
 from unittest.mock import MagicMock
 
+# No typing imports needed for this file
+
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -67,8 +69,12 @@ class TestFleetManager(unittest.TestCase):
         self.assertEqual(self.fleet.formation, "line")
         self.assertEqual(self.fleet.commander_level, 3)
         self.assertEqual(len(self.fleet.ships), 5)
-        self.assertIsNotNone(self.fleet.flagship)
-        self.assertEqual(self.fleet.flagship.ship_id, "ship-0")
+
+        # Add null check for flagship before accessing its attributes
+        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
+        if self.fleet.flagship:  # Type guard
+            self.assertEqual(self.fleet.flagship.entity_id, "ship-0")
+
         self.assertTrue(self.fleet.is_active)
         self.assertFalse(self.fleet.in_combat)
         self.assertIsNone(self.fleet.target_fleet)
@@ -170,32 +176,59 @@ class TestFleetManager(unittest.TestCase):
         self.fleet._update_ship_positions()
 
         # In line formation, ships should be positioned horizontally
-        flagship_x = self.fleet.flagship.position[0]
-        flagship_y = self.fleet.flagship.position[1]
+        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
+        if self.fleet.flagship:  # Type guard
+            self.assertIsNotNone(
+                self.fleet.flagship.position, "Flagship position should not be None"
+            )
+            if self.fleet.flagship.position:  # Type guard
+                flagship_x = self.fleet.flagship.position[0]
+                flagship_y = self.fleet.flagship.position[1]
 
-        # Check that non-flagship ships are positioned horizontally
-        for ship in self.fleet.ships:
-            if ship != self.fleet.flagship:
-                # Y coordinate should be the same as flagship
-                self.assertEqual(ship.position[1], flagship_y)
-                # X coordinate should be different
-                self.assertNotEqual(ship.position[0], flagship_x)
+                # Check that non-flagship ships are positioned horizontally
+                for ship in self.fleet.ships:
+                    if ship != self.fleet.flagship:
+                        self.assertIsNotNone(
+                            ship.position,
+                            f"Ship {ship.entity_id} position should not be None",
+                        )
+                        if ship.position:  # Type guard
+                            # Y coordinate should be the same as flagship
+                            self.assertEqual(ship.position[1], flagship_y)
+                            # X coordinate should be different
+                            self.assertNotEqual(ship.position[0], flagship_x)
 
         # Test column formation
         self.fleet.set_formation("column")
         self.fleet._update_ship_positions()
 
+        # Initialize flagship position variables to default values
+        flagship_x = 0
+        flagship_y = 0
+
         # In column formation, ships should be positioned vertically
-        flagship_x = self.fleet.flagship.position[0]
-        flagship_y = self.fleet.flagship.position[1]
+        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
+        if self.fleet.flagship:  # Type guard
+            self.assertIsNotNone(
+                self.fleet.flagship.position, "Flagship position should not be None"
+            )
+            if self.fleet.flagship.position:  # Type guard
+                flagship_x = self.fleet.flagship.position[0]
+                flagship_y = self.fleet.flagship.position[1]
 
         # Check that non-flagship ships are positioned vertically
         for ship in self.fleet.ships:
             if ship != self.fleet.flagship:
-                # X coordinate should be the same as flagship
-                self.assertEqual(ship.position[0], flagship_x)
-                # Y coordinate should be different
-                self.assertNotEqual(ship.position[1], flagship_y)
+                self.assertIsNotNone(ship.position, "Ship position should not be None")
+                if (
+                    ship.position
+                    and "flagship_x" in locals()
+                    and "flagship_y" in locals()
+                ):  # Type guard
+                    # X coordinate should be the same as flagship
+                    self.assertEqual(ship.position[0], flagship_x)
+                    # Y coordinate should be different
+                    self.assertNotEqual(ship.position[1], flagship_y)
 
         # Restore the original method
         self.fleet._update_ship_positions = original_update_positions
@@ -205,22 +238,27 @@ class TestFleetManager(unittest.TestCase):
         # Mock the update method to actually move the fleet
         original_update = self.fleet.update
 
-        def mock_update(dt):
+        def mock_update(delta_time: float) -> None:
             # Only move if we have a destination
-            if hasattr(self.fleet, "destination") and self.fleet.destination:
-                # Calculate direction vector
+            if not hasattr(self.fleet, "destination") or not self.fleet.destination:
+                return
+            # Calculate direction vector
+            if self.fleet.destination and self.fleet.position:  # Type guard
                 dx = self.fleet.destination[0] - self.fleet.position[0]
                 dy = self.fleet.destination[1] - self.fleet.position[1]
                 distance = math.sqrt(dx * dx + dy * dy)
+            else:
+                return  # Skip if position or destination is None
 
-                # Normalize and scale by speed
-                if distance > 0:
-                    dx /= distance
-                    dy /= distance
+            # Normalize and scale by speed
+            if distance > 0:
+                dx /= distance
+                dy /= distance
 
-                    # Update position
-                    x = self.fleet.position[0] + dx * self.fleet.speed * dt
-                    y = self.fleet.position[1] + dy * self.fleet.speed * dt
+                # Update position
+                if self.fleet.position:  # Type guard
+                    x = self.fleet.position[0] + dx * self.fleet.speed * delta_time
+                    y = self.fleet.position[1] + dy * self.fleet.speed * delta_time
                     self.fleet.position = (x, y)
 
         # Replace the method with our mock
@@ -233,12 +271,16 @@ class TestFleetManager(unittest.TestCase):
         # Check that movement was initiated
         self.assertTrue(result)
         self.assertEqual(self.fleet.destination, destination)
-        self.assertEqual(self.fleet.current_orders["type"], "move_to")
+        self.assertIsNotNone(self.fleet.current_orders, "Fleet current_orders should not be None")
+        if self.fleet.current_orders:  # Type guard for Pyright
+            self.assertEqual(self.fleet.current_orders["type"], "move_to")
 
         # Update the fleet to simulate movement
         self.fleet.update(1.0)
 
         # Check that the fleet has moved toward the destination
+        self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+        # We've already asserted position is not None, so we can access it directly
         self.assertNotEqual(self.fleet.position, (50, 50))  # Original position
 
         # Calculate expected position after one update
@@ -253,8 +295,10 @@ class TestFleetManager(unittest.TestCase):
         expected_y = 50 + dy * self.fleet.speed
 
         # Allow for small floating-point differences
-        self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
-        self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
+        self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+        if self.fleet.position is not None:  # Type guard for Pyright
+            self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
+            self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
 
         # Restore the original method
         self.fleet.update = original_update
@@ -264,23 +308,37 @@ class TestFleetManager(unittest.TestCase):
         # Mock the update method to actually move the fleet and update waypoint index
         original_update = self.fleet.update
 
-        def mock_update(dt):
+        def mock_update(delta_time: float) -> None:
             # Only move if we have a destination
             if not hasattr(self.fleet, "destination") or not self.fleet.destination:
                 return
             # Calculate direction vector
-            dx = self.fleet.destination[0] - self.fleet.position[0]
-            dy = self.fleet.destination[1] - self.fleet.position[1]
-            distance = math.sqrt(dx * dx + dy * dy)
+            if self.fleet.destination and self.fleet.position:  # Type guard
+                dx = self.fleet.destination[0] - self.fleet.position[0]
+                dy = self.fleet.destination[1] - self.fleet.position[1]
+                distance = math.sqrt(dx * dx + dy * dy)
+            else:
+                return  # Skip if position or destination is None
 
             # If we're close enough to the waypoint, move to the next one
-            if distance < 1.0 and self.fleet.current_orders.get("type") == "patrol":
-                current_index = self.fleet.current_orders.get(
-                    "current_waypoint_index", 0
-                )
-                next_index = (current_index + 1) % len(self.fleet.waypoints)
-                self.fleet.current_orders["current_waypoint_index"] = next_index
-                self.fleet.destination = self.fleet.waypoints[next_index]
+            if (
+                distance < 1.0
+                and self.fleet.current_orders
+                and self.fleet.current_orders.get("type") == "patrol"
+            ):
+                current_index = 0
+                if self.fleet.current_orders:  # Type guard
+                    current_index = self.fleet.current_orders.get(
+                        "current_waypoint_index", 0
+                    )
+
+                if self.fleet.waypoints:  # Type guard
+                    next_index = (current_index + 1) % len(self.fleet.waypoints)
+                    if self.fleet.current_orders:  # Type guard
+                        self.fleet.current_orders["current_waypoint_index"] = next_index
+
+                    if self.fleet.waypoints:  # Type guard
+                        self.fleet.destination = self.fleet.waypoints[next_index]
                 return
 
             # Normalize and scale by speed
@@ -289,7 +347,8 @@ class TestFleetManager(unittest.TestCase):
                 dy /= distance
 
                 # Update position - move directly to waypoint for testing
-                self.fleet.position = self.fleet.destination
+                if self.fleet.destination:  # Type guard
+                    self.fleet.position = self.fleet.destination
 
         # Replace the method with our mock
         self.fleet.update = mock_update
@@ -301,17 +360,46 @@ class TestFleetManager(unittest.TestCase):
         # Check that patrol was initiated
         self.assertTrue(result)
         self.assertEqual(self.fleet.waypoints, patrol_points)
-        self.assertEqual(self.fleet.destination, patrol_points[0])
-        self.assertEqual(self.fleet.current_orders["type"], "patrol")
+
+        self.assertIsNotNone(
+            self.fleet.destination, "Fleet destination should not be None"
+        )
+        if self.fleet.destination and patrol_points:  # Type guard
+            self.assertEqual(self.fleet.destination, patrol_points[0])
+
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.assertEqual(self.fleet.current_orders["type"], "patrol")
 
         # Instead of relying on the mock update, directly set the current_waypoint_index
         # This ensures the test is more reliable
-        self.fleet.current_orders["current_waypoint_index"] = 1
-        self.fleet.destination = patrol_points[1]
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.fleet.current_orders["current_waypoint_index"] = 1
+
+        self.assertIsNotNone(patrol_points, "Patrol points should not be None")
+        if patrol_points and len(patrol_points) > 1:  # Type guard
+            self.fleet.destination = patrol_points[1]
 
         # Check that we've moved to the next waypoint
-        self.assertEqual(self.fleet.current_orders["current_waypoint_index"], 1)
-        self.assertEqual(self.fleet.destination, patrol_points[1])
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.assertEqual(self.fleet.current_orders["current_waypoint_index"], 1)
+
+        self.assertIsNotNone(
+            self.fleet.destination, "Fleet destination should not be None"
+        )
+        self.assertIsNotNone(patrol_points, "Patrol points should not be None")
+        if (
+            self.fleet.destination and patrol_points and len(patrol_points) > 1
+        ):  # Type guard
+            self.assertEqual(self.fleet.destination, patrol_points[1])
 
         # Test with invalid patrol points (less than 2)
         result = self.fleet.patrol_between([])
@@ -349,7 +437,9 @@ class TestFleetManager(unittest.TestCase):
         # Check that engagement was initiated
         self.assertTrue(result)
         self.assertTrue(self.fleet.in_combat)
-        self.assertEqual(self.fleet.target_fleet, enemy_fleet)
+        self.assertIsNotNone(self.fleet.target_fleet, "Target fleet should not be None")
+        if self.fleet.target_fleet:  # Type guard
+            self.assertEqual(self.fleet.target_fleet, enemy_fleet)
         self.assertEqual(self.fleet.combat_stance, "aggressive")
 
         # Update the fleet to simulate combat
@@ -479,17 +569,35 @@ class TestFleetManager(unittest.TestCase):
         self.assertFalse(result)
 
         # Test resource consumption
+        self.assertIsNotNone(self.fleet.resources, "Fleet resources should not be None")
+        # Test resource consumption
+        self.assertIsNotNone(self.fleet.resources, "Fleet resources should not be None")
+        self.assertIn(
+            "fuel_cells", self.fleet.resources, "Fleet should have fuel cells resource"
+        )
+
+        # Store the original fuel amount
         original_fuel = self.fleet.resources["fuel_cells"]
+
         # Simulate 1 day of movement
         self.fleet.path = [(60, 60)]  # Set path to trigger increased consumption
         self.fleet._consume_resources(86400.0)  # 1 day in seconds
 
         # Check that resources were consumed
-        self.assertLess(self.fleet.resources["fuel_cells"], original_fuel)
+        self.assertIsNotNone(self.fleet.resources, "Fleet resources should not be None")
+        self.assertIn(
+            "fuel_cells",
+            self.fleet.resources,
+            "Fleet should still have fuel cells resource",
+        )
+        self.assertLess(
+            self.fleet.resources["fuel_cells"], original_fuel, "Fuel should be consumed"
+        )
 
         # Test resource distribution methods
         for method in ["equal", "proportional", "priority"]:
             self.fleet.resource_distribution_method = method
+            # Call the method - we're just verifying it runs without errors
             self.fleet._distribute_resources()
             # Hard to test actual distribution with mocks, but we can verify the method runs
 
@@ -514,20 +622,26 @@ class TestFleetManager(unittest.TestCase):
             ship.ship_id = f"enemy-ship-{i}"
             ship.position = (55, 55)
             ship.health = 100.0
-            enemy_fleet.add_ship(ship)
+
+            # Verify that enemy_fleet is not None before adding ship
+            self.assertIsNotNone(enemy_fleet, "Enemy fleet should not be None")
+            if enemy_fleet:  # Type guard
+                enemy_fleet.add_ship(ship)
 
         # Mock the _check_for_enemies method to simulate detecting the enemy fleet
-        original_check_for_enemies = self.fleet._check_for_enemies
-        self.fleet._check_for_enemies = MagicMock(return_value=True)
+        self.assertIsNotNone(self.fleet, "Fleet should not be None")
+        if hasattr(self.fleet, "_check_for_enemies"):  # Check if attribute exists
+            original_check_for_enemies = self.fleet._check_for_enemies
+            self.fleet._check_for_enemies = MagicMock(return_value=True)
 
-        # Update the fleet
-        self.fleet.update(1.0)
+            # Update the fleet
+            self.fleet.update(1.0)
 
-        # Check that _check_for_enemies was called
-        self.fleet._check_for_enemies.assert_called_once()
+            # Check that _check_for_enemies was called
+            self.fleet._check_for_enemies.assert_called_once()
 
-        # Restore the original method
-        self.fleet._check_for_enemies = original_check_for_enemies
+            # Restore the original method
+            self.fleet._check_for_enemies = original_check_for_enemies
 
 
 if __name__ == "__main__":

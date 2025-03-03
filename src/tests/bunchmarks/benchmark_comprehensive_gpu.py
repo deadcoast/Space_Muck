@@ -9,6 +9,7 @@ performance metrics and visualizations to help optimize GPU acceleration usage.
 
 
 
+# contextlib import removed (no longer needed)
 import os
 import sys
 import time
@@ -17,44 +18,70 @@ import platform
 import importlib.util
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional, Tuple
+
+# Note: This benchmarking script requires optional dependencies:
+# - cupy: For CUDA-based GPU acceleration
+# - torch: For PyTorch-based GPU acceleration
+# 
+# If these dependencies are not available, the script will still run
+# but will skip the corresponding GPU backends.
 
 # Check for optional dependencies
 CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
 TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
-# Set up dummy modules to prevent errors
+if not CUPY_AVAILABLE:
+    logging.warning("CuPy not found. CUDA backend will be unavailable for benchmarking.")
+    logging.warning("To install: pip install cupy-cuda11x (replace with your CUDA version)")
+
+if not TORCH_AVAILABLE:
+    logging.warning("PyTorch not found. PyTorch backend will be unavailable for benchmarking.")
+    logging.warning("To install: pip install torch")
+
+# Set up dummy modules to prevent errors when dependencies are missing
 class DummyModule:
-    """Dummy module for when optional dependencies are not available."""
+    """Dummy module for when optional dependencies are not available.
+    
+    This class acts as a placeholder that returns itself for any attribute
+    access or function call, allowing code to run without raising errors
+    when optional dependencies are missing.
+    """
+
     def __getattr__(self, name):
         return self
-    
+
     def __call__(self, *args, **kwargs):
         return self
 
-# Import optional dependencies
+
+# Import optional dependencies with proper error handling
+cp = DummyModule()  # Default to dummy module
 if CUPY_AVAILABLE:
     try:
         import cupy as cp
-    except ImportError:
-        cp = DummyModule()
-else:
-    cp = DummyModule()
+        logging.info("Successfully imported CuPy for CUDA acceleration")
+    except ImportError as e:
+        logging.warning(f"Failed to import CuPy despite being found: {e}")
+        CUPY_AVAILABLE = False
 
+torch = DummyModule()  # Default to dummy module
 if TORCH_AVAILABLE:
     try:
         import torch
-    except ImportError:
-        torch = DummyModule()
-else:
-    torch = DummyModule()
+        logging.info(f"Successfully imported PyTorch {torch.__version__} for GPU acceleration")
+    except ImportError as e:
+        logging.warning(f"Failed to import PyTorch despite being found: {e}")
+        TORCH_AVAILABLE = False
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 # Add the parent directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 # Import all modules at the top
 from entities.base_generator import BaseGenerator  # noqa: E402
@@ -75,31 +102,47 @@ from utils.value_generator_gpu import (  # noqa: E402
     add_value_clusters_gpu,
 )
 
+
 # Define terrain generation functions
 def generate_terrain_cpu(width, height):
     """Generate terrain using CPU implementation."""
     # Use value_generator for CPU implementation
-    return generate_value_distribution(width, height, distribution_type="perlin")
+    # Create base grid and grid for terrain generation
+    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    grid = np.ones((height, width))  # All cells active for terrain
+    return generate_value_distribution(grid, base_grid)
+
 
 def generate_terrain_gpu(width, height, backend="cuda"):
     """Generate terrain using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
-    return generate_value_distribution_gpu(width, height, distribution_type="perlin", backend=backend)
+    # Create base grid and grid for terrain generation
+    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    grid = np.ones((height, width))  # All cells active for terrain
+    return generate_value_distribution_gpu(grid, base_grid, backend=backend)
+
 
 # Define resource distribution functions
 def generate_resource_distribution_cpu(width, height):
     """Generate resource distribution using CPU implementation."""
     # Use value_generator for CPU implementation
-    base = generate_value_distribution(width, height, distribution_type="simplex")
-    return add_value_clusters(base, num_clusters=10, cluster_value=1.5)
+    # Create base grid and value grid
+    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
+    value_grid = generate_value_distribution(grid, base_grid)
+    return add_value_clusters(value_grid, num_clusters=10, value_multiplier=1.5)
+
 
 def generate_resource_distribution_gpu(width, height, backend="cuda"):
     """Generate resource distribution using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
-    base = generate_value_distribution_gpu(width, height, distribution_type="simplex", backend=backend)
-    return add_value_clusters_gpu(base, num_clusters=10, cluster_value=1.5, backend=backend)
-
-
+    # Create base grid and value grid
+    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
+    value_grid = generate_value_distribution_gpu(grid, base_grid, backend=backend)
+    return add_value_clusters_gpu(
+        value_grid, num_clusters=10, value_multiplier=1.5, backend=backend
+    )
 
 
 def benchmark_cellular_automaton(
@@ -282,7 +325,7 @@ def benchmark_clustering(
                     kmeans_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
                     logging.info(f"  K-means {backend}: {avg_time:.4f} seconds")
             else:
-                _speed_handler(kmeans_results, backend, '  K-means ')
+                _speed_handler(kmeans_results, backend, "  K-means ")
             # DBSCAN benchmarking
             dbscan_times = []
             for _ in range(repetitions):
@@ -336,7 +379,7 @@ def benchmark_clustering(
                     dbscan_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
                     logging.info(f"  DBSCAN {backend}: {avg_time:.4f} seconds")
             else:
-                _speed_handler(dbscan_results, backend, '  DBSCAN ')
+                _speed_handler(dbscan_results, backend, "  DBSCAN ")
     return {"kmeans": kmeans_results, "dbscan": dbscan_results}
 
 
@@ -444,9 +487,7 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Terrain {backend}: {avg_time:.4f} seconds")
             else:
-                _time_handler(
-                    terrain_results, backend, '  Terrain '
-                )
+                _time_handler(terrain_results, backend, "  Terrain ")
             # Resource distribution benchmarking
             resource_times = []
             for _ in range(repetitions):
@@ -458,9 +499,7 @@ def benchmark_value_generation(
                         generate_resource_distribution_cpu(size, size)
                     else:
                         # Use GPU implementation for resource distribution
-                        generate_resource_distribution_gpu(
-                            size, size, backend=backend
-                        )
+                        generate_resource_distribution_gpu(size, size, backend=backend)
 
                     end_time = time.time()
                     resource_times.append(end_time - start_time)
@@ -471,9 +510,7 @@ def benchmark_value_generation(
                     resource_times.append(float("inf"))
 
             # Record average time for resource distribution
-            if resource_times and any(
-                t != float("inf") for t in resource_times
-            ):
+            if resource_times and any(t != float("inf") for t in resource_times):
                 valid_times = [t for t in resource_times if t != float("inf")]
                 avg_time = (
                     sum(valid_times) / len(valid_times) if valid_times else float("inf")
@@ -501,9 +538,7 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Resources {backend}: {avg_time:.4f} seconds")
             else:
-                _time_handler(
-                    resource_results, backend, '  Resources '
-                )
+                _time_handler(resource_results, backend, "  Resources ")
     return {"terrain": terrain_results, "resources": resource_results}
 
 
@@ -617,7 +652,7 @@ def benchmark_memory_transfer(
                     h2d_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  H2D {backend}: {avg_time:.6f} seconds")
             else:
-                _bandwidth_handler(h2d_results, backend, '  H2D ')
+                _bandwidth_handler(h2d_results, backend, "  H2D ")
             # Device to host transfer benchmarking
             d2h_times = []
             for _ in range(repetitions):
@@ -670,7 +705,7 @@ def benchmark_memory_transfer(
                     d2h_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  D2H {backend}: {avg_time:.6f} seconds")
             else:
-                _bandwidth_handler(d2h_results, backend, '  D2H ')
+                _bandwidth_handler(d2h_results, backend, "  D2H ")
     return {"host_to_device": h2d_results, "device_to_host": d2h_results}
 
 
@@ -722,106 +757,188 @@ def visualize_single_operation(
     operation = op_results.get("operation", "unknown")
 
     # Determine x-axis values and label
-    if "grid_sizes" in op_results:
-        x_values = op_results["grid_sizes"]
-        x_label = "Grid Size"
-    elif "data_sizes" in op_results:
-        x_values = op_results["data_sizes"]
-        x_label = "Data Size"
-    else:
-        logging.warning(
-            f"No size information found for {operation}, skipping visualization"
-        )
+    x_values, x_label = _get_x_axis_data(op_results, operation)
+    if not x_values:  # Skip if no x-axis data found
         return
 
-    # Create execution time plot
+    # Create different plot types based on available data
     if "times" in op_results:
-        plt.figure(figsize=(12, 8))
-        for backend, times in op_results["times"].items():
-            if times and any(t != float("inf") for t in times):
-                valid_indices = [i for i, t in enumerate(times) if t != float("inf")]
-                valid_x = [x_values[i] for i in valid_indices]
-                valid_times = [times[i] for i in valid_indices]
-                plt.plot(valid_x, valid_times, marker="o", label=f"{backend}")
-
-        plt.title(f"{title} - Execution Time")
-        plt.xlabel(x_label)
-        plt.ylabel("Time (seconds)")
-        plt.grid(True)
-        plt.legend()
-        (
-            plt.xscale("log")
-            if len(x_values) > 1 and max(x_values) / min(x_values) > 100
-            else None
-        )
-        (
-            plt.yscale("log")
-            if op_results["times"]
-            and any(
-                len(times) > 0
-                and max(t for t in times if t != float("inf"))
-                / min(t for t in times if t != float("inf") and t > 0)
-                > 100
-                for times in op_results["times"].values()
-                if times
-            )
-            else None
-        )
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"{operation}_time.png"))
-        plt.close()
-
-    # Create speedup plot
+        _create_time_plot(op_results, x_values, x_label, title, operation, output_dir)
+    
     if "speedup" in op_results:
-        plt.figure(figsize=(12, 8))
-        for backend, speedups in op_results["speedup"].items():
-            if backend != "cpu" and speedups and any(s != 0 for s in speedups):
-                valid_indices = [i for i, s in enumerate(speedups) if s > 0]
-                valid_x = [x_values[i] for i in valid_indices]
-                valid_speedups = [speedups[i] for i in valid_indices]
-                plt.plot(valid_x, valid_speedups, marker="o", label=f"{backend}")
-
-        plt.title(f"{title} - Speedup vs CPU")
-        plt.xlabel(x_label)
-        plt.ylabel("Speedup Factor (x)")
-        plt.grid(True)
-        plt.legend()
-        (
-            plt.xscale("log")
-            if len(x_values) > 1 and max(x_values) / min(x_values) > 100
-            else None
-        )
-        plt.axhline(y=1, color="r", linestyle="--", label="CPU Baseline")
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"{operation}_speedup.png"))
-        plt.close()
-
-    # Create bandwidth plot for memory transfer benchmarks
+        _create_speedup_plot(op_results, x_values, x_label, title, operation, output_dir)
+    
     if "bandwidth" in op_results:
-        plt.figure(figsize=(12, 8))
-        for backend, bandwidths in op_results["bandwidth"].items():
-            if bandwidths and any(b != 0 for b in bandwidths):
-                valid_indices = [i for i, b in enumerate(bandwidths) if b > 0]
-                valid_x = [x_values[i] for i in valid_indices]
-                valid_bandwidths = [bandwidths[i] for i in valid_indices]
-                plt.plot(valid_x, valid_bandwidths, marker="o", label=f"{backend}")
-
-        plt.title(f"{title} - Memory Bandwidth")
-        plt.xlabel(x_label)
-        plt.ylabel("Bandwidth (GB/s)")
-        plt.grid(True)
-        plt.legend()
-        (
-            plt.xscale("log")
-            if len(x_values) > 1 and max(x_values) / min(x_values) > 100
-            else None
-        )
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"{operation}_bandwidth.png"))
-        plt.close()
+        _create_bandwidth_plot(op_results, x_values, x_label, title, operation, output_dir)
 
 
-def run_all_benchmarks(output_dir: str = "./benchmark_results", small_grid_sizes: List[int] = None, large_data_sizes: List[int] = None, repetitions: int = 3) -> None:
+def _get_x_axis_data(op_results: Dict[str, Any], operation: str) -> Tuple[List[int], str]:
+    """Extract x-axis data and label from operation results."""
+    if "grid_sizes" in op_results:
+        return op_results["grid_sizes"], "Grid Size"
+    elif "data_sizes" in op_results:
+        return op_results["data_sizes"], "Data Size"
+    else:
+        logging.warning(f"No size information found for {operation}, skipping visualization")
+        return [], ""
+
+
+def _set_log_scale_if_needed(x_values: List[int]) -> None:
+    """Set x-axis to log scale if the range is large enough."""
+    if len(x_values) > 1 and max(x_values) / min(x_values) > 100:
+        plt.xscale("log")
+
+
+def _filter_valid_data(values: List[float], x_values: List[int], filter_func=None) -> Tuple[List[int], List[float]]:
+    """Filter out invalid data points and return valid x and y values."""
+    if filter_func is None:
+        # Default filter: keep non-infinite values
+        def default_filter(v):
+            return v != float("inf")
+        filter_func = default_filter
+    
+    valid_indices = [i for i, v in enumerate(values) if filter_func(v)]
+    valid_x = [x_values[i] for i in valid_indices]
+    valid_y = [values[i] for i in valid_indices]
+    return valid_x, valid_y
+
+
+def _create_time_plot(
+    op_results: Dict[str, Any], 
+    x_values: List[int], 
+    x_label: str, 
+    title: str, 
+    operation: str, 
+    output_dir: str
+) -> None:
+    """Create execution time plot."""
+    plt.figure(figsize=(12, 8))
+
+    # Plot data for each backend
+    for backend, times in op_results["times"].items():
+        if not times or not any(t != float("inf") for t in times):
+            continue
+
+        valid_x, valid_times = _filter_valid_data(times, x_values)
+        plt.plot(valid_x, valid_times, marker="o", label=f"{backend}")
+
+    # Configure plot
+    plt.title(f"{title} - Execution Time")
+    plt.xlabel(x_label)
+    plt.ylabel("Time (seconds)")
+    plt.grid(True)
+    plt.legend()
+
+    # Set x-axis scale
+    _set_log_scale_if_needed(x_values)
+
+    # Set y-axis to log scale if the range is large enough
+    try:
+        should_use_log_scale = False
+        for times in op_results["times"].values():
+            if not times:
+                continue
+            
+            valid_times = [t for t in times if t != float("inf") and t > 0]
+            if len(valid_times) >= 2:
+                time_range = max(valid_times) / min(valid_times)
+                if time_range > 100:
+                    should_use_log_scale = True
+                    break
+        
+        if should_use_log_scale:
+            plt.yscale("log")
+    except (ValueError, ZeroDivisionError):
+        # Handle case where min/max calculation fails
+        pass
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{operation}_time.png"))
+    plt.close()
+
+
+def _create_speedup_plot(
+    op_results: Dict[str, Any], 
+    x_values: List[int], 
+    x_label: str, 
+    title: str, 
+    operation: str, 
+    output_dir: str
+) -> None:
+    """Create speedup comparison plot."""
+    plt.figure(figsize=(12, 8))
+    
+    # Define filter function outside the loop
+    def positive_filter(s):
+        return s > 0
+
+    # Plot data for each backend
+    for backend, speedups in op_results["speedup"].items():
+        if backend == "cpu" or not speedups or not any(s > 0 for s in speedups):
+            continue
+
+        valid_x, valid_speedups = _filter_valid_data(speedups, x_values, positive_filter)
+        plt.plot(valid_x, valid_speedups, marker="o", label=f"{backend}")
+
+    # Configure plot
+    plt.title(f"{title} - Speedup vs CPU")
+    plt.xlabel(x_label)
+    plt.ylabel("Speedup Factor (x)")
+    plt.grid(True)
+    plt.legend()
+    plt.axhline(y=1, color="r", linestyle="--", label="CPU Baseline")
+
+    # Set x-axis scale
+    _set_log_scale_if_needed(x_values)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{operation}_speedup.png"))
+    plt.close()
+
+
+def _create_bandwidth_plot(
+    op_results: Dict[str, Any], 
+    x_values: List[int], 
+    x_label: str, 
+    title: str, 
+    operation: str, 
+    output_dir: str
+) -> None:
+    """Create bandwidth plot for memory transfer benchmarks."""
+    plt.figure(figsize=(12, 8))
+    
+    # Define filter function outside the loop
+    def positive_filter(b):
+        return b > 0
+
+    # Plot data for each backend
+    for backend, bandwidths in op_results["bandwidth"].items():
+        if not bandwidths or not any(b > 0 for b in bandwidths):
+            continue
+
+        valid_x, valid_bandwidths = _filter_valid_data(bandwidths, x_values, positive_filter)
+        plt.plot(valid_x, valid_bandwidths, marker="o", label=f"{backend}")
+
+    # Configure plot
+    plt.title(f"{title} - Memory Bandwidth")
+    plt.xlabel(x_label)
+    plt.ylabel("Bandwidth (GB/s)")
+    plt.grid(True)
+    plt.legend()
+
+    # Set x-axis scale
+    _set_log_scale_if_needed(x_values)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{operation}_bandwidth.png"))
+    plt.close()
+
+
+def run_all_benchmarks(
+    output_dir: str = "./benchmark_results",
+    small_grid_sizes: Optional[List[int]] = None,
+    large_data_sizes: Optional[List[int]] = None,
+    repetitions: int = 3,
+) -> None:
     """
     Run all benchmark functions and visualize results.
 

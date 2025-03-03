@@ -74,7 +74,7 @@ class CombatSystem:
         # If no faction specified, determine based on location or random
         if faction is None and random.random() < 0.3:
             from src.entities.player import GAME_FACTIONS
-        
+
             faction = random.choice(GAME_FACTIONS)
 
         # Determine ship type based on difficulty and faction
@@ -492,11 +492,11 @@ class CombatSystem:
         # Update reputation if enemy had faction alignment
         reputation_change = None
         if self.current_enemy.faction and self.current_enemy.faction in [
-                        "galactic_navy",
-                        "traders_coalition",
-                        "miners_guild",
-                        "explorers_union",
-                    ]:
+            "galactic_navy",
+            "traders_coalition",
+            "miners_guild",
+            "explorers_union",
+        ]:
             reputation_change = self.player.change_reputation(
                 self.current_enemy.faction, 1
             )

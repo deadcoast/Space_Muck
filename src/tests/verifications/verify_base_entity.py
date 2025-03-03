@@ -66,10 +66,15 @@ def verify_base_entity():
         0,
         0,
     ), f"Expected color (255, 0, 0), got {entity.color}"
-    assert entity.position == (
-        10,
-        20,
-    ), f"Expected position (10, 20), got {entity.position}"
+
+    # Check that position is not None before comparing
+    assert entity.position is not None, "Entity position should not be None"
+    if entity.position:  # Type guard for position
+        assert entity.position == (
+            10,
+            20,
+        ), f"Expected position (10, 20), got {entity.position}"
+
     assert entity.active is True, f"Expected active True, got {entity.active}"
 
     # Test methods
@@ -77,10 +82,15 @@ def verify_base_entity():
     assert entity.has_tag("important"), "Tag 'important' should be present"
 
     entity.set_position(30, 40)
-    assert entity.get_position() == (
-        30,
-        40,
-    ), f"Expected position (30, 40), got {entity.get_position()}"
+
+    # Check that position is not None before comparing
+    position = entity.get_position()
+    assert position is not None, "Entity position should not be None after set_position"
+    if position:  # Type guard for position
+        assert position == (
+            30,
+            40,
+        ), f"Expected position (30, 40), got {position}"
 
     entity.deactivate()
     assert not entity.is_active(), "Entity should be inactive after deactivate()"

@@ -21,7 +21,9 @@ from utils.noise_generator import NoiseGenerator
 from utils.dependency_injection import DependencyContainer
 
 # Check for utility modules availability using importlib.util.find_spec
-CA_UTILS_AVAILABLE = importlib.util.find_spec("utils.cellular_automaton_utils") is not None
+CA_UTILS_AVAILABLE = (
+    importlib.util.find_spec("utils.cellular_automaton_utils") is not None
+)
 VALUE_GEN_AVAILABLE = importlib.util.find_spec("utils.value_generator") is not None
 
 
@@ -135,9 +137,9 @@ class TestBaseGenerator(unittest.TestCase):
             entity_id="test-noise",
             width=50,
             height=60,
-            noise_generator=MockNoiseGenerator(return_value=0.5)
+            noise_generator=MockNoiseGenerator(return_value=0.5),
         )
-        
+
         # Generate a noise layer
         noise_layer = test_generator.generate_noise_layer(
             noise_type="medium", scale=0.1
@@ -156,9 +158,7 @@ class TestBaseGenerator(unittest.TestCase):
         # Call again with same parameters
         self.mock_noise_generator.calls = []  # Clear call history
         # Generate noise layer again to test caching
-        self.generator.generate_noise_layer(
-            noise_type="medium", scale=0.1
-        )
+        self.generator.generate_noise_layer(noise_type="medium", scale=0.1)
 
         # Should use cached value, so no new calls to noise generator
         self.assertEqual(len(self.mock_noise_generator.calls), 0)
@@ -303,9 +303,9 @@ class TestBaseGenerator(unittest.TestCase):
             entity_id="test-multi-octave",
             width=50,
             height=60,
-            noise_generator=MockNoiseGenerator(return_value=0.5)
+            noise_generator=MockNoiseGenerator(return_value=0.5),
         )
-        
+
         # Generate multi-octave noise
         noise_layer = test_generator.generate_multi_octave_noise(
             scale=0.2, octaves=[2, 4, 6], weights=[0.7, 0.2, 0.1]
@@ -331,8 +331,6 @@ class TestBaseGenerator(unittest.TestCase):
         # Should use cached value, so no new calls to noise generator
         self.assertEqual(len(self.mock_noise_generator.calls), 0)
 
-
-
     def test_apply_cellular_automaton_with_utils(self):
         """Test the apply_cellular_automaton method with utility module integration."""
         if not CA_UTILS_AVAILABLE:
@@ -352,11 +350,9 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Mock the utility function to verify it's called
         with patch(
-                "utils.cellular_automaton_utils.apply_cellular_automaton"
-            ) as mock_ca:
-            self._mock_grid_handler(
-                grid, mock_ca, test_generator
-            )
+            "utils.cellular_automaton_utils.apply_cellular_automaton"
+        ) as mock_ca:
+            self._mock_grid_handler(grid, mock_ca, test_generator)
 
     def _mock_grid_handler(self, grid, mock_ca, test_generator):
         # Set up the mock to return a known grid
@@ -419,9 +415,7 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Mock the utility function to verify it's called
         with patch("utils.value_generator.add_value_clusters") as mock_clusters:
-            self._known_grid_handler(
-                grid, mock_clusters, test_generator
-            )
+            self._known_grid_handler(grid, mock_clusters, test_generator)
 
     def _known_grid_handler(self, grid, mock_clusters, test_generator):
         # Set up the mock to return a known grid
@@ -521,16 +515,12 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
         with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
-            self._grid_result_handler(
-                mock_executor, test_generator, grid
-            )
+            self._grid_result_handler(mock_executor, test_generator, grid)
 
     def _grid_result_handler(self, mock_executor, test_generator, grid):
         # Set up the mock to return a result that would be expected from clustering
         mock_future = MagicMock()
-        mock_result = (
-            np.ones((250, 250)) * 1.5
-        )  # Simulated result with elevated values
+        mock_result = np.ones((250, 250)) * 1.5  # Simulated result with elevated values
         mock_future.result.return_value = mock_result
         mock_executor.return_value.__enter__.return_value.submit.return_value = (
             mock_future
@@ -563,9 +553,7 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
         with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
-            self._ca_evolution_handler(
-                mock_executor, test_generator, controlled_grid
-            )
+            self._ca_evolution_handler(mock_executor, test_generator, controlled_grid)
 
     def _ca_evolution_handler(self, mock_executor, test_generator, controlled_grid):
         # Set up the mock to return a result that would be expected from CA evolution

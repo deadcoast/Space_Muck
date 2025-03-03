@@ -230,7 +230,9 @@ def apply_weighted_patterns(
     result_grid = np.zeros((height, width), dtype=float)
 
     # Apply each pattern
-    for pattern_func, weight, args in zip(pattern_functions, normalized_weights, pattern_args):
+    for pattern_func, weight, args in zip(
+        pattern_functions, normalized_weights, pattern_args
+    ):
         if weight > 0:
             pattern_grid = pattern_func(width, height, **args)
             result_grid += pattern_grid * weight

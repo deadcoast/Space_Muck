@@ -201,29 +201,42 @@ class TestBaseEntity(unittest.TestCase):
         entity1 = BaseEntity(entity_id="entity1", position=(10, 10))
         entity2 = BaseEntity(entity_id="entity2", position=(20, 20))
 
-        # Test distance calculation
-        distance = (
-            (entity1.position[0] - entity2.position[0]) ** 2
-            + (entity1.position[1] - entity2.position[1]) ** 2
-        ) ** 0.5
-        self.assertAlmostEqual(distance, 14.142, places=3)  # √200 ≈ 14.142
+        # Ensure positions are not None before calculating distance
+        self.assertIsNotNone(entity1.position, "Entity1 position should not be None")
+        self.assertIsNotNone(entity2.position, "Entity2 position should not be None")
 
-        # Test collision detection (no collision)
-        collision_distance = 5
-        self.assertFalse(distance <= collision_distance)
+        # Test distance calculation
+        if entity1.position and entity2.position:  # Type guard for position
+            distance = (
+                (entity1.position[0] - entity2.position[0]) ** 2
+                + (entity1.position[1] - entity2.position[1]) ** 2
+            ) ** 0.5
+            self.assertAlmostEqual(distance, 14.142, places=3)  # √200 ≈ 14.142
+
+            # Test collision detection (no collision)
+            collision_distance = 5
+            self.assertFalse(distance <= collision_distance)
 
         # Move entity2 closer to entity1
         entity2.set_position(12, 12)
 
-        # Recalculate distance
-        distance = (
-            (entity1.position[0] - entity2.position[0]) ** 2
-            + (entity1.position[1] - entity2.position[1]) ** 2
-        ) ** 0.5
-        self.assertAlmostEqual(distance, 2.828, places=3)  # √8 ≈ 2.828
+        # Ensure positions are still not None after moving entity2
+        self.assertIsNotNone(entity1.position, "Entity1 position should not be None")
+        self.assertIsNotNone(entity2.position, "Entity2 position should not be None")
 
-        # Test collision detection (collision)
-        self.assertTrue(distance <= collision_distance)
+        # Define collision distance for testing
+        collision_distance = 5.0
+
+        # Recalculate distance
+        if entity1.position and entity2.position:  # Type guard for position
+            distance = (
+                (entity1.position[0] - entity2.position[0]) ** 2
+                + (entity1.position[1] - entity2.position[1]) ** 2
+            ) ** 0.5
+            self.assertAlmostEqual(distance, 2.828, places=3)  # √8 ≈ 2.828
+
+            # Test collision detection (collision)
+            self.assertTrue(distance <= collision_distance)
 
     def test_edge_cases(self):
         """Test edge cases and boundary conditions."""
