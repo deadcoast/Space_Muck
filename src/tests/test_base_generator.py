@@ -20,13 +20,17 @@ from utils.dependency_injection import DependencyContainer
 
 # Import utility modules for testing integration
 try:
-    from utils.cellular_automaton_utils import apply_cellular_automaton as utils_apply_ca
+    from utils.cellular_automaton_utils import (
+        apply_cellular_automaton as utils_apply_ca,
+    )
+
     CA_UTILS_AVAILABLE = True
 except ImportError:
     CA_UTILS_AVAILABLE = False
 
 try:
     from utils.value_generator import add_value_clusters
+
     VALUE_GEN_AVAILABLE = True
 except ImportError:
     VALUE_GEN_AVAILABLE = False
@@ -344,12 +348,11 @@ class TestBaseGenerator(unittest.TestCase):
         # Should use cached value, so no new calls to noise generator
         self.assertEqual(len(self.mock_noise_generator.calls), 0)
 
-
     def test_apply_cellular_automaton_with_utils(self):
         """Test the apply_cellular_automaton method with utility module integration."""
         if not CA_UTILS_AVAILABLE:
             self.skipTest("Cellular automaton utils module not available")
-            
+
         # Create a test generator with smaller dimensions
         test_generator = BaseGenerator(
             entity_id="test-ca-utils",
@@ -357,35 +360,37 @@ class TestBaseGenerator(unittest.TestCase):
             height=10,
             noise_generator=self.mock_noise_generator,
         )
-        
+
         # Create a simple grid with some cells
         grid = np.zeros((10, 10))
         grid[4:7, 4:7] = 1  # 3x3 block of cells in the middle
-        
+
         # Mock the utility function to verify it's called
-        with patch('utils.cellular_automaton_utils.apply_cellular_automaton') as mock_ca:
+        with patch(
+            "utils.cellular_automaton_utils.apply_cellular_automaton"
+        ) as mock_ca:
             # Set up the mock to return a known grid
             mock_result = grid.copy()
             mock_result[5, 5] = 2  # Make a change we can detect
             mock_ca.return_value = mock_result
-            
+
             # Apply cellular automaton with utility module
             result = test_generator.apply_cellular_automaton(
                 grid=grid, birth_set={3}, survival_set={2, 3}, iterations=1, wrap=True
             )
-            
+
             # Verify the utility function was called
             mock_ca.assert_called_once()
-            
+
             # Verify the result is what the mock returned
             np.testing.assert_array_equal(result, mock_result)
-    
+
     def test_apply_cellular_automaton_fallback(self):
         """Test the apply_cellular_automaton method with fallback to internal implementation."""
         # Skip this test if we can't properly test the fallback
         if not CA_UTILS_AVAILABLE:
             self.skipTest("Cannot test fallback when utils are not available")
-            
+
         # Create a test generator with smaller dimensions
         test_generator = BaseGenerator(
             entity_id="test-ca-fallback",
@@ -393,24 +398,24 @@ class TestBaseGenerator(unittest.TestCase):
             height=10,
             noise_generator=self.mock_noise_generator,
         )
-        
+
         # Create a simple grid with some cells
         grid = np.zeros((10, 10))
         grid[4:7, 4:7] = 1  # 3x3 block of cells in the middle
-        
+
         # Apply cellular automaton without mocking to get expected result
         expected_shape = test_generator.apply_cellular_automaton(
             grid=grid, birth_set={3}, survival_set={2, 3}, iterations=1, wrap=True
         ).shape
-        
+
         # Verify the result is the expected shape
         self.assertEqual(expected_shape, (10, 10))
-    
+
     def test_create_clusters_with_utils(self):
         """Test the create_clusters method with utility module integration."""
         if not VALUE_GEN_AVAILABLE:
             self.skipTest("Value generator utils module not available")
-            
+
         # Create a test generator with smaller dimensions
         test_generator = BaseGenerator(
             entity_id="test-clusters-utils",
@@ -418,43 +423,43 @@ class TestBaseGenerator(unittest.TestCase):
             height=10,
             noise_generator=self.mock_noise_generator,
         )
-        
+
         # Create a simple grid
         grid = np.ones((10, 10))
-        
+
         # Mock the utility function to verify it's called
-        with patch('utils.value_generator.add_value_clusters') as mock_clusters:
+        with patch("utils.value_generator.add_value_clusters") as mock_clusters:
             # Set up the mock to return a known grid
             mock_result = grid.copy() * 1.5  # Make a change we can detect
             mock_clusters.return_value = mock_result
-            
+
             # Apply clustering with utility module
             result = test_generator.create_clusters(
                 grid=grid, num_clusters=3, cluster_value_multiplier=2.0
             )
-            
+
             # Verify the utility function was called with correct parameters
             mock_clusters.assert_called_once()
             call_args = mock_clusters.call_args[0]
             call_kwargs = mock_clusters.call_args[1]
-            
+
             # Check positional arguments
             np.testing.assert_array_equal(call_args[0], grid)
-            
+
             # Check keyword arguments
-            self.assertEqual(call_kwargs['num_clusters'], 3)
-            self.assertEqual(call_kwargs['value_multiplier'], 2.0)
-            self.assertTrue('cluster_radius' in call_kwargs)
-            
+            self.assertEqual(call_kwargs["num_clusters"], 3)
+            self.assertEqual(call_kwargs["value_multiplier"], 2.0)
+            self.assertTrue("cluster_radius" in call_kwargs)
+
             # Verify the result is what the mock returned
             np.testing.assert_array_equal(result, mock_result)
-    
+
     def test_create_clusters_fallback(self):
         """Test the create_clusters method with fallback to internal implementation."""
         # Skip this test if we can't properly test the fallback
         if not VALUE_GEN_AVAILABLE:
             self.skipTest("Cannot test fallback when utils are not available")
-            
+
         # Create a test generator with smaller dimensions
         test_generator = BaseGenerator(
             entity_id="test-clusters-fallback",
@@ -462,21 +467,21 @@ class TestBaseGenerator(unittest.TestCase):
             height=10,
             noise_generator=self.mock_noise_generator,
         )
-        
+
         # Create a simple grid
         grid = np.ones((10, 10))
-        
+
         # Apply clustering without mocking
         result = test_generator.create_clusters(
             grid=grid, num_clusters=3, cluster_value_multiplier=2.0
         )
-        
+
         # Verify the result is the expected shape
         self.assertEqual(result.shape, (10, 10))
-        
+
         # Verify that some values are higher than the original
         self.assertTrue(np.any(result > 1.0))
-    
+
     def test_parameter_validation_clusters(self):
         """Test parameter validation in the create_clusters method."""
         # Create a test generator with smaller dimensions
@@ -486,26 +491,25 @@ class TestBaseGenerator(unittest.TestCase):
             height=10,
             noise_generator=self.mock_noise_generator,
         )
-        
+
         # Create a simple grid
         grid = np.ones((10, 10))
-        
+
         # Test invalid num_clusters
-        with patch('logging.warning') as mock_log:
+        with patch("logging.warning") as mock_log:
             result = test_generator.create_clusters(
                 grid=grid, num_clusters=-1, cluster_value_multiplier=2.0
             )
             # Verify the shape is correct
             self.assertEqual(result.shape, (10, 10))
-        
+
         # Test invalid cluster_value_multiplier
-        with patch('logging.warning') as mock_log:
+        with patch("logging.warning") as mock_log:
             result = test_generator.create_clusters(
                 grid=grid, num_clusters=3, cluster_value_multiplier=0
             )
             # Verify the shape is correct
             self.assertEqual(result.shape, (10, 10))
-
 
     def test_parallel_clustering(self):
         """Test the parallel clustering implementation."""
@@ -521,32 +525,36 @@ class TestBaseGenerator(unittest.TestCase):
         grid = np.ones((250, 250))
 
         # Create cluster centers (more than 3 to trigger parallel processing)
-        cluster_centers = np.array([
-            [50, 50],
-            [100, 100],
-            [150, 150],
-            [200, 200],
-            [75, 125],
-            [125, 75],
-            [175, 25],
-            [25, 175]
-        ])
+        cluster_centers = np.array(
+            [
+                [50, 50],
+                [100, 100],
+                [150, 150],
+                [200, 200],
+                [75, 125],
+                [125, 75],
+                [175, 25],
+                [25, 175],
+            ]
+        )
 
         # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
-        with patch('concurrent.futures.ProcessPoolExecutor') as mock_executor:
+        with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
             # Set up the mock to return a result that would be expected from clustering
             mock_future = MagicMock()
-            mock_result = np.ones((250, 250)) * 1.5  # Simulated result with elevated values
+            mock_result = (
+                np.ones((250, 250)) * 1.5
+            )  # Simulated result with elevated values
             mock_future.result.return_value = mock_result
-            mock_executor.return_value.__enter__.return_value.submit.return_value = mock_future
-            
+            mock_executor.return_value.__enter__.return_value.submit.return_value = (
+                mock_future
+            )
+
             # Call the create_clusters method which should use parallel processing
             result = test_generator.create_clusters(
-                grid=grid,
-                num_clusters=8,
-                cluster_value_multiplier=2.0
+                grid=grid, num_clusters=8, cluster_value_multiplier=2.0
             )
-            
+
             # Verify the result has the expected shape
             self.assertEqual(result.shape, (250, 250))
 
@@ -562,46 +570,40 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Create a controlled grid with a pattern
         controlled_grid = np.zeros((250, 250))
-        
+
         # Create a glider pattern
-        glider = np.array([
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 1, 1]
-        ])
+        glider = np.array([[0, 1, 0], [0, 0, 1], [1, 1, 1]])
         controlled_grid[10:13, 10:13] = glider
 
         # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
-        with patch('concurrent.futures.ProcessPoolExecutor') as mock_executor:
+        with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
             # Set up the mock to return a result that would be expected from CA evolution
             mock_future = MagicMock()
-            
+
             # Create a simulated result with the expected glider evolution
             simulated_result = np.zeros((250, 250))
             # The glider pattern after one iteration
-            evolved_glider = np.array([
-                [0, 0, 0],
-                [1, 0, 1],
-                [0, 1, 1],
-                [0, 1, 0]
-            ])
+            evolved_glider = np.array([[0, 0, 0], [1, 0, 1], [0, 1, 1], [0, 1, 0]])
             simulated_result[10:14, 10:13] = evolved_glider
-            
+
             # Set up the mock to return chunks of the simulated result
             mock_future.result.return_value = (0, 250, simulated_result)
-            mock_executor.return_value.__enter__.return_value.submit.return_value = mock_future
-            
+            mock_executor.return_value.__enter__.return_value.submit.return_value = (
+                mock_future
+            )
+
             # Call the apply_cellular_automaton method which should use parallel processing for large grids
             result = test_generator.apply_cellular_automaton(
                 grid=controlled_grid,
                 birth_set={3},
                 survival_set={2, 3},
                 iterations=1,
-                wrap=True
+                wrap=True,
             )
-            
+
             # Verify the result has the expected shape
             self.assertEqual(result.shape, (250, 250))
+
 
 if __name__ == "__main__":
     unittest.main()

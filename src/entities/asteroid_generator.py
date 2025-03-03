@@ -26,10 +26,13 @@ from src.utils.logging_setup import (
 # Try to import optional dependencies
 try:
     import scipy.signal as signal
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-    logging.warning("SciPy not available. Using manual implementation for cellular automaton.")
+    logging.warning(
+        "SciPy not available. Using manual implementation for cellular automaton."
+    )
 
 
 @inject
@@ -147,7 +150,9 @@ class AsteroidGenerator(BaseGenerator):
         noise_grid = self._generate_base_noise()
 
         # Normalize grid to 0-1 range
-        grid = (noise_grid - noise_grid.min()) / (noise_grid.max() - noise_grid.min() + 1e-10)
+        grid = (noise_grid - noise_grid.min()) / (
+            noise_grid.max() - noise_grid.min() + 1e-10
+        )
 
         # Apply threshold to create binary asteroid field
         density = self.get_parameter("density", 0.2)
@@ -251,7 +256,9 @@ class AsteroidGenerator(BaseGenerator):
                     ):
                         if value_grid[y, x] > 0:
                             # Calculate distance from center
-                            distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+                            distance = np.sqrt(
+                                (x - center_x) ** 2 + (y - center_y) ** 2
+                            )
 
                             # Apply multiplier with falloff based on distance
                             if distance <= cluster_radius:
@@ -307,8 +314,12 @@ class AsteroidGenerator(BaseGenerator):
         rare_chance = self.get_parameter("rare_chance", 0.05)
 
         # Normalize noise to 0-1 range
-        rare_noise = (rare_noise - rare_noise.min()) / (rare_noise.max() - rare_noise.min() + 1e-10)
-        anomaly_noise = (anomaly_noise - anomaly_noise.min()) / (anomaly_noise.max() - anomaly_noise.min() + 1e-10)
+        rare_noise = (rare_noise - rare_noise.min()) / (
+            rare_noise.max() - rare_noise.min() + 1e-10
+        )
+        anomaly_noise = (anomaly_noise - anomaly_noise.min()) / (
+            anomaly_noise.max() - anomaly_noise.min() + 1e-10
+        )
 
         # No rare resources where there are no asteroids
         asteroid_mask = value_grid > 0
@@ -383,16 +394,22 @@ class AsteroidGenerator(BaseGenerator):
 
         return large_scale * 0.5 + medium_scale * 0.3 + small_scale * 0.2
 
-    def _apply_cellular_automaton_scipy(self, grid: np.ndarray, birth_set: Set[int] = None, survival_set: Set[int] = None, iterations: int = 1) -> np.ndarray:
+    def _apply_cellular_automaton_scipy(
+        self,
+        grid: np.ndarray,
+        birth_set: Set[int] = None,
+        survival_set: Set[int] = None,
+        iterations: int = 1,
+    ) -> np.ndarray:
         """
         Apply cellular automaton rules using scipy for efficiency.
-        
+
         Args:
             grid: Input binary grid
             birth_set: Set of neighbor counts that cause cell birth
             survival_set: Set of neighbor counts that allow cell survival
             iterations: Number of iterations to perform
-            
+
         Returns:
             np.ndarray: Evolved grid
         """
@@ -411,26 +428,28 @@ class AsteroidGenerator(BaseGenerator):
         # Apply cellular automaton for specified iterations
         for _ in range(iterations):
             # Count neighbors using convolution
-            neighbors = signal.convolve2d(result_grid, kernel, mode='same', boundary='wrap')
+            neighbors = signal.convolve2d(
+                result_grid, kernel, mode="same", boundary="wrap"
+            )
 
             # Create masks for rule application (vectorized operations)
-            alive_mask = (result_grid == 1)
-            dead_mask = (result_grid == 0)
+            alive_mask = result_grid == 1
+            dead_mask = result_grid == 0
 
             # Create masks for birth and survival based on neighbor counts
             birth_mask = np.zeros_like(neighbors, dtype=bool)
             survival_mask = np.zeros_like(neighbors, dtype=bool)
 
             for n in birth_set:
-                birth_mask |= (neighbors == n)
+                birth_mask |= neighbors == n
 
             for n in survival_set:
-                survival_mask |= (neighbors == n)
+                survival_mask |= neighbors == n
 
             # Apply rules using vectorized operations
             new_grid = np.zeros_like(result_grid)
             new_grid[alive_mask & survival_mask] = 1  # Cells that survive
-            new_grid[dead_mask & birth_mask] = 1      # Cells that are born
+            new_grid[dead_mask & birth_mask] = 1  # Cells that are born
 
             result_grid = new_grid
 

@@ -44,6 +44,21 @@ CODEBASE MAPPING REFERENCE
 38. [test_value_generator.py](#unit_testing)
 39. [test_visualization.py](#testing)
 40. [dependency_config_example.py](#examples)
+41. [enemy_ship.py](#entity_system)
+42. [combat_system.py](#systems)
+43. [encounter_generator.py](#systems)
+44. [trading_system.py](#systems)
+45. [test_combat_system.py](#unit_testing)
+46. [test_encounter_generator.py](#unit_testing)
+47. [test_trading_system.py](#unit_testing)
+46. [test_value_generator.py](#unit_testing)
+47. [config.py](#config)
+48. [gpu_utils.py](#utils)
+49. [test_gpu_utils.py](#unit_testing)
+50. [benchmark_gpu_acceleration.py](#testing)
+51. [test_gpu_clustering.py](#unit_testing)
+52. [GPU_Acceleration_Guide.md](#documentation)
+53. [GPU_Hardware_Compatibility.md](#documentation)
 
 ---
 
@@ -111,10 +126,28 @@ CODEBASE MAPPING REFERENCE
   - **File Dependencies**: 
     - Inherits from MinerEntity (which inherits from BaseEntity)
     - Uses config constants for player visualization
+    - import logging (for level-up events)
   - **Required Components**: 
     - AsteroidField
     - Inventory system
-    - Quest system (placeholder for future implementation)
+    - Quest system
+    - Level progression system
+    - Ship upgrade system
+    - Combat system
+  - **Key Features**:
+    - Credit management and transaction history
+    - Inventory management with item types and quantities
+    - Command processing system
+    - Anomaly discovery tracking
+    - Quest handling and completion with dynamic generation
+    - Level progression with XP tracking
+    - Level-based bonuses for mining efficiency and speed
+    - Ship upgrade system with tiered benefits
+    - Mining quest progress tracking
+    - Exploration quest progress tracking
+    - Combat mechanics including weapon, shield, and hull systems
+    - Combat quest progress tracking
+    - Faction reputation system
 
 ## 5. [fleet.py](#entity_system)
 
@@ -501,13 +534,20 @@ CODEBASE MAPPING REFERENCE
 ## 19. [test_miner_entity.py](#unit_testing)
 
 - `src/tests/test_miner_entity.py`
-  - **Purpose**: Comprehensive unit tests for the MinerEntity class
+  - **Purpose**: Comprehensive unit tests for the MinerEntity class with optimized testing patterns
   - **File Imports**: 
     - from entities.miner_entity import MinerEntity
-  - **File Dependencies**: 
-    - import unittest
     - import numpy as np
-    - from unittest.mock import patch, MagicMock
+  - **File Dependencies**: 
+    - unittest
+    - unittest.mock (patch, MagicMock)
+    - numpy
+  - **Key Features**:
+    - Vectorized resource creation using numpy
+    - Individual test methods instead of loops for better test independence
+    - Helper methods for common test operations
+    - Direct assertions without conditionals
+    - Performance testing for large-scale operations
   - **Required Components**: 
     - MinerEntity class
     - BaseEntity class
@@ -523,20 +563,33 @@ CODEBASE MAPPING REFERENCE
 ## 20. [test_player.py](#unit_testing)
 
 - `src/tests/test_player.py`
-  - **Purpose**: Comprehensive unit tests for the Player class
+  - **Purpose**: Comprehensive unit tests for the Player class, including attribute testing, credit management, ship upgrades, command processing, anomaly discovery, quest handling, level progression, and combat mechanics
   - **File Imports**: 
-    - from entities.player import Player
+    - from src.entities.player import Player
+    - from src.world.asteroid_field import AsteroidField
   - **File Dependencies**: 
     - import unittest
     - from unittest.mock import patch, MagicMock
+    - import numpy as np
   - **Required Components**: 
     - Player class
     - MinerEntity class
+    - BaseEntity class
+    - AsteroidField class
   - **Test Coverage**:
     - Initialization with default and custom values
     - Player-specific attributes (credits, inventory)
-    - Movement methods
-    - Mining methods
+    - Credit management and transaction history
+    - Command processing and execution
+    - Inventory management with item types
+    - Anomaly discovery tracking
+    - Quest handling and completion
+    - Level progression system
+    - XP calculation and accumulation
+    - Level-up mechanics and bonuses
+    - Multiple level-ups from single XP gain
+    - Level cap enforcement
+    - Mining methods with XP gain
     - Inheritance from MinerEntity
     - Serialization and deserialization
 
@@ -877,7 +930,248 @@ CODEBASE MAPPING REFERENCE
     - Test pattern characteristics (density, distribution)
     - Test edge cases and boundary conditions
 
-## 34. [test_value_generator.py](#unit_testing)
+## 41. [enemy_ship.py](#entity_system)
+
+- `src/entities/enemy_ship.py`
+  - **Purpose**: Enemy ship class for combat encounters with the player
+  - **File Imports**: 
+
+## 42. [fleet_manager.py](#systems)
+
+- `src/systems/fleet_manager.py`
+  - **Purpose**: Comprehensive fleet management system for creating, managing, and controlling fleets of ships
+  - **File Imports**:
+    - import logging
+    - import random
+    - import math
+    - import heapq
+    - from typing import Dict, List, Tuple, Any, Optional, Set, Union, Callable
+    - from src.entities.enemy_ship import EnemyShip
+    - from src.config import GAME_MAP_SIZE
+  - **Key Components**:
+    - Fleet formation management (line, column, wedge, echelon, circle, scatter)
+    - Fleet movement mechanics (direct movement, patrol, escort)
+    - Pathfinding using A* algorithm
+    - Fleet combat system with multiple stances (balanced, aggressive, defensive, evasive)
+    - Formation-specific damage distribution methods:
+      - _distribute_damage_evenly (Line formation)
+      - _distribute_damage_front_heavy (Column formation)
+      - _distribute_damage_point_heavy (Wedge formation)
+      - _distribute_damage_flank_heavy (Echelon formation)
+      - _distribute_damage_flagship_protected (Circle formation)
+      - _distribute_damage_randomly (Scatter formation)
+    - Dynamic combat positioning based on stance
+    - Auto-engagement functionality with configurable detection range
+    - Fleet strength calculation incorporating formation bonuses
+    - Ship destruction and fleet elimination mechanics
+    - Comprehensive resource management system:
+      - Five resource types: common_minerals, rare_minerals, anomalous_materials, fuel_cells, ship_parts
+      - Three distribution strategies: priority-based, equal, proportional
+      - Dynamic resource consumption based on fleet activity
+      - Resource status impact on fleet performance and morale
+  - **Combat Methods**:
+    - engage_fleet(target_fleet, stance): Initiates combat with another fleet
+    - disengage(): Exits combat state
+    - _handle_combat(target_fleet, delta_time): Manages combat mechanics
+    - _execute_attack(target_fleet): Calculates and applies damage
+    - _apply_damage_to_fleet(target_fleet, damage): Distributes damage based on formation
+    - set_auto_engagement(auto_engage, attack_same_faction): Configures auto-engagement settings
+    - _check_for_enemies(): Detects enemy fleets within range
+  - **Resource Management Methods**:
+    - add_resources(resource_type, amount): Adds resources to the fleet
+    - remove_resources(resource_type, amount): Removes resources from the fleet
+    - transfer_resources(target_fleet, resource_type, amount): Transfers resources between fleets
+    - set_resource_distribution_method(method): Sets the resource distribution strategy
+    - get_resource_status(): Returns current resource levels, capacities, and percentages
+    - _consume_resources(delta_time): Consumes resources based on fleet activity
+    - _distribute_resources(): Distributes resources among ships based on selected method
+    - _calculate_resource_status_multiplier(): Calculates fleet strength modifier based on resources
+  - **Main Classes**:
+    - `Fleet`: Core class for fleet management and operations
+
+## 43. [gpu_utils.py](#utils)
+
+- `src/utils/gpu_utils.py`
+  - **Purpose**: GPU acceleration utilities for common operations with fallback mechanisms
+  - **File Imports**: 
+    - import numpy as np
+    - import numba (optional)
+    - import cupy as cp (optional)
+  - **File Dependencies**: 
+    - src.utils.cellular_automaton_utils
+    - src.utils.noise_generator
+
+## 43. [test_gpu_utils.py](#testing)
+
+- `src/tests/test_gpu_utils.py`
+  - **Purpose**: Unit tests for the GPU utilities module
+  - **File Imports**: 
+    - from src.utils.gpu_utils import *
+    - import numpy as np
+
+## 44. [benchmark_gpu_acceleration.py](#testing)
+
+- `src/tests/benchmark_gpu_acceleration.py`
+  - **Purpose**: Benchmark script for measuring GPU vs CPU performance
+  - **File Imports**: 
+    - from src.utils.gpu_utils import *
+    - from src.utils.cellular_automaton_utils import apply_cellular_automaton
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+    - from src.entities.base_entity import BaseEntity
+    - from src.config import COMBAT_ENEMY_TYPES, COMBAT_DIFFICULTY_MULTIPLIER
+  - **File Dependencies**: 
+    - import random
+    - import logging
+    - from typing import Dict, List, Optional, Tuple, Any
+  - **Required Components**: 
+    - BaseEntity class
+    - Combat system
+    - Loot generation system
+  - **Key Features**:
+    - Procedural enemy ship generation based on difficulty and type
+    - Combat attributes (attack power, shield strength, hull strength)
+    - Faction alignment system
+    - Combat mechanics (attack, take damage, shield recharge)
+    - Loot generation based on difficulty and type
+    - Critical hit system
+    - Evasion and armor damage reduction
+    - Comprehensive stat tracking
+
+## 42. [combat_system.py](#systems)
+
+- `src/systems/combat_system.py`
+  - **Purpose**: Manages combat encounters between the player and enemy ships
+  - **File Imports**: 
+    - from src.entities.player import Player
+    - from src.entities.enemy_ship import EnemyShip
+    - from src.config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
+  - **File Dependencies**: 
+    - import random
+    - import logging
+    - from typing import Dict, List, Optional, Tuple, Any
+  - **Required Components**: 
+    - Player class
+    - EnemyShip class
+    - Combat configuration constants
+  - **Key Features**:
+    - Enemy ship generation based on player level and location
+    - Combat turn management with initiative system
+    - Shield recharge mechanics
+    - Player and enemy attack resolution
+    - Combat rewards and loot distribution
+    - Combat logging system
+    - Player flee mechanics with reputation consequences
+    - Combat quest integration
+
+## 43. [encounter_generator.py](#systems)
+
+- `src/systems/encounter_generator.py`
+  - **Purpose**: Generates combat and other encounters based on player location and status
+  - **File Imports**: 
+    - from src.entities.player import Player
+    - from src.entities.enemy_ship import EnemyShip
+    - from src.systems.combat_system import CombatSystem
+    - from src.config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES, GAME_MAP_SIZE
+  - **File Dependencies**: 
+    - import random
+    - import logging
+    - from typing import Dict, List, Optional, Tuple, Any
+  - **Required Components**: 
+    - Player class
+    - CombatSystem class
+    - Game map configuration
+  - **Key Features**:
+    - Zone-based danger levels across the game map
+    - Random encounter generation based on location danger
+    - Encounter cooldown system to prevent encounter spam
+    - Faction-based encounter generation
+    - Quest-specific encounter generation
+    - Encounter messaging system
+
+## 44. [trading_system.py](#systems)
+
+- `src/systems/trading_system.py`
+  - **Purpose**: Comprehensive resource trading system with dynamic market mechanics
+  - **File Imports**: 
+    - import random
+    - import math
+    - import logging
+    - from typing import Dict, List, Tuple, Any, Optional, Set
+    - from src.config import GAME_MAP_SIZE
+  - **File Dependencies**: 
+    - None
+  - **Required Components**: 
+    - Player class with faction reputation system
+  - **Key Features**:
+    - Dynamic commodity pricing with supply/demand mechanics
+    - Market events affecting prices (shortages, surpluses, etc.)
+    - Trading stations with location-based price differences
+    - Faction reputation effects on prices
+    - Buy/sell functionality with inventory management
+    - Trading quest generation and completion validation
+    - Station inventory management and restocking
+
+## 45. [test_combat_system.py](#unit_testing)
+
+- `src/tests/test_combat_system.py`
+  - **Purpose**: Comprehensive unit tests for the combat system
+  - **File Imports**: 
+    - from src.entities.player import Player
+    - from src.entities.enemy_ship import EnemyShip
+    - from src.systems.combat_system import CombatSystem
+  - **File Dependencies**: 
+    - import unittest
+    - from unittest.mock import patch, MagicMock
+  - **Required Components**: None
+  - **Key Features**:
+    - Tests for enemy ship generation
+    - Tests for combat initialization and termination
+    - Tests for player and enemy attacks
+    - Tests for combat turn execution
+    - Tests for player flee mechanics
+    - Tests for combat rewards and loot
+
+## 45. [test_encounter_generator.py](#unit_testing)
+
+- `src/tests/test_encounter_generator.py`
+  - **Purpose**: Comprehensive unit tests for the encounter generator
+  - **File Imports**: 
+    - from src.entities.player import Player
+    - from src.entities.enemy_ship import EnemyShip
+    - from src.systems.combat_system import CombatSystem
+    - from src.systems.encounter_generator import EncounterGenerator
+  - **File Dependencies**: 
+    - import unittest
+    - from unittest.mock import patch, MagicMock
+  - **Required Components**: None
+  - **Key Features**:
+    - Tests for zone danger level calculation
+    - Tests for encounter generation based on location
+    - Tests for encounter cooldown system
+    - Tests for combat encounter generation
+    - Tests for quest-specific encounter generation
+
+## 46. [test_trading_system.py](#unit_testing)
+
+- `src/tests/test_trading_system.py`
+  - **Purpose**: Comprehensive unit tests for the trading system
+  - **File Imports**: 
+    - from src.systems.trading_system import TradingSystem
+  - **File Dependencies**: 
+    - import unittest
+    - from unittest.mock import patch, MagicMock
+  - **Required Components**: None
+  - **Key Features**:
+    - Tests for commodity initialization and pricing
+    - Tests for trading station creation and management
+    - Tests for price fluctuations and market events
+    - Tests for buying and selling commodities
+    - Tests for faction price modifiers
+    - Tests for trading quest generation and completion
+    - Tests for station inventory management
+
+## 47. [test_value_generator.py](#unit_testing)
 
 - `src/tests/test_value_generator.py`
   - **Purpose**: Comprehensive unit tests for value generation utilities
@@ -899,8 +1193,26 @@ CODEBASE MAPPING REFERENCE
     - Test resource distribution patterns
     - Test falloff application
     - Test statistical properties of generated values
+    
+## 48. [config.py](#config)
 
-## 35. [test_visualization.py](#testing)
+- `src/config.py`
+  - **Purpose**: Central configuration file containing all game constants and settings
+  - **File Imports**:
+    - from typing import Tuple, Dict, Any, List
+  - **File Dependencies**: None
+  - **Required Components**: None
+  - **Key Constants**:
+    - Grid and window configuration (CELL_SIZE, GRID_WIDTH, GRID_HEIGHT, GAME_MAP_SIZE)
+    - Performance settings (RENDER_DISTANCE, UPDATE_INTERVAL)
+    - Game colors (COLOR_BG, COLOR_PLAYER, etc.)
+    - Game states (STATE_PLAY, STATE_SHOP, etc.)
+    - Asteroid field generation parameters
+    - Combat system settings
+    - Player settings
+    - Shop and UI settings
+
+## 49. [test_visualization.py](#testing)
 
 - `src/tests/test_visualization.py`
   - **Purpose**: Demonstration and validation of visualization capabilities
@@ -919,7 +1231,7 @@ CODEBASE MAPPING REFERENCE
     - Validates colormap support
     - Shows evolution visualization
 
-## 36. [dependency_config_example.py](#examples)
+## 50. [dependency_config_example.py](#examples)
 
 - `src/examples/dependency_config_example.py`
   - **Purpose**: Example script demonstrating the dependency configuration system
@@ -941,3 +1253,113 @@ CODEBASE MAPPING REFERENCE
     - Example of loading configuration from a file
     - Demonstration of changing configuration at runtime
     - Comparison of different noise generator implementations
+
+## 48. [gpu_utils.py](#utils)
+
+- `src/utils/gpu_utils.py`
+  - **Purpose**: Provides GPU-accelerated implementations of computationally intensive operations with fallback mechanisms for systems without GPU support
+  - **File Imports**: None
+  - **File Dependencies**: 
+    - import numpy as np
+    - try: import numba, from numba import cuda
+    - try: import cupy as cp
+    - import logging
+    - from typing import Any, Dict, List, Optional, Set, Tuple, Union
+  - **Required Components**: None (provides optional acceleration for other components)
+  - **Key Features**:
+    - Backend detection and selection (CUDA, CuPy, CPU fallback)
+    - GPU-accelerated cellular automaton operations
+    - GPU-accelerated noise generation
+    - GPU-accelerated clustering algorithms (K-means, DBSCAN)
+    - Memory management utilities (to_gpu, to_cpu)
+    - Graceful degradation when GPU support is unavailable
+
+## 49. [test_gpu_utils.py](#unit_testing)
+
+- `src/tests/test_gpu_utils.py`
+  - **Purpose**: Comprehensive unit tests for GPU acceleration utilities
+  - **File Imports**: 
+    - from src.utils.gpu_utils import is_gpu_available, get_available_backends, to_gpu, to_cpu, apply_cellular_automaton_gpu, apply_noise_generation_gpu
+  - **File Dependencies**: 
+    - import unittest
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+  - **Required Components**: 
+    - gpu_utils.py
+  - **Key Features**:
+    - Tests for backend detection and selection
+    - Tests for memory transfer utilities
+    - Tests for GPU-accelerated cellular automaton
+    - Tests for GPU-accelerated noise generation
+    - Compatibility tests across different backends
+    - Result consistency validation between CPU and GPU implementations
+
+## 50. [benchmark_gpu_acceleration.py](#testing)
+
+- `src/tests/benchmark_gpu_acceleration.py`
+  - **Purpose**: Performance benchmarking for GPU acceleration compared to CPU implementations
+  - **File Imports**: 
+    - from src.utils.gpu_utils import apply_cellular_automaton_gpu, apply_noise_generation_gpu, is_gpu_available, get_available_backends
+  - **File Dependencies**: 
+    - import time
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+  - **Required Components**: 
+    - gpu_utils.py
+  - **Key Features**:
+    - Benchmarking across different grid sizes
+    - Performance comparison between CPU and GPU implementations
+    - Visualization of benchmark results
+    - Memory usage tracking
+    - Comprehensive reporting of performance metrics
+
+## 51. [test_gpu_clustering.py](#unit_testing)
+
+- `src/tests/test_gpu_clustering.py`
+  - **Purpose**: Unit tests for GPU-accelerated clustering algorithms
+  - **File Imports**: 
+    - from src.utils.gpu_utils import apply_kmeans_clustering_gpu, apply_dbscan_clustering_gpu, is_gpu_available, get_available_backends
+  - **File Dependencies**: 
+    - import unittest
+    - import numpy as np
+    - import matplotlib.pyplot as plt
+    - from pathlib import Path
+  - **Required Components**: 
+    - gpu_utils.py
+  - **Key Features**:
+    - Tests for K-means clustering on CPU and GPU
+    - Tests for DBSCAN clustering on CPU and GPU
+    - Consistency tests across backends
+    - Visualization of clustering results
+    - Performance validation
+
+## 52. [GPU_Acceleration_Guide.md](#documentation)
+
+- `src/docs/GPU_Acceleration_Guide.md`
+  - **Purpose**: Comprehensive guide for integrating GPU acceleration into Space Muck components
+  - **File Imports**: None (documentation)
+  - **File Dependencies**: None (documentation)
+  - **Required Components**: None (documentation)
+  - **Key Features**:
+    - Installation instructions for GPU dependencies
+    - Basic usage examples
+    - Integration examples with existing components
+    - Performance considerations and best practices
+    - Troubleshooting common issues
+    - Advanced usage patterns
+
+## 53. [GPU_Hardware_Compatibility.md](#documentation)
+
+- `src/docs/GPU_Hardware_Compatibility.md`
+  - **Purpose**: Hardware requirements and compatibility information for GPU acceleration features
+  - **File Imports**: None (documentation)
+  - **File Dependencies**: None (documentation)
+  - **Required Components**: None (documentation)
+  - **Key Features**:
+    - Supported hardware specifications
+    - Memory requirements for different grid sizes
+    - CPU fallback performance expectations
+    - Compatibility matrix for different features and hardware
+    - Installation requirements for different GPU platforms
+    - Troubleshooting common hardware-related issues
+    - Benchmarking instructions for specific hardware configurations

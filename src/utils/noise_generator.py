@@ -17,6 +17,7 @@ import numpy as np
 # Optional dependencies
 try:
     from perlin_noise import PerlinNoise
+
     PERLIN_AVAILABLE = True
 except ImportError:
     PERLIN_AVAILABLE = False
@@ -185,6 +186,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
 # Optional dependencies
 try:
     from scipy.ndimage import zoom
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
