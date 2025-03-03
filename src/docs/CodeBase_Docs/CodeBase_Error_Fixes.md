@@ -18,6 +18,11 @@ Add concise notation to avoid future confusion and ensure best practices are fol
 6. [renderers.py](#ui_system)
 7. [shop.py](#ui_system)
 8. [miner_entity.py](#entity_system)
+9. [noise_generator.py](#utils)
+10. [test_fleet_manager.py](#unit_testing)
+11. [test_base_entity.py](#unit_testing)
+12. [test_miner_entity.py](#unit_testing)
+13. [test_base_generator.py](#unit_testing)
 
 ---
 
@@ -268,7 +273,85 @@ if self.width * self.height > 10000:  # Threshold for large grids
 - All optimizations include fallback mechanisms for environments without required dependencies
 - The optimizations maintain backward compatibility with existing code
 
-## 10. [test_miner_entity.py](#unit_testing)
+## 10. [test_fleet_manager.py](#unit_testing)
+
+ERROR: Import errors, test failures due to missing configuration constants, and linting issues
+CORRECTION: Implemented proper mocking of dependencies, improved test reliability, and fixed linting warnings
+
+```python
+# Before - Problematic direct imports
+from systems.fleet_manager import Fleet
+from src.entities.enemy_ship import EnemyShip
+
+# After - Proper mocking of dependencies
+# Mock the modules and constants needed by fleet_manager.py
+from unittest.mock import patch
+
+# Mock the GAME_MAP_SIZE constant
+sys.modules['src.config'] = MagicMock()
+sys.modules['src.config'].GAME_MAP_SIZE = (1000, 1000)
+
+# Mock the EnemyShip class
+mock_enemy_ship = MagicMock()
+sys.modules['src.entities.enemy_ship'] = MagicMock()
+sys.modules['src.entities.enemy_ship'].EnemyShip = mock_enemy_ship
+
+# Now import the class to test
+from src.systems.fleet_manager import Fleet
+```
+
+### Additional Notes
+
+- When testing classes with external dependencies, always use proper mocking to isolate the test from those dependencies
+- For system constants, mock the entire module rather than trying to import and modify individual constants
+- Use deterministic test behavior by directly setting expected values rather than relying on complex interactions
+- Always restore original methods after mocking to prevent test pollution
+- Remove unused imports to prevent linting warnings (F401, F811)
+- Avoid duplicate imports of the same module (especially when one is unused)
+- Structure code to follow PEP 8 guidelines for readability and maintainability
+
+## 11. [test_base_entity.py](#unit_testing)
+
+ERROR: Linting issues with unused imports and variables
+CORRECTION: Removed unused imports and fixed unused variable warnings
+
+```python
+# Before - Unused imports and variable
+import unittest
+import sys
+import os
+import uuid
+from unittest.mock import patch, MagicMock
+
+# In test_uuid_generation method
+try:
+    uuid_obj = uuid.UUID(entity.entity_id)  # F841: Local variable assigned but never used
+    is_valid_uuid = True
+except ValueError:
+    is_valid_uuid = False
+
+# After - Fixed linting issues
+import unittest
+import sys
+import os
+import uuid
+
+# In test_uuid_generation method
+try:
+    uuid.UUID(entity.entity_id)  # Directly verify UUID without assigning to unused variable
+    is_valid_uuid = True
+except ValueError:
+    is_valid_uuid = False
+```
+
+### Additional Notes
+
+- Always check for unused imports (F401) and remove them to keep the codebase clean
+- Avoid assigning variables that are never used (F841)
+- Use refactoring to extract common test logic into helper methods
+- Follow PEP 8 guidelines for code structure and readability
+
+## 12. [test_miner_entity.py](#unit_testing)
 
 ERROR: Inefficient test patterns and linting warnings in MinerEntity test suite
 CORRECTION: Refactored tests to address Sourcery linting warnings and improve test efficiency
@@ -320,7 +403,47 @@ def _process_minerals_handler(self, minerals, expected_fed, expected_population_
 - Set up linting tools (ruff, flake8, pylint, sourcery) in a virtual environment
 - These improvements make the tests more reliable and maintainable
 
-## 11. [cellular_automaton_optimization.py](#entity_system)
+## 12. [test_base_generator.py](#unit_testing)
+
+ERROR: Unused imports and variables in test_base_generator.py
+CORRECTION: Removed unused imports and variables, improved test structure with helper methods
+
+```python
+# Before - Unused imports and variables
+import logging  # Unused import
+from utils.cellular_automaton_utils import apply_cellular_automaton as utils_apply_ca  # Unused import
+from utils.value_generator import add_value_clusters  # Unused import
+
+# Unused variables in tests
+noise_layer2 = self.generator.generate_noise_layer(noise_type="medium", scale=0.1)
+with patch("logging.warning") as mock_log:  # mock_log never used
+    result = test_generator.create_clusters(...)
+cluster_centers = np.array([...])  # Defined but never used
+
+# After - Fixed imports using importlib.util for availability checking
+import importlib.util
+
+# Check for utility modules availability using importlib.util.find_spec
+CA_UTILS_AVAILABLE = importlib.util.find_spec("utils.cellular_automaton_utils") is not None
+VALUE_GEN_AVAILABLE = importlib.util.find_spec("utils.value_generator") is not None
+
+# Fixed unused variables
+self.generator.generate_noise_layer(noise_type="medium", scale=0.1)  # No assignment to unused variable
+result = test_generator.create_clusters(...)  # Removed unused mock_log
+# Removed unused cluster_centers array
+```
+
+### Additional Notes
+
+- Removed unused imports (logging) to improve code clarity
+- Used importlib.util.find_spec for better module availability checking
+- Fixed unused variable warnings by removing unnecessary assignments
+- Refactored test code to use helper methods for common test patterns
+- Improved test structure by creating new test generator instances to avoid caching issues
+- Used itertools.product for cleaner nested loop implementation
+- These changes make the tests more maintainable and pass linting checks
+
+## 13. [cellular_automaton_optimization.py](#entity_system)
 
 ERROR: Inefficient cellular automaton implementation using nested loops
 CORRECTION: Implemented vectorized operations using NumPy for significant performance improvements.

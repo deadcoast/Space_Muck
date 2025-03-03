@@ -61,6 +61,8 @@ CODEBASE MAPPING REFERENCE
 53. [GPU_Acceleration_Guide.md](#documentation)
 54. [GPU_Hardware_Compatibility.md](#documentation)
 55. [value_generator_gpu.py](#utils)
+56. [test_value_generator_gpu.py](#unit_testing)
+57. [test_fleet_manager.py](#unit_testing)
 
 ---
 
@@ -1474,3 +1476,33 @@ CODEBASE MAPPING REFERENCE
     - Support for multiple GPU backends (CUDA, CuPy)
     - Graceful fallback to CPU implementations
     - Performance optimization for large grids
+
+## 57. [test_fleet_manager.py](#unit_testing)
+
+- `src/tests/test_fleet_manager.py`
+  - **Purpose**: Comprehensive unit tests for the FleetManager class, covering fleet creation, management, formations, movement, resource handling, and combat functionality
+  - **File Imports**: 
+    - from src.entities.fleet import Fleet
+    - from src.managers.fleet_manager import FleetManager
+  - **File Dependencies**: 
+    - import unittest
+    - import logging
+    - import sys
+    - from unittest.mock import patch, MagicMock
+  - **Required Components**: 
+    - fleet.py
+    - fleet_manager.py
+    - enemy_ship.py (mocked)
+    - config.py (mocked)
+  - **Key Features**:
+    - Tests for fleet creation and management
+    - Tests for ship addition and removal
+    - Tests for formation management and positioning
+    - Tests for fleet movement and patrol functionality
+    - Tests for resource management
+    - Tests for flagship designation
+    - Tests for combat engagement
+    - Comprehensive mocking of external dependencies
+    - Deterministic test behavior
+    - Proper error handling and validation
+    - PEP 8 compliant code structure

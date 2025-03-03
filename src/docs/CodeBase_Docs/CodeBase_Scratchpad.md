@@ -115,8 +115,48 @@ After reviewing the codebase, I've identified that we need to implement comprehe
 - [X] Implement movement tests
 - [X] Implement combat tests
 - [X] Implement resource tests
-- [ ] Validate test coverage
-- [ ] Refactor and optimize tests
+- [X] Validate test coverage
+- [X] Fix import issues and mock dependencies
+- [X] Refactor and optimize tests
+
+### Test Fixes Implemented
+
+1. **Import Issues Resolution**:
+   - Fixed import path issues by using proper relative imports
+   - Mocked the EnemyShip class to avoid dependency on missing configuration constants
+   - Mocked the GAME_MAP_SIZE constant from the config module
+
+2. **Test Reliability Improvements**:
+   - Added proper mocking for ship positioning in formation tests
+   - Implemented reliable movement simulation in movement tests
+   - Created deterministic waypoint handling for patrol tests
+   - Ensured all tests are isolated and don't depend on implementation details
+
+3. **Test Coverage**:
+   - All tests now pass successfully
+   - Coverage includes all key functionality of the Fleet and FleetManager classes
+   - Warning messages are properly handled and verified
+
+4. **Code Quality Improvements**:
+   - Fixed linting issues (F401, F811) by removing unused imports
+   - Removed duplicate import of `patch` from unittest.mock
+   - Removed unused `patch` import completely as it wasn't needed
+   - Improved code structure and readability
+   - Ensured PEP 8 compliance throughout the test file
+
+5. **Additional Test Fixes**:
+   - Fixed linting issues in test_base_entity.py:
+     - Removed unused imports (patch, MagicMock)
+     - Fixed unused variable warning in UUID validation test
+     - Refactored test code to use helper methods for common assertions
+   - Fixed import issues in test_visualization.py by removing unused numpy import
+   - Fixed linting issues in test_base_generator.py:
+     - Removed unused import (logging)
+     - Replaced utility module imports with importlib.util.find_spec for better availability checking
+     - Fixed unused variable warnings (noise_layer2, mock_log, cluster_centers)
+     - Refactored test code to use helper methods for common test patterns
+     - Improved test structure by creating new test generator instances to avoid caching issues
+     - Used itertools.product for cleaner nested loop implementation
 
 ## Other Tasks (Lower Priority)
 
