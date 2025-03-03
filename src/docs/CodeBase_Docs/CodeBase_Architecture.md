@@ -1176,6 +1176,17 @@ In BaseGenerator, this is implemented through:
      * Tests multi-octave noise generation performance
      * Compares CPU vs GPU implementations across different grid sizes
      * Generates performance and speedup visualization plots
+   - `benchmark_comprehensive_gpu.py`: Comprehensive GPU benchmarking framework
+     * Unified framework for benchmarking all GPU-accelerated operations
+     * Modular benchmark functions for different operations:
+       - Cellular Automaton
+       - Noise Generation
+       - Clustering Algorithms
+       - Value Generation
+       - Memory Transfer Overhead
+     * Cross-platform testing capabilities (CUDA, CuPy, MPS)
+     * Detailed performance comparison visualizations
+     * Command-line interface via `benchmark_comprehensive_gpu_main.py`
 
 3. **Visualization**: Performance comparison plots to identify optimal configurations
    - Grid size vs. execution time plots
