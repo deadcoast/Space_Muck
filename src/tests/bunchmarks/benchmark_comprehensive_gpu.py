@@ -7,53 +7,99 @@ across different backends, grid sizes, and configurations. It generates detailed
 performance metrics and visualizations to help optimize GPU acceleration usage.
 """
 
+
+
 import os
 import sys
 import time
 import logging
-import argparse
 import platform
+import importlib.util
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Any
 
+# Check for optional dependencies
+CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
+TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
+
+# Set up dummy modules to prevent errors
+class DummyModule:
+    """Dummy module for when optional dependencies are not available."""
+    def __getattr__(self, name):
+        return self
+    
+    def __call__(self, *args, **kwargs):
+        return self
+
+# Import optional dependencies
+if CUPY_AVAILABLE:
+    try:
+        import cupy as cp
+    except ImportError:
+        cp = DummyModule()
+else:
+    cp = DummyModule()
+
+if TORCH_AVAILABLE:
+    try:
+        import torch
+    except ImportError:
+        torch = DummyModule()
+else:
+    torch = DummyModule()
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 # Add the parent directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Import GPU utilities
-from src.utils.gpu_utils import (
-    is_gpu_available,
+# Import all modules at the top
+from entities.base_generator import BaseGenerator  # noqa: E402
+from utils.cellular_automaton_utils import apply_cellular_automaton  # noqa: E402
+from utils.gpu_utils import (  # noqa: E402
     get_available_backends,
-    to_gpu,
-    to_cpu,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
     apply_kmeans_clustering_gpu,
     apply_dbscan_clustering_gpu,
-    CUDA_AVAILABLE,
-    CUPY_AVAILABLE,
-    MPS_AVAILABLE,
-    METALGPU_AVAILABLE,
 )
-
-# Import CPU implementations for comparison
-from src.utils.cellular_automaton_utils import apply_cellular_automaton
-from src.utils.value_generator import (
+from utils.value_generator import (  # noqa: E402
     generate_value_distribution,
     add_value_clusters,
 )
-from src.utils.value_generator_gpu import (
+from utils.value_generator_gpu import (  # noqa: E402
     generate_value_distribution_gpu,
     add_value_clusters_gpu,
 )
 
-# Import BaseGenerator for integration testing
-from src.entities.base_generator import BaseGenerator
+# Define terrain generation functions
+def generate_terrain_cpu(width, height):
+    """Generate terrain using CPU implementation."""
+    # Use value_generator for CPU implementation
+    return generate_value_distribution(width, height, distribution_type="perlin")
+
+def generate_terrain_gpu(width, height, backend="cuda"):
+    """Generate terrain using GPU implementation."""
+    # Use value_generator_gpu for GPU implementation
+    return generate_value_distribution_gpu(width, height, distribution_type="perlin", backend=backend)
+
+# Define resource distribution functions
+def generate_resource_distribution_cpu(width, height):
+    """Generate resource distribution using CPU implementation."""
+    # Use value_generator for CPU implementation
+    base = generate_value_distribution(width, height, distribution_type="simplex")
+    return add_value_clusters(base, num_clusters=10, cluster_value=1.5)
+
+def generate_resource_distribution_gpu(width, height, backend="cuda"):
+    """Generate resource distribution using GPU implementation."""
+    # Use value_generator_gpu for GPU implementation
+    base = generate_value_distribution_gpu(width, height, distribution_type="simplex", backend=backend)
+    return add_value_clusters_gpu(base, num_clusters=10, cluster_value=1.5, backend=backend)
+
+
 
 
 def benchmark_cellular_automaton(
@@ -102,9 +148,9 @@ def benchmark_cellular_automaton(
                 # Benchmark CPU implementation
                 start_time = time.time()
                 if backend == "cpu":
-                    result = apply_cellular_automaton(grid, iterations=iterations)
+                    apply_cellular_automaton(grid, iterations=iterations)
                 else:
-                    result = apply_cellular_automaton_gpu(
+                    apply_cellular_automaton_gpu(
                         grid, backend=backend, iterations=iterations
                     )
                 end_time = time.time()
@@ -236,10 +282,7 @@ def benchmark_clustering(
                     kmeans_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
                     logging.info(f"  K-means {backend}: {avg_time:.4f} seconds")
             else:
-                kmeans_results["times"][backend].append(float("inf"))
-                kmeans_results["speedup"][backend].append(0.0)
-                logging.info(f"  K-means {backend}: Failed")
-
+                _speed_handler(kmeans_results, backend, '  K-means ')
             # DBSCAN benchmarking
             dbscan_times = []
             for _ in range(repetitions):
@@ -251,10 +294,10 @@ def benchmark_clustering(
                         from sklearn.cluster import DBSCAN
 
                         dbscan = DBSCAN(eps=0.3, min_samples=5)
-                        labels = dbscan.fit_predict(data)
+                        dbscan.fit_predict(data)
                     else:
                         # Use GPU implementation
-                        labels = apply_dbscan_clustering_gpu(
+                        apply_dbscan_clustering_gpu(
                             data=data, eps=0.3, min_samples=5, backend=backend
                         )
 
@@ -293,11 +336,14 @@ def benchmark_clustering(
                     dbscan_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
                     logging.info(f"  DBSCAN {backend}: {avg_time:.4f} seconds")
             else:
-                dbscan_results["times"][backend].append(float("inf"))
-                dbscan_results["speedup"][backend].append(0.0)
-                logging.info(f"  DBSCAN {backend}: Failed")
-
+                _speed_handler(dbscan_results, backend, '  DBSCAN ')
     return {"kmeans": kmeans_results, "dbscan": dbscan_results}
+
+
+def _speed_handler(arg0, backend, arg2):
+    arg0["times"][backend].append(float("inf"))
+    arg0["speedup"][backend].append(0.0)
+    logging.info(f"{arg2}{backend}: Failed")
 
 
 def benchmark_value_generation(
@@ -356,10 +402,10 @@ def benchmark_value_generation(
 
                     if backend == "cpu":
                         # Use CPU implementation for terrain generation
-                        terrain = generate_terrain_cpu(size, size)
+                        generate_terrain_cpu(size, size)
                     else:
                         # Use GPU implementation for terrain generation
-                        terrain = generate_terrain_gpu(size, size, backend=backend)
+                        generate_terrain_gpu(size, size, backend=backend)
 
                     end_time = time.time()
                     terrain_times.append(end_time - start_time)
@@ -398,10 +444,9 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Terrain {backend}: {avg_time:.4f} seconds")
             else:
-                terrain_results["times"][backend].append(float("inf"))
-                terrain_results["speedup"][backend].append(0.0)
-                logging.info(f"  Terrain {backend}: Failed")
-
+                _time_handler(
+                    terrain_results, backend, '  Terrain '
+                )
             # Resource distribution benchmarking
             resource_times = []
             for _ in range(repetitions):
@@ -410,10 +455,10 @@ def benchmark_value_generation(
 
                     if backend == "cpu":
                         # Use CPU implementation for resource distribution
-                        resources = generate_resource_distribution_cpu(size, size)
+                        generate_resource_distribution_cpu(size, size)
                     else:
                         # Use GPU implementation for resource distribution
-                        resources = generate_resource_distribution_gpu(
+                        generate_resource_distribution_gpu(
                             size, size, backend=backend
                         )
 
@@ -426,7 +471,9 @@ def benchmark_value_generation(
                     resource_times.append(float("inf"))
 
             # Record average time for resource distribution
-            if resource_times and not all(t == float("inf") for t in resource_times):
+            if resource_times and any(
+                t != float("inf") for t in resource_times
+            ):
                 valid_times = [t for t in resource_times if t != float("inf")]
                 avg_time = (
                     sum(valid_times) / len(valid_times) if valid_times else float("inf")
@@ -454,11 +501,17 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Resources {backend}: {avg_time:.4f} seconds")
             else:
-                resource_results["times"][backend].append(float("inf"))
-                resource_results["speedup"][backend].append(0.0)
-                logging.info(f"  Resources {backend}: Failed")
-
+                _time_handler(
+                    resource_results, backend, '  Resources '
+                )
     return {"terrain": terrain_results, "resources": resource_results}
+
+
+# TODO Rename this here and in `benchmark_value_generation`
+def _time_handler(arg0, backend, arg2):
+    arg0["times"][backend].append(float("inf"))
+    arg0["speedup"][backend].append(0.0)
+    logging.info(f"{arg2}{backend}: Failed")
 
 
 def benchmark_memory_transfer(
@@ -514,9 +567,7 @@ def benchmark_memory_transfer(
             h2d_times = []
             for _ in range(repetitions):
                 try:
-                    if backend in ["cuda", "cupy"]:
-                        import cupy as cp
-
+                    if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
                         # Ensure we're starting from CPU memory
                         cpu_data = np.array(data)
                         # Time the transfer
@@ -525,9 +576,7 @@ def benchmark_memory_transfer(
                         # Force synchronization to ensure transfer is complete
                         cp.cuda.stream.get_current_stream().synchronize()
                         end_time = time.time()
-                    elif backend == "mps":
-                        import torch
-
+                    elif backend == "mps" and TORCH_AVAILABLE:
                         # Ensure we're starting from CPU memory
                         cpu_data = torch.tensor(data)
                         # Time the transfer
@@ -568,26 +617,19 @@ def benchmark_memory_transfer(
                     h2d_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  H2D {backend}: {avg_time:.6f} seconds")
             else:
-                h2d_results["times"][backend].append(float("inf"))
-                h2d_results["bandwidth"][backend].append(0.0)
-                logging.info(f"  H2D {backend}: Failed")
-
+                _bandwidth_handler(h2d_results, backend, '  H2D ')
             # Device to host transfer benchmarking
             d2h_times = []
             for _ in range(repetitions):
                 try:
-                    if backend in ["cuda", "cupy"]:
-                        import cupy as cp
-
+                    if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
                         # Create data on GPU
                         gpu_data = cp.random.random(size).astype(cp.float32)
                         # Time the transfer
                         start_time = time.time()
                         cpu_data = cp.asnumpy(gpu_data)
                         end_time = time.time()
-                    elif backend == "mps":
-                        import torch
-
+                    elif backend == "mps" and TORCH_AVAILABLE:
                         # Create data on GPU
                         gpu_data = torch.rand(size, device="mps")
                         # Time the transfer
@@ -628,11 +670,14 @@ def benchmark_memory_transfer(
                     d2h_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  D2H {backend}: {avg_time:.6f} seconds")
             else:
-                d2h_results["times"][backend].append(float("inf"))
-                d2h_results["bandwidth"][backend].append(0.0)
-                logging.info(f"  D2H {backend}: Failed")
-
+                _bandwidth_handler(d2h_results, backend, '  D2H ')
     return {"host_to_device": h2d_results, "device_to_host": d2h_results}
+
+
+def _bandwidth_handler(arg0, backend, arg2):
+    arg0["times"][backend].append(float("inf"))
+    arg0["bandwidth"][backend].append(0.0)
+    logging.info(f"{arg2}{backend}: Failed")
 
 
 def visualize_benchmark_results(
@@ -893,10 +938,10 @@ def benchmark_noise_generation(
                 if backend == "cpu":
                     # Use BaseGenerator with GPU disabled for CPU benchmark
                     generator = BaseGenerator(width=size, height=size, use_gpu=False)
-                    result = generator.generate_noise_layer(scale=0.1)
+                    generator.generate_noise_layer(scale=0.1)
                 else:
                     # Use apply_noise_generation_gpu directly
-                    result = apply_noise_generation_gpu(
+                    apply_noise_generation_gpu(
                         width=size,
                         height=size,
                         scale=0.1,

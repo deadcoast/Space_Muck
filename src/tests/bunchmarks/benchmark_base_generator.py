@@ -10,15 +10,15 @@ import sys
 import os
 import time
 import numpy as np
-from typing import Dict, List, Tuple, Callable
+from typing import Dict, List, Callable
 import logging
+
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the classes to benchmark
 from entities.base_generator import BaseGenerator
-from utils.noise_generator import NoiseGenerator
 
 # Configure logging
 logging.basicConfig(
@@ -39,7 +39,7 @@ def time_function(func: Callable, *args, **kwargs) -> float:
         float: Execution time in seconds
     """
     start_time = time.time()
-    result = func(*args, **kwargs)
+    func(*args, **kwargs)
     end_time = time.time()
     return end_time - start_time
 
