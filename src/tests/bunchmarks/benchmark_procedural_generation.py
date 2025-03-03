@@ -115,7 +115,7 @@ def benchmark_complete_generation(
 
             # Clustering
             start_time = time.time()
-            final_grid = generator.create_clusters(
+            generator.create_clusters(
                 grid=ca_grid,
                 num_clusters=5,
                 cluster_value_multiplier=2.0,
@@ -360,14 +360,7 @@ def plot_results(
             grid_sizes, complete_results["total"], marker="*", label="Total"
         )
 
-        axes[0, 0].set_title("Complete Generation Performance")
-        axes[0, 0].set_xlabel("Grid Size")
-        axes[0, 0].set_ylabel("Execution Time (seconds)")
-        axes[0, 0].set_xscale("log", base=2)
-        axes[0, 0].set_yscale("log")
-        axes[0, 0].grid(True)
-        axes[0, 0].legend()
-
+        _generation_handler(axes, 0, 0, "Complete Generation Performance")
     # Plot noise generation results
     if "noise" in results:
         noise_results = results["noise"]
@@ -377,14 +370,7 @@ def plot_results(
             if backend != "grid_sizes":
                 axes[0, 1].plot(grid_sizes, times, marker="o", label=backend)
 
-        axes[0, 1].set_title("Noise Generation Performance")
-        axes[0, 1].set_xlabel("Grid Size")
-        axes[0, 1].set_ylabel("Execution Time (seconds)")
-        axes[0, 1].set_xscale("log", base=2)
-        axes[0, 1].set_yscale("log")
-        axes[0, 1].grid(True)
-        axes[0, 1].legend()
-
+        _generation_handler(axes, 0, 1, "Noise Generation Performance")
     # Plot cellular automaton results
     if "cellular_automaton" in results:
         ca_results = results["cellular_automaton"]
@@ -394,14 +380,7 @@ def plot_results(
             if backend != "grid_sizes":
                 axes[1, 0].plot(grid_sizes, times, marker="o", label=backend)
 
-        axes[1, 0].set_title("Cellular Automaton Performance")
-        axes[1, 0].set_xlabel("Grid Size")
-        axes[1, 0].set_ylabel("Execution Time (seconds)")
-        axes[1, 0].set_xscale("log", base=2)
-        axes[1, 0].set_yscale("log")
-        axes[1, 0].grid(True)
-        axes[1, 0].legend()
-
+        _generation_handler(axes, 1, 0, "Cellular Automaton Performance")
     # Plot clustering results
     if "clustering" in results:
         cluster_results = results["clustering"]
@@ -414,17 +393,20 @@ def plot_results(
             grid_sizes, cluster_results["parallel"], marker="s", label="Parallel"
         )
 
-        axes[1, 1].set_title("Clustering Performance")
-        axes[1, 1].set_xlabel("Grid Size")
-        axes[1, 1].set_ylabel("Execution Time (seconds)")
-        axes[1, 1].set_xscale("log", base=2)
-        axes[1, 1].set_yscale("log")
-        axes[1, 1].grid(True)
-        axes[1, 1].legend()
-
+        _generation_handler(axes, 1, 1, "Clustering Performance")
     plt.tight_layout()
     plt.savefig(output_file)
     logging.info(f"Results saved to {output_file}")
+
+
+def _generation_handler(axes, arg1, arg2, arg3):
+    axes[arg1, arg2].set_title(arg3)
+    axes[arg1, arg2].set_xlabel("Grid Size")
+    axes[arg1, arg2].set_ylabel("Execution Time (seconds)")
+    axes[arg1, arg2].set_xscale("log", base=2)
+    axes[arg1, arg2].set_yscale("log")
+    axes[arg1, arg2].grid(True)
+    axes[arg1, arg2].legend()
 
 
 def main():
