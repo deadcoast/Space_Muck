@@ -56,7 +56,7 @@ class GeneratorVisualizer:
             "space": self._create_space_colormap() if MATPLOTLIB_AVAILABLE else None
         }
     
-    def _create_space_colormap(self) -> LinearSegmentedColormap:
+    def _create_space_colormap(self):
         """Create a custom space-themed colormap."""
         if not MATPLOTLIB_AVAILABLE:
             return None
@@ -73,7 +73,7 @@ class GeneratorVisualizer:
         show: bool = True,
         save: bool = False,
         filename: str = "generator_output.png",
-    ) -> Optional[plt.Figure]:
+    ) -> Optional:
         """
         Visualize a 2D grid from a generator.
         
@@ -125,7 +125,7 @@ class GeneratorVisualizer:
         show: bool = True,
         save: bool = False,
         filename: str = "grid_comparison.png",
-    ) -> Optional[plt.Figure]:
+    ) -> Optional:
         """
         Compare multiple grids side by side.
         
@@ -199,7 +199,7 @@ class GeneratorVisualizer:
         filename: str = "evolution.png",
         animation: bool = False,
         animation_filename: str = "evolution.gif",
-    ) -> Optional[plt.Figure]:
+    ) -> Optional:
         """
         Visualize the evolution of a grid over multiple iterations.
         
@@ -314,6 +314,38 @@ class GeneratorVisualizer:
         except Exception as e:
             logging.error(f"Failed to export grid: {str(e)}")
             return False
+            
+    def visualize_grid_comparison(
+        self,
+        grids: List[np.ndarray],
+        titles: List[str],
+        colormap: str = "binary",
+        show: bool = True,
+        save: bool = False,
+        filename: str = "grid_comparison.png",
+    ) -> Optional:
+        """
+        Visualize a comparison of multiple grids side by side.
+        
+        Args:
+            grids: List of 2D numpy arrays to compare
+            titles: List of titles for each grid
+            colormap: Colormap to use
+            show: Whether to display the visualization
+            save: Whether to save the visualization to a file
+            filename: Filename to save the visualization
+            
+        Returns:
+            matplotlib.Figure if matplotlib is available, None otherwise
+        """
+        return self.compare_grids(
+            grids=grids,
+            titles=titles,
+            colormap=colormap,
+            show=show,
+            save=save,
+            filename=filename
+        )
 
 
 def visualize_generator_output(

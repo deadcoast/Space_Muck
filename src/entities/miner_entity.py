@@ -326,130 +326,199 @@ class MinerEntity(BaseEntity):
             log_exception(e)
 
     def _generate_random_nodes(self, field: AsteroidField) -> None:
-        """Generate entities in a network pattern using NetworkX."""
-        # Create a graph
-        G = nx.Graph()
-
-        # Use scipy.stats to generate more realistic node distribution
-        # Use a truncated normal distribution for more natural clustering
-        num_nodes = stats.poisson.rvs(4)  # Poisson distribution with mean 4
+        """Generate entities in a network pattern using NetworkX.
+        
+        Creates a connected network of colony nodes and places entities along paths
+        between nodes and in clusters around node centers.
+        
+        Args:
+            field: The asteroid field where entities will be placed
+        """
+        # Step 1: Generate colony network
+        colony_graph, colony_centers = self._create_colony_network(field)
+        
+        # Step 2: Place entities along network paths
+        self._place_entities_on_paths(colony_graph, field)
+        
+        # Step 3: Create clusters around colony centers
+        self._create_colony_clusters(colony_graph, field)
+    
+    def _create_colony_network(self, field: AsteroidField) -> Tuple[nx.Graph, List[Tuple[int, int]]]:
+        """Create a connected network of colony nodes.
+        
+        Returns:
+            Tuple containing (NetworkX graph, list of node positions)
+        """
+        # Create empty graph
+        colony_graph = nx.Graph()
+        
+        # Determine number of colony centers (3-8) using Poisson distribution
+        num_nodes = stats.poisson.rvs(4)  # Mean of 4 nodes
         num_nodes = max(3, min(8, num_nodes))  # Ensure between 3-8 nodes
         
-        nodes = []
-        # Generate node positions using truncated normal distribution
+        # Generate node positions
+        colony_centers = []
         for _ in range(num_nodes):
-            # Generate x position with truncated normal distribution
-            x = int(stats.truncnorm.rvs(
-                (field.width // 5 - field.width // 2) / (field.width // 4),
-                (field.width * 4 // 5 - field.width // 2) / (field.width // 4),
-                loc=field.width // 2,
-                scale=field.width // 4
-            ))
+            # Calculate normalized bounds for truncated normal distribution
+            x_mean, x_std = field.width // 2, field.width // 4
+            x_min, x_max = field.width // 5, field.width * 4 // 5
+            x_a = (x_min - x_mean) / x_std
+            x_b = (x_max - x_mean) / x_std
             
-            # Generate y position with truncated normal distribution
-            y = int(stats.truncnorm.rvs(
-                (field.height // 5 - field.height // 2) / (field.height // 4),
-                (field.height * 4 // 5 - field.height // 2) / (field.height // 4),
-                loc=field.height // 2,
-                scale=field.height // 4
-            ))
+            # Generate x position
+            x = int(stats.truncnorm.rvs(x_a, x_b, loc=x_mean, scale=x_std))
             
-            nodes.append((x, y))
-            G.add_node((x, y))
-
-        # Connect nodes to form a network
-        # For each pair of nodes, add an edge with some probability
+            # Similar calculation for y position
+            y_mean, y_std = field.height // 2, field.height // 4
+            y_min, y_max = field.height // 5, field.height * 4 // 5
+            y_a = (y_min - y_mean) / y_std
+            y_b = (y_max - y_mean) / y_std
+            
+            # Generate y position
+            y = int(stats.truncnorm.rvs(y_a, y_b, loc=y_mean, scale=y_std))
+            
+            colony_centers.append((x, y))
+            colony_graph.add_node((x, y))
+        
+        # Connect nodes with 70% probability
+        self._connect_nodes(colony_graph, colony_centers)
+        
+        # Ensure the graph is fully connected
+        self._ensure_connected_graph(colony_graph, colony_centers)
+        
+        return colony_graph, colony_centers
+    
+    def _connect_nodes(self, graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
+        """Connect nodes with a 70% probability."""
+        CONNECTION_PROBABILITY = 0.7
+        
         for i in range(len(nodes)):
             for j in range(i + 1, len(nodes)):
-                if random.random() < 0.7:  # 70% chance of connection
-                    G.add_edge(nodes[i], nodes[j])
+                if random.random() < CONNECTION_PROBABILITY:
+                    graph.add_edge(nodes[i], nodes[j])
+    
+    def _ensure_connected_graph(self, graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
+        """Ensure the graph is fully connected by connecting components."""
+        # Skip if already connected or empty
+        if len(nodes) <= 1 or nx.is_connected(graph):
+            return
+        
+        # Find connected components
+        components = list(nx.connected_components(graph))
+        
+        # Connect each component to the largest one
+        largest_component = max(components, key=len)
+        
+        for component in components:
+            if component != largest_component:
+                self._connect_components(graph, component, largest_component)
+    
+    def _connect_components(self, graph: nx.Graph, component1: Set, component2: Set) -> None:
+        """Connect two components by adding an edge between their closest nodes."""
+        min_dist = float("inf")
+        closest_pair = None
+        
+        # Find the closest pair of nodes between components
+        for node1 in component1:
+            for node2 in component2:
+                # Calculate Euclidean distance
+                dist = math.sqrt((node1[0] - node2[0])**2 + (node1[1] - node2[1])**2)
+                
+                if dist < min_dist:
+                    min_dist = dist
+                    closest_pair = (node1, node2)
+        
+        # Connect the closest nodes
+        if closest_pair:
+            graph.add_edge(closest_pair[0], closest_pair[1])
+    
+    def _place_entities_on_paths(self, graph: nx.Graph, field: AsteroidField) -> None:
+        """Place entities along the paths between colony nodes."""
+        PATH_DENSITY_MULTIPLIER = 5.0
 
-        # Ensure all nodes are connected
-        if len(nodes) > 1 and not nx.is_connected(G):
-            # Find connected components
-            components = list(nx.connected_components(G))
-
-            # Connect each component to the largest one
-            largest = max(components, key=len)
-            for comp in components:
-                if comp != largest:
-                    # Find the closest pair of nodes between components
-                    min_dist = float("inf")
-                    closest_pair = None
-
-                    for n1 in comp:
-                        for n2 in largest:
-                            dist = math.sqrt(
-                                (n1[0] - n2[0]) ** 2 + (n1[1] - n2[1]) ** 2
-                            )
-                            if dist < min_dist:
-                                min_dist = dist
-                                closest_pair = (n1, n2)
-
-                    # Connect them
-                    if closest_pair:
-                        G.add_edge(closest_pair[0], closest_pair[1])
-
-        # Place entities along network paths
-        for edge in G.edges():
+        for edge in graph.edges():
             node1, node2 = edge
-            x1, y1 = node1
-            x2, y2 = node2
 
-            # Use Bresenham line algorithm to get all points on line
-            line_points = []
-            dx = abs(x2 - x1)
-            dy = abs(y2 - y1)
-            sx = 1 if x1 < x2 else -1
-            sy = 1 if y1 < y2 else -1
-            err = dx - dy
+            # Get points along the path using Bresenham's algorithm
+            line_points = self._get_line_points(node1, node2, field)
 
-            while True:
-                if 0 <= x1 < field.width and 0 <= y1 < field.height:
-                    line_points.append((x1, y1))
+            # Place entities along and around the path
+            for point in line_points:
+                x, y = point
 
-                if x1 == x2 and y1 == y2:
-                    break
+                # Add entities in a small area around each path point
+                for dy, dx in itertools.product(range(-1, 2), range(-1, 2)):
+                    nx, ny = x + dx, y + dy
 
-                e2 = 2 * err
-                if e2 > -dy:
-                    err -= dy
-                    x1 += sx
-                if e2 < dx:
-                    err += dx
-                    y1 += sy
+                    # Check if position is valid and empty
+                    if (self._is_valid_position(nx, ny, field) and 
+                            field.entity_grid[ny, nx] == 0 and
+                            random.random() < self.initial_density * PATH_DENSITY_MULTIPLIER):
+                        field.entity_grid[ny, nx] = self.race_id
+    
+    def _get_line_points(self, start: Tuple[int, int], end: Tuple[int, int], 
+                         field: AsteroidField) -> List[Tuple[int, int]]:
+        """Get points along a line using Bresenham's line algorithm."""
+        x1, y1 = start
+        x2, y2 = end
+        line_points = []
+        
+        # Bresenham's line algorithm
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
+        err = dx - dy
+        
+        # Current position
+        x, y = x1, y1
+        
+        while True:
+            # Add point if within field boundaries
+            if self._is_valid_position(x, y, field):
+                line_points.append((x, y))
+            
+            # Exit condition
+            if x == x2 and y == y2:
+                break
+            
+            # Update position
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x += sx
+            if e2 < dx:
+                err += dx
+                y += sy
+        
+        return line_points
+    
+    def _create_colony_clusters(self, graph: nx.Graph, field: AsteroidField) -> None:
+        """Create clusters of entities around colony centers."""
+        CLUSTER_DENSITY_MULTIPLIER = 2.0
 
-            # Place entities along path with higher density
-            for (x, y), dy, dx in itertools.product(
-                line_points, range(-1, 2), range(-1, 2)
-            ):
-                nx, ny = x + dx, y + dy
-                if (
-                    0 <= nx < field.width
-                    and 0 <= ny < field.height
-                    and field.entity_grid[ny, nx] == 0
-                    and random.random() < self.initial_density * 5
-                ):
-                    field.entity_grid[ny, nx] = self.race_id
-
-        # Add small clusters around nodes
-        for node in G.nodes():
+        for node in graph.nodes():
             x, y = node
             radius = random.randint(3, 6)
 
-            for dy, dx in itertools.product(
-                range(-radius, radius + 1), range(-radius, radius + 1)
-            ):
+            # Create a circular cluster around the node
+            for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < field.width and 0 <= ny < field.height:
+
+                # Check if position is valid and empty
+                if self._is_valid_position(nx, ny, field) and field.entity_grid[ny, nx] == 0:
+                    # Calculate distance from center
                     dist = math.sqrt(dx**2 + dy**2)
-                    if (
-                        dist <= radius
-                        and field.entity_grid[ny, nx] == 0
-                        and random.random()
-                        < self.initial_density * 2 * (1 - dist / radius)
-                    ):
+
+                    # Higher probability closer to center
+                    if (dist <= radius and 
+                            random.random() < self.initial_density * 
+                            CLUSTER_DENSITY_MULTIPLIER * (1 - dist/radius)):
                         field.entity_grid[ny, nx] = self.race_id
+    
+    def _is_valid_position(self, x: int, y: int, field: AsteroidField) -> bool:
+        """Check if a position is within field boundaries."""
+        return 0 <= x < field.width and 0 <= y < field.height
 
     def process_minerals(self, minerals: Dict[str, int]) -> None:
         """Process minerals for evolution and hunger reduction."""

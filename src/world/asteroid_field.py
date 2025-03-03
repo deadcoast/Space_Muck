@@ -21,22 +21,22 @@ import scipy.ndimage as ndimage
 import scipy.signal as signal
 from perlin_noise import PerlinNoise
 
-from src.config import (
+from config import (
     GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
 )
-from src.utils.logging_setup import (
+from utils.logging_setup import (
     log_exception,
     LogContext,
     log_performance_start,
     log_performance_end,
 )
-from src.entities.miner_entity import MinerEntity
-from src.generators.procedural_generator import ProceduralGenerator
-from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
+from entities.miner_entity import MinerEntity
+from generators.procedural_generator import ProceduralGenerator
+from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
 # Try to import the optimized generators if available
 try:
-    from src.entities.asteroid_generator import AsteroidGenerator
+    from entities.asteroid_generator import AsteroidGenerator
     ASTEROID_GENERATOR_AVAILABLE = True
 except ImportError:
     ASTEROID_GENERATOR_AVAILABLE = False

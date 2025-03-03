@@ -193,26 +193,25 @@ def test_clustering():
         
         # Time standard clustering
         start_time = time.time()
-        clusters = generator.create_clusters(grid, min_size=5)
+        clustered_grid = generator.create_clusters(grid, num_clusters=5)
         standard_time = time.time() - start_time
         print(f"  Standard clustering time: {standard_time:.4f} seconds")
-        print(f"  Number of clusters: {len(clusters)}")
         
         # Force cache reset
         generator._cluster_cache = {}
         
         # Time cached clustering (second call with same parameters)
         start_time = time.time()
-        clusters_cached = generator.create_clusters(grid, min_size=5)
+        clustered_grid_cached = generator.create_clusters(grid, num_clusters=5)
         cached_time = time.time() - start_time
         print(f"  Cached clustering time: {cached_time:.4f} seconds")
         print(f"  Speedup factor: {standard_time / max(cached_time, 0.0001):.2f}x")
         
         # Verify results are the same
-        if len(clusters) == len(clusters_cached):
-            print("  ✓ Cluster counts match")
+        if np.array_equal(clustered_grid, clustered_grid_cached):
+            print("  ✓ Results match")
         else:
-            print("  ✗ Cluster counts don't match")
+            print("  ✗ Results don't match")
     
     # Visualize clusters
     visualizer = GeneratorVisualizer()
@@ -229,14 +228,12 @@ def test_clustering():
         iterations=2
     )
     
-    # Get clusters
-    clusters = medium_generator.create_clusters(grid, min_size=5)
+    # Get clustered grid
+    clustered_grid = medium_generator.create_clusters(grid, num_clusters=5)
     
-    # Create a visualization grid where each cluster has a different value
-    cluster_grid = np.zeros_like(grid)
-    for i, cluster in enumerate(clusters):
-        for x, y in cluster:
-            cluster_grid[y, x] = i + 1
+    # Create a visualization grid showing the difference
+    original_grid = grid.copy()
+    cluster_grid = clustered_grid - original_grid
     
     try:
         visualizer.visualize_grid(

@@ -167,5 +167,123 @@ class TestBaseEntity(unittest.TestCase):
         self.assertEqual(entity.tags, set())
 
 
+    def test_health_management(self):
+        """Test health-related functionality."""
+        # Create a fresh entity for this test to avoid interference from other tests
+        entity = BaseEntity(entity_id="health-test")
+        
+        # Test initial health
+        self.assertEqual(entity.health, 100)
+        self.assertEqual(entity.max_health, 100)
+        
+        # Test health reduction
+        entity.health -= 30
+        self.assertEqual(entity.health, 70)
+        
+        # Test health increase (healing)
+        entity.health += 20
+        self.assertEqual(entity.health, 90)
+        
+        # Test health increase beyond max_health
+        # Note: The BaseEntity class doesn't currently cap health at max_health
+        # This test verifies current behavior, not necessarily desired behavior
+        entity.health += 20
+        self.assertEqual(entity.health, 110)
+        
+        # Test health reduction below 0
+        # Note: The BaseEntity class doesn't currently floor health at 0
+        # This test verifies current behavior, not necessarily desired behavior
+        entity.health -= 150
+        self.assertEqual(entity.health, -40)
+    
+    def test_entity_interaction(self):
+        """Test interaction between entities."""
+        # Create two entities
+        entity1 = BaseEntity(entity_id="entity1", position=(10, 10))
+        entity2 = BaseEntity(entity_id="entity2", position=(20, 20))
+        
+        # Test distance calculation
+        distance = ((entity1.position[0] - entity2.position[0])**2 + 
+                   (entity1.position[1] - entity2.position[1])**2)**0.5
+        self.assertAlmostEqual(distance, 14.142, places=3)  # √200 ≈ 14.142
+        
+        # Test collision detection (no collision)
+        collision_distance = 5
+        self.assertFalse(distance <= collision_distance)
+        
+        # Move entity2 closer to entity1
+        entity2.set_position(12, 12)
+        
+        # Recalculate distance
+        distance = ((entity1.position[0] - entity2.position[0])**2 + 
+                   (entity1.position[1] - entity2.position[1])**2)**0.5
+        self.assertAlmostEqual(distance, 2.828, places=3)  # √8 ≈ 2.828
+        
+        # Test collision detection (collision)
+        self.assertTrue(distance <= collision_distance)
+    
+    def test_edge_cases(self):
+        """Test edge cases and boundary conditions."""
+        # Test with invalid color values
+        entity = BaseEntity(color=(300, -10, 1000))
+        # Color values should be clamped between 0-255 in a real implementation
+        # For now, we're just testing that it accepts the values
+        self.assertEqual(entity.color, (300, -10, 1000))
+        
+        # Test with very large position values
+        large_pos = (1000000, 2000000)
+        entity.set_position(*large_pos)
+        self.assertEqual(entity.get_position(), large_pos)
+        
+        # Test with negative position values
+        neg_pos = (-500, -300)
+        entity.set_position(*neg_pos)
+        self.assertEqual(entity.get_position(), neg_pos)
+        
+        # Test with very long entity_type
+        long_type = "a" * 1000
+        entity = BaseEntity(entity_type=long_type)
+        self.assertEqual(entity.entity_type, long_type)
+        
+        # Test with empty tags
+        entity.tags = set()
+        self.assertEqual(len(entity.tags), 0)
+        self.assertFalse(entity.has_tag("any_tag"))
+    
+    def test_performance_large_scale(self):
+        """Test performance with large number of entities."""
+        import time
+        
+        # Create a large number of entities
+        start_time = time.time()
+        num_entities = 1000
+        entities = []
+        
+        for i in range(num_entities):
+            entity = BaseEntity(entity_id=f"entity-{i}", position=(i % 100, i // 100))
+            entities.append(entity)
+        
+        creation_time = time.time() - start_time
+        # This is just a rough performance check, not a strict assertion
+        self.assertLess(creation_time, 1.0, "Creating 1000 entities took too long")
+        
+        # Test serialization performance
+        start_time = time.time()
+        serialized = [entity.to_dict() for entity in entities]
+        serialization_time = time.time() - start_time
+        self.assertLess(serialization_time, 1.0, "Serializing 1000 entities took too long")
+        
+        # Test deserialization performance
+        start_time = time.time()
+        deserialized = [BaseEntity.from_dict(data) for data in serialized]
+        deserialization_time = time.time() - start_time
+        self.assertLess(deserialization_time, 1.0, "Deserializing 1000 entities took too long")
+        
+        # Verify all entities were properly deserialized
+        self.assertEqual(len(deserialized), num_entities)
+        self.assertEqual(deserialized[0].entity_id, "entity-0")
+        self.assertEqual(deserialized[-1].entity_id, f"entity-{num_entities-1}")
+
+
 if __name__ == "__main__":
     unittest.main()
