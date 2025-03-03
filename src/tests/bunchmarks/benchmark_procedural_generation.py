@@ -12,7 +12,7 @@ import time
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple, Callable, Any
+from typing import Dict, List, Tuple, Callable, Any, Optional
 import logging
 import multiprocessing
 
@@ -147,7 +147,7 @@ def benchmark_complete_generation(
 def benchmark_noise_generation(
     grid_sizes: List[int],
     repetitions: int = 3,
-    backends: List[str] = None,
+    backends: Optional[List[str]] = None,
 ) -> Dict[str, List[float]]:
     """
     Benchmark noise generation across different backends.
@@ -204,7 +204,7 @@ def benchmark_noise_generation(
 def benchmark_cellular_automaton(
     grid_sizes: List[int],
     repetitions: int = 3,
-    backends: List[str] = None,
+    backends: Optional[List[str]] = None,
 ) -> Dict[str, List[float]]:
     """
     Benchmark cellular automaton across different backends.

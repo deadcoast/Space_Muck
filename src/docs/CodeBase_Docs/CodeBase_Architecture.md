@@ -1201,6 +1201,72 @@ The GPU acceleration system integrates with the following components:
 2. **Noise Generation**: Accelerates noise generation used in terrain and asteroid field creation
 3. **Base Generator**: Provides accelerated alternatives to computationally intensive operations
 
+### Parameter Handling in GPU-Accelerated Functions
+
+When implementing GPU-accelerated functions with CPU fallbacks, consistent parameter handling is essential:
+
+1. **Parameter Consistency**: Ensure CPU and GPU function variants maintain identical parameter signatures
+   - Same parameter names and order
+   - Same default values
+   - Same type annotations
+
+2. **Type Annotations**:
+   - Use `Optional[Type]` for parameters that can be None
+   - Include proper container type annotations (List, Dict, etc.)
+   - Add type hints for GPU-specific array types when necessary
+
+3. **Grid Generation**:
+   - Create consistent grid objects before passing to value distribution functions
+   - Ensure grid dimensions are properly handled in both CPU and GPU implementations
+   - Use numpy arrays for grid data to ensure compatibility
+
+4. **Parameter Naming Conventions**:
+   - Use descriptive parameter names that reflect their purpose
+   - Maintain consistent naming between CPU and GPU implementations
+   - Common parameter names include:
+     * `value_multiplier`: Factor to multiply values by
+     * `noise_scale`: Scale factor for noise generation
+     * `octaves`: Number of noise octaves to generate
+     * `backend`: Specifies which backend to use ('cpu', 'cuda', 'cupy', etc.)
+
+5. **Example Implementation**:
+
+```python
+from typing import Optional, List, Tuple, Union
+import numpy as np
+
+# CPU implementation
+def generate_terrain_cpu(
+    width: int,
+    height: int,
+    noise_scale: float = 1.0,
+    octaves: int = 4,
+    persistence: float = 0.5,
+    lacunarity: float = 2.0,
+    seed: Optional[int] = None,
+    value_multiplier: float = 1.0,
+    base_height: float = 0.0
+) -> np.ndarray:
+    # Implementation details
+    pass
+
+# GPU implementation with identical parameter signature
+def generate_terrain_gpu(
+    width: int,
+    height: int,
+    backend: str = 'auto',
+    noise_scale: float = 1.0,
+    octaves: int = 4,
+    persistence: float = 0.5,
+    lacunarity: float = 2.0,
+    seed: Optional[int] = None,
+    value_multiplier: float = 1.0,
+    base_height: float = 0.0
+) -> np.ndarray:
+    # Implementation details with GPU acceleration
+    pass
+```
+
 ### Future Expansion
 
 1. **Additional Operations**: Extend GPU acceleration to more operations (clustering, pathfinding)

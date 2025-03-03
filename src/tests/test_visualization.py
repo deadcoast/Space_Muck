@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from entities.base_generator import BaseGenerator
 from utils.visualization import GeneratorVisualizer, visualize_generator_output
-from utils.noise_generator import NoiseGenerator
+from utils.noise_generator import get_noise_generator
 
 
 def test_visualize_noise_layers():
@@ -23,7 +23,7 @@ def test_visualize_noise_layers():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = NoiseGenerator(seed=seed)
+    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -59,7 +59,7 @@ def test_visualize_cellular_automaton():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = NoiseGenerator(seed=seed)
+    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -112,7 +112,7 @@ def test_visualize_clusters():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = NoiseGenerator(seed=seed)
+    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -147,7 +147,7 @@ def test_convenience_function():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = NoiseGenerator(seed=seed)
+    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Use convenience function

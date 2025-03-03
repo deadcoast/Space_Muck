@@ -1,0 +1,9 @@
+2025-03-03 14:11:05,037 - INFO - System: Darwin 24.3.0
+2025-03-03 14:11:05,037 - INFO - Python: 3.13.1
+2025-03-03 14:11:05,037 - INFO - Available backends: ['cpu']
+2025-03-03 14:11:05,037 - INFO - 
+===== CELLULAR AUTOMATON BENCHMARKS =====
+2025-03-03 14:11:05,037 - INFO - Benchmarking cellular automaton on grid size 32x32...
+2025-03-03 14:11:05,045 - INFO -   cpu: 0.0062 seconds
+2025-03-03 14:11:05,045 - INFO - Benchmarking cellular automaton on grid size 64x64...
+2025-03-03 14:11:05,070 - INFO -   cpu: 0.0245 seconds

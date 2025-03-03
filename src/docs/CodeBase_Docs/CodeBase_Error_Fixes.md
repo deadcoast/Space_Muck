@@ -23,6 +23,8 @@ Add concise notation to avoid future confusion and ensure best practices are fol
 11. [test_base_entity.py](#unit_testing)
 12. [test_miner_entity.py](#unit_testing)
 13. [test_base_generator.py](#unit_testing)
+14. [benchmark_comprehensive_gpu.py](#benchmarks)
+15. [test_pattern_generator.py](#unit_testing)
 
 ---
 
@@ -273,7 +275,151 @@ if self.width * self.height > 10000:  # Threshold for large grids
 - All optimizations include fallback mechanisms for environments without required dependencies
 - The optimizations maintain backward compatibility with existing code
 
+## 15. [test_pattern_generator.py](#unit_testing)
+
+ERROR: Type compatibility issues with assertion methods when comparing NumPy values
+CORRECTION: Replaced specialized assertion methods with assertTrue() and explicit comparisons
+```python
+# Before
+self.assertGreater(np.std(array1), np.std(array2))
+
+# After
+self.assertTrue(np.std(array1) > np.std(array2))
+```
+
+### Additional Notes
+
+- NumPy arrays and values can have type compatibility issues with unittest's assertion methods
+- Using assertTrue() with explicit comparisons provides more flexible type handling
+- This pattern applies to all comparison assertions when working with NumPy values:
+  - Replace assertGreater(a, b) with assertTrue(a > b)
+  - Replace assertGreaterEqual(a, b) with assertTrue(a >= b)
+  - Replace assertLess(a, b) with assertTrue(a < b)
+  - Replace assertLessEqual(a, b) with assertTrue(a <= b)
+
+## 16. [test_visualization.py](#unit_testing)
+
+ERROR: Type compatibility issues with assertion methods when used with NumPy arrays and values
+CORRECTION: Replaced problematic assertion methods with assertTrue and explicit comparisons
+
+```python
+# Before - Type compatibility issues with assertion methods
+self.assertGreater(np.std(high_density), np.std(low_density))
+self.assertGreaterEqual(many_voids_low, few_voids_low)
+self.assertLess(abs(max_x - custom_center[0]), 5)
+
+# After - Using assertTrue with explicit comparisons to avoid type issues
+self.assertTrue(np.std(high_density) > np.std(low_density))
+self.assertTrue(many_voids_low >= few_voids_low)
+self.assertTrue(abs(max_x - custom_center[0]) < 5)
+```
+
+### Additional Notes
+
+- When working with NumPy arrays and values in assertions, prefer using `assertTrue` with explicit comparisons
+- The `assertGreater` and `assertGreaterEqual` methods can have type compatibility issues with NumPy values
+- This pattern applies to other comparison assertions like `assertLess`, `assertLessEqual`, etc.
+- Using explicit comparisons with `assertTrue` provides better type compatibility while maintaining test readability
+
 ## 10. [test_fleet_manager.py](#unit_testing)
+
+ERROR: Type errors in test_fleet_manager.py including "Object of type None is not subscriptable", parameter name mismatches, unbound variables, and unused imports
+CORRECTION: Added type guards, null checks, fixed parameter names, initialized variables before use, and removed unused imports
+```python
+# Before - Accessing potentially None values without checks
+self.assertEqual(self.fleet.position[0], 50)
+
+# After - Adding null checks and type guards
+self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+if self.fleet.position:  # Type guard
+    self.assertEqual(self.fleet.position[0], 50)
+
+# Before - Parameter name mismatch in mock methods
+def mock_update(dt):
+    # Method implementation
+
+# After - Matching parameter names with proper type annotations
+def mock_update(delta_time: float) -> None:
+    # Method implementation
+
+# Before - Using uninitialized variables
+if self.fleet.resources and "fuel_cells" in self.fleet.resources:
+    original_fuel = self.fleet.resources["fuel_cells"]
+    # ... some operations
+if self.fleet.resources and "fuel_cells" in self.fleet.resources:
+    self.assertLess(self.fleet.resources["fuel_cells"], original_fuel)  # original_fuel possibly unbound
+
+# After - Using direct assertions instead of conditionals
+self.assertIsNotNone(self.fleet.resources, "Fleet resources should not be None")
+self.assertIn("fuel_cells", self.fleet.resources, "Fleet should have fuel cells resource")
+original_fuel = self.fleet.resources["fuel_cells"]
+# ... some operations
+self.assertIsNotNone(self.fleet.resources, "Fleet resources should not be None")
+self.assertIn("fuel_cells", self.fleet.resources, "Fleet should still have fuel cells resource")
+self.assertLess(self.fleet.resources["fuel_cells"], original_fuel, "Fuel should be consumed")
+
+# Before - Unused imports
+from typing import Optional, Tuple, Dict, Any, List, cast
+
+# After - Removing all unnecessary imports
+# No typing imports needed for this file
+```
+
+## Indentation Issues
+
+```python
+# Before - Incorrect indentation in test_move_to method
+self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+# We've already asserted position is not None, so we can access it directly
+self.assertNotEqual(self.fleet.position, (50, 50))  # Original position
+
+    # Calculate expected position after one update
+    # Direction vector is normalized, so movement is proportional to speed
+    dx = destination[0] - 50  # Original x = 50
+    dy = destination[1] - 50  # Original y = 50
+    distance = math.sqrt(dx * dx + dy * dy)
+    dx /= distance
+    dy /= distance
+
+    expected_x = 50 + dx * self.fleet.speed
+    expected_y = 50 + dy * self.fleet.speed
+
+    # Allow for small floating-point differences
+    self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
+    self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
+
+# After - Proper indentation
+self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+# We've already asserted position is not None, so we can access it directly
+self.assertNotEqual(self.fleet.position, (50, 50))  # Original position
+
+# Calculate expected position after one update
+# Direction vector is normalized, so movement is proportional to speed
+dx = destination[0] - 50  # Original x = 50
+dy = destination[1] - 50  # Original y = 50
+distance = math.sqrt(dx * dx + dy * dy)
+dx /= distance
+dy /= distance
+
+expected_x = 50 + dx * self.fleet.speed
+expected_y = 50 + dy * self.fleet.speed
+
+# Allow for small floating-point differences
+self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
+self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
+```
+
+### Additional Notes
+
+- Added assertIsNotNone checks before accessing attributes that could be None
+- Added type guards using if statements to ensure type safety
+- Fixed parameter name mismatches between mock methods and actual implementations
+- Added proper type annotations to function parameters
+- Fixed indentation issues in test methods
+- Added descriptive error messages to assertions
+- Improved indentation to properly scope code inside type guards
+- Added descriptive error messages to assertion failures
+- Used locals() to check for variable existence before using them
 
 ERROR: Import errors, test failures due to missing configuration constants, and linting issues
 CORRECTION: Implemented proper mocking of dependencies, improved test reliability, and fixed linting warnings
@@ -290,6 +436,25 @@ from unittest.mock import patch
 # Mock the GAME_MAP_SIZE constant
 sys.modules['src.config'] = MagicMock()
 sys.modules['src.config'].GAME_MAP_SIZE = (1000, 1000)
+```
+
+ERROR: "Object of type 'None' is not subscriptable" errors in test_fleet_manager.py
+CORRECTION: Added proper type guards and assertions before accessing potentially None values
+
+```python
+# Before - Accessing potentially None values without checks
+self.assertEqual(self.fleet.current_orders["type"], "move_to")
+self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
+self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
+
+# After - Added proper type guards and assertions
+self.assertIsNotNone(self.fleet.current_orders, "Fleet current_orders should not be None")
+self.assertEqual(self.fleet.current_orders["type"], "move_to")
+
+self.assertIsNotNone(self.fleet.position, "Fleet position should not be None")
+if self.fleet.position is not None:  # Type guard for Pyright
+    self.assertAlmostEqual(self.fleet.position[0], expected_x, delta=0.1)
+    self.assertAlmostEqual(self.fleet.position[1], expected_y, delta=0.1)
 
 # Mock the EnemyShip class
 mock_enemy_ship = MagicMock()
@@ -1162,6 +1327,212 @@ old_population = race.population
 - Commented out unused variable instead of removing it to preserve the intent
 - Improved code maintainability by making dependencies explicit
 - Reduced potential for name conflicts by avoiding star imports
+
+## 14. [benchmark_comprehensive_gpu.py](#benchmarks)
+
+ERROR: Complex visualization function with low code quality and maintainability
+CORRECTION: Refactored the `visualize_single_operation` function into smaller, more focused helper functions
+```python
+# Before refactoring - single large function with multiple responsibilities
+def visualize_single_operation(op_results, title, output_dir):
+    # 100+ lines of code with multiple plot types and complex logic
+
+# After refactoring - modular design with helper functions
+def visualize_single_operation(op_results, title, output_dir):
+    # Extract data
+    operation = op_results.get("operation", "unknown")
+    
+    # Determine x-axis values and label
+    x_values, x_label = _get_x_axis_data(op_results, operation)
+    if not x_values:  # Skip if no x-axis data found
+        return
+    
+    # Create different plot types based on available data
+    if "times" in op_results:
+        _create_time_plot(op_results, x_values, x_label, title, operation, output_dir)
+    
+    if "speedup" in op_results:
+        _create_speedup_plot(op_results, x_values, x_label, title, operation, output_dir)
+    
+    if "bandwidth" in op_results:
+        _create_bandwidth_plot(op_results, x_values, x_label, title, operation, output_dir)
+```
+
+### Additional Notes
+
+- Extracted common functionality into reusable helper functions
+- Improved error handling for edge cases (e.g., empty data, division by zero)
+- Added type hints for better code readability and IDE support
+- Created dedicated functions for each plot type to improve maintainability
+- Implemented a common data filtering function to remove invalid data points
+- Added better error handling for log scale calculations
+
+ERROR: Incorrect parameter names and type annotations in GPU benchmarking code
+CORRECTION: Fixed parameter names to match function signatures and added proper type annotations
+
+```python
+# Before - Incorrect parameter names in resource distribution functions
+def generate_resource_distribution_cpu(width, height):
+    base = generate_value_distribution(width, height, distribution_type="simplex")
+    return add_value_clusters(base, num_clusters=10, cluster_value=1.5)
+
+def generate_resource_distribution_gpu(width, height, backend="auto"):
+    base = generate_value_distribution_gpu(width, height, distribution_type="simplex", backend=backend)
+    return add_value_clusters_gpu(base, num_clusters=10, cluster_value=1.5, backend=backend)
+
+# After - Correct parameter usage with proper grid generation
+def generate_resource_distribution_cpu(width, height):
+    base_grid = np.random.rand(height, width)
+    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])
+    value_grid = generate_value_distribution(grid, base_grid)
+    return add_value_clusters(value_grid, num_clusters=10, value_multiplier=1.5)
+
+def generate_resource_distribution_gpu(width, height, backend="auto"):
+    base_grid = np.random.rand(height, width)
+    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])
+    value_grid = generate_value_distribution_gpu(grid, base_grid, backend=backend)
+    return add_value_clusters_gpu(value_grid, num_clusters=10, value_multiplier=1.5, backend=backend)
+
+# Before - Incorrect parameter names in terrain generation functions
+def generate_terrain_cpu(width, height):
+    return generate_value_distribution(width, height, distribution_type="perlin")
+
+def generate_terrain_gpu(width, height, backend="auto"):
+    return generate_value_distribution_gpu(width, height, distribution_type="perlin", backend=backend)
+
+# After - Correct parameter usage with proper grid generation
+def generate_terrain_cpu(width, height):
+    base_grid = np.random.rand(height, width)
+    grid = np.ones((height, width))
+    return generate_value_distribution(grid, base_grid)
+
+def generate_terrain_gpu(width, height, backend="auto"):
+    base_grid = np.random.rand(height, width)
+    grid = np.ones((height, width))
+    return generate_value_distribution_gpu(grid, base_grid, backend=backend)
+```
+
+The key corrections made were:
+
+1. Removed the non-existent `distribution_type` parameter which is not part of the function signature
+2. Created proper `grid` and `base_grid` inputs for the value distribution functions
+3. Changed `cluster_value` parameter to `value_multiplier` to match the actual function signature
+4. Ensured consistent parameter usage between CPU and GPU implementations
+
+ERROR: Using None as default value for List type parameters without Optional
+CORRECTION: Added Optional type annotation for parameters with None default values
+
+```python
+# Before - Missing Optional for None default values
+def run_all_benchmarks(output_dir: str = "./benchmark_results", 
+                     small_grid_sizes: List[int] = None, 
+                     large_data_sizes: List[int] = None, 
+                     repetitions: int = 3) -> None:
+
+# After - Proper Optional annotation
+def run_all_benchmarks(output_dir: str = "./benchmark_results", 
+                     small_grid_sizes: Optional[List[int]] = None, 
+                     large_data_sizes: Optional[List[int]] = None, 
+                     repetitions: int = 3) -> None:
+```
+
+Lessons learned:
+- Always check function signatures before calling functions with named parameters
+- Use Optional from typing when a parameter has a None default value
+- When benchmarking, ensure test functions match the actual implementation's interface
+- For GPU implementations, maintain parameter consistency with CPU counterparts
+
+## 16. [test_visualization.py](#unit_testing)
+
+ERROR: Cannot instantiate abstract class NoiseGenerator and incorrect constructor parameters
+CORRECTION: Used the get_noise_generator() factory function instead of direct instantiation
+```python
+# Before
+noise_gen = NoiseGenerator(seed=seed)  # Error: Cannot instantiate abstract class and no seed parameter
+
+# After
+from utils.noise_generator import get_noise_generator
+noise_gen = get_noise_generator()  # Correct: Returns a concrete implementation
+```
+
+### Additional Notes
+
+- NoiseGenerator is an abstract base class that cannot be instantiated directly
+- The NoiseGenerator class doesn't have a constructor parameter for seed
+- Always use the get_noise_generator() factory function to get a concrete implementation
+- The factory function automatically selects the best available implementation (PerlinNoiseGenerator or SimplexNoiseGenerator)
+- The seed parameter should be passed to the BaseGenerator, not to the noise generator
+
+## 15. [benchmark_procedural_generation.py](#benchmarks)
+
+ERROR: Missing Optional type annotation for parameters with None default values
+CORRECTION: Added Optional type annotation for parameters with None default values
+
+```python
+# Before - Missing Optional for None default values
+def benchmark_noise_generation(
+    grid_sizes: List[int],
+    repetitions: int = 3,
+    backends: List[str] = None,
+) -> Dict[str, List[float]]:
+
+def benchmark_cellular_automaton(
+    grid_sizes: List[int],
+    repetitions: int = 3,
+    backends: List[str] = None,
+) -> Dict[str, List[float]]:
+
+# After - Proper Optional annotation
+def benchmark_noise_generation(
+    grid_sizes: List[int],
+    repetitions: int = 3,
+    backends: Optional[List[str]] = None,
+) -> Dict[str, List[float]]:
+
+def benchmark_cellular_automaton(
+    grid_sizes: List[int],
+    repetitions: int = 3,
+    backends: Optional[List[str]] = None,
+) -> Dict[str, List[float]]:
+```
+
+Lessons learned:
+- Always use Optional from typing when a parameter has a None default value
+- This applies to all container types like List, Dict, etc.
+- Consistent type annotations improve code quality and prevent type errors
+- Type checkers like Pyright will catch these issues
+
+## 16. [test_base_entity.py](#unit_testing)
+
+ERROR: Object of type "None" is not subscriptable when accessing position attributes
+CORRECTION: Added null checks and type guards before accessing position attributes
+
+```python
+# Before - Accessing position without checking if it's None
+distance = (
+    (entity1.position[0] - entity2.position[0]) ** 2
+    + (entity1.position[1] - entity2.position[1]) ** 2
+) ** 0.5
+self.assertAlmostEqual(distance, 14.142, places=3)
+
+# After - Added null checks and type guards
+self.assertIsNotNone(entity1.position, "Entity1 position should not be None")
+self.assertIsNotNone(entity2.position, "Entity2 position should not be None")
+
+if entity1.position and entity2.position:  # Type guard for position
+    distance = (
+        (entity1.position[0] - entity2.position[0]) ** 2
+        + (entity1.position[1] - entity2.position[1]) ** 2
+    ) ** 0.5
+    self.assertAlmostEqual(distance, 14.142, places=3)
+```
+
+Lessons learned:
+- Always check if optional values are not None before accessing their attributes or indices
+- Use type guards (if value:) to ensure type safety when working with Optional types
+- Move dependent assertions inside the type guard block to prevent undefined variable errors
+- Add explicit assertions to validate assumptions about non-None values
+- Remember that position is defined as Optional[Tuple[int, int]] in BaseEntity
 
 ## 11. [base_generator.py](#entities)
 
