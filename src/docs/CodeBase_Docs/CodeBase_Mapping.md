@@ -19,29 +19,31 @@ CODEBASE MAPPING REFERENCE
 13. [verify_asteroid_generator_simple.py](#testing)
 14. [verify_asteroid_generator.py](#testing)
 15. [verify_base_generator_optimizations.py](#testing)
-16. [verify_symbiote_evolution_generator.py](#testing)
-17. [symbiote_evolution_demo.py](#demo)
-18. [asteroid_field.py](#world_system)
-19. [test_base_entity.py](#unit_testing)
-20. [test_base_generator.py](#unit_testing)
-21. [test_miner_entity.py](#unit_testing)
-22. [test_player.py](#unit_testing)
-23. [test_fleet.py](#unit_testing)
-24. [test_procedural_generator.py](#unit_testing)
-25. [test_asteroid_generator.py](#unit_testing)
-26. [test_symbiote_evolution_generator.py](#unit_testing)
-27. [dependency_injection.py](#utils)
-28. [noise_generator.py](#utils)
-29. [dependency_config.py](#utils)
-30. [pattern_generator.py](#utils)
-31. [value_generator.py](#utils)
-32. [cellular_automaton_utils.py](#utils)
-33. [import_standards.py](#utils)
-34. [visualization.py](#utils)
-35. [test_pattern_generator.py](#unit_testing)
-36. [test_value_generator.py](#unit_testing)
-37. [test_visualization.py](#testing)
-38. [dependency_config_example.py](#examples)
+16. [benchmark_base_generator.py](#testing)
+17. [benchmark_parallel_processing.py](#testing)
+18. [verify_symbiote_evolution_generator.py](#testing)
+19. [symbiote_evolution_demo.py](#demo)
+20. [asteroid_field.py](#world_system)
+21. [test_base_entity.py](#unit_testing)
+22. [test_base_generator.py](#unit_testing)
+23. [test_miner_entity.py](#unit_testing)
+24. [test_player.py](#unit_testing)
+25. [test_fleet.py](#unit_testing)
+26. [test_procedural_generator.py](#unit_testing)
+27. [test_asteroid_generator.py](#unit_testing)
+28. [test_symbiote_evolution_generator.py](#unit_testing)
+29. [dependency_injection.py](#utils)
+30. [noise_generator.py](#utils)
+31. [dependency_config.py](#utils)
+32. [pattern_generator.py](#utils)
+33. [value_generator.py](#utils)
+34. [cellular_automaton_utils.py](#utils)
+35. [import_standards.py](#utils)
+36. [visualization.py](#utils)
+37. [test_pattern_generator.py](#unit_testing)
+38. [test_value_generator.py](#unit_testing)
+39. [test_visualization.py](#testing)
+40. [dependency_config_example.py](#examples)
 
 ---
 
@@ -134,6 +136,9 @@ CODEBASE MAPPING REFERENCE
   - **Purpose**: Base class for all procedural generator entities in the game
   - **File Imports**: 
     - from src.entities.base_entity import BaseEntity
+    - from src.utils import cellular_automaton_utils
+    - from src.utils import value_generator
+    - from src.entities.noise_generator import NoiseGenerator
   - **File Dependencies**: 
     - import random
     - import logging
@@ -144,6 +149,12 @@ CODEBASE MAPPING REFERENCE
     - BaseEntity class
     - Noise generation
     - Cellular automaton
+  - **Key Features**:
+    - Modular integration with utility modules
+    - Robust fallback mechanisms for missing dependencies
+    - Intelligent caching system for performance optimization
+    - Parameter validation and error handling
+    - Comprehensive logging
 
 ## 7. [procedural_generator.py](#generator_system)
 
@@ -271,7 +282,47 @@ CODEBASE MAPPING REFERENCE
     - `simulate_evolution()`: Simulates symbiote evolution over time
     - `generate_mutation_map()`: Creates a map showing mutation hotspots
 
-## 14. [verify_symbiote_evolution_generator.py](#testing)
+## 14. [verify_base_generator_optimizations.py](#testing)
+
+- `src/tests/verify_base_generator_optimizations.py`
+  - **Purpose**: Verification script for testing the optimized methods in BaseGenerator
+  - **File Imports**: 
+    - from entities.base_generator import BaseGenerator
+    - from utils.visualization import GeneratorVisualizer
+  - **File Dependencies**: 
+    - import numpy as np
+    - import matplotlib.pyplot as plt (optional)
+    - import time
+  - **Required Components**: 
+    - BaseGenerator class
+    - GeneratorVisualizer class
+  - **Key Features**:
+    - Tests noise layer generation with caching
+    - Tests cellular automaton implementation with performance metrics
+    - Tests clustering implementation with performance metrics
+    - Tests thresholding implementation with performance metrics
+    - Visualizes results when matplotlib is available
+
+## 15. [benchmark_base_generator.py](#testing)
+
+- `src/tests/benchmark_base_generator.py`
+  - **Purpose**: Benchmark script for measuring BaseGenerator performance
+  - **File Imports**: 
+    - from entities.base_generator import BaseGenerator
+    - from utils.noise_generator import NoiseGenerator
+  - **File Dependencies**: 
+    - import numpy as np
+    - import time
+    - import logging
+  - **Required Components**: 
+    - BaseGenerator class
+  - **Key Features**:
+    - Measures execution time of cellular automaton operations
+    - Measures execution time of clustering operations
+    - Compares performance across different grid sizes
+    - Provides formatted benchmark results
+
+## 18. [verify_symbiote_evolution_generator.py](#testing)
 
 - `src/tests/verify_symbiote_evolution_generator.py`
   - **Purpose**: Comprehensive verification script for the SymbioteEvolutionGenerator class
@@ -372,7 +423,7 @@ CODEBASE MAPPING REFERENCE
     - Flexible seed-based testing
     - Isolated testing environment
 
-## 16. [verify_symbiote_evolution_generator.py](#testing)
+## 18. [verify_symbiote_evolution_generator.py](#testing)
 
 - `src/tests/verify_symbiote_evolution_generator.py`
   - **Purpose**: Comprehensive verification script for SymbioteEvolutionGenerator performance and optimization
@@ -421,13 +472,24 @@ CODEBASE MAPPING REFERENCE
 - `src/tests/test_base_generator.py`
   - **Purpose**: Comprehensive unit tests for the BaseGenerator class
   - **File Imports**: 
-    - from entities.base_generator import BaseGenerator
+    - from src.entities.base_generator import BaseGenerator
+    - from src.entities.noise_generator import NoiseGenerator
   - **File Dependencies**: 
     - import unittest
     - import numpy as np
-    - from unittest.mock import patch, MagicMock
+    - from unittest.mock import MagicMock, patch
   - **Required Components**: 
     - BaseGenerator class
+    - NoiseGenerator class
+  - **Key Features**:
+    - Tests for apply_cellular_automaton with and without utility modules
+    - Tests for create_clusters with and without utility modules
+    - Parameter validation tests
+    - Caching tests
+    - Mock testing for utility module integration
+  - **Required Components**: 
+    - BaseGenerator class
+    - NoiseGenerator class
   - **Test Coverage**:
     - Initialization with default and custom values
     - Noise generation methods
