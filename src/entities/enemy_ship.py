@@ -4,7 +4,7 @@ EnemyShip class: Represents enemy ships that the player can encounter and engage
 
 import logging
 import random
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any
 
 from src.config import (
     COMBAT_BASE_ATTACK_POWER,

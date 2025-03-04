@@ -113,3 +113,46 @@ def _bandwidth_handler(results, backend, prefix):
     results["bandwidth"][backend].append(0.0)
     logging.info(f"{prefix}{backend}: Failed")
 ```
+
+## Code Quality Issues
+
+### Poorly Named Functions
+
+**Issue**: Functions with generic extracted names (e.g., `_extracted_from_function_name_123`) that lack descriptive meaning.
+
+**Solution**: Rename these functions with descriptive names that indicate their purpose and add proper docstrings:
+
+```python
+# Before
+# TODO Rename this here and in `apply_noise_generation_gpu`
+def _extracted_from_apply_noise_generation_gpu_49(seed, height, width):
+    logging.warning("Noise generator not available. Using random noise.")
+    rng = np.random.RandomState(seed)
+    return rng.random((height, width))
+
+# After
+def _generate_fallback_noise(seed, height, width):
+    """Generate random noise as a fallback when noise generators are unavailable.
+    
+    Args:
+        seed: Random seed for reproducibility
+        height: Height of the noise grid
+        width: Width of the noise grid
+        
+    Returns:
+        np.ndarray: Random noise grid
+    """
+    logging.warning("Noise generator not available. Using random noise.")
+    rng = np.random.RandomState(seed)
+    return rng.random((height, width))
+```
+
+Also update all references to the renamed function:
+
+```python
+# Before
+return _extracted_from_apply_noise_generation_gpu_49(seed, height, width)
+
+# After
+return _generate_fallback_noise(seed, height, width)
+```

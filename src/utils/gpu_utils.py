@@ -365,7 +365,7 @@ def apply_noise_generation_gpu(
                 width, height, scale, octaves, persistence, lacunarity, seed
             )
         except ImportError:
-            return _extracted_from_apply_noise_generation_gpu_49(seed, height, width)
+            return _generate_fallback_noise(seed, height, width)
     # CuPy implementation
     if backend == "cupy" and CUPY_AVAILABLE:
         if seed is not None:
@@ -496,11 +496,20 @@ def apply_noise_generation_gpu(
             width, height, scale, octaves, persistence, lacunarity, seed
         )
     except ImportError:
-        return _extracted_from_apply_noise_generation_gpu_49(seed, height, width)
+        return _generate_fallback_noise(seed, height, width)
 
 
-# TODO Rename this here and in `apply_noise_generation_gpu`
-def _extracted_from_apply_noise_generation_gpu_49(seed, height, width):
+def _generate_fallback_noise(seed, height, width):
+    """Generate random noise as a fallback when noise generators are unavailable.
+    
+    Args:
+        seed: Random seed for reproducibility
+        height: Height of the noise grid
+        width: Width of the noise grid
+        
+    Returns:
+        np.ndarray: Random noise grid
+    """
     logging.warning("Noise generator not available. Using random noise.")
     rng = np.random.RandomState(seed)
     return rng.random((height, width))

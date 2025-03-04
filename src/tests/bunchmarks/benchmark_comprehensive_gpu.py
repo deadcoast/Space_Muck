@@ -492,7 +492,7 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Terrain {backend}: {avg_time:.4f} seconds")
             else:
-                _time_handler(terrain_results, backend, "  Terrain ")
+                _handle_benchmark_failure(terrain_results, backend, "  Terrain ")
             # Resource distribution benchmarking
             resource_times = []
             for _ in range(repetitions):
@@ -543,15 +543,24 @@ def benchmark_value_generation(
                     )  # CPU speedup is 1.0
                     logging.info(f"  Resources {backend}: {avg_time:.4f} seconds")
             else:
-                _time_handler(resource_results, backend, "  Resources ")
+                _handle_benchmark_failure(resource_results, backend, "  Resources ")
     return {"terrain": terrain_results, "resources": resource_results}
 
 
-# TODO Rename this here and in `benchmark_value_generation`
-def _time_handler(arg0, backend, arg2):
-    arg0["times"][backend].append(float("inf"))
-    arg0["speedup"][backend].append(0.0)
-    logging.info(f"{arg2}{backend}: Failed")
+def _handle_benchmark_failure(results_dict, backend, operation_prefix):
+    """Handle benchmark failure by setting appropriate values in the results dictionary.
+    
+    Args:
+        results_dict: Dictionary containing benchmark results
+        backend: The backend that failed (e.g., 'cuda', 'cupy')
+        operation_prefix: Prefix string for logging the operation type
+        
+    Returns:
+        None: Updates the results_dict in-place
+    """
+    results_dict["times"][backend].append(float("inf"))
+    results_dict["speedup"][backend].append(0.0)
+    logging.info(f"{operation_prefix}{backend}: Failed")
 
 
 def benchmark_memory_transfer(
@@ -657,7 +666,7 @@ def benchmark_memory_transfer(
                     h2d_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  H2D {backend}: {avg_time:.6f} seconds")
             else:
-                _bandwidth_handler(h2d_results, backend, "  H2D ")
+                _handle_bandwidth_benchmark_failure(h2d_results, backend, "  H2D ")
             # Device to host transfer benchmarking
             d2h_times = []
             for _ in range(repetitions):
@@ -710,14 +719,24 @@ def benchmark_memory_transfer(
                     d2h_results["bandwidth"][backend].append(0.0)
                     logging.info(f"  D2H {backend}: {avg_time:.6f} seconds")
             else:
-                _bandwidth_handler(d2h_results, backend, "  D2H ")
+                _handle_bandwidth_benchmark_failure(d2h_results, backend, "  D2H ")
     return {"host_to_device": h2d_results, "device_to_host": d2h_results}
 
 
-def _bandwidth_handler(arg0, backend, arg2):
-    arg0["times"][backend].append(float("inf"))
-    arg0["bandwidth"][backend].append(0.0)
-    logging.info(f"{arg2}{backend}: Failed")
+def _handle_bandwidth_benchmark_failure(results_dict, backend, operation_prefix):
+    """Handle bandwidth benchmark failure by setting appropriate values in the results dictionary.
+    
+    Args:
+        results_dict: Dictionary containing benchmark results
+        backend: The backend that failed (e.g., 'cuda', 'cupy')
+        operation_prefix: Prefix string for logging the operation type
+        
+    Returns:
+        None: Updates the results_dict in-place
+    """
+    results_dict["times"][backend].append(float("inf"))
+    results_dict["bandwidth"][backend].append(0.0)
+    logging.info(f"{operation_prefix}{backend}: Failed")
 
 
 def visualize_benchmark_results(
