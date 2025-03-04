@@ -2,8 +2,9 @@
 Player class: Represents the player character in the game, extends MinerEntity.
 """
 
-from typing import Dict, List, Tuple, Any, Optional, Set
+from typing import Dict, Tuple, Any, Optional, Set
 import logging
+import random
 
 from src.entities.miner_entity import MinerEntity
 from src.config import (

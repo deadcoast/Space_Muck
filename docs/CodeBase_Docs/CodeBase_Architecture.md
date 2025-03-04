@@ -21,6 +21,34 @@ Space Muck is organized into the following main components:
 4. Document all public functions, classes, and modules
 5. Use consistent naming conventions
 
+### Function Naming Conventions
+
+1. **Descriptive Function Names**: Use descriptive names that clearly indicate the function's purpose
+   - Example: `_generate_fallback_noise` instead of `_extracted_from_apply_noise_generation_gpu_49`
+   - Example: `_calculate_territory_metrics` instead of `_territory_handler`
+
+2. **Handler Functions**: Use the pattern `_handle_X` for functions that handle specific cases or errors
+   - Example: `_handle_benchmark_failure` for handling benchmark failures
+   - Example: `_handle_bandwidth_benchmark_failure` for handling bandwidth benchmark failures
+
+3. **Parameter Naming**: Use descriptive parameter names instead of generic names like `arg0`, `arg1`
+   - Example: `results_dict` instead of `arg0`
+   - Example: `operation_prefix` instead of `arg2`
+
+4. **Docstrings**: All functions should have proper docstrings with Args and Returns sections
+   ```python
+   def function_name(param1, param2):
+       """Short description of what the function does.
+       
+       Args:
+           param1: Description of param1
+           param2: Description of param2
+           
+       Returns:
+           Description of return value
+       """
+   ```
+
 ### GPU Acceleration
 
 1. Always provide a CPU fallback for GPU-accelerated functions

@@ -183,7 +183,7 @@ class AsteroidField:
                 # Use the ProceduralGenerator to generate the asteroid field
                 self.generate_field_with_procedural_generator()
 
-                self._extracted_from__legacy_initialize_patterns_17()
+                self._life_patterns_handler()
                 logging.info(
                     f"Field initialized with {self.total_asteroids} asteroids, "
                     + f"{self.total_rare} rare minerals."
@@ -207,7 +207,6 @@ class AsteroidField:
             # Re-raise to trigger fallback in initialize_patterns
             raise
 
-    # TODO Rename this here and in `generate_field_with_procedural_generator`
     def _asteroid_handler(self):
         # Use the optimized AsteroidGenerator if available, otherwise fall back to ProceduralGenerator
         seed = random.randint(1, 10000)
@@ -223,7 +222,7 @@ class AsteroidField:
         start_time = log_performance_start("generate_field_with_generator")
 
         if ASTEROID_GENERATOR_AVAILABLE:
-            self._extracted_from__asteroid_handler_22(common_params, seed)
+            self._generate_asteroid_field_with_optimized_generator(common_params, seed)
         else:
             # Fall back to the original ProceduralGenerator
             generator = ProceduralGenerator(
@@ -269,8 +268,16 @@ class AsteroidField:
         # Log performance
         log_performance_end("generate_field_with_generator", start_time)
 
-    # TODO Rename this here and in `generate_field_with_procedural_generator`
-    def _extracted_from__asteroid_handler_22(self, common_params, seed):
+    def _generate_asteroid_field_with_optimized_generator(self, common_params, seed):
+        """Generate asteroid field using the optimized AsteroidGenerator.
+        
+        Args:
+            common_params: Dictionary containing common parameters for the generator
+            seed: Random seed for reproducibility
+            
+        Returns:
+            None: Updates the field's grids in-place
+        """
         # Create an AsteroidGenerator with optimized caching
         generator = AsteroidGenerator(**common_params)
 
@@ -509,16 +516,14 @@ class AsteroidField:
                             self.grid[y, x] * self.rare_bonus_multiplier * 2
                         )
 
-        self._extracted_from__legacy_initialize_patterns_17()
+        self._life_patterns_handler()
 
-    # TODO Rename this here and in `initialize_patterns` and `_legacy_initialize_patterns`
     def _initialize_handler(self):
         self.grid.fill(0)
         self.rare_grid.fill(0)
         self.energy_grid.fill(0)
 
-    # TODO Rename this here and in `initialize_patterns` and `_legacy_initialize_patterns`
-    def _extracted_from__legacy_initialize_patterns_17(self):
+    def _life_patterns_handler(self):
         self.add_life_patterns()
         self.update_statistics()
         self.redraw_needed = True
@@ -915,13 +920,12 @@ class AsteroidField:
                     ):
                         new_grid[y, x] = 1
         else:
-            self._extracted_from__apply_cellular_automaton_scipy_51(
+            self._rule_handler(
                 grid, neighbor_counts, new_grid
             )
         return new_grid
 
-    # TODO Rename this here and in `_apply_cellular_automaton_scipy`
-    def _extracted_from__apply_cellular_automaton_scipy_51(
+    def _rule_handler(
         self, grid, neighbor_counts, new_grid
     ):
         # Simple rules without energy influence - fully vectorized approach

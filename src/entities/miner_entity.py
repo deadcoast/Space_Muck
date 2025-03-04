@@ -696,7 +696,7 @@ class MinerEntity(BaseEntity):
 
         # If only a few points, return simple stats
         if len(points) < 5:
-            return self._territory_handler(points)
+            return self._calculate_territory_metrics(points)
         # For larger populations, use KMeans to identify colonies
         try:
             # Determine k based on population size
@@ -716,8 +716,15 @@ class MinerEntity(BaseEntity):
                 "fragmentation": 0,
             }
 
-    # TODO Rename this here and in `analyze_territory`
-    def _territory_handler(self, points):
+    def _calculate_territory_metrics(self, points):
+        """Calculate basic territory metrics for a small number of points.
+        
+        Args:
+            points: Array of (x,y) coordinates representing entity locations
+            
+        Returns:
+            Dictionary containing territory metrics (center, radius, density)
+        """
         center_x = np.mean(points[:, 0])
         center_y = np.mean(points[:, 1])
         distances = np.sqrt(

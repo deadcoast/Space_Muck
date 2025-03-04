@@ -15,6 +15,7 @@ This document provides a navigation guide to the Space Muck codebase, helping to
 
 - `/src/entities/base_entity.py`: Base class for all entities in the Space Muck system
 - `/src/entities/base_generator.py`: Base generator class for procedural content generation
+- `/src/entities/miner_entity.py`: Symbiotic mining races that evolve in the asteroid field
 
 ### Utilities
 
@@ -29,6 +30,11 @@ This document provides a navigation guide to the Space Muck codebase, helping to
 ### Unit Tests
 
 - `/src/tests/test_base_entity.py`: Tests for the base entity class
+- `/src/tests/test_gpu_utils.py`: Tests for GPU acceleration utilities
+
+### Benchmarks
+
+- `/src/tests/bunchmarks/benchmark_comprehensive_gpu.py`: Comprehensive benchmarking for GPU-accelerated operations
 - `/src/tests/test_base_generator.py`: Tests for the base generator class
 - `/src/tests/test_fleet_manager.py`: Tests for the fleet management system
 
