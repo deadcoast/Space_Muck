@@ -17,7 +17,7 @@ import numpy as np
 import pygame
 
 # Local application imports
-from src.config import (
+from ..config import (
     COLOR_ASTEROID_RARE,
     COLOR_BG,
     COLOR_GRID,
@@ -25,7 +25,7 @@ from src.config import (
     COLOR_RACE_2,
     COLOR_RACE_3,
 )
-from src.ui.draw_utils import draw_text, draw_minimap
+from .draw_utils import draw_text, draw_minimap
 
 
 class AsteroidFieldRenderer:
@@ -404,12 +404,13 @@ class PlayerRenderer:
 
         # Animation logic
         if moving:
-            self._player_render_handler(ship_size, screen_y, surface, screen_x)
+            self._render_player_exhaust_animation(
+                ship_size, screen_y, surface, screen_x
+            )
         # Draw ship
         surface.blit(scaled_ship, (screen_x, screen_y))
 
-    # TODO Rename this here and in `render_player`
-    def _player_render_handler(self, ship_size, screen_y, surface, screen_x):
+    def _render_player_exhaust_animation(self, ship_size, screen_y, surface, screen_x):
         self.animation_counter += self.animation_speed
         if self.animation_counter >= len(self.exhaust_animation):
             self.animation_counter = 0

@@ -6,8 +6,8 @@ from typing import Dict, Tuple, Any, Optional, Set
 import logging
 import random
 
-from src.entities.miner_entity import MinerEntity
-from src.config import (
+from .miner_entity import MinerEntity
+from ..config import (
     COLOR_PLAYER,
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,
@@ -372,11 +372,7 @@ class Player(MinerEntity):
             ]
 
             # If no factions available (all hostile), return a generic non-faction quest
-            if not available_factions:
-                faction = None
-            else:
-                faction = random.choice(available_factions)
-
+            faction = random.choice(available_factions) if available_factions else None
         # Quest types - each faction has preferred quest types
         faction_quest_preferences = {
             "miners_guild": ["mining", "mining", "exploration"],  # Mining focused
@@ -472,13 +468,13 @@ class Player(MinerEntity):
             reward = int(1500 * reward_multiplier)
 
             # Customize description based on faction
-            if faction == "galactic_navy":
-                description = (
-                    f"Eliminate {target_enemies} pirate ships for the Galactic Navy"
-                )
-            elif faction == "fringe_colonies":
+            if faction == "fringe_colonies":
                 description = (
                     f"Take down {target_enemies} rival ships for the Fringe Colonies"
+                )
+            elif faction == "galactic_navy":
+                description = (
+                    f"Eliminate {target_enemies} pirate ships for the Galactic Navy"
                 )
             else:
                 description = f"Defeat {target_enemies} enemy ships"

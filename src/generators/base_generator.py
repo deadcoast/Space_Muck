@@ -24,7 +24,7 @@ except ImportError:
 
 # GPU acceleration dependencies
 try:
-    from utils.gpu_utils import (
+    from src.utils.gpu_utils import (
         is_gpu_available,
         get_available_backends,
         to_gpu,
@@ -37,9 +37,9 @@ except ImportError:
     logging.warning("GPU utilities not available. GPU acceleration will be disabled.")
 
 # Local application imports
-from entities.base_entity import BaseEntity
-from utils.dependency_injection import inject
-from utils.noise_generator import NoiseGenerator, get_noise_generator
+from src.entities.base_entity import BaseEntity
+from src.utils.dependency_injection import inject
+from src.utils.noise_generator import NoiseGenerator, get_noise_generator
 
 
 @inject
@@ -195,7 +195,7 @@ class BaseGenerator(BaseEntity):
                 )
 
                 # Use the GPU-accelerated noise generation function
-                from src.utils.gpu_utils import apply_noise_generation_gpu
+                from utils.gpu_utils import apply_noise_generation_gpu
 
                 noise_grid = apply_noise_generation_gpu(
                     width=self.width,
@@ -1612,9 +1612,6 @@ class BaseGenerator(BaseEntity):
                 f"(dimensions: {self.width}x{self.height})"
             )
 
-            # Import GPU utilities
-            from src.utils.gpu_utils import apply_noise_generation_gpu
-
             # Generate combined noise grid
             noise_grid = np.zeros((self.height, self.width))
 
@@ -1660,7 +1657,7 @@ class BaseGenerator(BaseEntity):
         Returns:
             np.ndarray: Accumulated noise grid
         """
-        from src.utils.gpu_utils import apply_noise_generation_gpu
+        from utils.gpu_utils import apply_noise_generation_gpu
 
         noise_grid = np.zeros((self.height, self.width))
 

@@ -6,7 +6,7 @@ import logging
 import random
 from typing import Dict, Optional, Tuple, Any
 
-from src.config import (
+from ..config import (
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,
     COMBAT_BASE_WEAPON_RANGE,
@@ -20,7 +20,7 @@ from src.config import (
     COMBAT_ENEMY_TYPES,
     COLOR_ERROR,
 )
-from src.entities.base_entity import BaseEntity
+from .base_entity import BaseEntity
 
 
 class EnemyShip(BaseEntity):

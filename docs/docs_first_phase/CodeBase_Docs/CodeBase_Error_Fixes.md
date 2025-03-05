@@ -25,6 +25,7 @@ Add concise notation to avoid future confusion and ensure best practices are fol
 13. [test_base_generator.py](#unit_testing)
 14. [benchmark_comprehensive_gpu.py](#benchmarks)
 15. [test_pattern_generator.py](#unit_testing)
+16. [import_paths.py](#system_architecture)
 
 ---
 
@@ -1567,4 +1568,35 @@ else:
 - Populated the noise_generators dictionary with the fallback noise generator for all noise types
 - Ensures that the generator will work correctly regardless of whether PerlinNoise is available
 - Fixed unused variable warning by properly utilizing the noise_gen variable
+
+## 17. [import_paths.py](#system_architecture)
+
+ERROR: Inconsistent import mechanisms causing module resolution errors
+CORRECTION: Standardized import paths across modules using absolute imports with src. prefix
+```python
+# Before - Inconsistent import mechanisms
+# In procedural_generator.py
+from src.entities.base_generator import BaseGenerator  # Incorrect path
+
+# In base_generator.py
+from entities.base_entity import BaseEntity  # Relative import
+from utils.dependency_injection import inject  # Relative import
+
+# After - Standardized absolute imports
+# In procedural_generator.py
+from src.generators.base_generator import BaseGenerator  # Correct path
+
+# In base_generator.py
+from src.entities.base_entity import BaseEntity  # Absolute import
+from src.utils.dependency_injection import inject  # Absolute import
+```
+
+### Additional Notes
+
+- The codebase had a mix of relative imports and absolute imports with src. prefix
+- This caused module resolution errors when importing across different packages
+- Configuration constants were not consistently available across modules
+- Added combat-related constants to src/config/__init__.py to ensure availability
+- Created test_import_fixes.py to verify import fixes
+- Consider implementing a centralized import configuration for future development
 

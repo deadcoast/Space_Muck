@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import *
-from src.world.asteroid_field import AsteroidField
+from src.generators import AsteroidField
 from src.entities.player import Player
 from src.entities.miner_entity import MinerEntity
 from src.ui.shop import Shop

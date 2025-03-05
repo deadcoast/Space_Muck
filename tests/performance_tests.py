@@ -16,10 +16,9 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import *
-from src.world.asteroid_field import AsteroidField
+from src.generators import AsteroidField, AsteroidGenerator
 from src.entities.player import Player
 from src.entities.miner_entity import MinerEntity
-from src.world.procedural_generation import generate_field
 
 
 class TestAsteroidFieldPerformance(unittest.TestCase):
@@ -69,18 +68,21 @@ class TestAsteroidFieldPerformance(unittest.TestCase):
         """Test performance of procedural field generation."""
         width, height = 400, 300
 
+        # Create asteroid generator
+        generator = AsteroidGenerator(width=width, height=height)
+
         # Time the generation process
         start_time = time.time()
-        field_data = generate_field(width, height)
+        asteroid_grid, metadata = generator.generate_field()
         end_time = time.time()
 
         # Generation should complete in reasonable time
         self.assertLess(end_time - start_time, 5.0, "Field generation took too long")
 
         # Verify we got valid data
-        self.assertIsNotNone(field_data)
-        self.assertIn("grid", field_data)
-        self.assertEqual(field_data["grid"].shape, (height, width))
+        self.assertIsNotNone(asteroid_grid)
+        self.assertIsNotNone(metadata)
+        self.assertEqual(asteroid_grid.shape, (height, width))
 
 
 class TestPlayerPerformance(unittest.TestCase):

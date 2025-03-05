@@ -516,8 +516,8 @@ class TestMinerEntity(unittest.TestCase):
 
     def test_edge_cases(self):
         """Test edge cases and boundary conditions for MinerEntity."""
-        self._high_population_handler(0, "feeding")
-        self._high_population_handler(1000000, "migrating")
+        self._test_with_population_and_behavior(0, "feeding")
+        self._test_with_population_and_behavior(1000000, "migrating")
         # Set behavior directly instead of calling update_behavior
         try:
             self.miner.current_behavior = "expanding"
@@ -563,14 +563,13 @@ class TestMinerEntity(unittest.TestCase):
             # If an exception was raised, we'll just print it but not fail the test
             print(f"Exception with out-of-bounds territory_center: {e}")
 
-    # TODO Rename this here and in `test_edge_cases`
-    def _high_population_handler(self, arg0, arg1):
+    def _test_with_population_and_behavior(self, population_value, behavior_type):
         # Test with extreme population values
-        self.miner.population = arg0
+        self.miner.population = population_value
         # Directly set behavior instead of calling update_behavior
-        self.miner.current_behavior = arg1
+        self.miner.current_behavior = behavior_type
         # Verify the behavior is set
-        self.assertEqual(self.miner.current_behavior, arg1)
+        self.assertEqual(self.miner.current_behavior, behavior_type)
 
 
 if __name__ == "__main__":

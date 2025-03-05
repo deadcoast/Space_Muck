@@ -189,9 +189,7 @@ class SymbioteEvolutionAlgorithm:
             # Calculate centers of mass for each colony
             centers = cast(
                 List[Tuple[float, float]],
-                ndimage.center_of_mass(
-                    grid, labeled_grid, range(1, num_colonies + 1)
-                )
+                ndimage.center_of_mass(grid, labeled_grid, range(1, num_colonies + 1)),
             )
 
             # Try to connect nearby colonies
@@ -201,10 +199,10 @@ class SymbioteEvolutionAlgorithm:
                     center2 = centers[j]
                     # Calculate distance between colony centers
                     distance = np.sqrt(
-                        ((center1[0] - center2[0]) ** 2) + 
-                        ((center1[1] - center2[1]) ** 2)
+                        ((center1[0] - center2[0]) ** 2)
+                        + ((center1[1] - center2[1]) ** 2)
                     )
-                    
+
                     # If colonies are close enough, create a bridge between them
                     if distance < 20:  # Threshold for cooperation
                         # Create a line between centers
@@ -212,23 +210,27 @@ class SymbioteEvolutionAlgorithm:
                         if steps > 0:
                             x_points = np.linspace(center1[0], center2[0], steps)
                             y_points = np.linspace(center1[1], center2[1], steps)
-                            
+
                             # Create bridge with some randomness
                             for k in range(steps):
                                 x = int(round(x_points[k]))
                                 y = int(round(y_points[k]))
-                                
+
                                 # Ensure coordinates are within grid bounds
-                                if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1] and np.random.random() < 0.7:
+                                if (
+                                    0 <= x < grid.shape[0]
+                                    and 0 <= y < grid.shape[1]
+                                    and np.random.random() < 0.7
+                                ):
                                     grid[x, y] = 1
 
         return grid
 
     def identify_colonies(self, grid) -> Tuple[np.ndarray, int]:
         """Identify distinct colonies in the grid.
-        
+
         Returns:
-            tuple: (labeled_grid, num_colonies) where labeled_grid is a numpy array 
+            tuple: (labeled_grid, num_colonies) where labeled_grid is a numpy array
                   with the same shape as grid, and num_colonies is the number of colonies found.
         """
         # Use cast to tell type checker that ndimage.label returns a tuple of (ndarray, int)

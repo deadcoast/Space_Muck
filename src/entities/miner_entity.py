@@ -27,6 +27,8 @@ except ImportError:
 
 # Local application imports
 from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+
+# Import from config package
 from src.config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
@@ -703,7 +705,7 @@ class MinerEntity(BaseEntity):
             population = len(points)
             k = min(8, max(1, population // 100))
 
-            return self._extracted_from_evolve_26(k, points, entity_locations)
+            return self._analyze_territory_clusters(k, points, entity_locations)
 
         except Exception as e:
             logging.error(f"Error in territory analysis: {e}")
@@ -718,10 +720,10 @@ class MinerEntity(BaseEntity):
 
     def _calculate_territory_metrics(self, points):
         """Calculate basic territory metrics for a small number of points.
-        
+
         Args:
             points: Array of (x,y) coordinates representing entity locations
-            
+
         Returns:
             Dictionary containing territory metrics (center, radius, density)
         """
@@ -759,12 +761,39 @@ class MinerEntity(BaseEntity):
             "centrality": self.territory_centrality,
             "distance_stats": distance_stats,
         }
+        
+    def _calculate_territory_metrics(self, main_center, main_cluster_idx, clusters, points):
+        """Calculate basic territory metrics based on clustering results.
+        
+        Args:
+            main_center: Center coordinates of the main cluster
+            main_cluster_idx: Index of the main cluster
+            clusters: Cluster assignments for each point
+            points: Array of entity points
+        """
+        # Set territory center
+        self.territory_center = (int(main_center[0]), int(main_center[1]))
 
-    # Helper method for territory analysis
-    def _extracted_from_evolve_26(
-        self, k: int, points: np.ndarray, entity_locations: np.ndarray
-    ) -> Dict[str, Any]:
-        """Helper method for territory analysis using KMeans clustering."""
+        # Calculate radius as distance to furthest entity in main cluster
+        main_cluster_points = points[clusters == main_cluster_idx]
+        distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
+        self.territory_radius = int(np.max(distances))
+        
+        # Calculate territory density
+        area = math.pi * self.territory_radius**2
+        self.territory_density = len(main_cluster_points) / area if area > 0 else 0
+    
+    def _perform_clustering(self, points, k):
+        """Perform KMeans clustering and find the main cluster.
+        
+        Args:
+            points: Array of points to cluster
+            k: Number of clusters
+            
+        Returns:
+            tuple: (clusters, centers, main_cluster_idx, main_center)
+        """
+        # Perform KMeans clustering
         kmeans = KMeans(n_clusters=k).fit(points)
         clusters = kmeans.labels_
         centers = kmeans.cluster_centers_
@@ -773,20 +802,72 @@ class MinerEntity(BaseEntity):
         cluster_sizes = [np.sum(clusters == i) for i in range(k)]
         main_cluster_idx = np.argmax(cluster_sizes)
         main_center = centers[main_cluster_idx]
+        
+        return clusters, centers, main_cluster_idx, main_center
 
-        # Calculate territory metrics
-        self.territory_center = (int(main_center[0]), int(main_center[1]))
+    def _analyze_territory_clusters(
+        self, k: int, points: np.ndarray, entity_locations: np.ndarray
+    ) -> Dict[str, Any]:
+        """Analyze territory using KMeans clustering to identify colonies and calculate metrics.
+        
+        Args:
+            k: Number of clusters to identify
+            points: Array of (x,y) coordinates representing entity locations
+            entity_locations: Raw entity location data from the field grid
+            
+        Returns:
+            Dictionary containing territory metrics including center, radius, density,
+            resource access, fragmentation, and cluster information
+            
+        Raises:
+            Exception: If clustering fails or calculation errors occur
+        """
+        try:
+            # Perform clustering and find main cluster
+            clusters, centers, main_cluster_idx, main_center = self._perform_clustering(points, k)
+            
+            # Get cluster sizes for metrics
+            cluster_sizes = [np.sum(clusters == i) for i in range(k)]
 
-        # Calculate radius as distance to furthest entity in main cluster
-        main_cluster_points = points[clusters == main_cluster_idx]
-        distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
-        self.territory_radius = int(np.max(distances))
+            # Calculate basic territory metrics
+            self._calculate_territory_metrics(main_center, main_cluster_idx, clusters, points)
 
-        # Calculate territory density
-        area = math.pi * self.territory_radius**2
-        self.territory_density = len(main_cluster_points) / area if area > 0 else 0
+            # Territory density is calculated in _calculate_territory_metrics
 
-        # Calculate resource access (how many asteroids are within territory)
+            # Calculate resource access (how many asteroids are within territory)
+            if self.field:
+                return self._calculate_resource_access(main_center, cluster_sizes, centers, k)
+            
+            # If we don't have a field reference, return basic metrics
+            return {
+                "center": self.territory_center,
+                "radius": self.territory_radius,
+                "density": self.territory_density,
+                "resource_access": 0,
+                "fragmentation": k / len(points) if len(points) > 0 else 1.0,
+                "clusters": k,
+                "cluster_sizes": cluster_sizes,
+                "centers": centers.tolist(),
+            }
+        except Exception as e:
+            logging.error(f"Error in territory cluster analysis: {str(e)}")
+            log_exception(e)
+            raise
+            
+    def _calculate_resource_access(
+        self, main_center: np.ndarray, cluster_sizes: List[int], centers: np.ndarray, k: int
+    ) -> Dict[str, Any]:
+        """Calculate resource access within territory and other advanced metrics.
+        
+        Args:
+            main_center: Coordinates of the main cluster center
+            cluster_sizes: List of population counts for each cluster
+            centers: Array of cluster center coordinates
+            k: Number of clusters
+            
+        Returns:
+            Dictionary containing territory metrics
+        """
         resource_access = 0
         if self.field:
             for y, x in itertools.product(
@@ -811,7 +892,9 @@ class MinerEntity(BaseEntity):
                     resource_access += 1
 
         # Calculate fragmentation (ratio of number of clusters to population)
-        fragmentation = k / len(points) if len(points) > 0 else 1.0
+        # Get the total number of points from the sum of cluster sizes
+        total_points = sum(cluster_sizes)
+        fragmentation = k / total_points if total_points > 0 else 1.0
 
         return {
             "center": self.territory_center,

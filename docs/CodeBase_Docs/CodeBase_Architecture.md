@@ -20,6 +20,7 @@ Space Muck is organized into the following main components:
 3. Keep functions small and focused on a single responsibility
 4. Document all public functions, classes, and modules
 5. Use consistent naming conventions
+6. Follow standardized import structure (see Import Structure section below)
 
 ### Function Naming Conventions
 
@@ -47,6 +48,50 @@ Space Muck is organized into the following main components:
        Returns:
            Description of return value
        """
+   ```
+
+### Import Structure
+
+1. **Import Organization**: Organize imports in the following order with a blank line between each group:
+   ```python
+   # Standard library imports
+   import logging
+   import math
+   import random
+   from typing import Dict, List, Optional
+   
+   # Third-party library imports
+   import numpy as np
+   import pygame
+   import scipy.ndimage as ndimage
+   
+   # Local application imports
+   from config import GRID_WIDTH, GRID_HEIGHT
+   from entities.base_entity import BaseEntity
+   from utils.noise_generator import NoiseGenerator
+   ```
+
+2. **Relative Imports**: Use relative imports for local application modules instead of absolute imports with 'src' prefix:
+   - Correct: `from entities.base_entity import BaseEntity`
+   - Incorrect: `from src.entities.base_entity import BaseEntity`
+
+3. **Optional Dependencies**: Handle optional dependencies with try/except blocks:
+   ```python
+   # Optional dependencies
+   try:
+       from perlin_noise import PerlinNoise
+       PERLIN_AVAILABLE = True
+   except ImportError:
+       PERLIN_AVAILABLE = False
+       logging.warning("PerlinNoise package is not available. Using fallback noise generator.")
+   ```
+
+4. **Duplicate Imports**: Avoid duplicate imports of the same module. Check if a module is already imported before trying to import it again:
+   ```python
+   # Check if scipy is available for optimized cellular automaton
+   SCIPY_AVAILABLE = 'signal' in dir(scipy)
+   if not SCIPY_AVAILABLE:
+       logging.warning("SciPy signal module not available. Using manual implementation for cellular automaton.")
    ```
 
 ### GPU Acceleration
@@ -94,3 +139,37 @@ Used for event handling and notifications.
 3. Log errors with appropriate context
 4. Implement graceful degradation for optional features
 5. Validate inputs to prevent downstream errors
+
+### Import Structure
+
+1. **Module Structure**:
+   - The project uses a package-based structure with `src` as the root package
+   - Main modules are organized in subdirectories: `entities`, `generators`, `utils`, etc.
+
+2. **Import Paths**:
+   - For imports within the same directory, use relative imports:
+     ```python
+     from .base_generator import BaseGenerator
+     ```
+   - For imports from other modules, use absolute imports with the `src` prefix:
+     ```python
+     from src.utils.noise_generator import NoiseGenerator
+     ```
+   - For imports in test files, ensure the proper path is added to sys.path:
+     ```python
+     import os
+     import sys
+     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+     from src.generators.asteroid_field import AsteroidField
+     ```
+
+3. **Import Order**:
+   - Standard library imports first
+   - Third-party library imports second
+   - Local application imports last
+   - Each group separated by a blank line
+
+4. **Module Location Changes**:
+   - The `asteroid_field.py` and related modules are now in the `src/generators` directory
+   - Previously, some tests were looking for these modules in `src/world`
+   - All import paths have been updated to reflect the correct locations

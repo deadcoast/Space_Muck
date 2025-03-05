@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Any, Optional, Set
 import logging
 import uuid
 
-from entities.base_entity import BaseEntity
+from .base_entity import BaseEntity
 
 # Import config constants as needed
 
@@ -53,10 +53,12 @@ class Fleet(BaseEntity):
         self.path = []
         self.fuel = 100
         self.max_fuel = 100
+        self.visited_positions: Set[Tuple[int, int]] = set()  # Track visited positions
+        self.unique_id_prefix = str(uuid.uuid4())[:8]  # Unique prefix for ship IDs
 
         logging.info(f"Fleet created: {self.fleet_name} (ID: {self.entity_id})")
 
-    def add_ship(self, ship_id: str, ship_data: Dict[str, Any]) -> None:
+    def add_ship(self, ship_id: str = None, ship_data: Dict[str, Any] = None) -> None:
         """
         Add a ship to the fleet.
 
@@ -64,6 +66,14 @@ class Fleet(BaseEntity):
             ship_id: Unique identifier for the ship
             ship_data: Dictionary containing ship data
         """
+        # Generate a unique ID if none provided
+        if ship_id is None:
+            ship_id = f"{self.unique_id_prefix}-{len(self.ships) + 1}"
+            
+        # Initialize empty ship data if none provided
+        if ship_data is None:
+            ship_data = {}
+            
         self.ships[ship_id] = ship_data
         logging.info(f"Ship added to fleet {self.fleet_name}: {ship_id}")
 
@@ -117,6 +127,9 @@ class Fleet(BaseEntity):
         # Simple direct path for now
         if not self.position or not self.destination:
             return []
+            
+        # Reset visited positions for new path calculation
+        self.visited_positions = set()
 
         start_x, start_y = self.position
         end_x, end_y = self.destination
@@ -138,6 +151,7 @@ class Fleet(BaseEntity):
                 current_y -= 1
 
             path.append((current_x, current_y))
+            self.visited_positions.add((current_x, current_y))
 
         return path
 

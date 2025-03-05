@@ -1,7 +1,20 @@
-pygame
-numpy
-scipy
-scikit-learn
-networkx
-perlin-noise
-importlib
+# Core dependencies
+pygame>=2.1.0
+numpy>=1.22.0
+scipy>=1.8.0
+scikit-learn>=1.0.2
+scikit-image>=0.19.0
+networkx>=2.7.1
+perlin-noise>=1.12
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+coverage>=6.3.2
+
+# Linting and code quality
+flake8>=4.0.1
+black>=22.1.0
+mypy>=0.931
+isort>=5.10.1
+sourcery>=1.0.0

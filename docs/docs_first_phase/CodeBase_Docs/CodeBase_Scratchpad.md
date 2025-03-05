@@ -18,6 +18,7 @@ CODEBASE SCRATCHPAD
 [ ] Add memory profiling tools to identify bottlenecks
 [ ] Explore additional GPU acceleration opportunities in other generator classes
 [X] Fix type errors in GPU benchmarking code
+[X] Refactor import paths for consistent module resolution
 
 ## Current Task: Fix Type Errors and Improve Type Safety
 
@@ -86,6 +87,42 @@ CODEBASE SCRATCHPAD
 [ ] Create helper functions for common operations on Optional types
 [ ] Add more comprehensive type annotations throughout the codebase
 [ ] Implement consistent patterns for null checking
+
+## Current Task: Import Path Refactoring
+
+### 1. Import Path Inconsistencies
+
+**Analysis of Issues:**
+- The codebase had inconsistent import mechanisms across modules
+- Some files used relative imports while others used absolute imports with the `src.` prefix
+- This caused module resolution errors when importing modules across different packages
+- Configuration constants were not consistently available across modules
+
+### 2. Fixed Import Issues in Configuration
+
+**Changes Made:**
+- Updated `src/config/__init__.py` to define constants directly
+- Added combat-related constants to `src/config/__init__.py`
+- Added player-related constants to `src/config/__init__.py`
+- Ensured consistent constant availability across modules
+
+### 3. Fixed Import Issues in Generator Modules
+
+**Changes Made:**
+- Updated import paths in `src/generators/procedural_generator.py` to use correct path for `BaseGenerator`
+- Fixed imports in `src/generators/base_generator.py` to use absolute imports with `src.` prefix
+- Updated imports in `src/generators/asteroid_field.py` to use consistent import patterns
+- Created test script `tests/test_import_fixes.py` to verify import fixes
+
+### 4. Next Steps for Import Refactoring
+
+**Planned Improvements:**
+[ ] Create a comprehensive import strategy document
+[ ] Implement a centralized import configuration
+[ ] Add automated import validation to CI/CD pipeline
+[ ] Review remaining modules for import consistency
+[ ] Consider using __init__.py files to simplify imports
+[ ] Add import linting to development workflow
 
 ## Previous Task: Comprehensive Fleet Management Unit Testing
 

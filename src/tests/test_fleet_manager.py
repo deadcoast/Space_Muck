@@ -271,7 +271,9 @@ class TestFleetManager(unittest.TestCase):
         # Check that movement was initiated
         self.assertTrue(result)
         self.assertEqual(self.fleet.destination, destination)
-        self.assertIsNotNone(self.fleet.current_orders, "Fleet current_orders should not be None")
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
         if self.fleet.current_orders:  # Type guard for Pyright
             self.assertEqual(self.fleet.current_orders["type"], "move_to")
 

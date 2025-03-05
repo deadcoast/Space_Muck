@@ -16,10 +16,17 @@ cov = coverage.Coverage(
 cov.start()
 
 # Import test modules
-from unit_tests import *
-from integration_tests import *
-from performance_tests import *
-from regression_tests import *
+import sys
+import os
+
+# Add the current directory to the path
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# Import test modules
+from tests.unit_tests import *
+from tests.integration_tests import *
+from tests.performance_tests import *
+from tests.regression_tests import *
 
 
 def run_tests():

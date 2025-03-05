@@ -70,7 +70,7 @@ def main():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
 
-    _dependency_handler(
+    _print_config_and_run_demo(
         "Current Dependency Configuration:",
         DependencyConfig,
         "\n=== Using Default Configuration ===",
@@ -87,22 +87,21 @@ def main():
         print(f"\n=== Loading Configuration from {config_path} ===")
         load_config_from_file(config_path)
 
-    _dependency_handler(
+    _print_config_and_run_demo(
         "\nUpdated Dependency Configuration:",
         DependencyConfig,
         "\n=== Using Updated Configuration ===",
     )
 
 
-# TODO Rename this here and in `main`
-def _dependency_handler(arg0, DependencyConfig, arg2):
+def _print_config_and_run_demo(header_text, dependency_config, demo_header):
     # Print current configuration
-    print(arg0)
-    for key, value in DependencyConfig.to_dict().items():
+    print(header_text)
+    for key, value in dependency_config.to_dict().items():
         print(f"  {key}: {value}")
 
     # Create and use a demo instance with default configuration
-    print(arg2)
+    print(demo_header)
     demo1 = NoiseGeneratorDemo()
     demo1.generate_sample()
 

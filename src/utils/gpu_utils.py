@@ -501,12 +501,12 @@ def apply_noise_generation_gpu(
 
 def _generate_fallback_noise(seed, height, width):
     """Generate random noise as a fallback when noise generators are unavailable.
-    
+
     Args:
         seed: Random seed for reproducibility
         height: Height of the noise grid
         width: Width of the noise grid
-        
+
     Returns:
         np.ndarray: Random noise grid
     """
