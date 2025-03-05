@@ -17,7 +17,7 @@ import numpy as np
 
 # Local application imports
 # Note: Config constants are referenced via parameters instead of direct imports
-from src.entities.base_generator import BaseGenerator
+from src.generators.base_generator import BaseGenerator
 from src.utils.dependency_injection import inject
 from src.utils.noise_generator import NoiseGenerator
 from src.utils.pattern_generator import (

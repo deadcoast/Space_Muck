@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Tuple
 import pygame
 
 # Local application imports
-from src.config import (
+from ..config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -23,7 +23,7 @@ from src.config import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
 )
-from src.ui.draw_utils import draw_button, draw_panel, draw_text, draw_tooltip
+from .draw_utils import draw_button, draw_panel, draw_text, draw_tooltip
 
 
 # Forward references for type hints

@@ -11,8 +11,8 @@ from typing import List, Tuple, Dict, Any, Optional
 
 import pygame
 
-from src.config import *
-from src.ui.draw_utils import draw_text, draw_panel, draw_tooltip
+from ..config import WINDOW_HEIGHT, COLOR_TEXT
+from .draw_utils import draw_text, draw_panel
 
 
 class NotificationManager:
@@ -369,126 +369,135 @@ class NotificationManager:
         visible_count = min(self.max_visible_notifications, len(filtered_notifications))
 
         if visible_count > 0:
-            content_y = self.panel_y + 55  # Below filters
+            self._extracted_from_draw_136(filtered_notifications, surface, alpha)
+
+    # TODO Rename this here and in `draw`
+    def _extracted_from_draw_136(self, filtered_notifications, surface, alpha):
+        content_y = self.panel_y + 55  # Below filters
 
             # Draw scrollbar if needed
-            if len(filtered_notifications) > self.max_visible_notifications:
-                scrollbar_height = (
-                    self.panel_height - 65
-                )  # Account for header and filters
-                visible_ratio = self.max_visible_notifications / len(
-                    filtered_notifications
-                )
-                thumb_height = max(30, scrollbar_height * visible_ratio)
-
-                # Calculate thumb position
-                max_scroll = (
-                    len(filtered_notifications) - self.max_visible_notifications
-                )
-                scroll_ratio = self.scroll_offset / max_scroll if max_scroll > 0 else 0
-                thumb_y = content_y + scroll_ratio * (scrollbar_height - thumb_height)
-
-                # Draw track
-                scrollbar_x = self.panel_x + self.panel_width - 15
-                pygame.draw.rect(
-                    surface,
-                    (40, 40, 50, alpha),
-                    (scrollbar_x, content_y, 10, scrollbar_height),
-                    border_radius=5,
-                )
-
-                # Draw thumb
-                pygame.draw.rect(
-                    surface,
-                    (80, 80, 100, alpha),
-                    (scrollbar_x, thumb_y, 10, thumb_height),
-                    border_radius=5,
-                )
-
-            # Adjust visible notifications based on scroll offset
-            start_idx = self.scroll_offset
-            end_idx = min(
-                start_idx + self.max_visible_notifications,
-                len(filtered_notifications),
+        if len(filtered_notifications) > self.max_visible_notifications:
+            self._extracted_from_draw_140(
+                filtered_notifications, content_y, surface, alpha
             )
-            visible_notifications = filtered_notifications[start_idx:end_idx]
+        # Adjust visible notifications based on scroll offset
+        start_idx = self.scroll_offset
+        end_idx = min(
+            start_idx + self.max_visible_notifications,
+            len(filtered_notifications),
+        )
+        visible_notifications = filtered_notifications[start_idx:end_idx]
 
-            # Draw each visible notification
-            for i, notification in enumerate(visible_notifications):
-                text = notification["text"]
-                color = notification["color"]
-                category = notification["category"]
-                importance = notification["importance"]
-                read = notification["read"]
+        # Draw each visible notification
+        for i, notification in enumerate(visible_notifications):
+            text = notification["text"]
+            color = notification["color"]
+            category = notification["category"]
+            importance = notification["importance"]
+            read = notification["read"]
 
-                # Background color based on importance and read status
-                bg_color = (40, 40, 50, alpha)  # Default
-                if not read:  # New notification
-                    bg_color = (60, 60, 80, alpha)
-                elif importance >= 3:  # High importance
-                    bg_color = (80, 50, 50, alpha)
-                elif importance == 2:  # Medium importance
-                    bg_color = (70, 70, 50, alpha)
+            # Background color based on importance and read status
+            bg_color = (40, 40, 50, alpha)  # Default
+            if not read:  # New notification
+                bg_color = (60, 60, 80, alpha)
+            elif importance >= 3:  # High importance
+                bg_color = (80, 50, 50, alpha)
+            elif importance == 2:  # Medium importance
+                bg_color = (70, 70, 50, alpha)
 
-                # Draw notification background
-                notification_y = content_y + i * self.notification_height
-                pygame.draw.rect(
-                    surface,
-                    bg_color,
-                    (
-                        self.panel_x + 5,
-                        notification_y,
-                        self.panel_width - 20,
-                        self.notification_height - 2,
-                    ),
-                    border_radius=3,
-                )
+            # Draw notification background
+            notification_y = content_y + i * self.notification_height
+            pygame.draw.rect(
+                surface,
+                bg_color,
+                (
+                    self.panel_x + 5,
+                    notification_y,
+                    self.panel_width - 20,
+                    self.notification_height - 2,
+                ),
+                border_radius=3,
+            )
 
-                # Draw category indicator
-                category_color = {
-                    "system": (100, 100, 255),
-                    "mining": (255, 215, 0),
-                    "race": (255, 100, 100),
-                    "event": (0, 255, 200),
-                    "upgrade": (200, 100, 255),
-                }.get(category, (150, 150, 150))
+            # Draw category indicator
+            category_color = {
+                "system": (100, 100, 255),
+                "mining": (255, 215, 0),
+                "race": (255, 100, 100),
+                "event": (0, 255, 200),
+                "upgrade": (200, 100, 255),
+            }.get(category, (150, 150, 150))
 
-                pygame.draw.rect(
-                    surface,
-                    category_color,
-                    (
-                        self.panel_x + 5,
-                        notification_y,
-                        3,
-                        self.notification_height - 2,
-                    ),
-                    border_radius=3,
-                )
+            pygame.draw.rect(
+                surface,
+                category_color,
+                (
+                    self.panel_x + 5,
+                    notification_y,
+                    3,
+                    self.notification_height - 2,
+                ),
+                border_radius=3,
+            )
 
-                # Draw notification text
-                max_text_width = self.panel_width - 30  # Allow space for scrollbar
-                draw_text(
-                    surface,
-                    text,
-                    self.panel_x + 12,  # Adjust for category indicator
-                    notification_y + 4,
-                    14,
-                    color,
-                    alpha=alpha,
-                    max_width=max_text_width,
-                )
+            # Draw notification text
+            max_text_width = self.panel_width - 30  # Allow space for scrollbar
+            draw_text(
+                surface,
+                text,
+                self.panel_x + 12,  # Adjust for category indicator
+                notification_y + 4,
+                14,
+                color,
+                alpha=alpha,
+                max_width=max_text_width,
+            )
 
-            # Draw empty state if no notifications
-            if not filtered_notifications:
-                draw_text(
-                    surface,
-                    "No notifications",
-                    self.panel_x + self.panel_width // 2,
-                    self.panel_y + self.panel_height // 2,
-                    16,
-                    (150, 150, 150, alpha),
-                    align="center",
-                )
+        # Draw empty state if no notifications
+        if not filtered_notifications:
+            draw_text(
+                surface,
+                "No notifications",
+                self.panel_x + self.panel_width // 2,
+                self.panel_y + self.panel_height // 2,
+                16,
+                (150, 150, 150, alpha),
+                align="center",
+            )
+
+    # TODO Rename this here and in `draw`
+    def _extracted_from_draw_140(self, filtered_notifications, content_y, surface, alpha):
+        scrollbar_height = (
+            self.panel_height - 65
+        )  # Account for header and filters
+        visible_ratio = self.max_visible_notifications / len(
+            filtered_notifications
+        )
+        thumb_height = max(30, scrollbar_height * visible_ratio)
+
+        # Calculate thumb position
+        max_scroll = (
+            len(filtered_notifications) - self.max_visible_notifications
+        )
+        scroll_ratio = self.scroll_offset / max_scroll if max_scroll > 0 else 0
+        thumb_y = content_y + scroll_ratio * (scrollbar_height - thumb_height)
+
+        # Draw track
+        scrollbar_x = self.panel_x + self.panel_width - 15
+        pygame.draw.rect(
+            surface,
+            (40, 40, 50, alpha),
+            (scrollbar_x, content_y, 10, scrollbar_height),
+            border_radius=5,
+        )
+
+        # Draw thumb
+        pygame.draw.rect(
+            surface,
+            (80, 80, 100, alpha),
+            (scrollbar_x, thumb_y, 10, thumb_height),
+            border_radius=5,
+        )
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """

@@ -21,22 +21,22 @@ from typing import Dict, List, Tuple, Any, Optional
 import numpy as np
 import pygame
 
-from src.config import *
-from src.world.asteroid_field import AsteroidField
-from src.generators.procedural_generator import create_field_with_multiple_algorithms
-from src.entities.player import Player
-from src.entities.miner_entity import MinerEntity
-from src.ui.shop import Shop
-from src.ui.notification import NotificationManager
-from src.ui.renderers import AsteroidFieldRenderer
-from src.ui.draw_utils import (
+from config import *
+from world.asteroid_field import AsteroidField
+from generators.procedural_generator import create_field_with_multiple_algorithms
+from entities.player import Player
+from entities.miner_entity import MinerEntity
+from ui.shop import Shop
+from ui.notification import NotificationManager
+from ui.renderers import AsteroidFieldRenderer
+from ui.draw_utils import (
     draw_text,
     draw_panel,
     draw_minimap,
     draw_progress_bar,
     draw_button,
 )
-from src.utils.logging_setup import (
+from utils.logging_setup import (
     setup_logging,
     log_exception,
     LogContext,
@@ -797,7 +797,7 @@ class Game:
 
         # Draw active tooltip if any
         if self.tooltip_text and self.show_tooltips:
-            from src.ui.draw_utils import draw_tooltip
+            from ui.draw_utils import draw_tooltip
 
             draw_tooltip(
                 self.screen,
@@ -1638,7 +1638,7 @@ class Game:
 
         # Draw active tooltip if any
         if self.tooltip_text and self.show_tooltips:
-            from src.ui.draw_utils import draw_tooltip
+            from ui.draw_utils import draw_tooltip
 
             draw_tooltip(
                 self.screen,

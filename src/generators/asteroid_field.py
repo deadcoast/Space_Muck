@@ -21,20 +21,20 @@ import scipy.ndimage as ndimage
 import scipy.signal as signal
 from perlin_noise import PerlinNoise
 
-from config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
-from utils.logging_setup import (
+from src.config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
+from src.utils.logging_setup import (
     log_exception,
     LogContext,
     log_performance_start,
     log_performance_end,
 )
-from entities.miner_entity import MinerEntity
-from generators.procedural_generator import ProceduralGenerator
-from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
+from src.entities.miner_entity import MinerEntity
+from src.generators.procedural_generator import ProceduralGenerator
+from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
 # Try to import the optimized generators if available
 try:
-    from entities.asteroid_generator import AsteroidGenerator
+    from src.entities.asteroid_generator import AsteroidGenerator
 
     ASTEROID_GENERATOR_AVAILABLE = True
 except ImportError:
@@ -43,15 +43,12 @@ except ImportError:
         "AsteroidGenerator not available. Using ProceduralGenerator as fallback."
     )
 
-# Try to import scipy for optimized cellular automaton
-try:
-    import scipy.signal as signal
-
-    SCIPY_AVAILABLE = True
-except ImportError:
-    SCIPY_AVAILABLE = False
+# Check if scipy is available for optimized cellular automaton
+import scipy
+SCIPY_AVAILABLE = hasattr(scipy, 'signal')
+if not SCIPY_AVAILABLE:
     logging.warning(
-        "SciPy not available. Using manual implementation for cellular automaton."
+        "SciPy signal module not available. Using manual implementation for cellular automaton."
     )
 
 
@@ -207,7 +204,17 @@ class AsteroidField:
             # Re-raise to trigger fallback in initialize_patterns
             raise
 
-    def _asteroid_handler(self):
+    def _asteroid_handler(self) -> None:
+        """Generate asteroid field using available generators.
+        
+        This method selects the appropriate generator based on availability:
+        - Uses optimized AsteroidGenerator if available
+        - Falls back to ProceduralGenerator if optimized generator is not available
+        - Handles grid initialization and ensures all required grids are populated
+        
+        Raises:
+            Exception: Passes through exceptions from generator methods for centralized handling
+        """
         # Use the optimized AsteroidGenerator if available, otherwise fall back to ProceduralGenerator
         seed = random.randint(1, 10000)
 
@@ -221,9 +228,77 @@ class AsteroidField:
         # Performance tracking
         start_time = log_performance_start("generate_field_with_generator")
 
-        if ASTEROID_GENERATOR_AVAILABLE:
-            self._generate_asteroid_field_with_optimized_generator(common_params, seed)
-        else:
+        try:
+            if ASTEROID_GENERATOR_AVAILABLE:
+                self._generate_asteroid_field_with_optimized_generator(common_params, seed)
+                logging.info(f"Asteroid field generated using optimized AsteroidGenerator (seed: {seed})")
+            else:
+                self._generate_asteroid_field_with_procedural_generator(common_params, seed)
+                logging.info(f"Asteroid field generated using ProceduralGenerator (seed: {seed})")
+
+            # Initialize energy grid based on asteroid values if not included in result
+            if np.all(self.energy_grid == 0):
+                self._initialize_energy_grid()
+                
+        except Exception as e:
+            log_exception(e)
+            logging.error(f"Error in asteroid field generation: {str(e)}")
+            raise  # Re-raise to allow the caller to handle or fall back
+        finally:
+            # Log performance regardless of success or failure
+            log_performance_end("generate_field_with_generator", start_time)
+
+    def _generate_asteroid_field_with_optimized_generator(self, common_params: dict, seed: int) -> None:
+        """Generate asteroid field using the optimized AsteroidGenerator.
+
+        Args:
+            common_params: Dictionary containing common parameters for the generator
+            seed: Random seed for reproducibility
+
+        Raises:
+            Exception: If there's an error during generation with the optimized generator
+        """
+        try:
+            # Create an AsteroidGenerator with optimized caching
+            generator = AsteroidGenerator(**common_params)
+
+            # Set parameters
+            generator.set_parameter("density", self.field_density)
+            generator.set_parameter("pattern_strength", self.pattern_complexity)
+            generator.set_parameter("cluster_tendency", self.turbulence)
+            generator.set_parameter("rare_chance", self.rare_chance)
+
+            # Generate the asteroid field
+            asteroid_grid, metadata = generator.generate_field()
+
+            # Generate values for asteroids
+            value_grid = generator.generate_values(asteroid_grid)
+
+            # Generate rare resources
+            rare_grid = generator.generate_rare_resources(value_grid)
+
+            # Set the grids
+            self.grid = value_grid
+            self.rare_grid = rare_grid
+
+            # Generate energy grid based on asteroid values
+            self.energy_grid = value_grid.astype(np.float32) / 100.0
+            
+        except Exception as e:
+            logging.error(f"Error in optimized asteroid generator: {str(e)}")
+            raise
+            
+    def _generate_asteroid_field_with_procedural_generator(self, common_params: dict, seed: int) -> None:
+        """Generate asteroid field using the ProceduralGenerator.
+
+        Args:
+            common_params: Dictionary containing common parameters for the generator
+            seed: Random seed for reproducibility
+
+        Raises:
+            Exception: If there's an error during generation with the procedural generator
+        """
+        try:
             # Fall back to the original ProceduralGenerator
             generator = ProceduralGenerator(
                 **common_params,
@@ -241,6 +316,7 @@ class AsteroidField:
 
             # Generate the asteroid field grid
             result = generator.generate()
+            
             if isinstance(result, dict):
                 # If the generator returns a dictionary with multiple grids
                 if "grid" in result:
@@ -256,61 +332,11 @@ class AsteroidField:
                 # Generate rare minerals distribution if not included in result
                 if np.all(self.rare_grid == 0):
                     self._generate_rare_minerals()
+                    
+        except Exception as e:
+            logging.error(f"Error in procedural asteroid generator: {str(e)}")
+            raise
 
-            logging.info(
-                f"Asteroid field generated using ProceduralGenerator (seed: {seed})"
-            )
-
-        # Initialize energy grid based on asteroid values if not included in result
-        if np.all(self.energy_grid == 0):
-            self._initialize_energy_grid()
-
-        # Log performance
-        log_performance_end("generate_field_with_generator", start_time)
-
-    def _generate_asteroid_field_with_optimized_generator(self, common_params, seed):
-        """Generate asteroid field using the optimized AsteroidGenerator.
-        
-        Args:
-            common_params: Dictionary containing common parameters for the generator
-            seed: Random seed for reproducibility
-            
-        Returns:
-            None: Updates the field's grids in-place
-        """
-        # Create an AsteroidGenerator with optimized caching
-        generator = AsteroidGenerator(**common_params)
-
-        # Set parameters
-        generator.set_parameter("density", self.field_density)
-        generator.set_parameter("pattern_strength", self.pattern_complexity)
-        generator.set_parameter("cluster_tendency", self.turbulence)
-        generator.set_parameter("rare_chance", self.rare_chance)
-
-        # Generate the asteroid field
-        asteroid_grid, metadata = generator.generate_field()
-
-        # Generate values for asteroids
-        value_grid = generator.generate_values(asteroid_grid)
-
-        # Generate rare resources
-        rare_grid = generator.generate_rare_resources(value_grid)
-
-        # Set the grids
-        self.grid = value_grid
-        self.rare_grid = rare_grid
-
-        # Generate energy grid based on asteroid values
-        self.energy_grid = value_grid.astype(np.float32) / 100.0
-
-        # Apply rare mineral bonuses to energy grid
-        for rare_level in range(1, 4):  # 1=rare, 2=precious, 3=anomaly
-            rare_mask = rare_grid == rare_level
-            self.energy_grid[rare_mask] *= self.rare_bonus_multiplier * rare_level
-
-        logging.info(
-            f"Asteroid field generated using optimized AsteroidGenerator (seed: {seed})"
-        )
 
     def _generate_rare_minerals(self) -> None:
         """
@@ -920,14 +946,10 @@ class AsteroidField:
                     ):
                         new_grid[y, x] = 1
         else:
-            self._rule_handler(
-                grid, neighbor_counts, new_grid
-            )
+            self._rule_handler(grid, neighbor_counts, new_grid)
         return new_grid
 
-    def _rule_handler(
-        self, grid, neighbor_counts, new_grid
-    ):
+    def _rule_handler(self, grid, neighbor_counts, new_grid):
         # Simple rules without energy influence - fully vectorized approach
         alive_mask = grid > 0
         dead_mask = ~alive_mask

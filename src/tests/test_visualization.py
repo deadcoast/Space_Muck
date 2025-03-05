@@ -23,7 +23,9 @@ def test_visualize_noise_layers():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
+    noise_gen = (
+        get_noise_generator()
+    )  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -59,7 +61,9 @@ def test_visualize_cellular_automaton():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
+    noise_gen = (
+        get_noise_generator()
+    )  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -112,7 +116,9 @@ def test_visualize_clusters():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
+    noise_gen = (
+        get_noise_generator()
+    )  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Create visualizer
@@ -147,7 +153,9 @@ def test_convenience_function():
     # Create a generator
     width, height = 100, 100
     seed = 42
-    noise_gen = get_noise_generator()  # Use factory function to get a concrete implementation
+    noise_gen = (
+        get_noise_generator()
+    )  # Use factory function to get a concrete implementation
     generator = BaseGenerator(width, height, seed=seed, noise_generator=noise_gen)
 
     # Use convenience function

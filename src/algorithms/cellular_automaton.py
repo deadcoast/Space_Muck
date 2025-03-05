@@ -24,7 +24,10 @@ def count_neighbors(grid: np.ndarray) -> np.ndarray:
 
 
 def apply_life_rules(
-    grid: np.ndarray, birth_set: set, survival_set: set, energy_grid: Optional[np.ndarray] = None
+    grid: np.ndarray,
+    birth_set: set,
+    survival_set: set,
+    energy_grid: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Apply Conway's Game of Life rules with custom birth and survival sets.

@@ -130,7 +130,9 @@ def run_demo():
     if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
         print(f"Colony grid shape: {colony_grid.shape}")
     else:
-        print(f"Colony grid dimensions: {len(colony_grid)}x{len(colony_grid[0]) if colony_grid else 0}")
+        print(
+            f"Colony grid dimensions: {len(colony_grid)}x{len(colony_grid[0]) if colony_grid else 0}"
+        )
 
     _visualize_state_handler(
         "\nInitial Colony Grid (text representation):",
@@ -169,10 +171,17 @@ def run_demo():
                 except Exception as e:
                     print(f"Could not generate mutation map: {e}")
                     # Create empty mutation map based on colony grid dimensions
-                    if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
+                    if (
+                        NUMPY_AVAILABLE
+                        and np is not None
+                        and isinstance(colony_grid, np.ndarray)
+                    ):
                         mutation_map = np.zeros_like(colony_grid)
                     else:
-                        mutation_map = [[0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))]
+                        mutation_map = [
+                            [0.0 for _ in range(len(colony_grid[0]))]
+                            for _ in range(len(colony_grid))
+                        ]
         except Exception as e:
             print(f"Error during evolution simulation: {e}")
             # Handle both numpy arrays and regular lists
@@ -184,10 +193,17 @@ def run_demo():
                 evolved_grid = [row[:] for row in colony_grid]
                 evolution_history = [[row[:] for row in colony_grid]]
             # Create empty mutation map based on colony grid dimensions
-            if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
+            if (
+                NUMPY_AVAILABLE
+                and np is not None
+                and isinstance(colony_grid, np.ndarray)
+            ):
                 mutation_map = np.zeros_like(colony_grid)
             else:
-                mutation_map = [[0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))]
+                mutation_map = [
+                    [0.0 for _ in range(len(colony_grid[0]))]
+                    for _ in range(len(colony_grid))
+                ]
     else:
         print("Using fallback evolution simulation...")
         evolved_grid = fallback_grid(generator.parameters["grid_size"])

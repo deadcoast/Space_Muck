@@ -10,74 +10,38 @@ and mutations based on environmental factors.
 import logging
 import math
 import random
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
-import scipy.ndimage as ndimage
+
 
 # Local application imports
-try:
-    from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
-    from src.config import *
-    from src.entities.base_generator import BaseGenerator
-    from src.utils.noise_generator import NoiseGenerator, get_noise_generator
-    from src.utils.dependency_injection import inject
-    from src.utils.logging_setup import (
-        log_performance_start,
-        log_performance_end,
-        log_exception,
-        LogContext,
-    )
-    from src.utils.pattern_generator import (
-        generate_spiral_pattern,
-        generate_ring_pattern,
-        generate_gradient_pattern,
-        generate_void_pattern,
-        apply_weighted_patterns,
-    )
-    from src.utils.value_generator import (
-        generate_value_distribution,
-        add_value_clusters,
-        generate_rare_resource_distribution,
-    )
-    from src.utils.cellular_automaton_utils import (
-        apply_cellular_automaton,
-        apply_cellular_automaton_optimized,
-        generate_cellular_automaton_rules,
-        apply_environmental_effects,
-    )
-except ImportError:
-    # Alternative import paths for when running from different directories
-    from config import *
-    from entities.base_generator import BaseGenerator
-    from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
-    from utils.noise_generator import NoiseGenerator, get_noise_generator
-    from utils.dependency_injection import inject
-    from utils.logging_setup import (
-        log_performance_start,
-        log_performance_end,
-        log_exception,
-        LogContext,
-    )
-    from utils.pattern_generator import (
-        generate_spiral_pattern,
-        generate_ring_pattern,
-        generate_gradient_pattern,
-        generate_void_pattern,
-        apply_weighted_patterns,
-    )
-    from utils.value_generator import (
-        generate_value_distribution,
-        add_value_clusters,
-        generate_rare_resource_distribution,
-    )
-    from utils.cellular_automaton_utils import (
-        apply_cellular_automaton,
-        apply_cellular_automaton_optimized,
-        generate_cellular_automaton_rules,
-        apply_environmental_effects,
-    )
+from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+# Remove wildcard import as no config variables are directly used
+# from src.config import *
+from src.generators.base_generator import BaseGenerator
+from src.utils.noise_generator import NoiseGenerator
+from src.utils.dependency_injection import inject
+from src.utils.logging_setup import (
+    log_performance_start,
+    log_performance_end,
+    log_exception,
+)
+from src.utils.pattern_generator import (
+    generate_gradient_pattern,
+    generate_void_pattern,
+    apply_weighted_patterns,
+)
+from src.utils.value_generator import (
+    add_value_clusters,
+)
+from src.utils.cellular_automaton_utils import (
+    apply_cellular_automaton,
+    apply_cellular_automaton_optimized,
+    generate_cellular_automaton_rules,
+    apply_environmental_effects,
+)
 
 
 @inject
@@ -517,7 +481,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             dict: Dictionary of mineral types and amounts consumed
         """
         # Calculate total mineral consumption
-        total_consumption = np.sum(colony_grid * mineral_grid)
+        # Calculate but don't use total consumption - might be needed in future
+        # total_consumption = np.sum(colony_grid * mineral_grid)
 
         # Distribute consumption across different mineral types
         # Higher mineral values have higher chance of rare minerals

@@ -6,10 +6,10 @@ import logging
 import random
 from typing import Dict, List, Optional, Tuple, Any
 
-from src.entities.player import Player
-from src.entities.enemy_ship import EnemyShip
-from src.systems.combat_system import CombatSystem
-from src.config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES, GAME_MAP_SIZE
+from ..entities.player import Player
+from ..entities.enemy_ship import EnemyShip
+from .combat_system import CombatSystem
+from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES, GAME_MAP_SIZE
 
 
 class EncounterGenerator:
@@ -205,7 +205,7 @@ class EncounterGenerator:
 
         if faction_encounter:
             # Determine which faction based on player location and reputation
-            from src.entities.player import GAME_FACTIONS
+            from ..entities.player import GAME_FACTIONS
 
             # Weight factions based on player's reputation (lower rep = more likely to encounter)
             faction_weights = {}

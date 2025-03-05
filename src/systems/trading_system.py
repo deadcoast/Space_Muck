@@ -12,7 +12,7 @@ import logging
 from typing import Dict, List, Tuple, Any, Optional
 
 # Local application imports
-from src.config import GAME_MAP_SIZE
+from ..config import GAME_MAP_SIZE
 
 
 class TradingSystem:
@@ -764,11 +764,10 @@ class TradingSystem:
             return False
 
         elif quest_type == "trading_rare_commodity":
-            return self._reward_handler108(player, quest)
+            return self._process_rare_commodity_quest_reward(player, quest)
         return False
 
-    # TODO Rename this here and in `check_quest_completion`
-    def _reward_handler108(self, player, quest):
+    def _process_rare_commodity_quest_reward(self, player, quest):
         # Check if player is at destination station with required rare goods
         if (
             not hasattr(player, "current_station")
@@ -791,10 +790,9 @@ class TradingSystem:
         if player.rare_inventory[quest["commodity_id"]] <= 0:
             del player.rare_inventory[quest["commodity_id"]]
 
-        return self._reward_handler(quest, player, 10, 4)
+        return self._apply_quest_rewards_and_reputation(quest, player, 10, 4)
 
-    # TODO Rename this here and in `check_quest_completion`
-    def _reward_handler(self, player, quest):
+    def _process_standard_delivery_quest_reward(self, player, quest):
         # Check if player is at destination station with required goods
         if (
             not hasattr(player, "current_station")
@@ -821,10 +819,11 @@ class TradingSystem:
                 station["inventory"][quest["commodity_id"]] = 0
             station["inventory"][quest["commodity_id"]] += quest["quantity"]
 
-        return self._reward_handler(quest, player, 5, 2)
+        return self._apply_quest_rewards_and_reputation(quest, player, 5, 2)
 
-    # TODO Rename this here and in `check_quest_completion`
-    def _reward_handler(self, quest, player, arg2, arg3):
+    def _apply_quest_rewards_and_reputation(
+        self, quest, player, reputation_base, reputation_multiplier
+    ):
         # Award credits and update reputation
         player.credits += quest["reward"]
         if hasattr(player, "update_faction_reputation") and quest["faction_id"]:

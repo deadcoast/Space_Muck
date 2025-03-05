@@ -8,7 +8,6 @@ performance metrics and visualizations to help optimize GPU acceleration usage.
 """
 
 
-
 # contextlib import removed (no longer needed)
 import os
 import sys
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 # Note: This benchmarking script requires optional dependencies:
 # - cupy: For CUDA-based GPU acceleration
 # - torch: For PyTorch-based GPU acceleration
-# 
+#
 # If these dependencies are not available, the script will still run
 # but will skip the corresponding GPU backends.
 
@@ -37,17 +36,24 @@ CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
 TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
 if not CUPY_AVAILABLE:
-    logging.warning("CuPy not found. CUDA backend will be unavailable for benchmarking.")
-    logging.warning("To install: pip install cupy-cuda11x (replace with your CUDA version)")
+    logging.warning(
+        "CuPy not found. CUDA backend will be unavailable for benchmarking."
+    )
+    logging.warning(
+        "To install: pip install cupy-cuda11x (replace with your CUDA version)"
+    )
 
 if not TORCH_AVAILABLE:
-    logging.warning("PyTorch not found. PyTorch backend will be unavailable for benchmarking.")
+    logging.warning(
+        "PyTorch not found. PyTorch backend will be unavailable for benchmarking."
+    )
     logging.warning("To install: pip install torch")
+
 
 # Set up dummy modules to prevent errors when dependencies are missing
 class DummyModule:
     """Dummy module for when optional dependencies are not available.
-    
+
     This class acts as a placeholder that returns itself for any attribute
     access or function call, allowing code to run without raising errors
     when optional dependencies are missing.
@@ -65,6 +71,7 @@ cp = DummyModule()  # Default to dummy module
 if CUPY_AVAILABLE:
     try:
         import cupy as cp  # type: ignore
+
         logging.info("Successfully imported CuPy for CUDA acceleration")
     except ImportError as e:
         logging.warning(f"Failed to import CuPy despite being found: {e}")
@@ -74,7 +81,10 @@ torch = DummyModule()  # Default to dummy module
 if TORCH_AVAILABLE:
     try:
         import torch  # type: ignore
-        logging.info(f"Successfully imported PyTorch {torch.__version__} for GPU acceleration")
+
+        logging.info(
+            f"Successfully imported PyTorch {torch.__version__} for GPU acceleration"
+        )
     except ImportError as e:
         logging.warning(f"Failed to import PyTorch despite being found: {e}")
         TORCH_AVAILABLE = False
@@ -549,12 +559,12 @@ def benchmark_value_generation(
 
 def _handle_benchmark_failure(results_dict, backend, operation_prefix):
     """Handle benchmark failure by setting appropriate values in the results dictionary.
-    
+
     Args:
         results_dict: Dictionary containing benchmark results
         backend: The backend that failed (e.g., 'cuda', 'cupy')
         operation_prefix: Prefix string for logging the operation type
-        
+
     Returns:
         None: Updates the results_dict in-place
     """
@@ -725,12 +735,12 @@ def benchmark_memory_transfer(
 
 def _handle_bandwidth_benchmark_failure(results_dict, backend, operation_prefix):
     """Handle bandwidth benchmark failure by setting appropriate values in the results dictionary.
-    
+
     Args:
         results_dict: Dictionary containing benchmark results
         backend: The backend that failed (e.g., 'cuda', 'cupy')
         operation_prefix: Prefix string for logging the operation type
-        
+
     Returns:
         None: Updates the results_dict in-place
     """
@@ -788,22 +798,30 @@ def visualize_single_operation(
     # Create different plot types based on available data
     if "times" in op_results:
         _create_time_plot(op_results, x_values, x_label, title, operation, output_dir)
-    
+
     if "speedup" in op_results:
-        _create_speedup_plot(op_results, x_values, x_label, title, operation, output_dir)
-    
+        _create_speedup_plot(
+            op_results, x_values, x_label, title, operation, output_dir
+        )
+
     if "bandwidth" in op_results:
-        _create_bandwidth_plot(op_results, x_values, x_label, title, operation, output_dir)
+        _create_bandwidth_plot(
+            op_results, x_values, x_label, title, operation, output_dir
+        )
 
 
-def _get_x_axis_data(op_results: Dict[str, Any], operation: str) -> Tuple[List[int], str]:
+def _get_x_axis_data(
+    op_results: Dict[str, Any], operation: str
+) -> Tuple[List[int], str]:
     """Extract x-axis data and label from operation results."""
     if "grid_sizes" in op_results:
         return op_results["grid_sizes"], "Grid Size"
     elif "data_sizes" in op_results:
         return op_results["data_sizes"], "Data Size"
     else:
-        logging.warning(f"No size information found for {operation}, skipping visualization")
+        logging.warning(
+            f"No size information found for {operation}, skipping visualization"
+        )
         return [], ""
 
 
@@ -813,14 +831,17 @@ def _set_log_scale_if_needed(x_values: List[int]) -> None:
         plt.xscale("log")
 
 
-def _filter_valid_data(values: List[float], x_values: List[int], filter_func=None) -> Tuple[List[int], List[float]]:
+def _filter_valid_data(
+    values: List[float], x_values: List[int], filter_func=None
+) -> Tuple[List[int], List[float]]:
     """Filter out invalid data points and return valid x and y values."""
     if filter_func is None:
         # Default filter: keep non-infinite values
         def default_filter(v):
             return v != float("inf")
+
         filter_func = default_filter
-    
+
     valid_indices = [i for i, v in enumerate(values) if filter_func(v)]
     valid_x = [x_values[i] for i in valid_indices]
     valid_y = [values[i] for i in valid_indices]
@@ -828,12 +849,12 @@ def _filter_valid_data(values: List[float], x_values: List[int], filter_func=Non
 
 
 def _create_time_plot(
-    op_results: Dict[str, Any], 
-    x_values: List[int], 
-    x_label: str, 
-    title: str, 
-    operation: str, 
-    output_dir: str
+    op_results: Dict[str, Any],
+    x_values: List[int],
+    x_label: str,
+    title: str,
+    operation: str,
+    output_dir: str,
 ) -> None:
     """Create execution time plot."""
     plt.figure(figsize=(12, 8))
@@ -862,14 +883,14 @@ def _create_time_plot(
         for times in op_results["times"].values():
             if not times:
                 continue
-            
+
             valid_times = [t for t in times if t != float("inf") and t > 0]
             if len(valid_times) >= 2:
                 time_range = max(valid_times) / min(valid_times)
                 if time_range > 100:
                     should_use_log_scale = True
                     break
-        
+
         if should_use_log_scale:
             plt.yscale("log")
     except (ValueError, ZeroDivisionError):
@@ -881,16 +902,16 @@ def _create_time_plot(
 
 
 def _create_speedup_plot(
-    op_results: Dict[str, Any], 
-    x_values: List[int], 
-    x_label: str, 
-    title: str, 
-    operation: str, 
-    output_dir: str
+    op_results: Dict[str, Any],
+    x_values: List[int],
+    x_label: str,
+    title: str,
+    operation: str,
+    output_dir: str,
 ) -> None:
     """Create speedup comparison plot."""
     plt.figure(figsize=(12, 8))
-    
+
     # Define filter function outside the loop
     def positive_filter(s):
         return s > 0
@@ -900,7 +921,9 @@ def _create_speedup_plot(
         if backend == "cpu" or not speedups or not any(s > 0 for s in speedups):
             continue
 
-        valid_x, valid_speedups = _filter_valid_data(speedups, x_values, positive_filter)
+        valid_x, valid_speedups = _filter_valid_data(
+            speedups, x_values, positive_filter
+        )
         plt.plot(valid_x, valid_speedups, marker="o", label=f"{backend}")
 
     # Configure plot
@@ -920,16 +943,16 @@ def _create_speedup_plot(
 
 
 def _create_bandwidth_plot(
-    op_results: Dict[str, Any], 
-    x_values: List[int], 
-    x_label: str, 
-    title: str, 
-    operation: str, 
-    output_dir: str
+    op_results: Dict[str, Any],
+    x_values: List[int],
+    x_label: str,
+    title: str,
+    operation: str,
+    output_dir: str,
 ) -> None:
     """Create bandwidth plot for memory transfer benchmarks."""
     plt.figure(figsize=(12, 8))
-    
+
     # Define filter function outside the loop
     def positive_filter(b):
         return b > 0
@@ -939,7 +962,9 @@ def _create_bandwidth_plot(
         if not bandwidths or not any(b > 0 for b in bandwidths):
             continue
 
-        valid_x, valid_bandwidths = _filter_valid_data(bandwidths, x_values, positive_filter)
+        valid_x, valid_bandwidths = _filter_valid_data(
+            bandwidths, x_values, positive_filter
+        )
         plt.plot(valid_x, valid_bandwidths, marker="o", label=f"{backend}")
 
     # Configure plot

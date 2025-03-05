@@ -17,6 +17,13 @@ This document provides a navigation guide to the Space Muck codebase, helping to
 - `/src/entities/base_generator.py`: Base generator class for procedural content generation
 - `/src/entities/miner_entity.py`: Symbiotic mining races that evolve in the asteroid field
 
+### Generators
+
+- `/src/generators/asteroid_field.py`: Manages the asteroid field grid and symbiote entities with procedural generation
+- `/src/generators/asteroid_generator.py`: Specialized generator for asteroid fields with various patterns
+- `/src/generators/procedural_generator.py`: Base procedural generation utilities
+- `/src/generators/symbiote_evolution_generator.py`: Handles symbiote race evolution
+
 ### Utilities
 
 - `/src/utils/gpu_utils.py`: GPU acceleration utilities for various computational tasks

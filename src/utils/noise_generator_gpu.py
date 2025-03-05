@@ -15,14 +15,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 # Local imports
-from utils.gpu_utils import (
+from .gpu_utils import (
     is_gpu_available,
     get_available_backends,
     to_gpu,
     to_cpu,
     apply_noise_generation_gpu,
 )
-from utils.noise_generator import NoiseGenerator, get_noise_generator
+from .noise_generator import NoiseGenerator, get_noise_generator
 
 # Optional dependencies
 try:
