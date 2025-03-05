@@ -4,11 +4,10 @@ Combat system module: Handles combat encounters between the player and enemy shi
 
 import logging
 import random
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any
 
 from ..entities.player import Player
 from ..entities.enemy_ship import EnemyShip
-from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
 
 
 class CombatSystem:
@@ -345,42 +344,43 @@ class CombatSystem:
         flee_chance = 0.5 + (self.player.level * 0.05) - (enemy.aggression * 0.2)
         flee_chance = max(0.1, min(0.9, flee_chance))  # Clamp between 10% and 90%
 
-        # Attempt to flee
         if random.random() < flee_chance:
-            # Successful flee
-            log_message = "Player successfully fled from combat!"
-            self.combat_log.append(log_message)
+            return self._handle_successful_flee(enemy)
+        # Failed flee attempt - enemy gets a free attack
+        log_message = "Player failed to flee! Enemy gets a free attack."
+        self.combat_log.append(log_message)
 
-            # Fleeing has a reputation penalty with some factions
-            reputation_change = None
-            if enemy.faction == "galactic_navy":
-                reputation_change = self.player.change_reputation("galactic_navy", -2)
+        # Enemy attack
+        attack_result = self.enemy_attack()
 
-            # End combat
-            end_result = self.end_combat("Player fled")
-            end_result["message"] = log_message
-            end_result["flee_success"] = True
+        return {
+            "success": True,
+            "flee_success": False,
+            "message": log_message,
+            "enemy_attack": attack_result,
+            "enemy_stats": enemy.get_stats(),
+            "player_stats": self.player.get_combat_stats(),
+        }
 
-            if reputation_change:
-                end_result["reputation_change"] = reputation_change
+    def _handle_successful_flee(self, enemy):
+        # Successful flee
+        log_message = "Player successfully fled from combat!"
+        self.combat_log.append(log_message)
 
-            return end_result
-        else:
-            # Failed flee attempt - enemy gets a free attack
-            log_message = "Player failed to flee! Enemy gets a free attack."
-            self.combat_log.append(log_message)
+        reputation_change = (
+            self.player.change_reputation("galactic_navy", -2)
+            if enemy.faction == "galactic_navy"
+            else None
+        )
+        # End combat
+        end_result = self.end_combat("Player fled")
+        end_result["message"] = log_message
+        end_result["flee_success"] = True
 
-            # Enemy attack
-            attack_result = self.enemy_attack()
+        if reputation_change:
+            end_result["reputation_change"] = reputation_change
 
-            return {
-                "success": True,
-                "flee_success": False,
-                "message": log_message,
-                "enemy_attack": attack_result,
-                "enemy_stats": enemy.get_stats(),
-                "player_stats": self.player.get_combat_stats(),
-            }
+        return end_result
 
     def _handle_enemy_destroyed(self) -> Dict[str, Any]:
         """

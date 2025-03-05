@@ -7,6 +7,9 @@ This document logs common issues encountered during development and their soluti
 1. [Import Issues](#import-issues)
 2. [Linting Issues](#linting-issues)
 3. [GPU Acceleration Issues](#gpu-acceleration-issues)
+4. [Game Loop Implementation](#game-loop-implementation)
+5. [Code Duplication Issues](#code-duplication-issues)
+6. [Code Quality Issues](#code-quality-issues)
 
 ## Import Issues
 
@@ -16,6 +19,7 @@ This document logs common issues encountered during development and their soluti
 1. Mixing absolute imports with 'src' prefix and relative imports
 2. Duplicate imports of the same module
 3. Inconsistent import organization
+4. Using wildcard imports (`from module import *`)
 
 **Solution**: Standardize import structure following these guidelines:
 
@@ -39,14 +43,26 @@ This document logs common issues encountered during development and their soluti
    from src.utils.gpu_utils import apply_noise_generation_gpu
    
    # Correct - using relative imports
-   from utils.gpu_utils import apply_noise_generation_gpu
+   from ..utils.gpu_utils import apply_noise_generation_gpu
    ```
+   
+   Note: The number of dots in relative imports depends on the directory depth. Use one dot for imports from the same directory, two dots for imports from the parent directory, and so on.
 
 3. **Avoid duplicate imports** by checking if a module is already imported:
    ```python
    # Incorrect - duplicate import
    import scipy
    import scipy.signal
+   ```
+   
+4. **Fix incorrect import paths** to ensure modules are found correctly:
+   ```python
+   # Incorrect - importing from wrong location
+   from src.entities.base_generator import BaseGenerator
+   
+   # Correct - importing from actual location
+   from src.generators.base_generator import BaseGenerator
+   ```
    
    # Correct - single import
    import scipy
@@ -144,6 +160,39 @@ This approach:
 4. Adds extra error handling with try/except during imports
 5. Avoids unused import warnings by not importing unused typing modules
 
+### Wildcard Import Issues
+
+**Issue**: Using wildcard imports (`from module import *`) causes several problems:
+1. Makes it unclear which names are imported and where they come from
+2. Can lead to name conflicts if multiple modules define the same name
+3. Causes linting warnings (F403, F405 in flake8/ruff)
+4. Makes it difficult to track which constants are actually used
+
+**Solution**: Replace wildcard imports with explicit imports:
+
+```python
+# Bad - wildcard import
+from config import *
+
+# Good - explicit imports
+from config import (
+    # Version information
+    VERSION,
+    # Window settings
+    WINDOW_WIDTH, WINDOW_HEIGHT,
+    # Game states
+    STATE_PLAY, STATE_SHOP,
+    # Colors
+    COLOR_BG, COLOR_TEXT
+)
+```
+
+Benefits:
+1. Makes code more readable by showing exactly which constants are used
+2. Prevents name conflicts and undefined name errors
+3. Allows linters to correctly identify unused imports
+4. Makes it easier to refactor and maintain the codebase
+
 ## Linting Issues
 
 ### Unused Imports
@@ -173,6 +222,49 @@ func(*args, **kwargs)  # Don't assign if not using the result
 end_time = time.time()
 ```
 
+## Type Errors
+
+### Tuple vs Integer Operations
+
+**Issue**: Attempting to perform integer operations on tuple values:
+```python
+# Error: TypeError: unsupported operand type(s) for //: 'tuple' and 'int'
+center_x, center_y = GAME_MAP_SIZE // 2, GAME_MAP_SIZE // 2
+```
+
+**Solution**: Unpack the tuple first, then perform operations on individual components:
+```python
+# Correct approach
+grid_width, grid_height = GAME_MAP_SIZE
+center_x, center_y = grid_width // 2, grid_height // 2
+```
+
+### Function Parameter Mismatches
+
+**Issue**: Calling functions with incorrect parameter names or extra parameters:
+```python
+# Error: TypeError: add_value_clusters() got multiple values for argument 'num_clusters'
+add_value_clusters(
+    value_grid=value_grid,
+    num_clusters=num_clusters,
+    cluster_value_multiplier=1.0 + cluster_tendency,  # Wrong parameter name
+    width=self.width,  # Extra parameter
+    height=self.height,  # Extra parameter
+    random_generator=self.random,  # Extra parameter
+)
+```
+
+**Solution**: Check the function signature and use only the parameters defined in the function:
+```python
+# Correct approach
+add_value_clusters(
+    value_grid=value_grid,
+    num_clusters=num_clusters,
+    cluster_radius=int(min(self.width, self.height) * 0.05),
+    value_multiplier=1.0 + cluster_tendency,  # Correct parameter name
+)
+```
+
 ## GPU Acceleration Issues
 
 ### Handling Backend Failures
@@ -191,6 +283,186 @@ def _bandwidth_handler(results, backend, prefix):
     results["times"][backend].append(float("inf"))
     results["bandwidth"][backend].append(0.0)
     logging.info(f"{prefix}{backend}: Failed")
+```
+
+## Game Loop Implementation
+
+### Missing Entry Point
+
+**Issue**: The main.py file had a Game class defined but lacked a proper entry point and game loop implementation. This made it impossible to run the game directly.
+
+**Solution**: Implement a proper main() function and entry point:
+
+## Code Quality Issues
+
+### Low Code Quality in Large Methods
+
+**Issue**: Several methods in the Game class had low code quality scores (below 15%) due to excessive length, complex conditionals, and multiple responsibilities within a single method.
+
+**Solution**: Refactor large methods by extracting smaller, focused methods with single responsibilities:
+
+1. **Extract Methods for Event Handling**:
+   ```python
+   # Before: Large monolithic event handling method
+   def handle_events(self) -> None:
+       for event in pygame.event.get():
+           # Many lines of code with different responsibilities
+           # ...
+   
+   # After: Smaller, focused methods
+   def handle_events(self) -> None:
+       for event in pygame.event.get():
+           # Handle UI component events first
+           if self.notifier.handle_event(event):
+               continue
+           # ...
+           elif event.type == pygame.MOUSEMOTION:
+               self.handle_mouse_motion(event)
+           elif event.type == pygame.MOUSEBUTTONDOWN:
+               self.handle_mouse_button_down(event)
+   
+   def handle_mouse_motion(self, event) -> None:
+       # Only handle mouse motion logic
+       self.hover_position = event.pos
+       self.cursor_over_ui = self.check_cursor_over_ui()
+   ```
+
+2. **Use Early Returns to Reduce Nesting**:
+   ```python
+   # Before: Deeply nested conditionals
+   def check_for_discoveries(self) -> None:
+       if self.frame_counter % 120 == 0:  # Every 2 seconds at 60 FPS
+           for dy, dx in itertools.product(range(-3, 4), range(-3, 4)):
+               nx, ny = self.player.x + dx, self.player.y + dy
+               if (condition1 and condition2 and condition3):
+                   # Do something
+   
+   # After: Early returns to reduce nesting
+   def check_for_discoveries(self) -> None:
+       if self.frame_counter % 120 != 0:  # Every 2 seconds at 60 FPS
+           return
+           
+       for dy, dx in itertools.product(range(-3, 4), range(-3, 4)):
+           nx, ny = self.player.x + dx, self.player.y + dy
+           if (condition1 and condition2 and condition3):
+               # Do something
+   ```
+
+3. **Use Meaningful Method Names**:
+   ```python
+   # Before: Generic or unclear method name
+   def _extracted_from_regenerate_field_12(self):
+       # Method implementation
+   
+   # After: Descriptive method name that explains purpose
+   def setup_new_field(self):
+       # Method implementation
+   ```
+
+### Benefits of Code Quality Improvements
+
+1. **Improved Readability**: Smaller methods with clear purposes are easier to understand
+2. **Better Maintainability**: Isolated functionality makes future changes safer
+3. **Easier Testing**: Single-responsibility methods are easier to test
+4. **Reduced Cognitive Load**: Developers can focus on one aspect at a time
+5. **Better Code Reuse**: Extracted methods can be reused in other contexts
+
+```python
+def run_game_loop(game: Game) -> None:
+    """Run the main game loop.
+    
+    Args:
+        game: Initialized Game instance
+    """
+    running = True
+    try:
+        # Main game loop
+        while running:
+            # Start performance timing for this frame
+            frame_start = log_performance_start("Frame")
+            
+            # Process events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                else:
+                    game.handle_events()
+            
+            # Update game state
+            game.update()
+            
+            # Render the game
+            game.draw()
+            
+            # Maintain frame rate
+            game.clock.tick(FPS)
+            
+            # End performance timing for this frame
+            log_performance_end("Frame", frame_start)
+            
+    except Exception as e:
+        # Log any unhandled exceptions
+        log_exception("Unhandled exception in main game loop", e)
+        raise
+    finally:
+        # Clean up resources
+        pygame.quit()
+        logging.info("Game terminated")
+
+
+def main() -> None:
+    """Initialize and run the game."""
+    try:
+        # Set up logging
+        setup_logging(log_level=logging.INFO)
+        logging.info(f"Starting Space Muck v{VERSION}")
+        
+        # Initialize the game
+        game = Game()
+        logging.info("Game initialized successfully")
+        
+        # Run the game loop
+        run_game_loop(game)
+        
+    except Exception as e:
+        # Log any unhandled exceptions during initialization
+        log_exception("Failed to initialize or run game", e)
+        raise
+
+
+# Entry point
+if __name__ == "__main__":
+    main()
+```
+
+### Duplicate Imports
+
+**Issue**: The main.py file had duplicate imports, with some using absolute paths with 'src' prefix and others using relative imports.
+
+**Solution**: Organize imports following the project's best practices:
+
+```python
+# Standard library imports
+import gc
+import logging
+import math
+import os
+import random
+import sys
+import time
+from typing import Dict, List, Tuple, Any, Optional, Set, Union
+
+# Third-party library imports
+import numpy as np
+import pygame
+
+# Local application imports
+from config import *
+from generators.asteroid_field import AsteroidField
+from generators.procedural_generator import create_field_with_multiple_algorithms
+from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+from entities.player import Player
+from entities.miner_entity import MinerEntity
 ```
 
 ## Code Quality Issues
@@ -293,3 +565,52 @@ This approach:
 3. Makes testing easier by allowing each method to be tested independently
 4. Provides clear documentation through method names and docstrings
 5. Centralizes error handling in the parent method
+
+## Code Duplication Issues
+
+### Duplicate Class Implementations
+
+**Issue**: The main.py file contained two separate implementations of the Game class, each with slightly different functionality and initialization logic. This created confusion about which implementation was being used and led to potential bugs when features were added to one implementation but not the other.
+
+**Solution**: Consolidate the duplicate implementations into a single, comprehensive Game class that incorporates all necessary functionality:
+
+1. **Identify all unique features** from both implementations
+2. **Create a unified implementation** that includes all necessary functionality
+3. **Ensure consistent naming** of methods and attributes
+4. **Update all references** to use the consolidated implementation
+
+**Benefits**:
+1. Eliminates confusion about which implementation is being used
+2. Ensures all features are available in a single place
+3. Simplifies maintenance and future development
+4. Reduces the risk of bugs from inconsistent implementations
+
+**Example of consolidated initialization**:
+```python
+def __init__(self) -> None:
+    """Initialize the game environment, field, and entities."""
+    # Initialize Pygame
+    pygame.init()
+    pygame.mixer.init()  # Initialize sound system
+    pygame.font.init()  # Ensure fonts are initialized
+
+    # Create display surface
+    self.screen: pygame.Surface = pygame.display.set_mode(
+        (WINDOW_WIDTH, WINDOW_HEIGHT)
+    )
+    pygame.display.set_caption(f"Space Muck v{VERSION} - Procedural Generation Edition")
+
+    # Setup logging
+    setup_logging(log_level=logging.INFO)
+    logging.info(f"Starting Space Muck v{VERSION} ({BUILD_DATE})")
+    
+    # Initialize field with advanced procedural generation
+    with LogContext("Field Initialization"):
+        self.field: AsteroidField = create_field_with_multiple_algorithms(
+            width=GRID_WIDTH,
+            height=GRID_HEIGHT,
+            seed=self.seed,
+            rare_chance=RARE_THRESHOLD,
+            rare_bonus=RARE_BONUS_MULTIPLIER,
+        )
+```

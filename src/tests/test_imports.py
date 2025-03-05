@@ -4,7 +4,7 @@ Test script to verify imports and fix linting issues.
 """
 
 # Import the base_generator to check for issues
-from src.entities.base_generator import BaseGenerator
+from src.generators.base_generator import BaseGenerator
 
 
 # Create an instance and test the methods

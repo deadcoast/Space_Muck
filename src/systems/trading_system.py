@@ -281,10 +281,11 @@ class TradingSystem:
         """
         # Calculate location factor based on distance from center
         # Stations further from center have higher prices
-        center_x, center_y = GAME_MAP_SIZE // 2, GAME_MAP_SIZE // 2
+        grid_width, grid_height = GAME_MAP_SIZE
+        center_x, center_y = grid_width // 2, grid_height // 2
         x, y = position
         distance_from_center = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-        max_distance = math.sqrt(2 * (GAME_MAP_SIZE // 2) ** 2)
+        max_distance = math.sqrt((grid_width // 2) ** 2 + (grid_height // 2) ** 2)
         location_factor = (
             1.0 + (distance_from_center / max_distance) * 0.3
         )  # Up to 30% higher prices
@@ -556,165 +557,191 @@ class TradingSystem:
             Dictionary containing quest details
         """
         # Scale quest difficulty with player level
-        difficulty_multiplier = 0.8 + (
-            player_level * 0.2
-        )  # 1.0 at level 1, 1.8 at level 5
+        difficulty_multiplier = 0.8 + (player_level * 0.2)  # 1.0 at level 1, 1.8 at level 5
 
         # Select quest type based on player level
-        quest_types = ["delivery", "procurement"]
-        if player_level >= 3:
-            quest_types.append(
-                "market_manipulation"
-            )  # More complex quest for higher levels
-        if player_level >= 4:
-            quest_types.append(
-                "rare_commodity"
-            )  # Very challenging quest for high levels
-
-        quest_type = random.choice(quest_types)
+        quest_type = self._select_quest_type_for_level(player_level)
 
         # Select a commodity based on quest type and player level
-        if quest_type == "rare_commodity" or (
-            quest_type == "procurement" and player_level >= 4
-        ):
+        commodity_id = self._select_commodity_for_quest(quest_type, player_level)
+
+        # Base reward scales with player level and commodity value
+        base_value = self.commodities[commodity_id]["base_price"]
+
+        # Generate quest based on type
+        if quest_type == "delivery" or quest_type not in [
+            "procurement",
+            "market_manipulation",
+            "rare_commodity",
+        ]:
+            return self._generate_delivery_quest(player_level, faction_id, commodity_id, 
+                                               base_value, difficulty_multiplier)
+        elif quest_type == "procurement":
+            return self._generate_procurement_quest(player_level, faction_id, commodity_id, 
+                                                 base_value, difficulty_multiplier)
+        elif quest_type == "market_manipulation":
+            return self._generate_market_manipulation_quest(player_level, faction_id, commodity_id, 
+                                                         base_value, difficulty_multiplier)
+        else:
+            return self._generate_rare_commodity_quest(player_level, faction_id, commodity_id, 
+                                                    base_value, difficulty_multiplier)
+    
+    def _select_quest_type_for_level(self, player_level: int) -> str:
+        """Select an appropriate quest type based on player level."""
+        quest_types = ["delivery", "procurement"]
+        if player_level >= 3:
+            quest_types.append("market_manipulation")  # More complex quest for higher levels
+        if player_level >= 4:
+            quest_types.append("rare_commodity")  # Very challenging quest for high levels
+
+        return random.choice(quest_types)
+    
+    def _select_commodity_for_quest(self, quest_type: str, player_level: int) -> str:
+        """Select an appropriate commodity based on quest type and player level."""
+        if quest_type == "rare_commodity" or (quest_type == "procurement" and player_level >= 4):
             commodity_pool = ["anomalous_materials", "rare_minerals"]
         elif player_level >= 3:
             commodity_pool = ["rare_minerals", "fuel_cells", "ship_parts"]
         else:
             commodity_pool = ["common_minerals", "fuel_cells"]
 
-        commodity_id = random.choice(commodity_pool)
+        return random.choice(commodity_pool)
+    
+    def _select_destination_station(self, faction_id: Optional[str] = None) -> str:
+        """Select an appropriate destination station, preferably of the given faction."""
+        if faction_id:
+            if faction_stations := [
+                s_id
+                for s_id, s in self.trading_stations.items()
+                if s.get("faction_id") == faction_id
+            ]:
+                return random.choice(faction_stations)
 
-        # Base reward scales with player level and commodity value
-        base_value = self.commodities[commodity_id]["base_price"]
-
-        # Generate quest details based on type
-        if quest_type == "delivery":
-            # Delivery quest: Transport goods from one station to another
-            quantity = max(
-                5, int(20 * difficulty_multiplier / (base_value / 10))
-            )  # More for cheaper goods
-            reward = int(
-                base_value * quantity * 0.3 * difficulty_multiplier
-            )  # 30% profit margin
-
-            # Select random source and destination stations
-            if len(self.trading_stations) >= 2:
-                station_ids = list(self.trading_stations.keys())
-                source_id = random.choice(station_ids)
-                dest_id = random.choice([s for s in station_ids if s != source_id])
-            else:
-                # Fallback if not enough stations
-                source_id = (
-                    "station_1"
-                    if "station_1" in self.trading_stations
-                    else list(self.trading_stations.keys())[0]
-                )
-                dest_id = "station_2"
-
-            quest = {
-                "type": "trading_delivery",
-                "title": f"Deliver {commodity_id.replace('_', ' ')} to {dest_id}",
-                "description": f"Transport {quantity} {commodity_id.replace('_', ' ')} from {source_id} to {dest_id}.",
-                "commodity_id": commodity_id,
-                "quantity": quantity,
-                "source_station": source_id,
-                "destination_station": dest_id,
-                "reward": reward,
-                "faction_id": faction_id,
-                "difficulty": player_level,
-                "completed": False,
-            }
-
-        elif quest_type == "procurement":
-            # Procurement quest: Acquire specific goods for a faction
-            quantity = max(3, int(15 * difficulty_multiplier / (base_value / 10)))
-            reward = int(
-                base_value * quantity * 0.5 * difficulty_multiplier
-            )  # 50% profit margin
-
-            # Select a random destination station, preferably of the given faction
-            if faction_id:
-                if faction_stations := [
-                    s_id
-                    for s_id, s in self.trading_stations.items()
-                    if s.get("faction_id") == faction_id
-                ]:
-                    dest_id = random.choice(faction_stations)
-                else:
-                    dest_id = random.choice(list(self.trading_stations.keys()))
-            else:
-                dest_id = random.choice(list(self.trading_stations.keys()))
-
-            quest = {
-                "type": "trading_procurement",
-                "title": f"Procure {commodity_id.replace('_', ' ')} for {dest_id}",
-                "description": f"Acquire and deliver {quantity} {commodity_id.replace('_', ' ')} to {dest_id}.",
-                "commodity_id": commodity_id,
-                "quantity": quantity,
-                "destination_station": dest_id,
-                "reward": reward,
-                "faction_id": faction_id,
-                "difficulty": player_level,
-                "completed": False,
-            }
-
-        elif quest_type == "market_manipulation":
-            # Market manipulation: Buy low, sell high by exploiting market events
-            quantity = max(2, int(10 * difficulty_multiplier / (base_value / 10)))
-            reward = int(
-                base_value * quantity * 0.8 * difficulty_multiplier
-            )  # 80% profit margin
-
-            quest = {
-                "type": "trading_market_manipulation",
-                "title": f"Market opportunity: {commodity_id.replace('_', ' ')}",
-                "description": f"Buy {quantity} {commodity_id.replace('_', ' ')} during a price drop and sell when prices rise.",
-                "commodity_id": commodity_id,
-                "quantity": quantity,
-                "target_profit_margin": 0.3,  # Need to make at least 30% profit
-                "reward": reward,
-                "faction_id": faction_id,
-                "difficulty": player_level,
-                "completed": False,
-                "buy_price_threshold": base_value
-                * 0.7,  # Buy when price drops below 70% of base
-            }
-
-        elif quest_type == "rare_commodity":
-            # Rare commodity: Find and deliver a very rare and valuable item
-            quantity = max(1, int(5 * difficulty_multiplier / (base_value / 10)))
-            reward = int(
-                base_value * quantity * 1.2 * difficulty_multiplier
-            )  # 120% profit margin
-
-            # Select a random destination station, preferably of the given faction
-            if faction_id:
-                if faction_stations := [
-                    s_id
-                    for s_id, s in self.trading_stations.items()
-                    if s.get("faction_id") == faction_id
-                ]:
-                    dest_id = random.choice(faction_stations)
-                else:
-                    dest_id = random.choice(list(self.trading_stations.keys()))
-            else:
-                dest_id = random.choice(list(self.trading_stations.keys()))
-
-            quest = {
-                "type": "trading_rare_commodity",
-                "title": f"Acquire rare {commodity_id.replace('_', ' ')}",
-                "description": f"Find and deliver {quantity} rare quality {commodity_id.replace('_', ' ')} to {dest_id}.",
-                "commodity_id": commodity_id,
-                "quantity": quantity,
-                "destination_station": dest_id,
-                "reward": reward,
-                "faction_id": faction_id,
-                "difficulty": player_level,
-                "completed": False,
-            }
-
-        return quest
+        # If no faction stations or no faction specified, choose any station
+        return random.choice(list(self.trading_stations.keys()))
+    
+    def _calculate_quantity_and_reward(self, base_value: int, difficulty_multiplier: float, 
+                                      quantity_base: int, quantity_multiplier: int, 
+                                      reward_percentage: float) -> Tuple[int, int]:
+        """Calculate quantity and reward for a quest based on standard formula."""
+        quantity = max(quantity_base, int(quantity_multiplier * difficulty_multiplier / (base_value / 10)))
+        reward = int(base_value * quantity * reward_percentage * difficulty_multiplier)
+        return quantity, reward
+    
+    def _generate_delivery_quest(self, player_level: int, faction_id: Optional[str], 
+                              commodity_id: str, base_value: int, 
+                              difficulty_multiplier: float) -> Dict[str, Any]:
+        """Generate a delivery quest: Transport goods from one station to another."""
+        # Calculate quantity and reward
+        quantity, reward = self._calculate_quantity_and_reward(
+            base_value, difficulty_multiplier, 5, 20, 0.3  # 30% profit margin
+        )
+        
+        # Select random source and destination stations
+        source_id, dest_id = self._select_source_and_destination_stations()
+        
+        return {
+            "type": "trading_delivery",
+            "title": f"Deliver {commodity_id.replace('_', ' ')} to {dest_id}",
+            "description": f"Transport {quantity} {commodity_id.replace('_', ' ')} from {source_id} to {dest_id}.",
+            "commodity_id": commodity_id,
+            "quantity": quantity,
+            "source_station": source_id,
+            "destination_station": dest_id,
+            "reward": reward,
+            "faction_id": faction_id,
+            "difficulty": player_level,
+            "completed": False,
+        }
+    
+    def _select_source_and_destination_stations(self) -> Tuple[str, str]:
+        """Select source and destination stations for delivery quests."""
+        if len(self.trading_stations) >= 2:
+            station_ids = list(self.trading_stations.keys())
+            source_id = random.choice(station_ids)
+            dest_id = random.choice([s for s in station_ids if s != source_id])
+        else:
+            # Fallback if not enough stations
+            source_id = (
+                "station_1" if "station_1" in self.trading_stations
+                else list(self.trading_stations.keys())[0]
+            )
+            dest_id = "station_2"
+        
+        return source_id, dest_id
+    
+    def _generate_procurement_quest(self, player_level: int, faction_id: Optional[str], 
+                                 commodity_id: str, base_value: int, 
+                                 difficulty_multiplier: float) -> Dict[str, Any]:
+        """Generate a procurement quest: Acquire specific goods for a faction."""
+        # Calculate quantity and reward
+        quantity, reward = self._calculate_quantity_and_reward(
+            base_value, difficulty_multiplier, 3, 15, 0.5  # 50% profit margin
+        )
+        
+        # Select destination station
+        dest_id = self._select_destination_station(faction_id)
+        
+        return {
+            "type": "trading_procurement",
+            "title": f"Procure {commodity_id.replace('_', ' ')} for {dest_id}",
+            "description": f"Acquire and deliver {quantity} {commodity_id.replace('_', ' ')} to {dest_id}.",
+            "commodity_id": commodity_id,
+            "quantity": quantity,
+            "destination_station": dest_id,
+            "reward": reward,
+            "faction_id": faction_id,
+            "difficulty": player_level,
+            "completed": False,
+        }
+    
+    def _generate_market_manipulation_quest(self, player_level: int, faction_id: Optional[str], 
+                                         commodity_id: str, base_value: int, 
+                                         difficulty_multiplier: float) -> Dict[str, Any]:
+        """Generate a market manipulation quest: Buy low, sell high by exploiting market events."""
+        # Calculate quantity and reward
+        quantity, reward = self._calculate_quantity_and_reward(
+            base_value, difficulty_multiplier, 2, 10, 0.8  # 80% profit margin
+        )
+        
+        return {
+            "type": "trading_market_manipulation",
+            "title": f"Market opportunity: {commodity_id.replace('_', ' ')}",
+            "description": f"Buy {quantity} {commodity_id.replace('_', ' ')} during a price drop and sell when prices rise.",
+            "commodity_id": commodity_id,
+            "quantity": quantity,
+            "target_profit_margin": 0.3,  # Need to make at least 30% profit
+            "reward": reward,
+            "faction_id": faction_id,
+            "difficulty": player_level,
+            "completed": False,
+            "buy_price_threshold": base_value * 0.7,  # Buy when price drops below 70% of base
+        }
+    
+    def _generate_rare_commodity_quest(self, player_level: int, faction_id: Optional[str], 
+                                    commodity_id: str, base_value: int, 
+                                    difficulty_multiplier: float) -> Dict[str, Any]:
+        """Generate a rare commodity quest: Find and deliver a very rare and valuable item."""
+        # Calculate quantity and reward
+        quantity, reward = self._calculate_quantity_and_reward(
+            base_value, difficulty_multiplier, 1, 5, 1.2  # 120% profit margin
+        )
+        
+        # Select destination station
+        dest_id = self._select_destination_station(faction_id)
+        
+        return {
+            "type": "trading_rare_commodity",
+            "title": f"Acquire rare {commodity_id.replace('_', ' ')}",
+            "description": f"Find and deliver {quantity} rare quality {commodity_id.replace('_', ' ')} to {dest_id}.",
+            "commodity_id": commodity_id,
+            "quantity": quantity,
+            "destination_station": dest_id,
+            "reward": reward,
+            "faction_id": faction_id,
+            "difficulty": player_level,
+            "completed": False,
+        }
 
     def check_quest_completion(self, quest: Dict[str, Any], player) -> bool:
         """
@@ -827,7 +854,7 @@ class TradingSystem:
         # Award credits and update reputation
         player.credits += quest["reward"]
         if hasattr(player, "update_faction_reputation") and quest["faction_id"]:
-            reputation_gain = arg2 + quest["difficulty"] * arg3
+            reputation_gain = reputation_base + quest["difficulty"] * reputation_multiplier
             player.update_faction_reputation(quest["faction_id"], reputation_gain)
 
         return True

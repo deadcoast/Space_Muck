@@ -861,7 +861,7 @@ def _create_time_plot(
 
     # Plot data for each backend
     for backend, times in op_results["times"].items():
-        if not times or not any(t != float("inf") for t in times):
+        if not times or all(t == float("inf") for t in times):
             continue
 
         valid_x, valid_times = _filter_valid_data(times, x_values)
@@ -918,7 +918,7 @@ def _create_speedup_plot(
 
     # Plot data for each backend
     for backend, speedups in op_results["speedup"].items():
-        if backend == "cpu" or not speedups or not any(s > 0 for s in speedups):
+        if backend == "cpu" or not speedups or all(s <= 0 for s in speedups):
             continue
 
         valid_x, valid_speedups = _filter_valid_data(
@@ -959,7 +959,7 @@ def _create_bandwidth_plot(
 
     # Plot data for each backend
     for backend, bandwidths in op_results["bandwidth"].items():
-        if not bandwidths or not any(b > 0 for b in bandwidths):
+        if not bandwidths or all(b <= 0 for b in bandwidths):
             continue
 
         valid_x, valid_bandwidths = _filter_valid_data(

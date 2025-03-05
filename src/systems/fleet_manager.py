@@ -9,8 +9,8 @@ import logging
 import random
 import math
 import heapq
-from typing import Dict, List, Tuple, Any, Optional, Set, Union, Callable
-from collections import defaultdict
+from typing import Dict, List, Tuple, Any, Optional, Set, Callable
+# from collections import defaultdict  # Uncomment if needed in the future
 
 from ..entities.enemy_ship import EnemyShip
 from ..config import GAME_MAP_SIZE
@@ -564,7 +564,7 @@ class Fleet:
         }
 
         # Sort ships by role priority
-        ships_by_priority = sorted(
+        sorted(
             self.ships,
             key=lambda s: role_priority.get(getattr(s, "role", "support"), 9),
         )
@@ -1412,63 +1412,73 @@ class Fleet:
             self.target_fleet = None
             return
 
-        # Get combat stances
+        # Get our combat stance
         our_stance = self.combat_stance
-        their_stance = (
-            self.target_fleet.combat_stance
-            if hasattr(self.target_fleet, "combat_stance")
-            else "balanced"
-        )
+        # Note: target stance is retrieved in _get_target_stance when needed
 
         # Calculate distance to target fleet
         distance = self._distance(self.position, self.target_fleet.position)
 
         # Determine ideal combat distance based on stance
+        ideal_distance = self._get_ideal_combat_distance(our_stance)
+
+        # Move toward or away from target to maintain ideal distance
+        if abs(distance - ideal_distance) > 0.5:
+            self._adjust_position_for_combat(distance, ideal_distance, delta_time)
+        # Determine if we can attack based on distance
+        attack_range = 7.0  # Base attack range
+
+        if distance <= attack_range:
+            self._execute_attack(delta_time)
+
+    def _get_ideal_combat_distance(self, stance: str) -> float:
+        """
+        Determine the ideal combat distance based on the fleet's stance.
+        
+        Args:
+            stance: The combat stance of the fleet
+            
+        Returns:
+            float: The ideal distance to maintain during combat
+        """
         ideal_distances = {
             "balanced": 5.0,  # Medium range
             "aggressive": 2.0,  # Close range
             "defensive": 8.0,  # Long range
             "evasive": 10.0,  # Very long range
         }
+        
+        return ideal_distances.get(stance, 5.0)
+        
+    def _adjust_position_for_combat(self, distance, ideal_distance, delta_time):
+        # Calculate direction vector
+        dx = self.target_fleet.position[0] - self.position[0]
+        dy = self.target_fleet.position[1] - self.position[1]
 
-        ideal_distance = ideal_distances.get(our_stance, 5.0)
+        # Normalize
+        if distance > 0:
+            dx /= distance
+            dy /= distance
 
-        # Move toward or away from target to maintain ideal distance
-        if abs(distance - ideal_distance) > 0.5:
-            # Calculate direction vector
-            dx = self.target_fleet.position[0] - self.position[0]
-            dy = self.target_fleet.position[1] - self.position[1]
+        # Determine if we need to move closer or further
+        if distance > ideal_distance:
+            # Move closer
+            move_distance = min(self.speed * delta_time, distance - ideal_distance)
+        else:
+            # Move away
+            move_distance = min(self.speed * delta_time, ideal_distance - distance)
+            dx = -dx
+            dy = -dy
 
-            # Normalize
-            if distance > 0:
-                dx /= distance
-                dy /= distance
+        # Update position
+        new_x = self.position[0] + dx * move_distance
+        new_y = self.position[1] + dy * move_distance
 
-            # Determine if we need to move closer or further
-            if distance > ideal_distance:
-                # Move closer
-                move_distance = min(self.speed * delta_time, distance - ideal_distance)
-            else:
-                # Move away
-                move_distance = min(self.speed * delta_time, ideal_distance - distance)
-                dx = -dx
-                dy = -dy
+        # Ensure we stay within map bounds
+        new_x = max(0, min(GAME_MAP_SIZE[0] - 1, new_x))
+        new_y = max(0, min(GAME_MAP_SIZE[1] - 1, new_y))
 
-            # Update position
-            new_x = self.position[0] + dx * move_distance
-            new_y = self.position[1] + dy * move_distance
-
-            # Ensure we stay within map bounds
-            new_x = max(0, min(GAME_MAP_SIZE[0] - 1, new_x))
-            new_y = max(0, min(GAME_MAP_SIZE[1] - 1, new_y))
-
-            self.position = (new_x, new_y)
-
-        # Determine if we can attack based on distance
-        attack_range = 7.0  # Base attack range
-
-        if distance <= attack_range:
-            self._execute_attack(delta_time)
+        self.position = (new_x, new_y)
 
     def _execute_attack(self, delta_time: float) -> None:
         """
@@ -1480,38 +1490,11 @@ class Fleet:
         if not self.target_fleet or not self.target_fleet.ships:
             return
 
-        # Calculate base damage based on fleet strength and stance
-        stance_damage_multipliers = {
-            "balanced": 1.0,  # Balanced damage
-            "aggressive": 1.5,  # High damage
-            "defensive": 0.7,  # Low damage
-            "evasive": 0.4,  # Very low damage
-        }
-
-        # Get our damage multiplier based on stance
-        damage_mult = stance_damage_multipliers.get(self.combat_stance, 1.0)
-
-        # Calculate base damage from our fleet strength
-        base_damage = self.get_fleet_strength() * damage_mult * delta_time
-
-        # Apply target's defensive modifiers based on their stance
-        target_stance = (
-            self.target_fleet.combat_stance
-            if hasattr(self.target_fleet, "combat_stance")
-            else "balanced"
-        )
-
-        stance_defense_multipliers = {
-            "balanced": 1.0,  # Balanced defense
-            "aggressive": 0.7,  # Low defense
-            "defensive": 1.5,  # High defense
-            "evasive": 1.3,  # Good defense
-        }
-
-        defense_mult = stance_defense_multipliers.get(target_stance, 1.0)
-
-        # Calculate final damage
-        final_damage = base_damage / defense_mult
+        # Get target's stance
+        target_stance = self._get_target_stance()
+        
+        # Calculate damage based on stances and fleet strength
+        final_damage = self._calculate_combat_damage(delta_time, target_stance)
 
         # Apply damage to target fleet's ships
         self._apply_damage_to_fleet(self.target_fleet, final_damage)
@@ -1520,6 +1503,54 @@ class Fleet:
             f"Fleet {self.fleet_id} dealt {final_damage:.2f} damage to fleet {self.target_fleet.fleet_id}"
         )
 
+    def _get_target_stance(self) -> str:
+        """
+        Get the combat stance of the target fleet.
+        
+        Returns:
+            str: The target fleet's combat stance
+        """
+        return (
+            self.target_fleet.combat_stance
+            if hasattr(self.target_fleet, "combat_stance")
+            else "balanced"
+        )
+    
+    def _calculate_combat_damage(self, delta_time: float, target_stance: str) -> float:
+        """
+        Calculate the damage to be dealt to the target fleet.
+        
+        Args:
+            delta_time: Time elapsed since last update in seconds
+            target_stance: The combat stance of the target fleet
+            
+        Returns:
+            float: The final damage amount
+        """
+        # Calculate offensive multiplier based on our stance
+        stance_damage_multipliers = {
+            "balanced": 1.0,  # Balanced damage
+            "aggressive": 1.5,  # High damage
+            "defensive": 0.7,  # Low damage
+            "evasive": 0.4,  # Very low damage
+        }
+        damage_mult = stance_damage_multipliers.get(self.combat_stance, 1.0)
+        
+        # Calculate base damage from our fleet strength
+        base_damage = self.get_fleet_strength() * damage_mult * delta_time
+        
+        # Apply target's defensive modifiers based on their stance
+        stance_defense_multipliers = {
+            "balanced": 1.0,  # Balanced defense
+            "aggressive": 0.7,  # Low defense
+            "defensive": 1.5,  # High defense
+            "evasive": 1.3,  # Good defense
+        }
+        defense_mult = stance_defense_multipliers.get(target_stance, 1.0)
+        
+        # Calculate final damage
+        return base_damage / defense_mult
+    
     def _apply_damage_to_fleet(self, target_fleet: "Fleet", damage: float) -> None:
         """
         Apply damage to ships in the target fleet.
@@ -1531,8 +1562,25 @@ class Fleet:
         if not target_fleet or not target_fleet.ships:
             return
 
-        # Distribute damage among ships based on formation
-        # Different formations distribute damage differently
+        # Get the appropriate damage distribution function based on formation
+        distribute_func = self._get_damage_distribution_function(target_fleet.formation)
+        
+        # Apply the damage distribution
+        distribute_func(target_fleet, damage)
+        
+        # Handle destroyed ships
+        self._handle_destroyed_ships(target_fleet)
+
+    def _get_damage_distribution_function(self, formation: str) -> Callable[["Fleet", float], None]:
+        """
+        Get the appropriate damage distribution function based on formation.
+        
+        Args:
+            formation: The formation type
+            
+        Returns:
+            Callable: The damage distribution function
+        """
         formation_damage_distribution = {
             "line": self._distribute_damage_evenly,
             "column": self._distribute_damage_front_heavy,
@@ -1541,15 +1589,16 @@ class Fleet:
             "circle": self._distribute_damage_flagship_protected,
             "scatter": self._distribute_damage_randomly,
         }
-
-        # Get the appropriate damage distribution function
-        distribute_func = formation_damage_distribution.get(
-            target_fleet.formation, self._distribute_damage_evenly
-        )
-
-        # Apply the damage distribution
-        distribute_func(target_fleet, damage)
-
+        
+        return formation_damage_distribution.get(formation, self._distribute_damage_evenly)
+    
+    def _handle_destroyed_ships(self, target_fleet: "Fleet") -> None:
+        """
+        Remove destroyed ships and check if the fleet is empty.
+        
+        Args:
+            target_fleet: The fleet to check for destroyed ships
+        """
         # Check for destroyed ships and remove them
         destroyed_ships = [ship for ship in target_fleet.ships if ship.health <= 0]
         for ship in destroyed_ships:
@@ -1560,7 +1609,7 @@ class Fleet:
         if not target_fleet.ships:
             logging.info(f"Fleet {target_fleet.fleet_id} has been destroyed")
             target_fleet.is_active = False
-
+    
     def _distribute_damage_evenly(self, target_fleet: "Fleet", damage: float) -> None:
         """
         Distribute damage evenly among all ships.
@@ -1643,21 +1692,24 @@ class Fleet:
 
         # In echelon formation, last ship takes 40% of damage (exposed flank)
         if len(target_fleet.ships) >= 2:
-            flank_ship = target_fleet.ships[-1]
-            flank_ship_damage = damage * 0.4
-            remaining_damage = damage * 0.6
-
-            # Apply damage to flank ship
-            flank_ship.health -= flank_ship_damage
-
-            # Distribute remaining damage
-            other_ships = target_fleet.ships[:-1]
-            damage_per_remaining_ship = remaining_damage / len(other_ships)
-            for ship in other_ships:
-                ship.health -= damage_per_remaining_ship
+            self._apply_damage_to_flank_and_others(target_fleet, damage)
         else:
             # If only one ship, it takes all damage
             target_fleet.ships[0].health -= damage
+
+    def _apply_damage_to_flank_and_others(self, target_fleet, damage):
+        flank_ship = target_fleet.ships[-1]
+        flank_ship_damage = damage * 0.4
+        remaining_damage = damage * 0.6
+
+        # Apply damage to flank ship
+        flank_ship.health -= flank_ship_damage
+
+        # Distribute remaining damage
+        other_ships = target_fleet.ships[:-1]
+        damage_per_remaining_ship = remaining_damage / len(other_ships)
+        for ship in other_ships:
+            ship.health -= damage_per_remaining_ship
 
     def _distribute_damage_flagship_protected(
         self, target_fleet: "Fleet", damage: float
@@ -1674,22 +1726,27 @@ class Fleet:
 
         # In circle formation, flagship takes only 10% of damage, others take more
         if target_fleet.flagship and len(target_fleet.ships) > 1:
-            flagship_damage = damage * 0.1
-            remaining_damage = damage * 0.9
-
-            # Apply damage to flagship
-            target_fleet.flagship.health -= flagship_damage
-
-            # Distribute remaining damage to other ships
-            other_ships = [
-                ship for ship in target_fleet.ships if ship != target_fleet.flagship
-            ]
-            damage_per_remaining_ship = remaining_damage / len(other_ships)
-            for ship in other_ships:
-                ship.health -= damage_per_remaining_ship
+            self._apply_damage_with_flagship_protection(
+                damage, target_fleet
+            )
         else:
             # If no flagship or only one ship, distribute evenly
             self._distribute_damage_evenly(target_fleet, damage)
+
+    def _apply_damage_with_flagship_protection(self, damage, target_fleet):
+        flagship_damage = damage * 0.1
+        remaining_damage = damage * 0.9
+
+        # Apply damage to flagship
+        target_fleet.flagship.health -= flagship_damage
+
+        # Distribute remaining damage to other ships
+        other_ships = [
+            ship for ship in target_fleet.ships if ship != target_fleet.flagship
+        ]
+        damage_per_remaining_ship = remaining_damage / len(other_ships)
+        for ship in other_ships:
+            ship.health -= damage_per_remaining_ship
 
     def _distribute_damage_randomly(self, target_fleet: "Fleet", damage: float) -> None:
         """
