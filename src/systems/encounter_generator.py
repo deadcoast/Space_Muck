@@ -4,12 +4,15 @@ Encounter generator module: Generates combat and other encounters based on playe
 
 import logging
 import random
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Tuple, Any
 
 from ..entities.player import Player
-from ..entities.enemy_ship import EnemyShip
+# EnemyShip is not directly used but may be needed in future extensions
+# from ..entities.enemy_ship import EnemyShip
 from .combat_system import CombatSystem
-from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES, GAME_MAP_SIZE
+# These combat constants may be needed in future extensions
+# from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
+from ..config import GAME_MAP_SIZE
 
 
 class EncounterGenerator:
@@ -131,11 +134,7 @@ class EncounterGenerator:
             if (x_range[0] <= x <= x_range[1]) and (y_range[0] <= y <= y_range[1]):
                 applicable_zones.append((zone_name, zone_data["danger"]))
 
-        if not applicable_zones:
-            return 1.0  # Default danger level
-
-        # If position is in multiple zones, use the highest danger level
-        return max(danger for _, danger in applicable_zones)
+        return max((danger for _, danger in applicable_zones), default=1.0)
 
     def check_for_encounter(self) -> Dict[str, Any]:
         """
@@ -201,34 +200,7 @@ class EncounterGenerator:
         """
         # Determine if this is a faction-based encounter
         faction_encounter = random.random() < 0.3
-        faction = None
-
-        if faction_encounter:
-            # Determine which faction based on player location and reputation
-            from ..entities.player import GAME_FACTIONS
-
-            # Weight factions based on player's reputation (lower rep = more likely to encounter)
-            faction_weights = {}
-            for faction_name in GAME_FACTIONS:
-                rep = self.player.reputation.get(faction_name, 0)
-                if rep < -20:
-                    weight = 0.8  # Very hostile
-                elif rep < 0:
-                    weight = 0.5  # Somewhat hostile
-                elif rep < 20:
-                    weight = 0.2  # Neutral
-                else:
-                    weight = 0.1  # Friendly
-
-                faction_weights[faction_name] = weight
-
-            # Convert to format for random.choices
-            factions = list(faction_weights.keys())
-            weights = list(faction_weights.values())
-
-            # Select faction
-            faction = random.choices(factions, weights=weights, k=1)[0]
-
+        faction = self._select_faction_for_encounter() if faction_encounter else None
         # Generate enemy ship
         enemy = self.combat_system.generate_enemy(
             faction=faction, position=self.player.position
@@ -260,6 +232,31 @@ class EncounterGenerator:
             "combat_started": combat_result["success"],
             "combat_system": self.combat_system,
         }
+
+    def _select_faction_for_encounter(self):
+        # Determine which faction based on player location and reputation
+        from ..entities.player import GAME_FACTIONS
+
+        # Weight factions based on player's reputation (lower rep = more likely to encounter)
+        faction_weights = {}
+        for faction_name in GAME_FACTIONS:
+            rep = self.player.reputation.get(faction_name, 0)
+            if rep < -20:
+                weight = 0.8  # Very hostile
+            elif rep < 0:
+                weight = 0.5  # Somewhat hostile
+            elif rep < 20:
+                weight = 0.2  # Neutral
+            else:
+                weight = 0.1  # Friendly
+
+            faction_weights[faction_name] = weight
+
+        # Convert to format for random.choices
+        factions = list(faction_weights.keys())
+        weights = list(faction_weights.values())
+
+        return random.choices(factions, weights=weights, k=1)[0]
 
     def generate_quest_encounter(self, quest_type: str) -> Dict[str, Any]:
         """

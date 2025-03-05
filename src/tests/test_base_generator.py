@@ -16,7 +16,7 @@ import importlib.util
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from entities.base_generator import BaseGenerator
+from generators.base_generator import BaseGenerator
 from utils.noise_generator import NoiseGenerator
 from utils.dependency_injection import DependencyContainer
 
@@ -414,7 +414,7 @@ class TestBaseGenerator(unittest.TestCase):
         grid = np.ones((10, 10))
 
         # Mock the utility function to verify it's called
-        with patch("utils.value_generator.add_value_clusters") as mock_clusters:
+        with patch("src.utils.value_generator.add_value_clusters") as mock_clusters:
             self._known_grid_handler(grid, mock_clusters, test_generator)
 
     def _known_grid_handler(self, grid, mock_clusters, test_generator):

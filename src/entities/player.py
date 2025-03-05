@@ -362,43 +362,62 @@ class Player(MinerEntity):
         Returns:
             Dict containing quest details
         """
-        import random
-
         # Select faction if not provided
-        if faction is None:
-            # Filter out hostile factions (player can't get quests from them)
-            available_factions = [
-                f for f in GAME_FACTIONS if self.get_reputation_level(f) != "hostile"
-            ]
+        faction = self._select_quest_faction(faction)
+        
+        # Select quest type based on faction preference
+        quest_type = self._select_quest_type(faction)
+        
+        # Calculate difficulty and reward multipliers
+        difficulty_multiplier, reward_multiplier = self._calculate_quest_multipliers(faction)
+        
+        # Generate quest based on type
+        if quest_type == "mining":
+            quest = self._generate_mining_quest(faction, difficulty_multiplier, reward_multiplier)
+        elif quest_type == "exploration":
+            quest = self._generate_exploration_quest(faction, difficulty_multiplier, reward_multiplier)
+        else:  # combat
+            quest = self._generate_combat_quest(faction, difficulty_multiplier, reward_multiplier)
 
-            # If no factions available (all hostile), return a generic non-faction quest
-            faction = random.choice(available_factions) if available_factions else None
+        # Add faction information if applicable
+        if faction is not None:
+            quest["faction"] = faction
+
+        return quest
+        
+    def _select_quest_faction(self, faction: Optional[str]) -> Optional[str]:
+        """Select a faction for the quest if none is provided."""
+        if faction is not None:
+            return faction
+            
+        # Filter out hostile factions (player can't get quests from them)
+        available_factions = [
+            f for f in GAME_FACTIONS if self.get_reputation_level(f) != "hostile"
+        ]
+
+        # If no factions available (all hostile), return None for a generic non-faction quest
+        return random.choice(available_factions) if available_factions else None
+        
+    def _select_quest_type(self, faction: Optional[str]) -> str:
+        """Select a quest type based on faction preferences or random if no faction."""
         # Quest types - each faction has preferred quest types
         faction_quest_preferences = {
             "miners_guild": ["mining", "mining", "exploration"],  # Mining focused
-            "explorers_union": [
-                "exploration",
-                "exploration",
-                "mining",
-            ],  # Exploration focused
+            "explorers_union": ["exploration", "exploration", "mining"],  # Exploration focused
             "galactic_navy": ["combat", "combat", "exploration"],  # Combat focused
             "traders_coalition": ["mining", "exploration", "combat"],  # Balanced
-            "fringe_colonies": [
-                "combat",
-                "mining",
-                "exploration",
-            ],  # Slightly combat focused
+            "fringe_colonies": ["combat", "mining", "exploration"],  # Slightly combat focused
         }
 
-        # Default quest types if no faction
-        quest_types = ["mining", "exploration", "combat"]
-
-        # Select quest type based on faction preference or random if no faction
         if faction is not None and faction in faction_quest_preferences:
-            quest_type = random.choice(faction_quest_preferences[faction])
-        else:
-            quest_type = random.choice(quest_types)
+            return random.choice(faction_quest_preferences[faction])
+        # Default quest types if no faction
+        default_quest_types = ["mining", "exploration", "combat"]
 
+        return random.choice(default_quest_types)
+            
+    def _calculate_quest_multipliers(self, faction: Optional[str]) -> Tuple[float, float]:
+        """Calculate difficulty and reward multipliers based on player level and faction."""
         # Scale difficulty and rewards based on player level
         difficulty_multiplier = 1.0 + (self.level - 1) * 0.5  # 1.0, 1.5, 2.0, 2.5, 3.0
         reward_multiplier = 1.0 + (self.level - 1) * 0.7  # 1.0, 1.7, 2.4, 3.1, 3.8
@@ -411,89 +430,80 @@ class Player(MinerEntity):
                 reward_multiplier *= 1.2  # 20% bonus
             elif rep_level == "friendly":
                 reward_multiplier *= 1.1  # 10% bonus
+                
+        return difficulty_multiplier, reward_multiplier
+        
+    def _generate_mining_quest(self, faction: Optional[str], difficulty_multiplier: float, 
+                              reward_multiplier: float) -> Dict[str, Any]:
+        """Generate a mining-type quest."""
+        target_amount = int(500 * difficulty_multiplier)
+        reward = int(800 * reward_multiplier)
 
-        # Generate quest based on type
-        if quest_type == "mining":
-            target_amount = int(500 * difficulty_multiplier)
-            reward = int(800 * reward_multiplier)
+        # Customize description based on faction
+        if faction == "miners_guild":
+            description = f"Mine {target_amount} worth of minerals for the Miners Guild"
+        elif faction == "traders_coalition":
+            description = f"Collect {target_amount} worth of minerals for the Traders Coalition"
+        else:
+            description = f"Mine {target_amount} worth of minerals"
 
-            # Customize description based on faction
-            if faction == "miners_guild":
-                description = (
-                    f"Mine {target_amount} worth of minerals for the Miners Guild"
-                )
-            elif faction == "traders_coalition":
-                description = f"Collect {target_amount} worth of minerals for the Traders Coalition"
-            else:
-                description = f"Mine {target_amount} worth of minerals"
+        return {
+            "id": f"mining_{self.level}_{random.randint(1000, 9999)}",
+            "type": "mining",
+            "description": description,
+            "target_amount": target_amount,
+            "current_amount": 0,
+            "reward": reward,
+            "level_requirement": self.level,
+        }
+        
+    def _generate_exploration_quest(self, faction: Optional[str], difficulty_multiplier: float, 
+                                  reward_multiplier: float) -> Dict[str, Any]:
+        """Generate an exploration-type quest."""
+        target_anomalies = max(1, int(2 * difficulty_multiplier))
+        reward = int(1200 * reward_multiplier)
 
-            quest = {
-                "id": f"mining_{self.level}_{random.randint(1000, 9999)}",
-                "type": "mining",
-                "description": description,
-                "target_amount": target_amount,
-                "current_amount": 0,
-                "reward": reward,
-                "level_requirement": self.level,
-            }
+        # Customize description based on faction
+        if faction == "explorers_union":
+            description = f"Chart {target_anomalies} new anomalies for the Explorers Union"
+        elif faction == "galactic_navy":
+            description = f"Scout {target_anomalies} anomalies for the Galactic Navy"
+        else:
+            description = f"Discover {target_anomalies} new anomalies"
 
-        elif quest_type == "exploration":
-            target_anomalies = max(1, int(2 * difficulty_multiplier))
-            reward = int(1200 * reward_multiplier)
+        return {
+            "id": f"exploration_{self.level}_{random.randint(1000, 9999)}",
+            "type": "exploration",
+            "description": description,
+            "target_anomalies": target_anomalies,
+            "current_anomalies": 0,
+            "reward": reward,
+            "level_requirement": self.level,
+        }
+        
+    def _generate_combat_quest(self, faction: Optional[str], difficulty_multiplier: float, 
+                             reward_multiplier: float) -> Dict[str, Any]:
+        """Generate a combat-type quest."""
+        target_enemies = max(2, int(3 * difficulty_multiplier))
+        reward = int(1500 * reward_multiplier)
 
-            # Customize description based on faction
-            if faction == "explorers_union":
-                description = (
-                    f"Chart {target_anomalies} new anomalies for the Explorers Union"
-                )
-            elif faction == "galactic_navy":
-                description = (
-                    f"Scout {target_anomalies} anomalies for the Galactic Navy"
-                )
-            else:
-                description = f"Discover {target_anomalies} new anomalies"
+        # Customize description based on faction
+        if faction == "fringe_colonies":
+            description = f"Take down {target_enemies} rival ships for the Fringe Colonies"
+        elif faction == "galactic_navy":
+            description = f"Eliminate {target_enemies} pirate ships for the Galactic Navy"
+        else:
+            description = f"Defeat {target_enemies} enemy ships"
 
-            quest = {
-                "id": f"exploration_{self.level}_{random.randint(1000, 9999)}",
-                "type": "exploration",
-                "description": description,
-                "target_anomalies": target_anomalies,
-                "current_anomalies": 0,
-                "reward": reward,
-                "level_requirement": self.level,
-            }
-
-        else:  # combat
-            target_enemies = max(2, int(3 * difficulty_multiplier))
-            reward = int(1500 * reward_multiplier)
-
-            # Customize description based on faction
-            if faction == "fringe_colonies":
-                description = (
-                    f"Take down {target_enemies} rival ships for the Fringe Colonies"
-                )
-            elif faction == "galactic_navy":
-                description = (
-                    f"Eliminate {target_enemies} pirate ships for the Galactic Navy"
-                )
-            else:
-                description = f"Defeat {target_enemies} enemy ships"
-
-            quest = {
-                "id": f"combat_{self.level}_{random.randint(1000, 9999)}",
-                "type": "combat",
-                "description": description,
-                "target_enemies": target_enemies,
-                "current_enemies": 0,
-                "reward": reward,
-                "level_requirement": self.level,
-            }
-
-        # Add faction information if applicable
-        if faction is not None:
-            quest["faction"] = faction
-
-        return quest
+        return {
+            "id": f"combat_{self.level}_{random.randint(1000, 9999)}",
+            "type": "combat",
+            "description": description,
+            "target_enemies": target_enemies,
+            "current_enemies": 0,
+            "reward": reward,
+            "level_requirement": self.level,
+        }
 
     def get_reputation_level(self, faction: str) -> str:
         """

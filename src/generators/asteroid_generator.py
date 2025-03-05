@@ -321,10 +321,8 @@ class AsteroidGenerator(BaseGenerator):
         return add_value_clusters(
             value_grid=value_grid,
             num_clusters=num_clusters,
-            cluster_value_multiplier=1.0 + cluster_tendency,
-            width=self.width,
-            height=self.height,
-            random_generator=self.random,
+            cluster_radius=int(min(self.width, self.height) * 0.05),  # 5% of the smaller dimension
+            value_multiplier=1.0 + cluster_tendency,
         )
 
     def _spiral_pattern(self) -> np.ndarray:

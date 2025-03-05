@@ -24,7 +24,7 @@ except ImportError:
 
 # GPU acceleration dependencies
 try:
-    from src.utils.gpu_utils import (
+    from ..utils.gpu_utils import (
         is_gpu_available,
         get_available_backends,
         to_gpu,
@@ -37,9 +37,9 @@ except ImportError:
     logging.warning("GPU utilities not available. GPU acceleration will be disabled.")
 
 # Local application imports
-from src.entities.base_entity import BaseEntity
-from src.utils.dependency_injection import inject
-from src.utils.noise_generator import NoiseGenerator, get_noise_generator
+from ..entities.base_entity import BaseEntity
+from ..utils.dependency_injection import inject
+from ..utils.noise_generator import NoiseGenerator, get_noise_generator
 
 
 @inject
@@ -195,7 +195,7 @@ class BaseGenerator(BaseEntity):
                 )
 
                 # Use the GPU-accelerated noise generation function
-                from utils.gpu_utils import apply_noise_generation_gpu
+                from ..utils.gpu_utils import apply_noise_generation_gpu
 
                 noise_grid = apply_noise_generation_gpu(
                     width=self.width,
@@ -344,7 +344,7 @@ class BaseGenerator(BaseEntity):
         # Try GPU acceleration first if enabled
         if self.use_gpu and self.gpu_available and GPU_UTILS_AVAILABLE:
             try:
-                from utils.gpu_utils import apply_cellular_automaton_gpu
+                from ..utils.gpu_utils import apply_cellular_automaton_gpu
 
                 logging.info(
                     f"Using GPU-accelerated cellular automaton with backend: {self.gpu_backend}"
@@ -388,7 +388,7 @@ class BaseGenerator(BaseEntity):
 
         # Try optimized CPU implementation if GPU failed or is not available
         try:
-            from utils.cellular_automaton_utils import (
+            from ..utils.cellular_automaton_utils import (
                 apply_cellular_automaton_optimized,
             )
 
@@ -1005,7 +1005,7 @@ class BaseGenerator(BaseEntity):
 
         # Try optimized CPU implementation if GPU failed or is not available
         try:
-            from utils.value_generator import add_value_clusters
+            from ..utils.value_generator import add_value_clusters
 
             logging.info("Using optimized clustering from value_generator module")
             start_time = time.time()

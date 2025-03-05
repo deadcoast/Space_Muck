@@ -173,3 +173,45 @@ Used for event handling and notifications.
    - The `asteroid_field.py` and related modules are now in the `src/generators` directory
    - Previously, some tests were looking for these modules in `src/world`
    - All import paths have been updated to reflect the correct locations
+
+5. **Import Optimization**:
+   - Only import what you need; avoid wildcard imports (`from module import *`)
+   - Remove unused imports to prevent linting errors
+   - Comment out potentially useful imports for future use instead of removing them completely:
+     ```python
+     # from collections import defaultdict  # Uncomment if needed in the future
+     ```
+   - For typing imports, only include what's actually used in type annotations
+
+### Linting Practices
+
+1. **Linting Tools**:
+   - We use Ruff as our primary linter for its speed and comprehensive rule set
+   - Additional tools include flake8, pylint, and sourcery for more in-depth analysis
+
+2. **Common Linting Issues and Solutions**:
+
+   - **Unused Imports**:
+     - Remove unused imports or comment them out if they might be needed later
+     - Example: `# from collections import defaultdict  # Uncomment if needed in the future`
+
+   - **Unused Variables**:
+     - Remove variable assignments if the variables are not used
+     - If the expression has side effects, remove just the assignment part
+     - Example: Change `ships_by_priority = sorted(...)` to just `sorted(...)`
+
+   - **Unused Function Parameters**:
+     - If parameters are truly unused, prefix them with underscore: `def func(_unused_param)`
+     - If they might be used in the future, add a comment explaining why they're kept
+
+   - **Code Style Inconsistencies**:
+     - Follow PEP 8 for consistent indentation, line length, and spacing
+     - Use consistent naming conventions throughout the codebase
+
+3. **Linting Configuration**:
+   - Aim to have zero linting errors in the codebase
+   - Configure linting tools to run automatically during development
+   - Use inline comments to disable specific linting rules when necessary (sparingly):
+     ```python
+     # noqa: F401  # Import needed for type checking only
+     ```

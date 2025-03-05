@@ -199,10 +199,9 @@ class AsteroidField:
         try:
             self._asteroid_handler()
         except Exception as e:
-            log_exception(e)
-            logging.error(f"Failed to generate field with generator: {str(e)}")
-            # Re-raise to trigger fallback in initialize_patterns
-            raise
+            self._handle_asteroid_generation_error(
+                e, 'Failed to generate field with generator: '
+            )
 
     def _asteroid_handler(self) -> None:
         """Generate asteroid field using available generators.
@@ -239,14 +238,19 @@ class AsteroidField:
             # Initialize energy grid based on asteroid values if not included in result
             if np.all(self.energy_grid == 0):
                 self._initialize_energy_grid()
-                
+
         except Exception as e:
-            log_exception(e)
-            logging.error(f"Error in asteroid field generation: {str(e)}")
-            raise  # Re-raise to allow the caller to handle or fall back
+            self._handle_asteroid_generation_error(
+                e, 'Error in asteroid field generation: '
+            )
         finally:
             # Log performance regardless of success or failure
             log_performance_end("generate_field_with_generator", start_time)
+
+    def _handle_asteroid_generation_error(self, e, error_prefix):
+        log_exception(e)
+        logging.error(f"{error_prefix}{str(e)}")
+        raise
 
     def _generate_asteroid_field_with_optimized_generator(self, common_params: dict, seed: int) -> None:
         """Generate asteroid field using the optimized AsteroidGenerator.

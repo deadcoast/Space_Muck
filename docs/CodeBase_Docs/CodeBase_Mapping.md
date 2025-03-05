@@ -24,6 +24,17 @@ This document provides a navigation guide to the Space Muck codebase, helping to
 - `/src/generators/procedural_generator.py`: Base procedural generation utilities
 - `/src/generators/symbiote_evolution_generator.py`: Handles symbiote race evolution
 
+### Systems
+
+- `/src/systems/fleet_manager.py`: Manages ship fleets, formations, combat, and resource distribution
+- `/src/systems/trading_system.py`: Handles trading, economy, and market interactions
+- `/src/systems/combat_system.py`: Manages combat mechanics and interactions
+- `/src/systems/encounter_generator.py`: Generates random encounters and events
+
+### Core Game
+
+- `/src/main.py`: Main game entry point and game loop implementation
+
 ### Utilities
 
 - `/src/utils/gpu_utils.py`: GPU acceleration utilities for various computational tasks
