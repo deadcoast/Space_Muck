@@ -40,10 +40,10 @@ if str(project_root) not in sys.path:
 
 # These imports are used in individual test methods with dynamic reloading
 # to ensure we're using real implementations instead of mocks
-# from src.generators.base_generator import BaseGenerator  # noqa: E402, F401
-# from src.generators.asteroid_field import AsteroidField  # noqa: E402, F401
-# from src.entities.player import Player  # noqa: E402, F401
-# from src.config import GRID_WIDTH, GRID_HEIGHT  # noqa: E402, F401
+# from generators.base_generator import BaseGenerator  # noqa: E402, F401
+# from generators.asteroid_field import AsteroidField  # noqa: E402, F401
+# from entities.player import Player  # noqa: E402, F401
+# from config import GRID_WIDTH, GRID_HEIGHT  # noqa: E402, F401
 
 
 class TestImports(unittest.TestCase):
@@ -81,7 +81,7 @@ class TestImports(unittest.TestCase):
             del sys.modules["src.config"]
 
         # Import directly to get fresh values
-        from src.config import GRID_WIDTH as fresh_width, GRID_HEIGHT as fresh_height
+        from config import GRID_WIDTH as fresh_width, GRID_HEIGHT as fresh_height
 
         self.assertIsInstance(fresh_width, int, "GRID_WIDTH should be an integer")
         self.assertIsInstance(fresh_height, int, "GRID_HEIGHT should be an integer")
@@ -97,7 +97,7 @@ class TestImports(unittest.TestCase):
         if "src.entities.player" in sys.modules:
             del sys.modules["src.entities.player"]
 
-        from src.entities.player import Player as FreshPlayer
+        from entities.player import Player as FreshPlayer
 
         player = FreshPlayer()
         self.assertIsInstance(player, FreshPlayer)
@@ -109,7 +109,7 @@ class TestImports(unittest.TestCase):
         if "src.generators.asteroid_field" in sys.modules:
             del sys.modules["src.generators.asteroid_field"]
 
-        from src.generators.asteroid_field import AsteroidField as FreshAsteroidField
+        from generators.asteroid_field import AsteroidField as FreshAsteroidField
 
         field = FreshAsteroidField()
         self.assertIsInstance(field, FreshAsteroidField)
@@ -121,7 +121,7 @@ class TestImports(unittest.TestCase):
         if "src.generators.base_generator" in sys.modules:
             del sys.modules["src.generators.base_generator"]
 
-        from src.generators.base_generator import BaseGenerator as FreshBaseGenerator
+        from generators.base_generator import BaseGenerator as FreshBaseGenerator
 
         generator = FreshBaseGenerator(entity_id="test", seed=42, width=50, height=50)
         self.assertIsInstance(generator, FreshBaseGenerator)

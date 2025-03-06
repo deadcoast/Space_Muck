@@ -85,22 +85,14 @@ except ImportError:
     SYMBIOTE_ALGORITHM_AVAILABLE = False
 
 # Import the class to test
-try:
-    from entities.miner_entity import MinerEntity
-except ImportError:
-    # Try alternate import path
-    from src.entities.miner_entity import MinerEntity
+from entities.miner_entity import MinerEntity
 
-
-# Try importing AsteroidField for proper test implementation
+# Import AsteroidField for proper test implementation
 try:
     from generators.asteroid_field import AsteroidField
 except ImportError:
-    try:
-        from src.generators.asteroid_field import AsteroidField
-    except ImportError:
-        # If we can't import it, define a simplified version for testing
-        class AsteroidField:
+    # If we can't import it, define a simplified version for testing
+    class AsteroidField:
             """Simplified AsteroidField for testing."""
 
             def __init__(self, width=100, height=100):

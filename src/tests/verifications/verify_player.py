@@ -50,7 +50,7 @@ sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
 
 # Now try to import and instantiate the Player class
 try:
-    from src.entities.player import Player
+    from entities.player import Player
 
     # Create a player instance
     player = Player()

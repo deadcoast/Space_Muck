@@ -13,11 +13,11 @@ from unittest.mock import patch
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.generators.asteroid_field import AsteroidField
-from src.entities.player import Player
-from src.entities.miner_entity import MinerEntity
-from src.ui.shop import Shop
-from src.ui.notification import NotificationManager
+from generators.asteroid_field import AsteroidField
+from entities.player import Player
+from entities.miner_entity import MinerEntity
+from ui.shop import Shop
+from ui.notification import NotificationManager
 
 
 class TestPlayerFieldInteraction(unittest.TestCase):

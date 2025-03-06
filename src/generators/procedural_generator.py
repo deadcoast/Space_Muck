@@ -11,16 +11,16 @@ from typing import Dict, Tuple, Optional, TYPE_CHECKING
 
 # Type checking imports
 if TYPE_CHECKING:
-    from src.generators.asteroid_field import AsteroidField
+    from generators.asteroid_field import AsteroidField
 
 import numpy as np
 from scipy import stats
 
 # Local imports with correct paths
-from src.generators.base_generator import BaseGenerator
-from src.utils.noise_generator import NoiseGenerator
-from src.utils.dependency_injection import inject
-from src.utils.logging_setup import (
+from generators.base_generator import BaseGenerator
+from utils.noise_generator import NoiseGenerator
+from utils.dependency_injection import inject
+from utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
@@ -603,7 +603,7 @@ def create_field_with_multiple_algorithms(
     """
     # Create the asteroid field
     # Import here to avoid circular imports
-    from src.generators.asteroid_field import AsteroidField as AsteroidFieldImpl
+    from generators.asteroid_field import AsteroidField as AsteroidFieldImpl
 
     # Also make AsteroidField available at the module level for mocking in tests
     globals()["AsteroidField"] = AsteroidFieldImpl

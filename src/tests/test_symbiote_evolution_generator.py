@@ -69,7 +69,7 @@ else:
 
 # Import actual logging_setup module (no mocking)
 try:
-    from src.utils.logging_setup import (
+    from utils.logging_setup import (
         log_performance_start,
         log_performance_end,
         log_exception,
@@ -107,8 +107,8 @@ except ImportError:
 
 # Import the classes to test
 try:
-    from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
-    from src.generators.base_generator import BaseGenerator
+    from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
+    from generators.base_generator import BaseGenerator
 
     # Check if the algorithm module is available without importing unused class
     ALGORITHM_AVAILABLE = (

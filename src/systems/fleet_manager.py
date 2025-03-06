@@ -13,8 +13,8 @@ from typing import Dict, List, Tuple, Any, Optional, Set, Callable
 
 # from collections import defaultdict  # Uncomment if needed in the future
 
-from ..entities.enemy_ship import EnemyShip
-from ..config import GAME_MAP_SIZE
+from entities.enemy_ship import EnemyShip
+from config import GAME_MAP_SIZE
 
 # Fleet formation types
 FLEET_FORMATIONS = {

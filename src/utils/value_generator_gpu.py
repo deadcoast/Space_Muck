@@ -17,7 +17,7 @@ import numpy as np
 
 # Local imports
 # GPU utilities imports removed (unused)
-from src.utils.value_generator import generate_value_distribution, add_value_clusters
+from utils.value_generator import generate_value_distribution, add_value_clusters
 
 # Optional dependencies
 try:

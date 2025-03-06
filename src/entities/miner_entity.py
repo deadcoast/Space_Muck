@@ -42,10 +42,10 @@ except ImportError:
     print("PerlinNoise package is not available. Using fallback noise generator.")
 
 # Local application imports
-from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
 # Import from config package
-from src.config import (
+from config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -58,8 +58,8 @@ from src.config import (
     WINDOW_WIDTH,
     CELL_SIZE as GRID_CELL_SIZE,
 )
-from src.entities.base_entity import BaseEntity
-from src.utils.logging_setup import log_exception
+from entities.base_entity import BaseEntity
+from utils.logging_setup import log_exception
 
 
 # Forward reference for type hints

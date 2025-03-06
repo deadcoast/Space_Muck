@@ -19,22 +19,22 @@ import numpy as np
 
 # Local application imports
 # Note: Config constants are referenced via parameters instead of direct imports
-from src.generators.base_generator import BaseGenerator
-from src.utils.dependency_injection import inject
-from src.utils.noise_generator import NoiseGenerator
-from src.utils.pattern_generator import (
+from generators.base_generator import BaseGenerator
+from utils.dependency_injection import inject
+from utils.noise_generator import NoiseGenerator
+from utils.pattern_generator import (
     generate_spiral_pattern,
     generate_ring_pattern,
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
 )
-from src.utils.value_generator import (
+from utils.value_generator import (
     generate_value_distribution,
     add_value_clusters,
     generate_rare_resource_distribution,
 )
-from src.utils.logging_setup import (
+from utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
@@ -42,7 +42,7 @@ from src.utils.logging_setup import (
 
 # Import AsteroidField for create_asteroid_field method
 try:
-    from src.generators.asteroid_field import AsteroidField
+    from generators.asteroid_field import AsteroidField
 except ImportError:
     # For tests that mock this import
     AsteroidField = None
@@ -88,6 +88,9 @@ class AsteroidGenerator(BaseGenerator):
             position=position,
             noise_generator=noise_generator,
         )
+        
+        # Create a random number generator using the seed
+        self.random = random.Random(self.seed)
 
         # Generation parameters
         self.set_parameter("density", 0.2)  # Base density of asteroids

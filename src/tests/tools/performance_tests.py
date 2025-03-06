@@ -15,10 +15,10 @@ from unittest.mock import MagicMock, patch
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.config import *
-from src.generators import AsteroidField, AsteroidGenerator
-from src.entities.player import Player
-from src.entities.miner_entity import MinerEntity
+from config import *
+from generators import AsteroidField, AsteroidGenerator
+from entities.player import Player
+from entities.miner_entity import MinerEntity
 
 
 class TestAsteroidFieldPerformance(unittest.TestCase):

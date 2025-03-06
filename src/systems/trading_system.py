@@ -12,7 +12,7 @@ import logging
 from typing import Dict, List, Tuple, Any, Optional
 
 # Local application imports
-from ..config import GAME_MAP_SIZE
+from config import GAME_MAP_SIZE
 
 
 class TradingSystem:

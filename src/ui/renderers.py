@@ -17,7 +17,7 @@ import numpy as np
 import pygame
 
 # Local application imports
-from ..config import (
+from config import (
     COLOR_ASTEROID_RARE,
     COLOR_BG,
     COLOR_GRID,

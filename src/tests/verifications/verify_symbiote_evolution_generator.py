@@ -49,10 +49,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
     try:
         # Try primary import path
-        from src.generators.symbiote_evolution_generator import (
+        from generators.symbiote_evolution_generator import (
             SymbioteEvolutionGenerator,
         )
-        from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+        from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
         SYMBIOTE_GENERATOR_AVAILABLE = True
     except ImportError:
@@ -406,7 +406,7 @@ def _extracted_from_perform_code_review_7():
     # Check for key features
     features = {
         "Inheritance": "class SymbioteEvolutionGenerator(BaseGenerator)" in source,
-        "Algorithm Integration": "from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
+        "Algorithm Integration": "from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
         in source,
         "Colony Generation": "def generate_initial_colonies" in source,
         "Mineral Distribution": "def generate_mineral_distribution" in source,
@@ -514,8 +514,8 @@ def verify_file_structure():
                 content = f.read()
 
             if (
-                "from src.generators.base_generator import BaseGenerator" in content
-                or "from src.entities.base_generator import BaseGenerator" in content
+                "from generators.base_generator import BaseGenerator" in content
+                or "from entities.base_generator import BaseGenerator" in content
             ):
                 print("✓ SymbioteEvolutionGenerator imports BaseGenerator")
             else:
@@ -525,7 +525,7 @@ def verify_file_structure():
                 success = False
 
             if (
-                "from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
+                "from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
                 in content
             ):
                 print("✓ SymbioteEvolutionGenerator imports SymbioteEvolutionAlgorithm")
@@ -546,10 +546,10 @@ def verify_file_structure():
             # Try to import the modules to check inheritance programmatically
             try:
                 sys.path.append(parent_dir)
-                from src.generators.symbiote_evolution_generator import (
+                from generators.symbiote_evolution_generator import (
                     SymbioteEvolutionGenerator,
                 )
-                from src.generators.base_generator import BaseGenerator
+                from generators.base_generator import BaseGenerator
 
                 if issubclass(SymbioteEvolutionGenerator, BaseGenerator):
                     print("✓ SymbioteEvolutionGenerator is a subclass of BaseGenerator")

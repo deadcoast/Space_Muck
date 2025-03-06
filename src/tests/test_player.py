@@ -20,7 +20,7 @@ sys.modules["scipy"] = MagicMock()
 sys.modules["scipy.stats"] = MagicMock()
 sys.modules["scipy.ndimage"] = MagicMock()
 
-from src.entities.player import Player
+from entities.player import Player
 
 
 class MockField:
@@ -417,7 +417,7 @@ class TestPlayer(unittest.TestCase):
     def test_reputation_initialization(self):
         """Test that reputation is correctly initialized."""
         # Import constants from player module
-        from src.entities.player import GAME_FACTIONS
+        from entities.player import GAME_FACTIONS
 
         # Check that all factions are initialized with neutral reputation
         for faction in GAME_FACTIONS:
@@ -428,7 +428,7 @@ class TestPlayer(unittest.TestCase):
         """Test that reputation levels are correctly calculated."""
         # Import constants from player module
         # Import player module for reputation testing
-        from src.entities.player import (
+        from entities.player import (
             Player,
         )  # Re-import to ensure we have the latest version
 

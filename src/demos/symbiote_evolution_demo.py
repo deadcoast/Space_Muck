@@ -28,7 +28,7 @@ except ImportError:
 
 # Import the generator
 try:
-    from src.generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
+    from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
     GENERATOR_AVAILABLE = True
     print("Successfully imported SymbioteEvolutionGenerator")
@@ -44,7 +44,7 @@ except ImportError as e:
         import sys
 
         sys.path.append("/Users/deadcoast/PycharmProjects/Space_Muck")
-        from src.generators.symbiote_evolution_generator import (
+        from generators.symbiote_evolution_generator import (
             SymbioteEvolutionGenerator,
         )
 

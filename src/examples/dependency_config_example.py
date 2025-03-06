@@ -13,13 +13,13 @@ import logging
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.utils.dependency_injection import inject, container
-from src.utils.dependency_config import (
+from utils.dependency_injection import inject, container
+from utils.dependency_config import (
     app_container,
     DependencyConfig,
     load_config_from_file,
 )
-from src.utils.noise_generator import NoiseGenerator
+from utils.noise_generator import NoiseGenerator
 
 
 # Example class that uses dependency injection

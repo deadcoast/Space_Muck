@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import random
 import math
 
-from src.systems.trading_system import TradingSystem
+from systems.trading_system import TradingSystem
 
 
 class MockPlayer:

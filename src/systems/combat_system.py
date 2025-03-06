@@ -6,8 +6,8 @@ import logging
 import random
 from typing import Dict, Optional, Tuple, Any
 
-from ..entities.player import Player
-from ..entities.enemy_ship import EnemyShip
+from entities.player import Player
+from entities.enemy_ship import EnemyShip
 
 
 class CombatSystem:
@@ -72,7 +72,7 @@ class CombatSystem:
 
         # If no faction specified, determine based on location or random
         if faction is None and random.random() < 0.3:
-            from ..entities.player import GAME_FACTIONS
+            from entities.player import GAME_FACTIONS
 
             faction = random.choice(GAME_FACTIONS)
 

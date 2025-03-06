@@ -243,7 +243,7 @@ def apply_cellular_automaton_gpu(
         and not MPS_AVAILABLE
         and not METALGPU_AVAILABLE
     ):
-        from src.utils.cellular_automaton_utils import apply_cellular_automaton
+        from utils.cellular_automaton_utils import apply_cellular_automaton
 
         return apply_cellular_automaton(
             grid, birth_set, survival_set, iterations, wrap, width, height
@@ -312,7 +312,7 @@ def apply_cellular_automaton_gpu(
         return grid * result_grid
 
     # Fallback to CPU implementation
-    from src.utils.cellular_automaton_utils import apply_cellular_automaton
+    from utils.cellular_automaton_utils import apply_cellular_automaton
 
     return apply_cellular_automaton(
         grid, birth_set, survival_set, iterations, wrap, width, height
@@ -368,7 +368,7 @@ def apply_noise_generation_gpu(
         and not METALGPU_AVAILABLE
     ):
         try:
-            from src.utils.noise_generator import generate_perlin_noise
+            from utils.noise_generator import generate_perlin_noise
 
             return generate_perlin_noise(
                 width, height, scale, octaves, persistence, lacunarity, seed
@@ -531,7 +531,7 @@ def apply_noise_generation_gpu(
     # CUDA implementation not provided for noise generation due to complexity
     # Fallback to CPU implementation
     try:
-        from src.utils.noise_generator import generate_perlin_noise
+        from utils.noise_generator import generate_perlin_noise
 
         return generate_perlin_noise(
             width, height, scale, octaves, persistence, lacunarity, seed

@@ -5,9 +5,9 @@ Tests for the combat system module.
 import unittest
 import random
 
-from src.entities.player import Player
-from src.entities.enemy_ship import EnemyShip
-from src.systems.combat_system import CombatSystem
+from entities.player import Player
+from entities.enemy_ship import EnemyShip
+from systems.combat_system import CombatSystem
 
 
 class DeterministicCombatSystem(CombatSystem):

@@ -23,8 +23,8 @@ logging.basicConfig(
 )
 
 # Import our modules
-from src.entities.base_generator import BaseGenerator
-from src.utils.gpu_utils import is_gpu_available, get_available_backends
+from entities.base_generator import BaseGenerator
+from utils.gpu_utils import is_gpu_available, get_available_backends
 
 
 def run_noise_benchmark(
