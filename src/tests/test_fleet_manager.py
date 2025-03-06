@@ -26,7 +26,7 @@ sys.modules["src.entities.enemy_ship"] = MagicMock()
 sys.modules["src.entities.enemy_ship"].EnemyShip = mock_enemy_ship
 
 # Now import the class to test
-from src.systems.fleet_manager import Fleet  # noqa: E402
+from systems.fleet_manager import Fleet  # noqa: E402
 
 
 class TestFleetManager(unittest.TestCase):

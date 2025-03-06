@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple
 
 # Import utilities
-from src.utils.gpu_utils import (
+from utils.gpu_utils import (
     is_gpu_available,
     get_available_backends,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
 )
-from src.utils.cellular_automaton_utils import apply_cellular_automaton
+from utils.cellular_automaton_utils import apply_cellular_automaton
 
 
 def benchmark_cellular_automaton(

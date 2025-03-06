@@ -6,7 +6,7 @@ import logging
 import random
 from typing import Dict, Optional, Tuple, Any
 
-from ..config import (
+from config import (
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,
     COMBAT_BASE_WEAPON_RANGE,

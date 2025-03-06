@@ -14,14 +14,14 @@ from unittest.mock import patch, MagicMock
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.dependency_config import (
+from utils.dependency_config import (
     DependencyConfig,
     app_container,
     configure_dependencies,
     register_noise_generator,
     load_config_from_file,
 )
-from src.utils.noise_generator import (
+from utils.noise_generator import (
     NoiseGenerator,
     PerlinNoiseGenerator,
     SimplexNoiseGenerator,

@@ -16,9 +16,9 @@ import importlib.util
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from src.generators.base_generator import BaseGenerator
-from src.utils.noise_generator import NoiseGenerator
-from src.utils.dependency_injection import DependencyContainer
+from generators.base_generator import BaseGenerator
+from utils.noise_generator import NoiseGenerator
+from utils.dependency_injection import DependencyContainer
 
 # Check for utility modules availability using importlib.util.find_spec
 CA_UTILS_AVAILABLE = (

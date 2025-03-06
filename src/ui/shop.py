@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Tuple
 import pygame
 
 # Local application imports
-from ..config import (
+from config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -512,7 +512,7 @@ class Shop:
         birth_set = {random.randint(1, 8) for _ in range(random.randint(1, 3))}
         survival_set = {random.randint(1, 8) for _ in range(random.randint(1, 3))}
 
-        from src.entities.miner_entity import MinerEntity
+        from entities.miner_entity import MinerEntity
 
         new_race = MinerEntity(
             race_id=race_id,

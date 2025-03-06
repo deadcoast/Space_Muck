@@ -21,8 +21,8 @@ try:
     )
 except ImportError:
     # Fall back to absolute imports when running as a script
-    from src.utils.dependency_injection import DependencyContainer
-    from src.utils.noise_generator import (
+    from utils.dependency_injection import DependencyContainer
+    from utils.noise_generator import (
         NoiseGenerator,
         PerlinNoiseGenerator,
         SimplexNoiseGenerator,

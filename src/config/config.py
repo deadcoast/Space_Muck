@@ -7,7 +7,7 @@ are strongly typed for better IDE support and error checking.
 """
 
 # Standard library imports
-from typing import Tuple, Dict, Any, List, Set
+from typing import Tuple, Dict, Any, List
 
 # Version information
 VERSION: str = "1.0.0"

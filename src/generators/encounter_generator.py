@@ -6,9 +6,9 @@ import logging
 import random
 from typing import Dict, Tuple, Any
 
-from src.entities.player import Player
-from src.systems.combat_system import CombatSystem
-from src.config import GAME_MAP_SIZE
+from entities.player import Player
+from systems.combat_system import CombatSystem
+from config import GAME_MAP_SIZE
 
 
 class EncounterGenerator:
@@ -235,7 +235,7 @@ class EncounterGenerator:
     # TODO Rename this here and in `_generate_combat_encounter`
     def _extracted_from__generate_combat_encounter_14(self):
         # Determine which faction based on player location and reputation
-        from src.entities.player import GAME_FACTIONS
+        from entities.player import GAME_FACTIONS
 
         # Weight factions based on player's reputation (lower rep = more likely to encounter)
         faction_weights = {}

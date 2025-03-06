@@ -33,7 +33,7 @@ for module_name in list(sys.modules.keys()):
         del sys.modules[module_name]
 
 # Import from project modules
-from src.utils.gpu_utils import (  # noqa: E402
+from utils.gpu_utils import (  # noqa: E402
     apply_kmeans_clustering_gpu,
     apply_dbscan_clustering_gpu,
     is_gpu_available,

@@ -10,7 +10,7 @@ from typing import Tuple, List, Optional
 import pygame
 import numpy as np
 
-from ..config import COLOR_TEXT, COLOR_BG
+from config import COLOR_TEXT, COLOR_BG
 
 
 def draw_text(

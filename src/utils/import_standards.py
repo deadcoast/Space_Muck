@@ -31,10 +31,10 @@ except ImportError:
     SCIPY_AVAILABLE = False
     
 # Local application imports
-from src.config import *  # Config imports
-from src.entities.base_entity import BaseEntity
-from src.utils.dependency_injection import inject
-from src.utils.noise_generator import NoiseGenerator, get_noise_generator
+from config import *  # Config imports
+from entities.base_entity import BaseEntity
+from utils.dependency_injection import inject
+from utils.noise_generator import NoiseGenerator, get_noise_generator
 ```
 
 Guidelines:

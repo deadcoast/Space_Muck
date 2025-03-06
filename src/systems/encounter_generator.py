@@ -6,15 +6,15 @@ import logging
 import random
 from typing import Dict, Tuple, Any
 
-from ..entities.player import Player
+from entities.player import Player
 
 # EnemyShip is not directly used but may be needed in future extensions
-# from ..entities.enemy_ship import EnemyShip
-from .combat_system import CombatSystem
+# from entities.enemy_ship import EnemyShip
+from systems.combat_system import CombatSystem
 
 # These combat constants may be needed in future extensions
-# from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
-from ..config import GAME_MAP_SIZE
+# from config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
+from config import GAME_MAP_SIZE
 
 
 class EncounterGenerator:
@@ -237,7 +237,7 @@ class EncounterGenerator:
 
     def _select_faction_for_encounter(self):
         # Determine which faction based on player location and reputation
-        from ..entities.player import GAME_FACTIONS
+        from entities.player import GAME_FACTIONS
 
         # Weight factions based on player's reputation (lower rep = more likely to encounter)
         faction_weights = {}
@@ -295,7 +295,7 @@ class EncounterGenerator:
         combat_result = self.combat_system.start_combat(enemy)
 
         # Create encounter message
-        encounter_message = f"You've encountered a quest target: {enemy.difficulty} {enemy.ship_type} ship!"
+        encounter_message = f"You've encountered a WANTED target: {enemy.difficulty} {enemy.ship_type} ship!"
 
         return {
             "encounter": True,

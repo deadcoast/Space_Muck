@@ -6,10 +6,10 @@ import unittest
 from unittest.mock import patch
 import random
 
-from src.entities.player import Player
-from src.entities.enemy_ship import EnemyShip
-from src.systems.combat_system import CombatSystem
-from src.systems.encounter_generator import EncounterGenerator
+from entities.player import Player
+from entities.enemy_ship import EnemyShip
+from systems.combat_system import CombatSystem
+from systems.encounter_generator import EncounterGenerator
 
 
 class TestEncounterGenerator(unittest.TestCase):

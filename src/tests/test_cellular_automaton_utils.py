@@ -13,7 +13,7 @@ from typing import Dict, Set, Any
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Import the cellular automaton utilities
-from src.utils.cellular_automaton_utils import (
+from utils.cellular_automaton_utils import (
     apply_cellular_automaton,
     apply_cellular_automaton_optimized,
     generate_cellular_automaton_rules,

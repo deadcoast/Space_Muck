@@ -11,7 +11,7 @@ from typing import List, Tuple, Dict, Any, Optional
 
 import pygame
 
-from ..config import WINDOW_HEIGHT, COLOR_TEXT
+from config import WINDOW_HEIGHT, COLOR_TEXT
 from .draw_utils import draw_text, draw_panel
 
 

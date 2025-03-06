@@ -7,11 +7,11 @@ import unittest
 import numpy as np
 from unittest.mock import patch
 
-from src.utils.value_generator_gpu import (
+from utils.value_generator_gpu import (
     generate_value_distribution_gpu,
     add_value_clusters_gpu,
 )
-from src.utils.gpu_utils import (
+from utils.gpu_utils import (
     is_gpu_available,
     get_available_backends,
 )

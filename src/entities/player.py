@@ -7,7 +7,7 @@ import logging
 import random
 
 from .miner_entity import MinerEntity
-from ..config import (
+from config import (
     COLOR_PLAYER,
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,

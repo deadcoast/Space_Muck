@@ -18,14 +18,14 @@ from typing import List, Optional
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the classes to test
-from src.generators.procedural_generator import (
+from generators.procedural_generator import (
     ProceduralGenerator,
     # Imported but redefined below for testing purposes
     create_field_with_multiple_algorithms as original_create_field,
 )
-from src.generators.base_generator import BaseGenerator
-from src.generators.asteroid_field import AsteroidField
-from src.utils.noise_generator import (
+from generators.base_generator import BaseGenerator
+from generators.asteroid_field import AsteroidField
+from utils.noise_generator import (
     SimplexNoiseGenerator,
 )  # NoiseGenerator is not used directly
 
@@ -372,7 +372,7 @@ def create_field_with_multiple_algorithms(
     """
     # Create the asteroid field
     # Import here to avoid circular imports
-    from src.generators.asteroid_field import AsteroidField
+    from generators.asteroid_field import AsteroidField
 
     # Create the field
     field = AsteroidField(width=width, height=height)

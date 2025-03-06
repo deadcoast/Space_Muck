@@ -585,8 +585,8 @@ def verify_file_structure():
                 content = f.read()
 
             if (
-                "from src.generators.base_generator import BaseGenerator" in content
-                or "from src.entities.base_generator import BaseGenerator" in content
+                "from generators.base_generator import BaseGenerator" in content
+                or "from entities.base_generator import BaseGenerator" in content
             ):
                 print("✓ AsteroidGenerator imports BaseGenerator")
             else:
@@ -602,8 +602,8 @@ def verify_file_structure():
             # Try to import the modules to check inheritance programmatically
             try:
                 sys.path.append(parent_dir)
-                from src.generators.asteroid_field import AsteroidField
-                from src.generators.base_generator import BaseGenerator
+                from generators.asteroid_field import AsteroidField
+                from generators.base_generator import BaseGenerator
 
                 if issubclass(AsteroidField, BaseGenerator):
                     print("✓ AsteroidField is a subclass of BaseGenerator")

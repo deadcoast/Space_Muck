@@ -17,27 +17,27 @@ import numpy as np
 
 
 # Local application imports
-from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
 # Remove wildcard import as no config variables are directly used
-# from src.config import *
-from src.generators.base_generator import BaseGenerator
-from src.utils.noise_generator import NoiseGenerator
-from src.utils.dependency_injection import inject
-from src.utils.logging_setup import (
+# from config import *
+from generators.base_generator import BaseGenerator
+from utils.noise_generator import NoiseGenerator
+from utils.dependency_injection import inject
+from utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
 )
-from src.utils.pattern_generator import (
+from utils.pattern_generator import (
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
 )
-from src.utils.value_generator import (
+from utils.value_generator import (
     add_value_clusters,
 )
-from src.utils.cellular_automaton_utils import (
+from utils.cellular_automaton_utils import (
     apply_cellular_automaton,
     apply_cellular_automaton_optimized,
     generate_cellular_automaton_rules,

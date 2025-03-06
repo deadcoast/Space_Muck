@@ -11,7 +11,7 @@ import numpy as np
 from unittest.mock import patch, MagicMock
 
 # Import the module to test
-from src.utils.gpu_utils import (
+from utils.gpu_utils import (
     is_gpu_available,
     get_available_backends,
     to_gpu,
