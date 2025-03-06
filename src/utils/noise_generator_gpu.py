@@ -6,10 +6,13 @@ This module provides GPU-accelerated implementations of noise generation algorit
 used in procedural generation, with fallback mechanisms for systems without GPU support.
 """
 
+
+import itertools
+
 # Standard library imports
 import logging
 import random
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional
 
 # Third-party library imports
 import numpy as np
@@ -18,7 +21,6 @@ import numpy as np
 from .gpu_utils import (
     is_gpu_available,
     get_available_backends,
-    to_gpu,
     to_cpu,
     apply_noise_generation_gpu,
 )
@@ -26,8 +28,7 @@ from .noise_generator import NoiseGenerator, get_noise_generator
 
 # Optional dependencies
 try:
-    import numba
-    from numba import cuda, float32, int32
+    from numba import cuda
 
     NUMBA_AVAILABLE = True
     CUDA_AVAILABLE = cuda.is_available()
@@ -325,44 +326,42 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         # Generate base noise using warped coordinates
         if self.backend != "cpu" and is_gpu_available():
             try:
-                if self.backend == "cupy" and CUPY_AVAILABLE:
-                    # CuPy implementation
-                    result = cp.zeros((height, width), dtype=cp.float32)
-                    warped_x_gpu = cp.asarray(warped_x)
-                    warped_y_gpu = cp.asarray(warped_y)
-
-                    # Generate a random permutation table for noise
-                    perm_size = 256
-                    # Generate noise for each octave
-                    for i in range(octaves):
-                        octave_scale = scale * (2**i)
-                        octave_weight = 1.0 / (2**i)
-                        octave_seed = seed + i + 2000 if seed is not None else None
-
-                        # Custom noise generation using warped coordinates
-                        # This is a simplified version - in practice, you'd use a more sophisticated approach
-                        noise_values = cp.zeros((height, width), dtype=cp.float32)
-
-                        perm = cp.asarray(
-                            np.random.permutation(perm_size), dtype=cp.int32
-                        )
-
-                        # This is just a placeholder - actual implementation would be more complex
-                        noise_values = cp.sin(
-                            warped_x_gpu * octave_scale * 10
-                        ) * cp.cos(warped_y_gpu * octave_scale * 10)
-                        noise_values = (noise_values + 1) / 2  # Normalize to [0, 1]
-
-                        result += noise_values * octave_weight
-
-                    # Ensure values are in [0, 1]
-                    result = cp.clip(result, 0, 1)
-                    return to_cpu(result)
-                else:
+                if self.backend != "cupy" or not CUPY_AVAILABLE:
                     # Fall back to CPU implementation for now
                     raise NotImplementedError(
                         "Only CuPy backend is currently implemented for domain warping"
                     )
+                # CuPy implementation
+                result = cp.zeros((height, width), dtype=cp.float32)
+                warped_x_gpu = cp.asarray(warped_x)
+                warped_y_gpu = cp.asarray(warped_y)
+
+                # Permutation table size would be used in a more complete implementation
+                # but is not needed in this simplified version
+                # Generate noise for each octave
+                for i in range(octaves):
+                    octave_scale = scale * (2**i)
+                    octave_weight = 1.0 / (2**i)
+                    octave_seed = seed + i + 2000 if seed is not None else None
+
+                    # Custom noise generation using warped coordinates
+                    # This is a simplified version - in practice, you'd use a more sophisticated approach
+                    noise_values = cp.zeros((height, width), dtype=cp.float32)
+
+                    # Generate permutation table for noise (not used in this simplified version)
+                    # Will be implemented in future versions
+
+                    # This is just a placeholder - actual implementation would be more complex
+                    noise_values = cp.sin(warped_x_gpu * octave_scale * 10) * cp.cos(
+                        warped_y_gpu * octave_scale * 10
+                    )
+                    noise_values = (noise_values + 1) / 2  # Normalize to [0, 1]
+
+                    result += noise_values * octave_weight
+
+                # Ensure values are in [0, 1]
+                result = cp.clip(result, 0, 1)
+                return to_cpu(result)
             except Exception as e:
                 logging.warning(
                     f"GPU domain warping failed: {str(e)}. Falling back to CPU."
@@ -388,14 +387,13 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
 
             # Sample the noise using warped coordinates
             warped_noise = np.zeros((height, width), dtype=np.float32)
-            for y in range(height):
-                for x in range(width):
-                    # Get warped coordinates
-                    wx = int(warped_x[y, x] * width) % width
-                    wy = int(warped_y[y, x] * height) % height
+            for y, x in itertools.product(range(height), range(width)):
+                # Get warped coordinates
+                wx = int(warped_x[y, x] * width) % width
+                wy = int(warped_y[y, x] * height) % height
 
-                    # Sample noise at warped position
-                    warped_noise[y, x] = octave_noise[wy, wx]
+                # Sample noise at warped position
+                warped_noise[y, x] = octave_noise[wy, wx]
 
             # Add weighted noise to result
             result += warped_noise * octave_weight

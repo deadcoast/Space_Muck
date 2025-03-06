@@ -303,5 +303,124 @@ class TestBaseEntity(unittest.TestCase):
         self.assertEqual(deserialized[-1].entity_id, f"entity-{num_entities - 1}")
 
 
+# Inheritance test classes using real implementations
+class MinerEntity(BaseEntity):
+    """Test class for inheritance testing."""
+
+    def __init__(self, race_id=1, color=(0, 255, 0), **kwargs):
+        super().__init__(entity_id=str(race_id), entity_type="miner", color=color)
+        self.race_id = race_id
+        self.trait = "standard"
+
+
+class PlayerEntity(MinerEntity):
+    """Test class for inheritance testing."""
+
+    def __init__(self, race_id=0, color=(0, 255, 255), **kwargs):
+        super().__init__(race_id=race_id, color=color)
+        self.is_player = True
+        self.credits = 1000
+        self.ship_level = 1
+        self.trait = "adaptive"
+
+
+class TestEntityInheritance(unittest.TestCase):
+    """Test cases for the BaseEntity inheritance hierarchy."""
+
+    def test_inheritance_hierarchy(self):
+        """Test the inheritance hierarchy using real implementations."""
+        # Create instances of each entity type
+        base = BaseEntity(entity_type="base")
+        miner = MinerEntity(race_id=1, color=(0, 255, 0))
+        player = PlayerEntity()
+
+        # Verify inheritance
+        self.assertIsInstance(miner, BaseEntity)
+        self.assertIsInstance(player, MinerEntity)
+        self.assertIsInstance(player, BaseEntity)
+
+        # Verify entity types
+        self.assertEqual(base.entity_type, "base")
+        self.assertEqual(miner.entity_type, "miner")
+
+        # Verify player-specific attributes
+        self.assertTrue(player.is_player)
+        self.assertEqual(player.credits, 1000)
+        self.assertEqual(player.trait, "adaptive")
+
+    def test_subclass_base_functionality(self):
+        """Test that base functionality works in subclasses."""
+        # Create a player entity
+        player = PlayerEntity()
+
+        # Test position methods
+        player.set_position(10, 20)
+        self.assertEqual(player.get_position(), (10, 20))
+
+        # Test tags
+        player.add_tag("important")
+        self.assertTrue(player.has_tag("important"))
+
+        # Test activation methods
+        self.assertTrue(player.is_active())
+        player.deactivate()
+        self.assertFalse(player.is_active())
+        player.activate()
+        self.assertTrue(player.is_active())
+
+        # Test serialization and deserialization
+        player_dict = player.to_dict()
+        restored_player = PlayerEntity.from_dict(player_dict)
+
+        # Verify the attributes match after serialization/deserialization
+        self.assertEqual(restored_player.entity_type, "miner")
+        self.assertEqual(restored_player.trait, "adaptive")
+
+
+class TestVerificationEquivalence(unittest.TestCase):
+    """Test cases that were originally in verify_base_entity.py."""
+
+    def test_verification_basic_functionality(self):
+        """Test the basic functionality originally in verify_base_entity."""
+        # Create a basic entity
+        entity = BaseEntity(entity_type="test", color=(255, 0, 0), position=(10, 20))
+
+        # Verify basic attributes
+        self.assertEqual(entity.entity_type, "test")
+        self.assertEqual(entity.color, (255, 0, 0))
+
+        # Check that position is not None before comparing
+        self.assertIsNotNone(entity.position)
+        if entity.position:  # Type guard for position
+            self.assertEqual(entity.position, (10, 20))
+
+        self.assertTrue(entity.active)
+
+        # Test methods
+        entity.add_tag("important")
+        self.assertTrue(entity.has_tag("important"))
+
+        entity.set_position(30, 40)
+
+        # Check that position is not None before comparing
+        position = entity.get_position()
+        self.assertIsNotNone(position)
+        if position:  # Type guard for position
+            self.assertEqual(position, (30, 40))
+
+        entity.deactivate()
+        self.assertFalse(entity.is_active())
+
+        entity.activate()
+        self.assertTrue(entity.is_active())
+
+        # Test serialization
+        data = entity.to_dict()
+        self.assertEqual(data["entity_type"], "test")
+
+        new_entity = BaseEntity.from_dict(data)
+        self.assertEqual(new_entity.entity_type, entity.entity_type)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Standalone verification script for testing AsteroidGenerator optimization concepts.
-This script implements a simplified version of BaseGenerator and AsteroidGenerator
-to test the optimization techniques without circular import issues.
+Comprehensive verification script for testing AsteroidGenerator functionality and structure.
+
+This script provides both basic file structure verification and advanced performance testing
+for the AsteroidGenerator class. It implements a simplified version of BaseGenerator and
+AsteroidGenerator to test optimization techniques without circular import issues.
 
 This script focuses on:
-1. Performance testing of generator methods
-2. Caching verification
-3. Visualization of generator outputs
+1. File structure and inheritance verification
+2. Performance testing of generator methods
+3. Caching verification
+4. Visualization of generator outputs
 """
 
 import sys
@@ -541,8 +544,101 @@ def visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_d
     print("Visualization saved as 'asteroid_generator_test.png'")
 
 
+def verify_file_structure():
+    """Verify the file structure and inheritance of AsteroidGenerator."""
+    import os
+
+    print("\n=== Verifying AsteroidGenerator File Structure ===")
+
+    # Get the parent directory to access the src folder
+    parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+    # Check if the files exist
+    base_generator_path = os.path.join(
+        parent_dir, "src", "entities", "base_generator.py"
+    )
+    asteroid_generator_path = os.path.join(
+        parent_dir, "src", "generators", "asteroid_generator.py"
+    )
+
+    success = True
+
+    if not os.path.isfile(base_generator_path):
+        print(f"Error: BaseGenerator file does not exist at {base_generator_path}")
+        success = False
+    else:
+        print(f"✓ BaseGenerator file exists at {base_generator_path}")
+
+    if not os.path.isfile(asteroid_generator_path):
+        print(
+            f"Error: AsteroidGenerator file does not exist at {asteroid_generator_path}"
+        )
+        success = False
+    else:
+        print(f"✓ AsteroidGenerator file exists at {asteroid_generator_path}")
+
+    # Only proceed with inheritance check if both files exist
+    if success:
+        # Check file contents to verify inheritance
+        try:
+            with open(asteroid_generator_path, "r") as f:
+                content = f.read()
+
+            if (
+                "from src.generators.base_generator import BaseGenerator" in content
+                or "from src.entities.base_generator import BaseGenerator" in content
+            ):
+                print("✓ AsteroidGenerator imports BaseGenerator")
+            else:
+                print("✗ AsteroidGenerator does not import BaseGenerator correctly")
+                success = False
+
+            if "class AsteroidGenerator(BaseGenerator):" in content:
+                print("✓ AsteroidGenerator inherits from BaseGenerator")
+            else:
+                print("✗ AsteroidGenerator does not inherit from BaseGenerator")
+                success = False
+
+            # Try to import the modules to check inheritance programmatically
+            try:
+                sys.path.append(parent_dir)
+                from src.generators.asteroid_field import AsteroidField
+                from src.generators.base_generator import BaseGenerator
+
+                if issubclass(AsteroidField, BaseGenerator):
+                    print("✓ AsteroidField is a subclass of BaseGenerator")
+                else:
+                    print("✗ AsteroidField is not a subclass of BaseGenerator")
+                    success = False
+
+                # Check for required methods
+                required_methods = ["generate", "apply_cellular_automaton"]
+                for method in required_methods:
+                    if hasattr(AsteroidField, method) and callable(
+                        getattr(AsteroidField, method)
+                    ):
+                        print(f"✓ AsteroidField has required method: {method}")
+                    else:
+                        print(f"✗ AsteroidField is missing required method: {method}")
+                        success = False
+
+            except ImportError as e:
+                print(f"Error importing modules: {e}")
+                success = False
+
+        except Exception as e:
+            print(f"Error checking file contents: {e}")
+            success = False
+
+    print(f"File structure verification {'successful' if success else 'failed'}")
+    return success
+
+
 if __name__ == "__main__":
-    print("=== AsteroidGenerator Verification ===")
+    print("=== AsteroidGenerator Comprehensive Verification ===")
+
+    # First verify the file structure
+    structure_success = verify_file_structure()
 
     # Check if we can run the tests
     if not NUMPY_AVAILABLE or not SCIPY_AVAILABLE:

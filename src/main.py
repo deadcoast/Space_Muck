@@ -25,40 +25,52 @@ import pygame
 
 # Local application imports
 # Game constants and configuration
-from config import (
+from src.config import (
     # Version information
     VERSION,
     # Window and display settings
-    WINDOW_WIDTH, WINDOW_HEIGHT, 
-    GRID_WIDTH, GRID_HEIGHT, MINIMAP_SIZE, MINIMAP_PADDING,
-    VIEW_WIDTH, VIEW_HEIGHT,
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    GRID_WIDTH,
+    GRID_HEIGHT,
+    MINIMAP_SIZE,
+    MINIMAP_PADDING,
+    VIEW_WIDTH,
+    VIEW_HEIGHT,
     # Performance settings
-    UPDATE_INTERVAL, DEBUG_MODE, SHOW_GRID, SHOW_FPS,
+    UPDATE_INTERVAL,
+    DEBUG_MODE,
+    SHOW_GRID,
+    SHOW_FPS,
     # Game states
-    STATE_PLAY, STATE_SHOP,
+    STATE_PLAY,
+    STATE_SHOP,
     # Colors
-    COLOR_BG, COLOR_TEXT,
-    COLOR_RACE_1, COLOR_RACE_2, COLOR_RACE_3,
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_RACE_1,
+    COLOR_RACE_2,
+    COLOR_RACE_3,
     COLOR_PLAYER,
     # Race settings
-    RACE_INITIAL_DENSITY
+    RACE_INITIAL_DENSITY,
 )
 
 # Game components
-from generators.asteroid_field import AsteroidField
-from entities.player import Player
-from entities.miner_entity import MinerEntity
-from ui.shop import Shop
-from ui.notification import NotificationManager
-from ui.renderers import AsteroidFieldRenderer
-from ui.draw_utils import (
+from src.generators.asteroid_field import AsteroidField
+from src.entities.player import Player
+from src.entities.miner_entity import MinerEntity
+from src.ui.shop import Shop
+from src.ui.notification import NotificationManager
+from src.ui.renderers import AsteroidFieldRenderer
+from src.ui.draw_utils import (
     draw_text,
     draw_panel,
     draw_minimap,
     draw_progress_bar,
     draw_button,
 )
-from utils.logging_setup import (
+from src.utils.logging_setup import (
     log_exception,
     LogContext,
     log_performance_start,
@@ -224,7 +236,9 @@ class Game:
             self.bg_pattern.fill(COLOR_BG)
 
             # Add subtle noise to background
-            for y, x in itertools.product(range(bg_pattern_size), range(bg_pattern_size)):
+            for y, x in itertools.product(
+                range(bg_pattern_size), range(bg_pattern_size)
+            ):
                 noise = random.randint(-5, 5)
                 color = max(0, min(255, COLOR_BG[0] + noise))
                 self.bg_pattern.set_at((x, y), (color, color, color + 2))
@@ -368,13 +382,13 @@ class Game:
 
         elif self.state == STATE_PLAY:
             self.handle_play_state_keys(key)
-        
+
     def handle_mouse_motion(self, event) -> None:
         """Handle mouse motion events."""
         # Update hover position for tooltips
         self.hover_position = event.pos
         self.cursor_over_ui = self.check_cursor_over_ui()
-        
+
     def handle_mouse_button_down(self, event) -> None:
         """Handle mouse button down events."""
         # Handle mouse clicks
@@ -383,18 +397,18 @@ class Game:
         elif event.button == 3:  # Right click
             if self.state == STATE_PLAY:
                 self.handle_right_click_in_play_state(event.pos)
-                
+
     def handle_right_click_in_play_state(self, pos) -> None:
         """Handle right click in play state."""
         # Select race under cursor
         grid_x, grid_y = self.screen_to_grid(pos[0], pos[1])
         if not (0 <= grid_x < self.field.width and 0 <= grid_y < self.field.height):
             return
-            
+
         race_id = self.field.entity_grid[grid_y, grid_x]
         if race_id <= 0:
             return
-            
+
         # Find the race
         for i, race in enumerate(self.field.races):
             if race.race_id == race_id:
@@ -668,7 +682,7 @@ class Game:
         self.update_asteroid_field()
         self.check_race_evolutions()
         self.check_for_discoveries()
-        
+
     def handle_player_movement(self) -> None:
         """Handle player movement based on keyboard input."""
         keys = pygame.key.get_pressed()
@@ -685,16 +699,18 @@ class Game:
 
         if dx != 0 or dy != 0:
             self.player.move(dx, dy, self.field)
-            
+
     def handle_auto_mining(self) -> None:
         """Handle auto-mining if enabled."""
-        if not (self.auto_mine and self.frame_counter % 30 == 0):  # Every half second at 60 FPS
+        if not (
+            self.auto_mine and self.frame_counter % 30 == 0
+        ):  # Every half second at 60 FPS
             return
-            
+
         minerals_mined = self.player.mine(self.field)
         if minerals_mined > 0:
             self.stats["total_mined"] += minerals_mined
-            
+
     def update_asteroid_field(self) -> None:
         """Update asteroid field at intervals."""
         current_time = time.time()
@@ -717,7 +733,7 @@ class Game:
                     category="race",
                     importance=2,
                 )
-                
+
     def check_race_evolutions(self) -> None:
         """Check for race evolutions."""
         for race in self.field.races:
@@ -745,12 +761,12 @@ class Game:
                         + f"center={metrics['center']}, radius={metrics['radius']}, "
                         + f"density={metrics['density']:.4f}"
                     )
-                    
+
     def check_for_discoveries(self) -> None:
         """Check for new resource discoveries by player."""
         if self.frame_counter % 120 != 0:  # Every 2 seconds at 60 FPS
             return
-            
+
         # Check for nearby anomalies
         for dy, dx in itertools.product(range(-3, 4), range(-3, 4)):
             nx, ny = self.player.x + dx, self.player.y + dy
@@ -807,7 +823,7 @@ class Game:
 
         # Draw active tooltip if any
         if self.tooltip_text and self.show_tooltips:
-            from ui.draw_utils import draw_tooltip
+            from src.ui.draw_utils import draw_tooltip
 
             draw_tooltip(
                 self.screen,
@@ -933,4 +949,3 @@ class Game:
         # Draw player's ship info if enabled
         if self.show_ship_info:
             self.player.draw_ship_info(self.screen)
-

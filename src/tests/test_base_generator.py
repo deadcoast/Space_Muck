@@ -16,15 +16,15 @@ import importlib.util
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from generators.base_generator import BaseGenerator
-from utils.noise_generator import NoiseGenerator
-from utils.dependency_injection import DependencyContainer
+from src.generators.base_generator import BaseGenerator
+from src.utils.noise_generator import NoiseGenerator
+from src.utils.dependency_injection import DependencyContainer
 
 # Check for utility modules availability using importlib.util.find_spec
 CA_UTILS_AVAILABLE = (
-    importlib.util.find_spec("utils.cellular_automaton_utils") is not None
+    importlib.util.find_spec("src.utils.cellular_automaton_utils") is not None
 )
-VALUE_GEN_AVAILABLE = importlib.util.find_spec("utils.value_generator") is not None
+VALUE_GEN_AVAILABLE = importlib.util.find_spec("src.utils.value_generator") is not None
 
 
 class MockNoiseGenerator(NoiseGenerator):
@@ -350,7 +350,7 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Mock the utility function to verify it's called
         with patch(
-            "utils.cellular_automaton_utils.apply_cellular_automaton"
+            "src.utils.cellular_automaton_utils.apply_cellular_automaton_optimized"
         ) as mock_ca:
             self._mock_grid_handler(grid, mock_ca, test_generator)
 
@@ -437,7 +437,7 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Check keyword arguments
         self.assertEqual(call_kwargs["num_clusters"], 3)
-        self.assertEqual(call_kwargs["value_multiplier"], 2.0)
+        self.assertEqual(call_kwargs["cluster_value_multiplier"], 2.0)
         self.assertTrue("cluster_radius" in call_kwargs)
 
         # Verify the result is what the mock returned

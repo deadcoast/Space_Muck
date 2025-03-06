@@ -18,7 +18,7 @@ from ..config import (
     COMBAT_BASE_ARMOR,
     COMBAT_DIFFICULTY_MULTIPLIER,
     COMBAT_ENEMY_TYPES,
-    COLOR_ERROR,
+    COLOR_HIGHLIGHT,
 )
 from .base_entity import BaseEntity
 
@@ -71,7 +71,7 @@ class EnemyShip(BaseEntity):
         elif ship_type == "elite":
             color = (200, 50, 200)  # Purple for elite ships
         else:
-            color = COLOR_ERROR  # Default error color
+            color = COLOR_HIGHLIGHT  # Default error color
 
         # Call the parent class constructor
         super().__init__(

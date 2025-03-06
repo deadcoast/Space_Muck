@@ -18,6 +18,7 @@ import numpy as np
 
 # Local application imports
 from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+
 # Remove wildcard import as no config variables are directly used
 # from src.config import *
 from src.generators.base_generator import BaseGenerator
@@ -261,7 +262,9 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         # Create clusters of higher mineral concentration using the utility function
         mineral_grid = add_value_clusters(
-            mineral_grid, num_clusters=random.randint(5, 15), value_multiplier=2.0
+            mineral_grid,
+            num_clusters=random.randint(5, 15),
+            cluster_value_multiplier=2.0,
         )
 
         # Normalize again after adding clusters
@@ -392,6 +395,51 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         log_performance_end("simulate_evolution", start_time)
         return current_grid, evolution_history
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SymbioteEvolutionGenerator":
+        """
+        Create a SymbioteEvolutionGenerator instance from a dictionary.
+
+        This custom implementation handles the specific requirements of the SymbioteEvolutionGenerator
+        class, particularly the fact that entity_type is hardcoded as "symbiote".
+
+        Args:
+            data: Dictionary containing generator data
+
+        Returns:
+            SymbioteEvolutionGenerator: New generator instance
+        """
+        # Extract parameters for the evolution algorithm
+        parameters = data.get("parameters", {})
+
+        # Create a new instance with the extracted parameters
+        generator = cls(
+            entity_id=data.get("entity_id"),
+            seed=data.get("seed"),
+            width=data.get("width", 100),
+            height=data.get("height", 100),
+            color=data.get("color", (100, 200, 100)),
+            position=data.get("position"),
+            initial_aggression=parameters.get("initial_aggression", 0.2),
+            growth_rate=parameters.get("growth_rate", 0.05),
+            base_mutation_rate=parameters.get("base_mutation_rate", 0.01),
+            carrying_capacity=parameters.get("carrying_capacity", 100),
+            learning_enabled=parameters.get("learning_enabled", True),
+        )
+
+        # Set any additional parameters that might be in the data
+        for key, value in parameters.items():
+            if key not in [
+                "initial_aggression",
+                "growth_rate",
+                "base_mutation_rate",
+                "carrying_capacity",
+                "learning_enabled",
+            ]:
+                generator.set_parameter(key, value)
+
+        return generator
 
     def generate_mutation_map(
         self, colony_grid: np.ndarray, evolution_history: List[Dict[str, Any]]

@@ -7,9 +7,11 @@ import random
 from typing import Dict, Tuple, Any
 
 from ..entities.player import Player
+
 # EnemyShip is not directly used but may be needed in future extensions
 # from ..entities.enemy_ship import EnemyShip
 from .combat_system import CombatSystem
+
 # These combat constants may be needed in future extensions
 # from ..config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
 from ..config import GAME_MAP_SIZE

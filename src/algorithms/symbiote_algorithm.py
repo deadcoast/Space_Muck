@@ -1,10 +1,31 @@
 """
 SymbioteEvolutionAlgorithm: Advanced algorithm for symbiote race evolution.
+
+This module provides the core algorithm for simulating symbiote race evolution
+based on mineral consumption, environmental factors, and interactions between
+different colonies. It uses cellular automaton principles for growth simulation.
 """
 
-import numpy as np
-import scipy.ndimage as ndimage
+import itertools
+
+# Standard library imports
 from typing import Tuple, List, cast
+
+# Third-party imports
+import numpy as np
+
+# Handle optional dependencies gracefully
+try:
+    import scipy.ndimage as ndimage
+
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    import logging
+
+    logging.warning(
+        "scipy not available. Some symbiote evolution features may be limited."
+    )
 
 
 class SymbioteEvolutionAlgorithm:
@@ -129,7 +150,21 @@ class SymbioteEvolutionAlgorithm:
         return birth_set, survival_set
 
     def update_cellular_automaton(self, grid, birth_set, survival_set):
-        """Update grid using cellular automaton rules."""
+        """Update grid using cellular automaton rules.
+
+        Args:
+            grid: Binary grid representing symbiote presence (1) or absence (0)
+            birth_set: Set of neighbor counts that create new cells
+            survival_set: Set of neighbor counts that allow cells to survive
+
+        Returns:
+            Updated grid after applying cellular automaton rules
+        """
+        if not SCIPY_AVAILABLE:
+            # Fallback implementation when scipy is not available
+            return self._update_cellular_automaton_manual(grid, birth_set, survival_set)
+
+        # Use scipy for faster implementation when available
         # Count neighbors
         neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         neighbor_count = ndimage.convolve(
@@ -149,6 +184,48 @@ class SymbioteEvolutionAlgorithm:
 
         return new_grid
 
+    def _update_cellular_automaton_manual(self, grid, birth_set, survival_set):
+        """Manual implementation of cellular automaton update when scipy is not available.
+
+        This is a slower fallback implementation that doesn't require scipy.
+
+        Args:
+            grid: Binary grid representing symbiote presence (1) or absence (0)
+            birth_set: Set of neighbor counts that create new cells
+            survival_set: Set of neighbor counts that allow cells to survive
+
+        Returns:
+            Updated grid after applying cellular automaton rules
+        """
+        height, width = grid.shape
+        new_grid = np.zeros_like(grid)
+
+        # For each cell in the grid
+        for y, x in itertools.product(range(height), range(width)):
+            # Count neighbors
+            neighbors = 0
+            for dy in [-1, 0, 1]:
+                for dx in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue  # Skip the cell itself
+
+                    # Get neighbor coordinates with wrapping
+                    nx = (x + dx) % width
+                    ny = (y + dy) % height
+
+                    if grid[ny, nx] > 0:
+                        neighbors += 1
+
+                # Apply rules
+            if (
+                grid[y, x] > 0
+                and neighbors in survival_set
+                or grid[y, x] <= 0
+                and neighbors in birth_set
+            ):
+                new_grid[y, x] = 1  # Cell survives
+        return new_grid
+
     def apply_environmental_effects(self, grid, mineral_map, hostility):
         """Apply environmental effects to the grid based on mineral distribution."""
         return grid & (
@@ -156,12 +233,18 @@ class SymbioteEvolutionAlgorithm:
         )
 
     def simulate_colony_interaction(self, grid, genome, aggression):
-        """Simulate interaction between different colonies of the same race."""
+        """Simulate interaction between different colonies of the same race.
+
+        Args:
+            grid: Binary grid representing symbiote presence
+            genome: Dictionary of genome attributes for the race
+            aggression: Aggression level of the race
+
+        Returns:
+            Updated grid after colony interactions
+        """
         # Identify colonies
-        # Use cast to tell type checker that ndimage.label returns a tuple of (ndarray, int)
-        label_result = cast(Tuple[np.ndarray, int], ndimage.label(grid))
-        labeled_grid = label_result[0]  # This is a numpy array
-        num_colonies = label_result[1]  # This is an integer
+        labeled_grid, num_colonies = self.identify_colonies(grid)
 
         if num_colonies <= 1:
             return grid
@@ -172,7 +255,15 @@ class SymbioteEvolutionAlgorithm:
         # Colonies compete or cooperate based on aggression
         if competition_factor > 0.7:
             # Competition: smaller colonies may suffer
-            colony_sizes = ndimage.sum(grid, labeled_grid, range(1, num_colonies + 1))
+            if SCIPY_AVAILABLE:
+                colony_sizes = ndimage.sum(
+                    grid, labeled_grid, range(1, num_colonies + 1)
+                )
+            else:
+                colony_sizes = self._manual_sum_by_label(
+                    grid, labeled_grid, range(1, num_colonies + 1)
+                )
+
             max_size = np.max(colony_sizes)
 
             # Smaller colonies have higher death rate
@@ -187,10 +278,17 @@ class SymbioteEvolutionAlgorithm:
         else:
             # Cooperation: colonies may bridge together
             # Calculate centers of mass for each colony
-            centers = cast(
-                List[Tuple[float, float]],
-                ndimage.center_of_mass(grid, labeled_grid, range(1, num_colonies + 1)),
-            )
+            if SCIPY_AVAILABLE:
+                centers = cast(
+                    List[Tuple[float, float]],
+                    ndimage.center_of_mass(
+                        grid, labeled_grid, range(1, num_colonies + 1)
+                    ),
+                )
+            else:
+                centers = self._manual_center_of_mass(
+                    grid, labeled_grid, range(1, num_colonies + 1)
+                )
 
             # Try to connect nearby colonies
             for i in range(num_colonies):
@@ -229,34 +327,164 @@ class SymbioteEvolutionAlgorithm:
     def identify_colonies(self, grid) -> Tuple[np.ndarray, int]:
         """Identify distinct colonies in the grid.
 
+        Args:
+            grid: Binary grid representing symbiote presence
+
         Returns:
             tuple: (labeled_grid, num_colonies) where labeled_grid is a numpy array
                   with the same shape as grid, and num_colonies is the number of colonies found.
         """
+        if not SCIPY_AVAILABLE:
+            # Fallback implementation when scipy is not available
+            return self._manual_label_grid(grid)
         # Use cast to tell type checker that ndimage.label returns a tuple of (ndarray, int)
         label_result = cast(Tuple[np.ndarray, int], ndimage.label(grid))
-        labeled_grid = label_result[0]  # This is a numpy array
-        num_colonies = label_result[1]  # This is an integer
-        return labeled_grid, num_colonies
+        return label_result[0], label_result[1]
+
+    def _manual_label_grid(self, grid) -> Tuple[np.ndarray, int]:
+        """Manual implementation of grid labeling when scipy is not available.
+
+        This is a slower fallback implementation that doesn't require scipy.
+        It uses a flood fill algorithm to identify connected components.
+
+        Args:
+            grid: Binary grid representing symbiote presence
+
+        Returns:
+            tuple: (labeled_grid, num_colonies) where labeled_grid is a numpy array
+                  with the same shape as grid, and num_colonies is the number of colonies found.
+        """
+        height, width = grid.shape
+        labeled_grid = np.zeros_like(grid, dtype=np.int32)
+        visited = np.zeros_like(grid, dtype=bool)
+        current_label = 0
+
+        # Define directions for 8-connected neighbors
+        directions = [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ]
+
+        # For each cell in the grid
+        for y, x in itertools.product(range(height), range(width)):
+            # Skip if cell is empty or already visited
+            if grid[y, x] == 0 or visited[y, x]:
+                continue
+
+            # Found a new colony
+            current_label += 1
+
+            # Use a queue for flood fill
+            queue = [(y, x)]
+            visited[y, x] = True
+            labeled_grid[y, x] = current_label
+
+            # Process queue
+            while queue:
+                cy, cx = queue.pop(0)
+
+                # Check all neighbors
+                for dy, dx in directions:
+                    ny, nx = (cy + dy) % height, (cx + dx) % width  # Wrap around
+
+                    # If neighbor is valid, not visited, and has a cell
+                    if not visited[ny, nx] and grid[ny, nx] > 0:
+                        queue.append((ny, nx))
+                        visited[ny, nx] = True
+                        labeled_grid[ny, nx] = current_label
+
+        return labeled_grid, current_label
 
     def get_colony_stats(self, grid, labeled_grid, num_colonies):
-        """Get statistics for each colony."""
+        """Get statistics for each colony.
+
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            num_colonies: Number of colonies
+
+        Returns:
+            List of dictionaries containing stats for each colony
+        """
         colony_stats = []
 
         if num_colonies == 0:
             return colony_stats
 
         # Calculate stats for each colony
-        sizes = ndimage.sum(grid, labeled_grid, range(1, num_colonies + 1))
-        centroids = ndimage.center_of_mass(
-            grid, labeled_grid, range(1, num_colonies + 1)
-        )
+        if SCIPY_AVAILABLE:
+            sizes = ndimage.sum(grid, labeled_grid, range(1, num_colonies + 1))
+            centroids = ndimage.center_of_mass(
+                grid, labeled_grid, range(1, num_colonies + 1)
+            )
+        else:
+            sizes = self._manual_sum_by_label(
+                grid, labeled_grid, range(1, num_colonies + 1)
+            )
+            centroids = self._manual_center_of_mass(
+                grid, labeled_grid, range(1, num_colonies + 1)
+            )
 
         colony_stats.extend(
             {"id": i + 1, "size": sizes[i], "centroid": centroids[i]}
             for i in range(num_colonies)
         )
         return colony_stats
+
+    def _manual_sum_by_label(self, grid, labeled_grid, labels):
+        """Manual implementation of sum by label when scipy is not available.
+
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            labels: List of labels to calculate sums for
+
+        Returns:
+            List of sums for each label
+        """
+        sums = []
+        for label in labels:
+            # Sum all cells with this label
+            mask = labeled_grid == label
+            label_sum = np.sum(grid[mask])
+            sums.append(label_sum)
+        return sums
+
+    def _manual_center_of_mass(self, grid, labeled_grid, labels):
+        """Manual implementation of center of mass calculation when scipy is not available.
+
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            labels: List of labels to calculate centers for
+
+        Returns:
+            List of (y, x) center coordinates for each label
+        """
+        centers = []
+        height, width = grid.shape
+
+        for label in labels:
+            # Get all points with this label
+            y_coords, x_coords = np.where(labeled_grid == label)
+
+            if len(y_coords) == 0:
+                # If no cells with this label, use center of grid
+                centers.append((height // 2, width // 2))
+                continue
+
+            # Calculate center of mass
+            y_center = np.mean(y_coords)
+            x_center = np.mean(x_coords)
+            centers.append((y_center, x_center))
+
+        return centers
 
     def calculate_expansion_index(self, current_grid, previous_grid):
         """Calculate how much a race is expanding."""

@@ -69,11 +69,11 @@ class Fleet(BaseEntity):
         # Generate a unique ID if none provided
         if ship_id is None:
             ship_id = f"{self.unique_id_prefix}-{len(self.ships) + 1}"
-            
+
         # Initialize empty ship data if none provided
         if ship_data is None:
             ship_data = {}
-            
+
         self.ships[ship_id] = ship_data
         logging.info(f"Ship added to fleet {self.fleet_name}: {ship_id}")
 
@@ -127,7 +127,7 @@ class Fleet(BaseEntity):
         # Simple direct path for now
         if not self.position or not self.destination:
             return []
-            
+
         # Reset visited positions for new path calculation
         self.visited_positions = set()
 

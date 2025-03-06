@@ -3,7 +3,8 @@ Tests for the encounter generator module.
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+import random
 
 from src.entities.player import Player
 from src.entities.enemy_ship import EnemyShip
@@ -16,32 +17,25 @@ class TestEncounterGenerator(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        # Create a mock player
-        self.player = MagicMock(spec=Player)
+        # Create a real player instance
+        self.player = Player(position=(50, 50))
         self.player.level = 3
         self.player.in_combat = False
-        self.player.position = (50, 50)
-        self.player.reputation = {"galactic_navy": 0, "fringe_colonies": 0}
+
+        # Ensure player has appropriate reputation values
+        for faction in self.player.reputation:
+            self.player.reputation[faction] = 0
+
         self.player.current_quest = None
 
-        # Create a mock combat system
-        self.combat_system = MagicMock(spec=CombatSystem)
-
-        # Mock generate_enemy method
-        mock_enemy = MagicMock(spec=EnemyShip)
-        mock_enemy.difficulty = "medium"
-        mock_enemy.ship_type = "pirate"
-        mock_enemy.level = 3
-        mock_enemy.faction = None
-        mock_enemy.aggression = 0.5
-        mock_enemy.position = (50, 50)
-        mock_enemy.get_stats.return_value = {"ship_type": "pirate", "level": 3}
-
-        self.combat_system.generate_enemy.return_value = mock_enemy
-        self.combat_system.start_combat.return_value = {"success": True}
+        # Create a real combat system
+        self.combat_system = CombatSystem(self.player)
 
         # Create the encounter generator
         self.encounter_generator = EncounterGenerator(self.player, self.combat_system)
+
+        # Set a seed for reproducible random tests
+        random.seed(42)
 
     def test_zone_danger_levels(self):
         """Test zone danger level initialization."""
@@ -83,58 +77,80 @@ class TestEncounterGenerator(unittest.TestCase):
         self.assertFalse(result["encounter"])
         self.assertEqual(result["reason"], "Already in combat")
 
-    @patch("random.random")
-    def test_check_for_encounter_success(self, mock_random):
+    def test_check_for_encounter_success(self):
         """Test successful encounter generation."""
-        # Force encounter to happen
-        mock_random.return_value = 0.01  # Very low value to ensure encounter happens
+        # Temporarily override the encounter_chance_base to ensure encounters occur
+        original_chance = self.encounter_generator.encounter_chance_base
+        self.encounter_generator.encounter_chance_base = 1.0  # 100% chance of encounter
 
-        # Mock the _generate_encounter method
-        self.encounter_generator._generate_encounter = MagicMock(
-            return_value={"encounter": True, "type": "combat"}
-        )
+        # Save the original _generate_encounter method
+        original_generate_encounter = self.encounter_generator._generate_encounter
 
-        # Check for encounter
-        result = self.encounter_generator.check_for_encounter()
+        # Define a test encounter result
+        test_encounter = {"encounter": True, "type": "test_combat"}
 
-        # Verify encounter was generated
-        self.assertTrue(result["encounter"])
-        self.encounter_generator._generate_encounter.assert_called_once()
+        # Create a wrapper to track if the method was called
+        def tracking_generate_encounter(*args, **kwargs):
+            tracking_generate_encounter.called = True
+            return test_encounter
 
-    @patch("random.random")
-    def test_check_for_encounter_failure(self, mock_random):
+        tracking_generate_encounter.called = False
+        self.encounter_generator._generate_encounter = tracking_generate_encounter
+
+        try:
+            # Check for encounter
+            result = self.encounter_generator.check_for_encounter()
+
+            # Verify encounter was generated
+            self.assertTrue(result["encounter"])
+            self.assertEqual(result["type"], "test_combat")
+            self.assertTrue(tracking_generate_encounter.called)
+        finally:
+            # Restore original methods and values
+            self.encounter_generator._generate_encounter = original_generate_encounter
+            self.encounter_generator.encounter_chance_base = original_chance
+
+    def test_check_for_encounter_failure(self):
         """Test failed encounter check."""
-        # Force no encounter
-        mock_random.return_value = 0.99  # Very high value to ensure no encounter
+        # Temporarily override the encounter_chance_base to ensure no encounters occur
+        original_chance = self.encounter_generator.encounter_chance_base
+        self.encounter_generator.encounter_chance_base = 0.0  # 0% chance of encounter
 
-        # Check for encounter
-        result = self.encounter_generator.check_for_encounter()
+        try:
+            # Check for encounter
+            result = self.encounter_generator.check_for_encounter()
 
-        # Verify no encounter due to random chance
-        self.assertFalse(result["encounter"])
-        self.assertEqual(result["reason"], "Random chance")
+            # Verify no encounter due to random chance
+            self.assertFalse(result["encounter"])
+            self.assertEqual(result["reason"], "Random chance")
+        finally:
+            # Restore original value
+            self.encounter_generator.encounter_chance_base = original_chance
 
-    @patch("random.random")
-    @patch("random.choice")
-    def test_generate_combat_encounter(self, mock_choice, mock_random):
+    def test_generate_combat_encounter(self):
         """Test combat encounter generation."""
-        # Mock random choices
-        mock_random.return_value = 0.2  # Below 0.3 for faction encounter
-        mock_choice.return_value = "galactic_navy"
+        # Save original player state to restore later
+        original_in_combat = self.player.in_combat
+        self.player.in_combat = False
 
-        # Generate combat encounter
-        result = self.encounter_generator._generate_combat_encounter()
+        try:
+            # Generate combat encounter
+            result = self.encounter_generator._generate_combat_encounter()
 
-        # Verify combat encounter
-        self.assertTrue(result["encounter"])
-        self.assertEqual(result["type"], "combat")
-        self.assertIn("message", result)
-        self.assertIn("enemy", result)
-        self.assertTrue(result["combat_started"])
+            # Verify combat encounter
+            self.assertTrue(result["encounter"])
+            self.assertEqual(result["type"], "combat")
+            self.assertIn("message", result)
+            self.assertIn("enemy", result)
+            self.assertTrue(result["combat_started"])
 
-        # Verify combat system methods were called
-        self.combat_system.generate_enemy.assert_called_once()
-        self.combat_system.start_combat.assert_called_once()
+            # Verify combat was started
+            self.assertTrue(self.player.in_combat)
+            self.assertIsNotNone(self.player.current_enemy)
+        finally:
+            # Restore original player state
+            self.player.in_combat = original_in_combat
+            self.combat_system.end_combat()
 
     def test_generate_quest_encounter_no_quest(self):
         """Test quest encounter generation with no active quest."""
@@ -157,22 +173,31 @@ class TestEncounterGenerator(unittest.TestCase):
             "current_enemies": 2,
         }
 
-        # Generate quest encounter
-        result = self.encounter_generator.generate_quest_encounter("combat")
+        # Save original player state to restore later
+        original_in_combat = self.player.in_combat
+        self.player.in_combat = False
 
-        # Verify quest encounter
-        self.assertTrue(result["encounter"])
-        self.assertEqual(result["type"], "quest_combat")
-        self.assertIn("message", result)
-        self.assertIn("enemy", result)
-        self.assertTrue(result["combat_started"])
-        self.assertTrue(result["quest_related"])
+        try:
+            # Generate quest encounter
+            result = self.encounter_generator.generate_quest_encounter("combat")
 
-        # Verify combat system methods were called with correct parameters
-        self.combat_system.generate_enemy.assert_called_once_with(
-            difficulty="hard", faction="fringe_colonies", position=self.player.position
-        )
-        self.combat_system.start_combat.assert_called_once()
+            # Verify quest encounter
+            self.assertTrue(result["encounter"])
+            self.assertEqual(result["type"], "quest_combat")
+            self.assertIn("message", result)
+            self.assertIn("enemy", result)
+            self.assertTrue(result["combat_started"])
+            self.assertTrue(result["quest_related"])
+
+            # Verify combat was started with the right type of enemy
+            self.assertTrue(self.player.in_combat)
+            self.assertIsNotNone(self.player.current_enemy)
+            self.assertEqual(self.player.current_enemy.faction, "fringe_colonies")
+            self.assertEqual(self.player.current_enemy.difficulty, "hard")
+        finally:
+            # Restore original player state
+            self.player.in_combat = original_in_combat
+            self.combat_system.end_combat()
 
     def test_generate_quest_encounter_unknown_type(self):
         """Test encounter generation with unknown quest type."""

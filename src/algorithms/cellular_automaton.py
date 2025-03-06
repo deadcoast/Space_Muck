@@ -1,10 +1,17 @@
 """
 Cellular automaton algorithms for procedural generation.
+
+This module provides utility functions for applying cellular automaton rules
+to 2D grids, primarily used for procedural generation of asteroid fields and
+other game elements.
 """
 
+# Standard library imports
+from typing import Optional
+
+# Third-party imports
 import numpy as np
 import scipy.signal as signal
-from typing import Optional
 
 
 def count_neighbors(grid: np.ndarray) -> np.ndarray:

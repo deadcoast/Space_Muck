@@ -35,7 +35,7 @@ class TestPlayerFieldInteraction(unittest.TestCase):
         # Add some asteroids around the player using numpy slicing
         self.field.grid[35:45, 45:55] = 50  # Value 50 asteroids
         self.field.rare_grid[38:42, 48:52] = 1  # Some rare asteroids
-        
+
         # Verify grid shape using numpy
         assert np.shape(self.field.grid)[0] == 100, "Field width should be 100"
 
@@ -145,7 +145,7 @@ class TestGameCycle(unittest.TestCase):
         """Set up the test environment with mocked pygame components."""
         # Mock pygame surface for rendering
         self.mock_surface = mock_surface.return_value
-        
+
         # Verify pygame is properly mocked
         assert pygame.Surface is mock_surface, "pygame.Surface should be mocked"
 

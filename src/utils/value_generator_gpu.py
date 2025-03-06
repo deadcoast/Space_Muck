@@ -9,28 +9,19 @@ that can be used by different generator classes to improve performance.
 # Standard library imports
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple
+
+# Typing imports removed (unused)
 
 # Third-party library imports
 import numpy as np
 
 # Local imports
-from src.utils.gpu_utils import (
-    is_gpu_available,
-    get_available_backends,
-    to_gpu,
-    to_cpu,
-)
-from src.utils.value_generator import (
-    generate_value_distribution,
-    add_value_clusters,
-    generate_rare_resource_distribution,
-)
+# GPU utilities imports removed (unused)
+from src.utils.value_generator import generate_value_distribution, add_value_clusters
 
 # Optional dependencies
 try:
-    import numba
-    from numba import cuda, float32, int32
+    from numba import cuda
 
     NUMBA_AVAILABLE = True
     CUDA_AVAILABLE = cuda.is_available()
@@ -147,7 +138,7 @@ def add_value_clusters_gpu(
     value_grid: np.ndarray,
     num_clusters: int = 5,
     cluster_radius: int = 10,
-    value_multiplier: float = 2.0,
+    cluster_value_multiplier: float = 2.0,
     backend: str = "auto",
 ) -> np.ndarray:
     """
@@ -157,7 +148,7 @@ def add_value_clusters_gpu(
         value_grid: Grid with entity values
         num_clusters: Number of high-value clusters to create
         cluster_radius: Radius of each cluster
-        value_multiplier: Multiplier for values in clusters
+        cluster_value_multiplier: Multiplier for values in clusters
         backend: GPU backend to use ('cuda', 'cupy', 'auto')
 
     Returns:
@@ -175,7 +166,11 @@ def add_value_clusters_gpu(
     # Use CPU implementation if no GPU is available or requested
     if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
         return add_value_clusters(
-            value_grid, num_clusters, cluster_radius, value_multiplier
+            value_grid=value_grid,
+            binary_grid=None,
+            num_clusters=num_clusters,
+            cluster_radius=cluster_radius,
+            cluster_value_multiplier=cluster_value_multiplier,
         )
 
     height, width = value_grid.shape
@@ -234,7 +229,7 @@ def add_value_clusters_gpu(
 
                 # Calculate falloff and multipliers
                 falloff = 1.0 - (distances / cluster_radius)
-                multipliers = 1.0 + (value_multiplier - 1.0) * falloff
+                multipliers = 1.0 + (cluster_value_multiplier - 1.0) * falloff
 
                 # Apply multipliers to masked cells
                 result_grid_gpu[
@@ -301,7 +296,7 @@ def add_value_clusters_gpu(
                 result_grid,
                 cluster_centers,
                 cluster_radius,
-                value_multiplier,
+                cluster_value_multiplier,
                 width,
                 height,
             )
@@ -313,5 +308,8 @@ def add_value_clusters_gpu(
             f"GPU value clustering failed: {str(e)}. Falling back to CPU implementation."
         )
         return add_value_clusters(
-            value_grid, num_clusters, cluster_radius, value_multiplier
+            value_grid,
+            num_clusters,
+            cluster_radius,
+            cluster_value_multiplier=cluster_value_multiplier,
         )

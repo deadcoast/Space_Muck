@@ -11,7 +11,7 @@ import logging
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from entities.base_generator import BaseGenerator
+from src.generators.base_generator import BaseGenerator
 from utils.visualization import GeneratorVisualizer, visualize_generator_output
 from utils.noise_generator import get_noise_generator
 

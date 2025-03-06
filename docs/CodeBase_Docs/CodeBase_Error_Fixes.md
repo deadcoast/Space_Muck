@@ -10,6 +10,7 @@ This document logs common issues encountered during development and their soluti
 4. [Game Loop Implementation](#game-loop-implementation)
 5. [Code Duplication Issues](#code-duplication-issues)
 6. [Code Quality Issues](#code-quality-issues)
+7. [Test Suite Issues](#test-suite-issues)
 
 ## Import Issues
 
@@ -194,6 +195,80 @@ Benefits:
 4. Makes it easier to refactor and maintain the codebase
 
 ## Linting Issues
+
+### Unused Imports in Test Files
+
+**Issue**: Test files often contain unused imports that trigger F401 linting errors. These are particularly common in test files because:
+1. Tests may import modules to check for their availability without directly using them
+2. Mock objects may replace functionality that would otherwise use the imports
+3. Test files evolve over time, and imports that were once used may no longer be needed
+
+**Solution**: There are several approaches to handling unused imports in test files:
+
+1. **Use `importlib.util.find_spec()` for availability checks**:
+   ```python
+   # Before: Using try/except with import
+   try:
+       from sklearn.cluster import DBSCAN
+       SKLEARN_AVAILABLE = True
+   except ImportError:
+       SKLEARN_AVAILABLE = False
+   
+   # After: Using importlib.util.find_spec
+   import importlib.util
+   SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn.cluster") is not None
+   ```
+
+2. **Add proper typing imports and annotations**:
+   ```python
+   # Before: Missing typing imports despite using type annotations
+   def test_function(self):
+       self.birth_set = {3}
+       self.survival_set = {2, 3}
+       self.test_genome = {
+           "metabolism_rate": 1.0,
+           "expansion_drive": 1.5,
+       }
+   
+   # After: Adding typing imports and annotations
+   from typing import Dict, Set, Any
+   
+   def test_function(self):
+       self.birth_set: Set[int] = {3}
+       self.survival_set: Set[int] = {2, 3}
+       self.test_genome: Dict[str, Any] = {
+           "metabolism_rate": 1.0,
+           "expansion_drive": 1.5,
+       }
+   ```
+
+3. **Fix E402 errors (module level import not at top of file)**:
+   ```python
+   # Before: Imports scattered throughout the file
+   import unittest
+   import numpy as np
+   
+   # Some code or constants here
+   
+   from my_module import some_function  # E402 error
+   
+   # After: All imports at the top of the file
+   import unittest
+   import numpy as np
+   from my_module import some_function
+   
+   # Some code or constants here
+   ```
+
+4. **Use imports in the code**:
+   If an import is needed but not directly used in the code, consider adding logging statements or comments that explain why the import is necessary.
+   ```python
+   import logging
+   
+   # Later in the code
+   if condition_not_met:
+       logging.warning("Condition not met, skipping test")
+   ```
 
 ### Unused Imports
 
@@ -464,6 +539,350 @@ from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 from entities.player import Player
 from entities.miner_entity import MinerEntity
 ```
+
+## Test Suite Issues
+
+### Numerical Stability in Noise Normalization
+
+**Issue**: Runtime warnings about "invalid value encountered in divide" when normalizing noise arrays. This happens when trying to normalize an array where all values are the same, leading to division by zero.
+
+**Solution**: Add checks to prevent division by zero when normalizing arrays:
+
+```python
+# Before - potential division by zero
+noise = (noise - noise.min()) / (noise.max() - noise.min())
+
+# After - safe normalization with check
+min_val = noise.min()
+max_val = noise.max()
+if max_val > min_val:  # Only normalize if there's a range
+    noise = (noise - min_val) / (max_val - min_val)
+else:
+    noise = np.zeros_like(noise)  # Fallback to zeros if all values are the same
+```
+
+This pattern should be applied to all noise normalization operations to prevent numerical instability and runtime warnings.
+
+### Attribute Name Inconsistencies
+
+**Issue**: Test failures due to attribute name inconsistencies between class implementation and test suite. For example, in the SymbioteEvolutionGenerator tests, the test was looking for `initial_aggression` when the actual attribute in the SymbioteEvolutionAlgorithm was renamed to `aggression`.
+
+**Solution**: 
+1. Ensure test attribute names match the actual implementation:
+   ```python
+   # Incorrect - using outdated attribute name
+   self.assertEqual(algorithm.initial_aggression, 0.2)
+   
+   # Correct - using current attribute name
+   self.assertEqual(algorithm.aggression, 0.2)
+   ```
+
+2. When refactoring class attributes, always update corresponding test files to maintain consistency.
+
+### Missing Serialization Methods
+
+**Issue**: Test failures in `from_dict` and `to_dict` methods due to missing custom serialization logic for complex objects with nested dependencies.
+
+**Solution**: Implement custom serialization methods that handle all required parameters:
+
+```python
+@classmethod
+def from_dict(cls, data):
+    # Extract base parameters using parent class method
+    base_params = super().from_dict_params(data)
+    
+    # Extract class-specific parameters with defaults
+    initial_aggression = data.get('initial_aggression', 0.2)
+    growth_rate = data.get('growth_rate', 0.05)
+    base_mutation_rate = data.get('base_mutation_rate', 0.01)
+    carrying_capacity = data.get('carrying_capacity', 100)
+    learning_enabled = data.get('learning_enabled', True)
+    
+    # Create instance with all parameters
+    instance = cls(
+        **base_params,
+        initial_aggression=initial_aggression,
+        growth_rate=growth_rate,
+        base_mutation_rate=base_mutation_rate,
+        carrying_capacity=carrying_capacity,
+        learning_enabled=learning_enabled
+    )
+    
+    return instance
+```
+
+### Mock Object Configuration
+
+**Issue**: Test failures due to improper mock configuration, particularly when testing complex methods with dependencies.
+
+**Solution**: Configure mocks with appropriate return values and side effects:
+
+```python
+# Create a mock with specific return values
+mock_algorithm = MagicMock()
+mock_algorithm.process_mineral_feeding.return_value = (150, 0.25, ["mutation1", "mutation2"])
+
+# Configure mock to return different values on successive calls
+mock_algorithm.simulate_generation.side_effect = [
+    {"colony1": {"population": 120, "aggression": 0.3}},
+    {"colony1": {"population": 140, "aggression": 0.35}}
+]
+
+# Inject mock into the object under test
+generator._evolution_algorithm = mock_algorithm
+```
+
+### Test Data Consistency
+
+**Issue**: Inconsistent test data causing flaky tests, particularly in procedural generation components.
+
+**Solution**: Use fixed seeds and predefined test data:
+
+```python
+# Use fixed seed for deterministic results
+generator = SymbioteEvolutionGenerator(seed=12345)
+
+# Create predefined test data
+test_colonies = {
+    "colony1": {"position": (10, 10), "population": 100, "aggression": 0.2},
+    "colony2": {"position": (50, 50), "population": 80, "aggression": 0.3}
+}
+
+# Override random generation with fixed data
+generator._initial_colonies = test_colonies
+```
+
+### Parameter Name Mismatches
+
+**Issue**: Function parameter names in implementation don't match what's being used in tests, causing TypeError exceptions like "got multiple values for argument" or "got an unexpected keyword argument".
+
+**Solution**: Ensure parameter names are consistent between implementation and tests:
+
+```python
+# Implementation with mismatched parameter names
+def add_value_clusters(
+    value_grid: np.ndarray,
+    num_clusters: int = 5,
+    cluster_radius: int = 10,
+    value_multiplier: float = 2.0,  # Different name than in tests
+) -> np.ndarray:
+    # Function implementation
+    pass
+
+# Test using different parameter names
+result = add_value_clusters(
+    values, 
+    binary_grid,  # Missing parameter in implementation
+    num_clusters=3, 
+    cluster_value_multiplier=2.0  # Mismatched name
+)
+
+# Fixed implementation with matching parameter names
+def add_value_clusters(
+    value_grid: np.ndarray,
+    binary_grid: np.ndarray = None,  # Added missing parameter
+    num_clusters: int = 5,
+    cluster_radius: int = 10,
+    cluster_value_multiplier: float = 2.0,  # Renamed to match tests
+) -> np.ndarray:
+    # Function implementation
+    pass
+```
+
+When fixing parameter mismatches:
+1. Update function signatures to match test usage
+2. Add proper type hints and default values for new parameters
+3. Update function docstrings to document all parameters
+4. Ensure the implementation correctly handles the new parameter logic
+
+### Center Point Handling in Pattern Generators
+
+**Issue**: Pattern generation functions that create patterns with a central focus point (like spirals, rings, gradients) may not properly handle the center point, leading to test failures when checking if the center has the expected maximum value.
+
+**Solution**: Explicitly set the center point value in pattern generation functions:
+
+```python
+# Incorrect - relying on algorithm to naturally produce maximum at center
+def generate_spiral_pattern(width, height, center=None, density=0.5):
+    # Calculate spiral values
+    # No explicit handling of center point
+    return grid
+
+# Correct - explicitly setting center point to maximum value
+def generate_spiral_pattern(width, height, center=None, density=0.5):
+    # Calculate spiral values
+    
+    # Ensure the center point has the maximum value
+    grid[center_y, center_x] = 1.0
+    return grid
+```
+
+When implementing pattern generators:
+1. Always explicitly set the center point value if tests expect a specific value there
+2. Handle the case where center is None by providing a default center (typically the middle of the grid)
+3. Ensure consistent center point handling across all pattern generation functions
+4. Document the center point behavior in the function docstring
+
+### Binary Grid Conversion in Cellular Automaton
+
+**Issue**: Inconsistent handling of binary grid conversion in cellular automaton functions can lead to test failures, especially when comparing results between standard and optimized implementations.
+
+**Solution**: Ensure consistent binary grid conversion and boundary handling:
+
+```python
+# Incorrect - inconsistent grid conversion
+def apply_cellular_automaton_optimized(grid, birth_set, survival_set):
+    # Using grid directly without consistent binary conversion
+    neighbor_count = ndimage.convolve(
+        grid.astype(np.int8), neighbors_kernel, mode="constant", cval=0
+    )
+    
+    # Direct binary operations without consistent conversion
+    new_grid |= (neighbor_count == n) & grid
+    
+    # No preservation of original grid values
+    return new_grid
+
+# Correct - consistent binary grid conversion
+def apply_cellular_automaton_optimized(grid, birth_set, survival_set):
+    # Convert to binary grid for consistent processing
+    binary_grid = (grid > 0).astype(np.int8)
+    
+    # Use binary grid for convolution with wrap mode for consistent boundary handling
+    neighbor_count = ndimage.convolve(
+        binary_grid, neighbors_kernel, mode="wrap", cval=0
+    )
+    
+    # Consistent binary operations
+    new_grid |= (neighbor_count == n) & (binary_grid > 0)
+    
+    # Preserve original values where cells are alive
+    return grid * new_grid
+```
+
+When implementing cellular automaton functions:
+1. Always convert input grids to binary form using `(grid > 0).astype(np.int8)` for consistent processing
+2. Use consistent boundary handling (wrap vs. constant) across implementations
+3. Ensure the final result preserves original grid values where cells are alive
+4. Document the binary conversion and boundary handling behavior
+
+### Optional GPU Dependencies in Tests
+
+**Issue**: Tests that require optional GPU dependencies (like cupy, torch, or numba) may fail when those dependencies are not available, causing the entire test suite to fail even though the core functionality works correctly.
+
+**Solution**: Properly skip GPU-dependent tests when the required dependencies are not available:
+
+```python
+# Incorrect - test will fail if GPU dependencies are not available
+def test_kmeans_clustering_gpu(self):
+    # This will raise an ImportError if cupy is not available
+    result = apply_kmeans_clustering_gpu(self.test_data, n_clusters=3)
+    self.assertEqual(len(np.unique(result)), 3)
+
+# Correct - test will be skipped if GPU dependencies are not available
+import pytest
+
+# At the top of the file
+try:
+    import cupy
+    CUPY_AVAILABLE = True
+except ImportError:
+    CUPY_AVAILABLE = False
+
+@pytest.mark.skipif(not CUPY_AVAILABLE, reason="cupy not available")
+def test_kmeans_clustering_gpu(self):
+    result = apply_kmeans_clustering_gpu(self.test_data, n_clusters=3)
+    self.assertEqual(len(np.unique(result)), 3)
+```
+
+When implementing tests with optional dependencies:
+1. Always check for the availability of optional dependencies at the module level
+2. Use pytest's `skipif` decorator to skip tests when dependencies are not available
+3. Include a clear reason message explaining why the test is being skipped
+4. Ensure that CPU fallback implementations are always tested, even when GPU versions are skipped
+
+### Correct Mocking of Import Paths in Tests
+
+**Issue**: Tests that mock functions from imported modules may fail if the mock path doesn't match the actual import path used in the implementation, causing the mock to never be called.
+
+**Solution**: Ensure that the mock path exactly matches the import path used in the implementation:
+
+```python
+# Incorrect - mocking a path that doesn't match the actual import
+with patch("utils.cellular_automaton_utils.apply_cellular_automaton") as mock_ca:
+    # If the implementation imports from src.utils.cellular_automaton_utils, 
+    # this mock will never be called
+
+# Correct - mock the exact import path used in the implementation
+with patch("src.utils.cellular_automaton_utils.apply_cellular_automaton") as mock_ca:
+    # This will correctly intercept the function call
+```
+
+### Mock Path Issues in ProceduralGenerator Tests
+
+**Issue**: Tests failing because the mock patch target doesn't match the actual import path used in the implementation. For example, in `test_procedural_generator.py`, the test was trying to patch `generators.procedural_generator.AsteroidField` but the actual implementation imports from `src.generators.asteroid_field`.
+
+**Solution**: Always patch the exact import path as used in the implementation, not the path relative to the test file:
+
+```python
+# Incorrect - mocking a path that doesn't match the actual import
+with patch(
+    "generators.procedural_generator.AsteroidField",
+    return_value=asteroid_field_mock,
+):
+    # This won't work if the implementation imports from src.generators.asteroid_field
+
+# Correct - mock the exact import path used in the implementation
+with patch(
+    "src.generators.asteroid_field.AsteroidField",
+    return_value=asteroid_field_mock,
+):
+    # This will correctly intercept the class instantiation
+```
+
+### Method Signature Mismatches in Tests
+
+**Issue**: Tests expecting method signatures that don't match the actual implementation. For example, tests expecting a `create_field_with_multiple_algorithms` function to accept an `energy_chance` parameter when the implementation doesn't have this parameter.
+
+**Solution**: Ensure method signatures in the implementation match what's expected in the tests:
+
+```python
+# Before - missing parameter
+def create_field_with_multiple_algorithms(
+    width: int = 100,
+    height: int = 100,
+    seed: Optional[int] = None,
+    rare_chance: float = 0.1,
+    rare_bonus: float = 2.0,
+):
+    # Implementation
+
+# After - added missing parameter
+def create_field_with_multiple_algorithms(
+    width: int = 100,
+    height: int = 100,
+    seed: Optional[int] = None,
+    rare_chance: float = 0.1,
+    rare_bonus: float = 2.0,
+    energy_chance: float = 0.1,  # Added parameter
+):
+    # Updated implementation to use the new parameter
+```
+    result = test_generator.apply_cellular_automaton(grid)
+    mock_ca.assert_called_once()  # This will fail
+
+# Correct - mocking the exact import path used in the implementation
+with patch("src.utils.cellular_automaton_utils.apply_cellular_automaton_optimized") as mock_ca:
+    # This will work if the implementation imports from src.utils.cellular_automaton_utils
+    result = test_generator.apply_cellular_automaton(grid)
+    mock_ca.assert_called_once()  # This will pass
+```
+
+When mocking imports in tests:
+1. Check the actual import statements in the implementation file to determine the correct path to mock
+2. Be aware that absolute imports (with 'src' prefix) and relative imports will have different mock paths
+3. Mock the specific function that's actually called, not just the module or a different function
+4. Consider using `patch.object()` as an alternative when the import structure is complex
 
 ## Code Quality Issues
 

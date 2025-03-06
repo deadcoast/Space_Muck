@@ -6,10 +6,13 @@ This module provides an interface for noise generators and concrete implementati
 that can be injected into generator classes.
 """
 
+
 # Standard library imports
 import abc
+import contextlib
+import itertools
 import random
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 # Third-party library imports
 import numpy as np
@@ -118,11 +121,10 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         # Generate noise grid
         noise_grid = np.zeros((height, width))
-        for y in range(height):
-            for x in range(width):
-                noise_value = noise([x * scale, y * scale])
-                # Convert from [-1, 1] to [0, 1]
-                noise_grid[y, x] = (noise_value + 1) / 2
+        for y, x in itertools.product(range(height), range(width)):
+            noise_value = noise([x * scale, y * scale])
+            # Convert from [-1, 1] to [0, 1]
+            noise_grid[y, x] = (noise_value + 1) / 2
 
         return noise_grid
 
@@ -171,11 +173,10 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         for i, (noise, weight) in enumerate(zip(noise_objects, weights)):
             octave_scale = scale * (2**i)  # Scale increases with octave
-            for y in range(height):
-                for x in range(width):
-                    noise_value = noise([x * octave_scale, y * octave_scale])
-                    # Convert from [-1, 1] to [0, 1] and apply weight
-                    noise_grid[y, x] += ((noise_value + 1) / 2) * weight
+            for y, x in itertools.product(range(height), range(width)):
+                noise_value = noise([x * octave_scale, y * octave_scale])
+                # Convert from [-1, 1] to [0, 1] and apply weight
+                noise_grid[y, x] += ((noise_value + 1) / 2) * weight
 
         # Ensure values are in [0, 1]
         noise_grid = np.clip(noise_grid, 0, 1)
@@ -310,9 +311,6 @@ def get_noise_generator() -> NoiseGenerator:
         A NoiseGenerator implementation
     """
     if PERLIN_AVAILABLE:
-        try:
+        with contextlib.suppress(ImportError):
             return PerlinNoiseGenerator()
-        except ImportError:
-            pass
-
     return SimplexNoiseGenerator()

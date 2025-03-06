@@ -10,6 +10,7 @@ import random
 import math
 import heapq
 from typing import Dict, List, Tuple, Any, Optional, Set, Callable
+
 # from collections import defaultdict  # Uncomment if needed in the future
 
 from ..entities.enemy_ship import EnemyShip
@@ -1434,10 +1435,10 @@ class Fleet:
     def _get_ideal_combat_distance(self, stance: str) -> float:
         """
         Determine the ideal combat distance based on the fleet's stance.
-        
+
         Args:
             stance: The combat stance of the fleet
-            
+
         Returns:
             float: The ideal distance to maintain during combat
         """
@@ -1447,9 +1448,9 @@ class Fleet:
             "defensive": 8.0,  # Long range
             "evasive": 10.0,  # Very long range
         }
-        
+
         return ideal_distances.get(stance, 5.0)
-        
+
     def _adjust_position_for_combat(self, distance, ideal_distance, delta_time):
         # Calculate direction vector
         dx = self.target_fleet.position[0] - self.position[0]
@@ -1492,7 +1493,7 @@ class Fleet:
 
         # Get target's stance
         target_stance = self._get_target_stance()
-        
+
         # Calculate damage based on stances and fleet strength
         final_damage = self._calculate_combat_damage(delta_time, target_stance)
 
@@ -1506,7 +1507,7 @@ class Fleet:
     def _get_target_stance(self) -> str:
         """
         Get the combat stance of the target fleet.
-        
+
         Returns:
             str: The target fleet's combat stance
         """
@@ -1515,15 +1516,15 @@ class Fleet:
             if hasattr(self.target_fleet, "combat_stance")
             else "balanced"
         )
-    
+
     def _calculate_combat_damage(self, delta_time: float, target_stance: str) -> float:
         """
         Calculate the damage to be dealt to the target fleet.
-        
+
         Args:
             delta_time: Time elapsed since last update in seconds
             target_stance: The combat stance of the target fleet
-            
+
         Returns:
             float: The final damage amount
         """
@@ -1535,10 +1536,10 @@ class Fleet:
             "evasive": 0.4,  # Very low damage
         }
         damage_mult = stance_damage_multipliers.get(self.combat_stance, 1.0)
-        
+
         # Calculate base damage from our fleet strength
         base_damage = self.get_fleet_strength() * damage_mult * delta_time
-        
+
         # Apply target's defensive modifiers based on their stance
         stance_defense_multipliers = {
             "balanced": 1.0,  # Balanced defense
@@ -1547,10 +1548,10 @@ class Fleet:
             "evasive": 1.3,  # Good defense
         }
         defense_mult = stance_defense_multipliers.get(target_stance, 1.0)
-        
+
         # Calculate final damage
         return base_damage / defense_mult
-    
+
     def _apply_damage_to_fleet(self, target_fleet: "Fleet", damage: float) -> None:
         """
         Apply damage to ships in the target fleet.
@@ -1564,20 +1565,22 @@ class Fleet:
 
         # Get the appropriate damage distribution function based on formation
         distribute_func = self._get_damage_distribution_function(target_fleet.formation)
-        
+
         # Apply the damage distribution
         distribute_func(target_fleet, damage)
-        
+
         # Handle destroyed ships
         self._handle_destroyed_ships(target_fleet)
 
-    def _get_damage_distribution_function(self, formation: str) -> Callable[["Fleet", float], None]:
+    def _get_damage_distribution_function(
+        self, formation: str
+    ) -> Callable[["Fleet", float], None]:
         """
         Get the appropriate damage distribution function based on formation.
-        
+
         Args:
             formation: The formation type
-            
+
         Returns:
             Callable: The damage distribution function
         """
@@ -1589,13 +1592,15 @@ class Fleet:
             "circle": self._distribute_damage_flagship_protected,
             "scatter": self._distribute_damage_randomly,
         }
-        
-        return formation_damage_distribution.get(formation, self._distribute_damage_evenly)
-    
+
+        return formation_damage_distribution.get(
+            formation, self._distribute_damage_evenly
+        )
+
     def _handle_destroyed_ships(self, target_fleet: "Fleet") -> None:
         """
         Remove destroyed ships and check if the fleet is empty.
-        
+
         Args:
             target_fleet: The fleet to check for destroyed ships
         """
@@ -1609,7 +1614,7 @@ class Fleet:
         if not target_fleet.ships:
             logging.info(f"Fleet {target_fleet.fleet_id} has been destroyed")
             target_fleet.is_active = False
-    
+
     def _distribute_damage_evenly(self, target_fleet: "Fleet", damage: float) -> None:
         """
         Distribute damage evenly among all ships.
@@ -1726,9 +1731,7 @@ class Fleet:
 
         # In circle formation, flagship takes only 10% of damage, others take more
         if target_fleet.flagship and len(target_fleet.ships) > 1:
-            self._apply_damage_with_flagship_protection(
-                damage, target_fleet
-            )
+            self._apply_damage_with_flagship_protection(damage, target_fleet)
         else:
             # If no flagship or only one ship, distribute evenly
             self._distribute_damage_evenly(target_fleet, damage)
