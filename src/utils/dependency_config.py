@@ -8,11 +8,11 @@ injection framework to register and configure dependencies.
 """
 
 import logging
-from typing import Dict, Any, Type, Optional, List, Callable
+from typing import Dict, Any
 
 # Try relative imports first, then fall back to absolute imports
 try:
-    from .dependency_injection import DependencyContainer, provides
+    from .dependency_injection import DependencyContainer
     from .noise_generator import (
         NoiseGenerator,
         PerlinNoiseGenerator,
@@ -21,7 +21,7 @@ try:
     )
 except ImportError:
     # Fall back to absolute imports when running as a script
-    from src.utils.dependency_injection import DependencyContainer, provides
+    from src.utils.dependency_injection import DependencyContainer
     from src.utils.noise_generator import (
         NoiseGenerator,
         PerlinNoiseGenerator,

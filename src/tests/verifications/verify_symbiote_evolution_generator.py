@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 """
 Comprehensive verification script for the SymbioteEvolutionGenerator class.
-Tests the functionality of the SymbioteEvolutionGenerator and ensures it correctly
-inherits from BaseGenerator while maintaining all required functionality.
+
+This script provides both basic file structure verification and advanced functionality testing
+for the SymbioteEvolutionGenerator class. It tests the functionality of the SymbioteEvolutionGenerator
+and ensures it correctly inherits from BaseGenerator while maintaining all required functionality.
+
+The verification includes:
+1. File structure and inheritance verification
+2. Basic functionality testing
+3. Evolution simulation over time
+4. Mineral consumption impact analysis
+5. Visualization of results
+6. Code review for best practices
 """
 
 import sys
@@ -25,13 +35,12 @@ except ImportError:
     print("matplotlib not available. Visualization will be skipped.")
     MATPLOTLIB_AVAILABLE = False
 
-try:
-    import scipy
+# Check if scipy is available using importlib
+import importlib.util
 
-    SCIPY_AVAILABLE = True
-except ImportError:
+SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
+if not SCIPY_AVAILABLE:
     print("scipy not available. Tests will be skipped.")
-    SCIPY_AVAILABLE = False
 
 # Add the src directory to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -182,22 +191,28 @@ def test_evolution_over_time():
     ), f"Expected 10 evolution steps, got {len(evolution_history)}"
 
     # Check that each step in history has required fields
+    # This loop is necessary for validating the structure of each evolution step
+    # sourcery skip: no-loop-in-tests
     for i, step in enumerate(evolution_history):
-        assert "iteration" in step, f"Step {i} missing 'iteration' field"
-        assert "population" in step, f"Step {i} missing 'population' field"
-        assert "aggression" in step, f"Step {i} missing 'aggression' field"
-        assert "genome" in step, f"Step {i} missing 'genome' field"
-        assert "mutations" in step, f"Step {i} missing 'mutations' field"
-        assert (
-            "mineral_consumption" in step
-        ), f"Step {i} missing 'mineral_consumption' field"
-
+        _extracted_from_test_evolution_over_time_24(step, i)
     # Verify population changes over time
     populations = [step["population"] for step in evolution_history]
     assert len(set(populations)) > 1, "Population did not change during evolution"
 
     print("Evolution over time test passed!")
     return evolved_grid, evolution_history
+
+
+# TODO Rename this here and in `test_evolution_over_time`
+def _extracted_from_test_evolution_over_time_24(step, i):
+    assert "iteration" in step, f"Step {i} missing 'iteration' field"
+    assert "population" in step, f"Step {i} missing 'population' field"
+    assert "aggression" in step, f"Step {i} missing 'aggression' field"
+    assert "genome" in step, f"Step {i} missing 'genome' field"
+    assert "mutations" in step, f"Step {i} missing 'mutations' field"
+    assert (
+        "mineral_consumption" in step
+    ), f"Step {i} missing 'mineral_consumption' field"
 
 
 def test_mineral_consumption_impact():
@@ -364,86 +379,222 @@ def perform_code_review():
     print("\nPerforming code review of SymbioteEvolutionGenerator...")
 
     try:
-        # Read the file directly instead of importing it
-        import os
-
-        symbiote_generator_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "generators",
-            "symbiote_evolution_generator.py",
-        )
-
-        if not os.path.exists(symbiote_generator_path):
-            print(f"Error: File not found at {symbiote_generator_path}")
-            return False
-
-        with open(symbiote_generator_path, "r") as f:
-            source = f.read()
-
-        # Check for key features
-        features = {
-            "Inheritance": "class SymbioteEvolutionGenerator(BaseGenerator)" in source,
-            "Algorithm Integration": "from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
-            in source,
-            "Colony Generation": "def generate_initial_colonies" in source,
-            "Mineral Distribution": "def generate_mineral_distribution" in source,
-            "Evolution Simulation": "def simulate_evolution" in source,
-            "Mutation Tracking": "def generate_mutation_map" in source,
-            "Parameter Handling": "self.set_parameter" in source,
-            "Error Handling": "try:" in source and "except" in source,
-            "Performance Logging": "log_performance" in source,
-        }
-
-        # Report findings
-        print("\nCode Review Results:")
-        for feature, present in features.items():
-            status = "✓" if present else "✗"
-            print(f"{status} {feature}")
-
-        # Count methods
-        method_count = source.count("def ")
-        print(f"\nTotal methods: {method_count}")
-
-        # Check docstrings
-        has_class_docstring = '"""' in source.split("class")[1].split(":")[0]
-        print(f"Class docstring: {'✓' if has_class_docstring else '✗'}")
-
-        # Check for BaseGenerator method calls
-        base_methods = [
-            "generate_noise_layer",
-            "apply_cellular_automaton",
-            "create_clusters",
-        ]
-
-        print("\nBaseGenerator method calls:")
-        for method in base_methods:
-            call_present = f"self.{method}" in source
-            status = "✓" if call_present else "✗"
-            print(f"{status} {method}")
-
-        # Check for SymbioteEvolutionAlgorithm integration
-        algo_methods = [
-            "process_mineral_feeding",
-            "generate_cellular_automaton_rules",
-            "update_cellular_automaton",
-            "apply_environmental_effects",
-            "simulate_colony_interaction",
-        ]
-
-        print("\nSymbioteEvolutionAlgorithm method calls:")
-        for method in algo_methods:
-            call_present = f"self.evolution_algorithm.{method}" in source
-            status = "✓" if call_present else "✗"
-            print(f"{status} {method}")
-
-        return True
+        return _extracted_from_perform_code_review_7()
     except Exception as e:
         print(f"Error during code review: {e}")
         return False
 
 
+# TODO Rename this here and in `perform_code_review`
+def _extracted_from_perform_code_review_7():
+    # Read the file directly instead of importing it
+    import os
+
+    symbiote_generator_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "generators",
+        "symbiote_evolution_generator.py",
+    )
+
+    if not os.path.exists(symbiote_generator_path):
+        print(f"Error: File not found at {symbiote_generator_path}")
+        return False
+
+    with open(symbiote_generator_path, "r") as f:
+        source = f.read()
+
+    # Check for key features
+    features = {
+        "Inheritance": "class SymbioteEvolutionGenerator(BaseGenerator)" in source,
+        "Algorithm Integration": "from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
+        in source,
+        "Colony Generation": "def generate_initial_colonies" in source,
+        "Mineral Distribution": "def generate_mineral_distribution" in source,
+        "Evolution Simulation": "def simulate_evolution" in source,
+        "Mutation Tracking": "def generate_mutation_map" in source,
+        "Parameter Handling": "self.set_parameter" in source,
+        "Error Handling": "try:" in source and "except" in source,
+        "Performance Logging": "log_performance" in source,
+    }
+
+    # Report findings
+    print("\nCode Review Results:")
+    for feature, present in features.items():
+        status = "✓" if present else "✗"
+        print(f"{status} {feature}")
+
+    # Count methods
+    method_count = source.count("def ")
+    print(f"\nTotal methods: {method_count}")
+
+    # Check docstrings
+    has_class_docstring = '"""' in source.split("class")[1].split(":")[0]
+    print(f"Class docstring: {'✓' if has_class_docstring else '✗'}")
+
+    # Check for BaseGenerator method calls
+    base_methods = [
+        "generate_noise_layer",
+        "apply_cellular_automaton",
+        "create_clusters",
+    ]
+
+    print("\nBaseGenerator method calls:")
+    for method in base_methods:
+        call_present = f"self.{method}" in source
+        status = "✓" if call_present else "✗"
+        print(f"{status} {method}")
+
+    # Check for SymbioteEvolutionAlgorithm integration
+    algo_methods = [
+        "process_mineral_feeding",
+        "generate_cellular_automaton_rules",
+        "update_cellular_automaton",
+        "apply_environmental_effects",
+        "simulate_colony_interaction",
+    ]
+
+    print("\nSymbioteEvolutionAlgorithm method calls:")
+    for method in algo_methods:
+        call_present = f"self.evolution_algorithm.{method}" in source
+        status = "✓" if call_present else "✗"
+        print(f"{status} {method}")
+
+    return True
+
+
+def verify_file_structure():
+    """Verify the file structure and inheritance of SymbioteEvolutionGenerator."""
+    import os
+
+    print("\n=== Verifying SymbioteEvolutionGenerator File Structure ===")
+
+    # Get the parent directory to access the src folder
+    parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+    # Check if the files exist
+    base_generator_path = os.path.join(
+        parent_dir, "src", "entities", "base_generator.py"
+    )
+    symbiote_generator_path = os.path.join(
+        parent_dir, "src", "generators", "symbiote_evolution_generator.py"
+    )
+    symbiote_algorithm_path = os.path.join(
+        parent_dir, "src", "algorithms", "symbiote_algorithm.py"
+    )
+
+    success = True
+
+    if not os.path.isfile(base_generator_path):
+        print(f"Error: BaseGenerator file does not exist at {base_generator_path}")
+        success = False
+    else:
+        print(f"✓ BaseGenerator file exists at {base_generator_path}")
+
+    if not os.path.isfile(symbiote_generator_path):
+        print(
+            f"Error: SymbioteEvolutionGenerator file does not exist at {symbiote_generator_path}"
+        )
+        success = False
+    else:
+        print(f"✓ SymbioteEvolutionGenerator file exists at {symbiote_generator_path}")
+
+    if not os.path.isfile(symbiote_algorithm_path):
+        print(
+            f"Error: SymbioteEvolutionAlgorithm file does not exist at {symbiote_algorithm_path}"
+        )
+        success = False
+    else:
+        print(f"✓ SymbioteEvolutionAlgorithm file exists at {symbiote_algorithm_path}")
+
+    # Only proceed with inheritance check if all files exist
+    if success:
+        # Check file contents to verify inheritance
+        try:
+            with open(symbiote_generator_path, "r") as f:
+                content = f.read()
+
+            if (
+                "from src.generators.base_generator import BaseGenerator" in content
+                or "from src.entities.base_generator import BaseGenerator" in content
+            ):
+                print("✓ SymbioteEvolutionGenerator imports BaseGenerator")
+            else:
+                print(
+                    "✗ SymbioteEvolutionGenerator does not import BaseGenerator correctly"
+                )
+                success = False
+
+            if (
+                "from src.algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm"
+                in content
+            ):
+                print("✓ SymbioteEvolutionGenerator imports SymbioteEvolutionAlgorithm")
+            else:
+                print(
+                    "✗ SymbioteEvolutionGenerator does not import SymbioteEvolutionAlgorithm correctly"
+                )
+                success = False
+
+            if "class SymbioteEvolutionGenerator(BaseGenerator):" in content:
+                print("✓ SymbioteEvolutionGenerator inherits from BaseGenerator")
+            else:
+                print(
+                    "✗ SymbioteEvolutionGenerator does not inherit from BaseGenerator"
+                )
+                success = False
+
+            # Try to import the modules to check inheritance programmatically
+            try:
+                sys.path.append(parent_dir)
+                from src.generators.symbiote_evolution_generator import (
+                    SymbioteEvolutionGenerator,
+                )
+                from src.generators.base_generator import BaseGenerator
+
+                if issubclass(SymbioteEvolutionGenerator, BaseGenerator):
+                    print("✓ SymbioteEvolutionGenerator is a subclass of BaseGenerator")
+                else:
+                    print(
+                        "✗ SymbioteEvolutionGenerator is not a subclass of BaseGenerator"
+                    )
+                    success = False
+
+                # Check for required methods
+                required_methods = [
+                    "generate",
+                    "evolve_colony",
+                    "apply_cellular_automaton",
+                ]
+                for method in required_methods:
+                    if hasattr(SymbioteEvolutionGenerator, method) and callable(
+                        getattr(SymbioteEvolutionGenerator, method)
+                    ):
+                        print(
+                            f"✓ SymbioteEvolutionGenerator has required method: {method}"
+                        )
+                    else:
+                        print(
+                            f"✗ SymbioteEvolutionGenerator is missing required method: {method}"
+                        )
+                        success = False
+
+            except ImportError as e:
+                print(f"Error importing modules: {e}")
+                success = False
+
+        except Exception as e:
+            print(f"Error checking file contents: {e}")
+            success = False
+
+    print(f"File structure verification {'successful' if success else 'failed'}")
+    return success
+
+
 if __name__ == "__main__":
-    print("=== SymbioteEvolutionGenerator Verification ===")
+    print("=== SymbioteEvolutionGenerator Comprehensive Verification ===")
+
+    # First verify the file structure
+    structure_success = verify_file_structure()
 
     if can_run_full_tests := (
         NUMPY_AVAILABLE and SCIPY_AVAILABLE and SYMBIOTE_GENERATOR_AVAILABLE

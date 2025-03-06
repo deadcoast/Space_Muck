@@ -415,7 +415,7 @@ def draw_tooltip(
 
     # Ensure tooltip stays within screen bounds
     screen_width = surface.get_width()
-    
+
     # Adjust position to keep tooltip on screen
     tooltip_x = min(x, screen_width - width - 10)
     tooltip_y = y - height - 10  # Position above cursor by default
@@ -472,13 +472,15 @@ def draw_minimap(
     # Calculate scale factors and sampling steps
     scale_x, scale_y = rect.width / grid.shape[1], rect.height / grid.shape[0]
     step_x, step_y = max(1, grid.shape[1] // 100), max(1, grid.shape[0] // 100)
-    
+
     # Draw the grid elements
     _draw_grid_on_minimap(minimap, grid, scale_x, scale_y, step_x, step_y)
-    
+
     # Draw entities if provided
     if entity_grid is not None:
-        _draw_entities_on_minimap(minimap, entity_grid, scale_x, scale_y, step_x, step_y)
+        _draw_entities_on_minimap(
+            minimap, entity_grid, scale_x, scale_y, step_x, step_y
+        )
 
     # Draw player position if provided
     if player_pos:
@@ -496,12 +498,12 @@ def draw_minimap(
 
 
 def _draw_grid_on_minimap(
-    minimap: pygame.Surface, 
-    grid: np.ndarray, 
-    scale_x: float, 
-    scale_y: float, 
-    step_x: int, 
-    step_y: int
+    minimap: pygame.Surface,
+    grid: np.ndarray,
+    scale_x: float,
+    scale_y: float,
+    step_x: int,
+    step_y: int,
 ) -> None:
     """Draw the asteroid grid on the minimap."""
     for y in range(0, grid.shape[0], step_y):
@@ -521,21 +523,21 @@ def _draw_grid_on_minimap(
 
 
 def _draw_entities_on_minimap(
-    minimap: pygame.Surface, 
-    entity_grid: np.ndarray, 
-    scale_x: float, 
-    scale_y: float, 
-    step_x: int, 
-    step_y: int
+    minimap: pygame.Surface,
+    entity_grid: np.ndarray,
+    scale_x: float,
+    scale_y: float,
+    step_x: int,
+    step_y: int,
 ) -> None:
     """Draw entities on the minimap."""
     # Entity color mapping
     entity_colors = {
-        1: (50, 100, 255),   # Blue
-        2: (255, 50, 150),    # Pink
-        3: (255, 165, 0)      # Orange
+        1: (50, 100, 255),  # Blue
+        2: (255, 50, 150),  # Pink
+        3: (255, 165, 0),  # Orange
     }
-    
+
     for entity_id, color in entity_colors.items():
         for y in range(0, entity_grid.shape[0], step_y):
             for x in range(0, entity_grid.shape[1], step_x):
@@ -553,10 +555,7 @@ def _draw_entities_on_minimap(
 
 
 def _draw_player_on_minimap(
-    minimap: pygame.Surface, 
-    player_pos: Tuple[int, int], 
-    scale_x: float, 
-    scale_y: float
+    minimap: pygame.Surface, player_pos: Tuple[int, int], scale_x: float, scale_y: float
 ) -> None:
     """Draw the player position on the minimap."""
     pygame.draw.circle(
@@ -568,10 +567,10 @@ def _draw_player_on_minimap(
 
 
 def _draw_view_rect_on_minimap(
-    minimap: pygame.Surface, 
-    view_rect: Tuple[int, int, int, int], 
-    scale_x: float, 
-    scale_y: float
+    minimap: pygame.Surface,
+    view_rect: Tuple[int, int, int, int],
+    scale_x: float,
+    scale_y: float,
 ) -> None:
     """Draw the current view rectangle on the minimap."""
     x1, y1, x2, y2 = view_rect

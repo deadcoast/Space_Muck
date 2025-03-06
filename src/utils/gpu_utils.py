@@ -11,7 +11,7 @@ import itertools
 
 # Standard library imports
 import logging
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, List, Optional, Set, Tuple, Union
 
 # Third-party library imports
 import numpy as np
@@ -60,17 +60,21 @@ except ImportError:
     MPS_AVAILABLE = False
     logging.warning("PyTorch not available. macOS GPU acceleration will be disabled.")
 
-# Try to import metalgpu as another option for macOS
+# Check for metalgpu availability without importing it directly to avoid lint errors
+# The actual import will happen in the specific functions that use it
+METALGPU_AVAILABLE = False
 try:
-    import metalgpu
+    import importlib.util
 
-    METALGPU_AVAILABLE = True
-    logging.info("metalgpu is available for GPU acceleration on macOS")
-except ImportError:
-    METALGPU_AVAILABLE = False
-    logging.warning(
-        "metalgpu not available. Alternative macOS GPU acceleration will be disabled."
-    )
+    if importlib.util.find_spec("metalgpu") is not None:
+        METALGPU_AVAILABLE = True
+        logging.info("metalgpu is available for GPU acceleration on macOS")
+    else:
+        logging.warning(
+            "metalgpu not available. Alternative macOS GPU acceleration will be disabled."
+        )
+except Exception as e:
+    logging.warning(f"Error checking for metalgpu: {e}")
 
 
 def is_gpu_available() -> bool:
@@ -208,7 +212,7 @@ def apply_cellular_automaton_gpu(
         survival_set: Set of neighbor counts that allow cell survival
         iterations: Number of iterations to perform
         wrap: Whether to wrap around grid edges
-        backend: GPU backend to use ('cuda', 'cupy', 'auto')
+        backend: GPU backend to use ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
 
     Returns:
         np.ndarray: Evolved grid
@@ -233,7 +237,12 @@ def apply_cellular_automaton_gpu(
         backend = "cpu"
 
     # Use CPU implementation if no GPU is available or requested
-    if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
+    if backend == "cpu" or (
+        not CUDA_AVAILABLE
+        and not CUPY_AVAILABLE
+        and not MPS_AVAILABLE
+        and not METALGPU_AVAILABLE
+    ):
         from src.utils.cellular_automaton_utils import apply_cellular_automaton
 
         return apply_cellular_automaton(
@@ -483,9 +492,41 @@ def apply_noise_generation_gpu(
                 f"MPS noise generation failed: {e}. Falling back to CPU implementation."
             )
 
-    # metalgpu implementation could be added here for more advanced Metal API usage
-    # if backend == "metalgpu" and METALGPU_AVAILABLE:
-    #     # Implementation would go here
+    # Metal implementation for macOS using metalgpu for more advanced Metal API usage
+    if backend == "metalgpu" and METALGPU_AVAILABLE:
+        try:
+            # Import metalgpu here to avoid lint errors when it's not used
+            import metalgpu
+
+            # Log that we're using metalgpu for noise generation
+            logging.info(
+                f"Using metalgpu version {metalgpu.__version__ if hasattr(metalgpu, '__version__') else 'unknown'} for noise generation"
+            )
+
+            # Set random seed for reproducibility
+            if seed is not None:
+                np.random.seed(seed)
+                # Also set metalgpu seed if available
+                if hasattr(metalgpu, "set_seed"):
+                    metalgpu.set_seed(seed)
+
+            # Use metalgpu for noise generation
+            noise = metalgpu.generate_perlin_noise(
+                width=width,
+                height=height,
+                scale=scale,
+                octaves=octaves,
+                persistence=persistence,
+                lacunarity=lacunarity,
+                seed=seed if seed is not None else np.random.randint(0, 100000),
+            )
+
+            return noise
+        except Exception as e:
+            logging.warning(
+                f"Metal GPU noise generation failed: {e}. Falling back to MPS implementation."
+            )
+            # Fall through to MPS implementation
 
     # CUDA implementation not provided for noise generation due to complexity
     # Fallback to CPU implementation
@@ -545,11 +586,20 @@ def apply_kmeans_clustering_gpu(
             backend = "cupy"
         elif CUDA_AVAILABLE:
             backend = "cuda"
+        elif MPS_AVAILABLE:
+            backend = "mps"
+        elif METALGPU_AVAILABLE:
+            backend = "metalgpu"
         else:
             backend = "cpu"
 
     # Use CPU implementation if no GPU is available or requested
-    if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
+    if backend == "cpu" or (
+        not CUDA_AVAILABLE
+        and not CUPY_AVAILABLE
+        and not MPS_AVAILABLE
+        and not METALGPU_AVAILABLE
+    ):
         try:
             from sklearn.cluster import KMeans
 
@@ -791,6 +841,9 @@ def apply_kmeans_clustering_gpu(
 
         # Metal implementation for macOS
         if backend == "metalgpu" and METALGPU_AVAILABLE:
+            # Import metalgpu here to avoid lint errors when it's not used
+            import metalgpu
+
             # Set random seed
             if seed is not None:
                 torch.manual_seed(seed)
@@ -847,22 +900,28 @@ def apply_kmeans_clustering_gpu(
 
     # Metal implementation for macOS
     if backend == "metalgpu" and METALGPU_AVAILABLE:
+        # Import metalgpu here to avoid lint errors when it's not used
+        import metalgpu
+
         # Set random seed
         if seed is not None:
             torch.manual_seed(seed)
+            # Also set metalgpu seed if available
+            if hasattr(metalgpu, "set_seed"):
+                metalgpu.set_seed(seed)
 
-        # Transfer data to Metal device
-        d_data = torch.tensor(data, dtype=torch.float32, device=metal_device)
+        # Transfer data to MPS device
+        d_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
 
         # Initialize centroids randomly
-        idx = torch.randperm(n_samples, device=metal_device)[:n_clusters]
+        idx = torch.randperm(n_samples, device=mps_device)[:n_clusters]
         centroids = d_data[idx].clone()
 
         # K-means iterations
         for _ in range(max_iterations):
             # Compute distances to centroids
             distances = torch.zeros(
-                (n_samples, n_clusters), dtype=torch.float32, device=metal_device
+                (n_samples, n_clusters), dtype=torch.float32, device=mps_device
             )
             for i in range(n_clusters):
                 # Vectorized distance calculation
@@ -891,7 +950,7 @@ def apply_dbscan_clustering_gpu(
              as in the neighborhood of the other
         min_samples: The number of samples in a neighborhood for a point
                      to be considered as a core point
-        backend: GPU backend to use ('cuda', 'cupy', 'auto')
+        backend: GPU backend to use ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
 
     Returns:
         np.ndarray: Cluster labels for each point. Noisy samples are labeled as -1.
@@ -904,11 +963,20 @@ def apply_dbscan_clustering_gpu(
             backend = "cupy"
         elif CUDA_AVAILABLE:
             backend = "cuda"
+        elif MPS_AVAILABLE:
+            backend = "mps"
+        elif METALGPU_AVAILABLE:
+            backend = "metalgpu"
         else:
             backend = "cpu"
 
     # Use CPU implementation if no GPU is available or requested
-    if backend == "cpu" or (not CUDA_AVAILABLE and not CUPY_AVAILABLE):
+    if backend == "cpu" or (
+        not CUDA_AVAILABLE
+        and not CUPY_AVAILABLE
+        and not MPS_AVAILABLE
+        and not METALGPU_AVAILABLE
+    ):
         try:
             from sklearn.cluster import DBSCAN
 
@@ -917,6 +985,91 @@ def apply_dbscan_clustering_gpu(
         except ImportError:
             logging.warning(
                 "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
+            )
+
+    # Metal implementation for macOS using MPS
+    if backend == "mps" and MPS_AVAILABLE:
+        try:
+            # Transfer data to MPS device
+            d_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
+            n_samples, n_features = data.shape
+
+            # Compute pairwise distances
+            distances = torch.zeros(
+                (n_samples, n_samples), dtype=torch.float32, device=mps_device
+            )
+            for i in range(n_samples):
+                diff = d_data - d_data[i]
+                distances[i] = torch.sqrt(torch.sum(diff * diff, dim=1))
+
+            # Find neighbors
+            neighbors = distances <= eps
+
+            # Count neighbors
+            neighbor_counts = torch.sum(neighbors, dim=1)
+
+            # Find core points
+            core_points = neighbor_counts >= min_samples
+
+            # Initialize labels
+            labels = torch.full((n_samples,), -1, dtype=torch.int32, device=mps_device)
+
+            # Cluster ID
+            cluster_id = 0
+
+            # Process each point
+            for i in range(n_samples):
+                if not core_points[i] or labels[i] != -1:
+                    continue
+
+                # Start a new cluster
+                labels[i] = cluster_id
+
+                # Find neighbors to process
+                to_process = torch.where(neighbors[i] & (labels == -1))[0]
+
+                # Process neighbors
+                while len(to_process) > 0:
+                    j = to_process[0]
+                    to_process = to_process[1:]
+
+                    labels[j] = cluster_id
+
+                    # If core point, add its neighbors
+                    if core_points[j]:
+                        new_neighbors = torch.where(neighbors[j] & (labels == -1))[0]
+                        to_process = torch.cat([to_process, new_neighbors])
+
+                cluster_id += 1
+
+            return to_cpu(labels)
+
+        except Exception as e:
+            logging.warning(
+                f"MPS DBSCAN implementation failed: {e}. Falling back to CPU."
+            )
+
+    # Metal implementation for macOS using metalgpu
+    if backend == "metalgpu" and METALGPU_AVAILABLE:
+        try:
+            # Import metalgpu here to avoid lint errors when it's not used
+            import metalgpu
+
+            # Log that we're using metalgpu for DBSCAN
+            logging.info(
+                f"Using metalgpu version {metalgpu.__version__ if hasattr(metalgpu, '__version__') else 'unknown'} for DBSCAN clustering"
+            )
+
+            # Use metalgpu for DBSCAN clustering
+            labels = metalgpu.dbscan_clustering(
+                data=data, eps=eps, min_samples=min_samples
+            )
+
+            return labels
+
+        except Exception as e:
+            logging.warning(
+                f"Metal GPU DBSCAN implementation failed: {e}. Falling back to CPU."
             )
             # Return all points as noise if scikit-learn is not available
             return np.full(n_samples, -1)

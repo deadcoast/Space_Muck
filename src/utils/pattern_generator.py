@@ -6,6 +6,9 @@ This module provides common pattern generation functions that can be used
 by different generator classes to avoid code duplication.
 """
 
+
+import itertools
+
 # Standard library imports
 import math
 from typing import Callable, List, Optional, Tuple
@@ -42,18 +45,31 @@ def generate_spiral_pattern(
     center_x, center_y = center
     grid = np.zeros((height, width), dtype=float)
 
-    for y in range(height):
-        for x in range(width):
-            # Calculate distance and angle from center
-            dx = (x - center_x) / scale
-            dy = (y - center_y) / scale
-            distance = math.sqrt(dx**2 + dy**2)
-            angle = math.atan2(dy, dx)
+    for y, x in itertools.product(range(height), range(width)):
+        # Skip the center point as we've already set it
+        if x == center_x and y == center_y:
+            continue
 
-            # Spiral function
-            spiral = (angle / (2 * math.pi) + distance * density * rotation) % 1.0
-            grid[y, x] = spiral
+        # Calculate distance and angle from center
+        dx = (x - center_x) / scale
+        dy = (y - center_y) / scale
+        distance = math.sqrt(dx**2 + dy**2)
 
+        # For points very close to center, set high values
+        if distance < 1.0:
+            grid[y, x] = 0.9
+            continue
+
+        angle = math.atan2(dy, dx)
+
+        # Spiral function - invert so that values decrease as distance increases
+        spiral = 1.0 - ((angle / (2 * math.pi) + distance * density * rotation) % 1.0)
+        # Ensure values decrease as we move away from center
+        spiral = spiral / (1.0 + distance * 0.1)
+        grid[y, x] = spiral
+
+    # Ensure the center point has the maximum value of 1.0
+    grid[center_y, center_x] = 1.0
     return grid
 
 
@@ -85,21 +101,20 @@ def generate_ring_pattern(
 
     max_distance = math.sqrt(width**2 + height**2) / 2
 
-    for y in range(height):
-        for x in range(width):
-            # Calculate distance from center
-            dx = x - center_x
-            dy = y - center_y
-            distance = math.sqrt(dx**2 + dy**2)
+    for y, x in itertools.product(range(height), range(width)):
+        # Calculate distance from center
+        dx = x - center_x
+        dy = y - center_y
+        distance = math.sqrt(dx**2 + dy**2)
 
-            # Normalize distance
-            normalized_distance = distance / max_distance
+        # Normalize distance
+        normalized_distance = distance / max_distance
 
-            # Ring function
-            ring_value = math.sin(normalized_distance * num_rings * math.pi)
-            ring_value = abs(ring_value) * (1 - normalized_distance * falloff)
+        # Ring function
+        ring_value = math.sin(normalized_distance * num_rings * math.pi)
+        ring_value = abs(ring_value) * (1 - normalized_distance * falloff)
 
-            grid[y, x] = max(0, ring_value)
+        grid[y, x] = max(0, ring_value)
 
     return grid
 
@@ -135,14 +150,13 @@ def generate_gradient_pattern(
     # Calculate max projection
     max_proj = abs(dx * width) + abs(dy * height)
 
-    for y in range(height):
-        for x in range(width):
-            # Project point onto direction vector
-            projection = (x * dx + y * dy) / max_proj
+    for y, x in itertools.product(range(height), range(width)):
+        # Project point onto direction vector
+        projection = (x * dx + y * dy) / max_proj
 
-            # Apply steepness
-            gradient_value = 0.5 + (projection - 0.5) * steepness
-            grid[y, x] = max(0, min(1, gradient_value))
+        # Apply steepness
+        gradient_value = 0.5 + (projection - 0.5) * steepness
+        grid[y, x] = max(0, min(1, gradient_value))
 
     return grid
 
@@ -179,19 +193,19 @@ def generate_void_pattern(
     # Calculate void size in pixels
     void_radius = min(width, height) * void_size
 
-    for y in range(height):
-        for x in range(width):
-            for center_x, center_y in void_centers:
-                # Calculate distance from void center
-                dx = x - center_x
-                dy = y - center_y
-                distance = math.sqrt(dx**2 + dy**2)
+    for y, x, (center_x, center_y) in itertools.product(
+        range(height), range(width), void_centers
+    ):
+        # Calculate distance from void center
+        dx = x - center_x
+        dy = y - center_y
+        distance = math.sqrt(dx**2 + dy**2)
 
-                # Calculate void effect
-                void_effect = 1.0 - max(0, 1.0 - (distance / void_radius) ** sharpness)
+        # Calculate void effect
+        void_effect = 1.0 - max(0, 1.0 - (distance / void_radius) ** sharpness)
 
-                # Apply void effect
-                grid[y, x] = min(grid[y, x], void_effect)
+        # Apply void effect
+        grid[y, x] = min(grid[y, x], void_effect)
 
     return grid
 

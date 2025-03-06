@@ -110,37 +110,49 @@ def apply_cellular_automaton_optimized(
     Returns:
         np.ndarray: Evolved grid
     """
+    # Convert to binary grid for consistent processing
+    binary_grid = (grid > 0).astype(np.int8)
+
     if SCIPY_AVAILABLE:
-        # Count neighbors using scipy's optimized convolution
-        neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-        neighbor_count = ndimage.convolve(
-            grid.astype(np.int8), neighbors_kernel, mode="constant", cval=0
+        return _extracted_from_apply_cellular_automaton_optimized_20(
+            binary_grid, survival_set, birth_set, grid
         )
+    # Fallback to standard implementation if scipy is not available
+    height, width = grid.shape
+    return apply_cellular_automaton(
+        grid,
+        birth_set,
+        survival_set,
+        iterations=1,
+        wrap=True,
+        width=width,
+        height=height,
+    )
 
-        # Create new grid
-        new_grid = np.zeros_like(grid)
 
-        # Apply survival rules
-        for n in survival_set:
-            new_grid |= (neighbor_count == n) & grid
+# TODO Rename this here and in `apply_cellular_automaton_optimized`
+def _extracted_from_apply_cellular_automaton_optimized_20(
+    binary_grid, survival_set, birth_set, grid
+):
+    # Count neighbors using scipy's optimized convolution
+    neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+    neighbor_count = ndimage.convolve(
+        binary_grid, neighbors_kernel, mode="wrap", cval=0
+    )
 
-        # Apply birth rules
-        for n in birth_set:
-            new_grid |= (neighbor_count == n) & (~grid)
+    # Create new grid
+    new_grid = np.zeros_like(binary_grid)
 
-        return new_grid
-    else:
-        # Fallback to standard implementation if scipy is not available
-        height, width = grid.shape
-        return apply_cellular_automaton(
-            grid,
-            birth_set,
-            survival_set,
-            iterations=1,
-            wrap=True,
-            width=width,
-            height=height,
-        )
+    # Apply survival rules
+    for n in survival_set:
+        new_grid |= (neighbor_count == n) & (binary_grid > 0)
+
+    # Apply birth rules
+    for n in birth_set:
+        new_grid |= (neighbor_count == n) & (binary_grid == 0)
+
+    # Preserve original values where cells are alive
+    return grid * new_grid
 
 
 def generate_cellular_automaton_rules(

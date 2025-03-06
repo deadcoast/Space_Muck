@@ -2,10 +2,12 @@
 Game configuration and constants for Space Muck.
 
 This file centralizes all game constants and configuration values to make
-adjustments and balancing easier across the entire codebase.
+adjustments and balancing easier across the entire codebase. All constants
+are strongly typed for better IDE support and error checking.
 """
 
-from typing import Tuple, Dict, Any, List
+# Standard library imports
+from typing import Tuple, Dict, Any, List, Set
 
 # Version information
 VERSION: str = "1.0.0"

@@ -9,20 +9,20 @@ This module provides advanced logging capabilities including:
 - Memory usage monitoring
 """
 
+import contextlib
 import logging
 import logging.handlers
 import os
-import sys
 import time
 import traceback
 import gc
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional
 
 # Try to import colorama for cross-platform colored console output
 try:
     import colorama
-    from colorama import Fore, Back, Style
+    from colorama import Fore, Style
 
     colorama.init()
     COLORAMA_AVAILABLE = True
@@ -150,30 +150,7 @@ def setup_logging(
 
     # Add file handler if requested
     if log_to_file:
-        # Create timestamped log filename
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        log_file = f"logs/space_muck_{timestamp}.log"
-
-        # Create file handler which logs even debug messages
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=10 * 1024 * 1024, backupCount=5
-        )
-        file_handler.setLevel(logging.DEBUG)
-
-        # Create more detailed formatter for file logs
-        file_format = (
-            "%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s"
-        )
-        if log_level <= logging.DEBUG:
-            file_format += " (elapsed: %(elapsed).3f, memory: %(memory).2f MB)"
-
-        file_formatter = logging.Formatter(file_format)
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-
-        # Log the startup event
-        logger.info(f"Logging started, saving to {log_file}")
-
+        file_handler = _extracted_from_setup_logging_43(logging, log_level, logger)
     # Create in-memory handler for showing logs in-game
     memory_handler = MemoryHandler(capacity=100)
     memory_handler.setLevel(logging.INFO)
@@ -190,6 +167,33 @@ def setup_logging(
             file_handler.addFilter(perf_filter)
 
     return logger
+
+
+# TODO Rename this here and in `setup_logging`
+def _extracted_from_setup_logging_43(logging, log_level, logger):
+    # Create timestamped log filename
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_file = f"logs/space_muck_{timestamp}.log"
+
+    # Create file handler which logs even debug messages
+    result = logging.handlers.RotatingFileHandler(
+        log_file, maxBytes=10 * 1024 * 1024, backupCount=5
+    )
+    result.setLevel(logging.DEBUG)
+
+    # Create more detailed formatter for file logs
+    file_format = "%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s"
+    if log_level <= logging.DEBUG:
+        file_format += " (elapsed: %(elapsed).3f, memory: %(memory).2f MB)"
+
+    file_formatter = logging.Formatter(file_format)
+    result.setFormatter(file_formatter)
+    logger.addHandler(result)
+
+    # Log the startup event
+    logger.info(f"Logging started, saving to {log_file}")
+
+    return result
 
 
 def log_exception(e: Exception, critical: bool = True) -> None:
@@ -219,21 +223,24 @@ def log_exception(e: Exception, critical: bool = True) -> None:
     # Log memory stats in debug mode
     if logger.level <= logging.DEBUG:
         # Try to get detailed memory info
-        try:
-            import psutil
+        with contextlib.suppress(ImportError):
+            _extracted_from_log_exception_(logger)
 
-            process = psutil.Process(os.getpid())
-            memory = process.memory_info().rss / (1024 * 1024)
-            logger.debug(f"Memory usage at exception: {memory:.2f} MB")
 
-            # Run garbage collection and log again
-            gc.collect()
-            memory_after = process.memory_info().rss / (1024 * 1024)
-            logger.debug(
-                f"Memory after gc.collect(): {memory_after:.2f} MB, delta: {memory_after - memory:.2f} MB"
-            )
-        except ImportError:
-            pass
+# TODO Rename this here and in `log_exception`
+def _extracted_from_log_exception_(logger):
+    import psutil
+
+    process = psutil.Process(os.getpid())
+    memory = process.memory_info().rss / (1024 * 1024)
+    logger.debug(f"Memory usage at exception: {memory:.2f} MB")
+
+    # Run garbage collection and log again
+    gc.collect()
+    memory_after = process.memory_info().rss / (1024 * 1024)
+    logger.debug(
+        f"Memory after gc.collect(): {memory_after:.2f} MB, delta: {memory_after - memory:.2f} MB"
+    )
 
 
 def get_in_memory_logs() -> list:

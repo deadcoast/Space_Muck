@@ -9,18 +9,36 @@ This module contains the AsteroidField class which handles:
 - Optimized rendering and interaction systems
 """
 
+# Standard library imports
 import itertools
 import logging
 import math
 import random
 from typing import Dict, List, Tuple, Set
 
+# Third-party imports
 import numpy as np
 import pygame
-import scipy.ndimage as ndimage
-import scipy.signal as signal
-from perlin_noise import PerlinNoise
 
+# Handle optional dependencies gracefully
+try:
+    import scipy.ndimage as ndimage
+    import scipy.signal as signal
+
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    logging.warning("scipy not available. Falling back to manual implementations.")
+
+try:
+    from perlin_noise import PerlinNoise
+
+    PERLIN_AVAILABLE = True
+except ImportError:
+    PERLIN_AVAILABLE = False
+    logging.warning("perlin_noise package not available. Some features may be limited.")
+
+# Local application imports
 from src.config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
 from src.utils.logging_setup import (
     log_exception,
@@ -45,7 +63,8 @@ except ImportError:
 
 # Check if scipy is available for optimized cellular automaton
 import scipy
-SCIPY_AVAILABLE = hasattr(scipy, 'signal')
+
+SCIPY_AVAILABLE = hasattr(scipy, "signal")
 if not SCIPY_AVAILABLE:
     logging.warning(
         "SciPy signal module not available. Using manual implementation for cellular automaton."
@@ -200,17 +219,17 @@ class AsteroidField:
             self._asteroid_handler()
         except Exception as e:
             self._handle_asteroid_generation_error(
-                e, 'Failed to generate field with generator: '
+                e, "Failed to generate field with generator: "
             )
 
     def _asteroid_handler(self) -> None:
         """Generate asteroid field using available generators.
-        
+
         This method selects the appropriate generator based on availability:
         - Uses optimized AsteroidGenerator if available
         - Falls back to ProceduralGenerator if optimized generator is not available
         - Handles grid initialization and ensures all required grids are populated
-        
+
         Raises:
             Exception: Passes through exceptions from generator methods for centralized handling
         """
@@ -229,11 +248,19 @@ class AsteroidField:
 
         try:
             if ASTEROID_GENERATOR_AVAILABLE:
-                self._generate_asteroid_field_with_optimized_generator(common_params, seed)
-                logging.info(f"Asteroid field generated using optimized AsteroidGenerator (seed: {seed})")
+                self._generate_asteroid_field_with_optimized_generator(
+                    common_params, seed
+                )
+                logging.info(
+                    f"Asteroid field generated using optimized AsteroidGenerator (seed: {seed})"
+                )
             else:
-                self._generate_asteroid_field_with_procedural_generator(common_params, seed)
-                logging.info(f"Asteroid field generated using ProceduralGenerator (seed: {seed})")
+                self._generate_asteroid_field_with_procedural_generator(
+                    common_params, seed
+                )
+                logging.info(
+                    f"Asteroid field generated using ProceduralGenerator (seed: {seed})"
+                )
 
             # Initialize energy grid based on asteroid values if not included in result
             if np.all(self.energy_grid == 0):
@@ -241,7 +268,7 @@ class AsteroidField:
 
         except Exception as e:
             self._handle_asteroid_generation_error(
-                e, 'Error in asteroid field generation: '
+                e, "Error in asteroid field generation: "
             )
         finally:
             # Log performance regardless of success or failure
@@ -252,7 +279,9 @@ class AsteroidField:
         logging.error(f"{error_prefix}{str(e)}")
         raise
 
-    def _generate_asteroid_field_with_optimized_generator(self, common_params: dict, seed: int) -> None:
+    def _generate_asteroid_field_with_optimized_generator(
+        self, common_params: dict, seed: int
+    ) -> None:
         """Generate asteroid field using the optimized AsteroidGenerator.
 
         Args:
@@ -287,12 +316,14 @@ class AsteroidField:
 
             # Generate energy grid based on asteroid values
             self.energy_grid = value_grid.astype(np.float32) / 100.0
-            
+
         except Exception as e:
             logging.error(f"Error in optimized asteroid generator: {str(e)}")
             raise
-            
-    def _generate_asteroid_field_with_procedural_generator(self, common_params: dict, seed: int) -> None:
+
+    def _generate_asteroid_field_with_procedural_generator(
+        self, common_params: dict, seed: int
+    ) -> None:
         """Generate asteroid field using the ProceduralGenerator.
 
         Args:
@@ -304,23 +335,21 @@ class AsteroidField:
         """
         try:
             # Fall back to the original ProceduralGenerator
-            generator = ProceduralGenerator(
-                **common_params,
-                parameters={
-                    "pattern_complexity": self.pattern_complexity,
-                    "field_density": self.field_density,
-                    "turbulence": self.turbulence,
-                    "birth_set": self.birth_set,
-                    "survival_set": self.survival_set,
-                    "anomaly_chance": self.anomaly_chance,
-                    "rare_chance": self.rare_chance,
-                    "rare_bonus_multiplier": self.rare_bonus_multiplier,
-                },
-            )
+            generator = ProceduralGenerator(**common_params)
+
+            # Set parameters individually instead of using a parameters dict
+            generator.set_parameter("pattern_complexity", self.pattern_complexity)
+            generator.set_parameter("field_density", self.field_density)
+            generator.set_parameter("turbulence", self.turbulence)
+            generator.set_parameter("birth_set", self.birth_set)
+            generator.set_parameter("survival_set", self.survival_set)
+            generator.set_parameter("anomaly_chance", self.anomaly_chance)
+            generator.set_parameter("rare_chance", self.rare_chance)
+            generator.set_parameter("rare_bonus_multiplier", self.rare_bonus_multiplier)
 
             # Generate the asteroid field grid
             result = generator.generate()
-            
+
             if isinstance(result, dict):
                 # If the generator returns a dictionary with multiple grids
                 if "grid" in result:
@@ -336,11 +365,10 @@ class AsteroidField:
                 # Generate rare minerals distribution if not included in result
                 if np.all(self.rare_grid == 0):
                     self._generate_rare_minerals()
-                    
+
         except Exception as e:
             logging.error(f"Error in procedural asteroid generator: {str(e)}")
             raise
-
 
     def _generate_rare_minerals(self) -> None:
         """
@@ -700,40 +728,65 @@ class AsteroidField:
         num_patterns = max(3, min(10, num_patterns))
 
         for _ in range(num_patterns):
-            # Choose a pattern with complexity proportional to pattern_complexity
-            pattern_index = min(
-                len(life_patterns) - 1,
-                int(
-                    random.random() ** (1.0 - self.pattern_complexity)
-                    * len(life_patterns)
-                ),
-            )
-            pattern = life_patterns[pattern_index]
+            try:
+                # Choose a pattern with complexity proportional to pattern_complexity
+                pattern_index = min(
+                    len(life_patterns) - 1,
+                    int(
+                        random.random() ** (1.0 - self.pattern_complexity)
+                        * len(life_patterns)
+                    ),
+                )
+                pattern = life_patterns[pattern_index]
 
-            # Find a suitable location (not too close to edges)
-            margin = 20
-            max_pattern_size = (
-                max(max(dx for dx, dy in pattern), max(dy for dx, dy in pattern)) + 5
-            )
+                # Find a suitable location (not too close to edges)
+                margin = 20
 
-            offset_x = random.randint(margin, self.width - max_pattern_size - margin)
-            offset_y = random.randint(margin, self.height - max_pattern_size - margin)
+                # Calculate maximum pattern dimensions
+                max_pattern_width = max(dx for dx, dy in pattern) + 5 if pattern else 5
+                max_pattern_height = max(dy for dx, dy in pattern) + 5 if pattern else 5
+                max_pattern_size = max(max_pattern_width, max_pattern_height)
 
-            # Add the pattern to the grid
-            for dx, dy in pattern:
-                x, y = offset_x + dx, offset_y + dy
-                if 0 <= x < self.width and 0 <= y < self.height:
-                    self.grid[y, x] = random.randint(80, 120)  # Good value range
-                    self.energy_grid[y, x] = random.uniform(0.6, 0.9)  # High energy
+                # Ensure we have enough space to place the pattern
+                if self.width <= (margin * 2 + max_pattern_size) or self.height <= (
+                    margin * 2 + max_pattern_size
+                ):
+                    # Field is too small for this pattern, skip it
+                    continue
 
-                    # Small chance for a rare mineral
-                    if (
-                        random.random() < self.rare_chance * 2
-                    ):  # Double chance in patterns
-                        self.rare_grid[y, x] = 1
-                        self.grid[y, x] = int(
-                            self.grid[y, x] * self.rare_bonus_multiplier
-                        )
+                # Calculate valid ranges for pattern placement
+                min_x = margin
+                max_x = self.width - max_pattern_size - margin
+                min_y = margin
+                max_y = self.height - max_pattern_size - margin
+
+                # Ensure valid ranges (prevent ValueError in randint)
+                if min_x >= max_x or min_y >= max_y:
+                    # Not enough space for this pattern, skip it
+                    continue
+
+                # Place pattern at random valid position
+                offset_x = random.randint(min_x, max_x)
+                offset_y = random.randint(min_y, max_y)
+
+                # Add the pattern to the grid
+                for dx, dy in pattern:
+                    x, y = offset_x + dx, offset_y + dy
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        self.grid[y, x] = random.randint(80, 120)  # Good value range
+                        self.energy_grid[y, x] = random.uniform(0.6, 0.9)  # High energy
+
+                        # Small chance for a rare mineral
+                        if (
+                            random.random() < self.rare_chance * 2
+                        ):  # Double chance in patterns
+                            self.rare_grid[y, x] = 1
+                            self.grid[y, x] = int(
+                                self.grid[y, x] * self.rare_bonus_multiplier
+                            )
+            except Exception as e:
+                # Log the error but continue with other patterns
+                print(f"Error placing life pattern: {str(e)}")
 
     def update_statistics(self) -> None:
         """Update field statistics and history."""
@@ -903,6 +956,11 @@ class AsteroidField:
     def _apply_cellular_automaton_scipy(
         self, grid, energy_grid=None, energy_boost=None
     ):
+        # Check if scipy is available
+        if not SCIPY_AVAILABLE:
+            return self._apply_cellular_automaton_manual(
+                grid, energy_grid, energy_boost
+            )
         """
         Apply cellular automaton rules using scipy for efficiency.
 

@@ -95,42 +95,88 @@ class ProceduralGenerator(BaseGenerator):
             f"ProceduralGenerator initialized: ID: {self.entity_id}, Seed: {self.seed}"
         )
 
-    def generate_asteroid_field(self, density: float = 0.3) -> np.ndarray:
+    def generate_asteroid_field(
+        self, density: float = 0.3, noise_scale: float = 0.1, threshold: float = 0.4
+    ) -> np.ndarray:
         """
         Generate a procedural asteroid field using multiple noise layers.
 
         Args:
             density: Overall density of asteroids (0-1)
+            noise_scale: Scale factor for noise generation
+            threshold: Threshold value for asteroid formation
 
         Returns:
             np.ndarray: 2D grid with asteroid values
         """
-        start_time = log_performance_start("generate_asteroid_field")
+        # Track performance
+        start = log_performance_start("generate_asteroid_field")
 
         try:
-            return self.generate_multi_layer_asteroid_field(density, start_time)
+            result = self.generate_multi_layer_asteroid_field(
+                density, noise_scale, threshold
+            )
+            log_performance_end("generate_asteroid_field", start)
+            return result
+            # Already returned above
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
             return np.random.binomial(1, density * 0.5, (self.height, self.width)) * 50
 
-    def generate_multi_layer_asteroid_field(self, density, start_time):
+    def generate_multi_layer_asteroid_field(
+        self,
+        density: float = 0.3,
+        noise_scale: float = 0.1,
+        threshold: float = 0.4,
+        octaves=None,
+    ) -> np.ndarray:
+        """
+        Generate a multi-layered asteroid field with detailed features.
+
+        Args:
+            density: Overall density of asteroids (0-1)
+            noise_scale: Scale factor for noise generation
+            threshold: Threshold value for asteroid formation
+            octaves: Optional list of octave values for noise generation
+
+        Returns:
+            np.ndarray: 2D grid with asteroid values
+        """
+        start_time = log_performance_start("generate_multi_layer_asteroid_field")
+
         # Initialize the grid
         grid = np.zeros((self.height, self.width), dtype=np.int32)
 
+        # Use provided octaves or default
+        if octaves is None:
+            octaves = [2, 4, 6]
+
         # Generate primary noise layer
-        primary = self.generate_noise_layer("medium", scale=0.02)
-        primary = (primary - primary.min()) / (primary.max() - primary.min())
+        primary = self.generate_noise_layer("medium", scale=noise_scale * 0.2)
+        # Prevent division by zero when normalizing
+        min_val = primary.min()
+        max_val = primary.max()
+        if max_val > min_val:  # Only normalize if there's a range
+            primary = (primary - min_val) / (max_val - min_val)
+        else:
+            primary = np.zeros_like(primary)
 
         # Generate secondary noise for details
-        secondary = self.generate_noise_layer("high", scale=0.05)
-        secondary = (secondary - secondary.min()) / (secondary.max() - secondary.min())
+        secondary = self.generate_noise_layer("high", scale=noise_scale * 0.5)
+        # Prevent division by zero when normalizing
+        min_val = secondary.min()
+        max_val = secondary.max()
+        if max_val > min_val:  # Only normalize if there's a range
+            secondary = (secondary - min_val) / (max_val - min_val)
+        else:
+            secondary = np.zeros_like(secondary)
 
         # Combine noise layers
         combined = (primary * 0.7 + secondary * 0.3) * density * 1.5
 
         # Apply threshold to create asteroid locations
-        asteroid_mask = combined > (1 - density)
+        asteroid_mask = combined > threshold
 
         # Generate values for asteroids using lognormal distribution
         values = self.value_distribution.rvs(size=np.sum(asteroid_mask))
@@ -160,56 +206,93 @@ class ProceduralGenerator(BaseGenerator):
         # Add edge degradation for natural appearance
         grid = self.apply_edge_degradation(grid)
 
-        log_performance_end("generate_asteroid_field", start_time)
+        log_performance_end("generate_multi_layer_asteroid_field", start_time)
         return grid
 
     def generate_rare_minerals(
-        self, grid: np.ndarray, rare_chance: float = 0.1
+        self,
+        asteroid_grid: np.ndarray,
+        rare_chance: float = 0.1,
+        rare_bonus: float = 2.5,
+        anomaly_chance: float = 0.05,
     ) -> np.ndarray:
         """
         Generate rare mineral distribution based on the asteroid field.
 
         Args:
-            grid: Asteroid field grid
-            rare_chance: Base chance of rare minerals
+            asteroid_grid: Base asteroid grid
+            rare_chance: Chance of rare minerals (0-1)
+            rare_bonus: Multiplier for rare mineral values
+            anomaly_chance: Chance of anomalous rare mineral deposits
 
         Returns:
-            np.ndarray: Grid with rare mineral indicators (0 = common, 1 = rare, 2 = precious, 3 = anomaly)
+            np.ndarray: Grid with rare mineral values
         """
         start_time = log_performance_start("generate_rare_minerals")
 
         try:
             return self.generate_tiered_mineral_distribution(
-                grid, rare_chance, start_time
+                asteroid_grid, rare_chance, rare_bonus, start_time
             )
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.zeros_like(grid, dtype=np.int8)
+            return np.zeros_like(asteroid_grid, dtype=np.int8)
 
-    def generate_tiered_mineral_distribution(self, grid, rare_chance, start_time):
-        rare_grid = np.zeros_like(grid, dtype=np.int8)
+    def generate_tiered_mineral_distribution(
+        self,
+        asteroid_grid: np.ndarray,
+        rare_chance: float = 0.2,
+        rare_bonus: float = 2.5,
+        tiers: int = 3,
+    ) -> np.ndarray:
+        """
+        Generate tiered mineral distribution within the asteroid field.
+
+        Args:
+            asteroid_grid: Base asteroid grid
+            rare_chance: Chance of rare minerals (0-1)
+            rare_bonus: Multiplier for rare mineral values
+            tiers: Number of rarity tiers to generate
+
+        Returns:
+            np.ndarray: Grid with tiered mineral values
+        """
+        start_time = log_performance_start("generate_tiered_mineral_distribution")
+        rare_grid = np.zeros_like(asteroid_grid, dtype=np.int32)
 
         # No rare minerals where there are no asteroids
-        asteroid_mask = grid > 0
+        asteroid_mask = asteroid_grid > 0
 
         # Generate noise for rare mineral distribution
         rare_noise = self.generate_noise_layer("high", scale=0.03)
-        rare_noise = (rare_noise - rare_noise.min()) / (
-            rare_noise.max() - rare_noise.min()
-        )
+        # Prevent division by zero when normalizing rare_noise
+        min_val = rare_noise.min()
+        max_val = rare_noise.max()
+        if max_val > min_val:  # Only normalize if there's a range
+            rare_noise = (rare_noise - min_val) / (max_val - min_val)
+        else:
+            rare_noise = np.zeros_like(rare_noise)
 
         # Generate precious noise (even rarer)
         precious_noise = self.generate_noise_layer("high", scale=0.015)
-        precious_noise = (precious_noise - precious_noise.min()) / (
-            precious_noise.max() - precious_noise.min()
-        )
+        # Prevent division by zero when normalizing precious_noise
+        min_val = precious_noise.min()
+        max_val = precious_noise.max()
+        if max_val > min_val:  # Only normalize if there's a range
+            precious_noise = (precious_noise - min_val) / (max_val - min_val)
+        else:
+            precious_noise = np.zeros_like(precious_noise)
 
         # Generate anomaly noise (rarest)
         anomaly_noise = self.generate_noise_layer("detail", scale=0.01)
-        anomaly_noise = (anomaly_noise - anomaly_noise.min()) / (
-            anomaly_noise.max() - anomaly_noise.min()
-        )
+        # Prevent division by zero when normalizing anomaly_noise
+        min_val = anomaly_noise.min()
+        max_val = anomaly_noise.max()
+        if max_val > min_val:  # Only normalize if there's a range
+            anomaly_noise = (anomaly_noise - min_val) / (max_val - min_val)
+        else:
+            anomaly_noise = np.zeros_like(anomaly_noise)
 
         # Apply thresholds for different mineral types
         # Only apply to cells with asteroids
@@ -224,14 +307,22 @@ class ProceduralGenerator(BaseGenerator):
         anomaly_mask = (
             (anomaly_noise > anomaly_threshold)
             & asteroid_mask
-            & (np.random.random(grid.shape) < anomaly_chance)
+            & (np.random.random(asteroid_grid.shape) < anomaly_chance)
         )
 
-        # Assign values to the rare grid
-        # Priority: anomaly > precious > rare
-        rare_grid[rare_mask] = 1  # Rare
-        rare_grid[precious_mask] = 2  # Precious
-        rare_grid[anomaly_mask] = 3  # Anomaly
+        # Set rare mineral values based on asteroid values and rare_bonus
+        if np.any(rare_mask):
+            rare_grid[rare_mask] = (
+                asteroid_grid[rare_mask] * (rare_bonus * 0.5)
+            ).astype(np.int32)
+        if np.any(precious_mask):
+            rare_grid[precious_mask] = (
+                asteroid_grid[precious_mask] * (rare_bonus * 0.8)
+            ).astype(np.int32)
+        if np.any(anomaly_mask):
+            rare_grid[anomaly_mask] = (asteroid_grid[anomaly_mask] * rare_bonus).astype(
+                np.int32
+            )
 
         # Apply cellular automaton to create more natural clusters
         rare_grid = self.apply_cellular_automaton(
@@ -242,7 +333,7 @@ class ProceduralGenerator(BaseGenerator):
             wrap=True,
         )
 
-        log_performance_end("generate_rare_minerals", start_time)
+        log_performance_end("generate_tiered_mineral_distribution", start_time)
         return rare_grid
 
     def create_value_clusters(
@@ -374,15 +465,86 @@ class ProceduralGenerator(BaseGenerator):
                 "rare_grid": np.zeros_like(fallback_grid, dtype=np.int8),
                 "energy_grid": fallback_grid.astype(np.float32) / 100.0,
             }
-            
-    def _generate_energy_grid(self, grid: np.ndarray, rare_grid: np.ndarray) -> np.ndarray:
+
+    def generate_energy_sources(
+        self,
+        asteroid_grid: np.ndarray,
+        rare_grid: np.ndarray,
+        energy_chance: float = 0.1,
+        energy_value: float = 3.0,
+    ) -> np.ndarray:
+        """
+        Generate energy sources within the asteroid field.
+
+        Args:
+            asteroid_grid: Base asteroid grid
+            rare_grid: Rare minerals grid
+            energy_chance: Chance of energy sources (0-1)
+            energy_value: Base value for energy sources
+
+        Returns:
+            np.ndarray: Grid with energy source values
+        """
+        start_time = log_performance_start("generate_energy_sources")
+
+        try:
+            # Initialize energy grid
+            energy_grid = np.zeros_like(asteroid_grid, dtype=np.float32)
+
+            # Only place energy sources where asteroids exist
+            asteroid_mask = asteroid_grid > 0
+
+            # Generate noise for energy distribution
+            energy_noise = self.generate_noise_layer("medium", scale=0.04)
+            # Prevent division by zero when normalizing energy_noise
+            min_val = energy_noise.min()
+            max_val = energy_noise.max()
+            if max_val > min_val:  # Only normalize if there's a range
+                energy_noise = (energy_noise - min_val) / (max_val - min_val)
+            else:
+                energy_noise = np.zeros_like(energy_noise)
+
+            # Random chance for each asteroid to contain energy sources
+            energy_mask = np.logical_and(
+                asteroid_mask,
+                np.logical_or(
+                    energy_noise > (1 - energy_chance),
+                    np.random.random(asteroid_grid.shape) < energy_chance * 0.5,
+                ),
+            )
+
+            # Set energy values
+            energy_grid[energy_mask] = (
+                asteroid_grid[energy_mask].astype(np.float32)
+                * np.random.uniform(0.5, energy_value, np.sum(energy_mask))
+                / 100.0
+            )
+
+            # Apply bonuses from rare minerals
+            rare_mask = rare_grid > 0
+            if np.any(rare_mask & energy_mask):
+                energy_grid[
+                    rare_mask & energy_mask
+                ] *= 2.0  # Double energy in rare mineral locations
+
+            log_performance_end("generate_energy_sources", start_time)
+            return energy_grid
+
+        except Exception as e:
+            log_exception(e)
+            # Return a simple fallback grid if generation fails
+            return np.zeros_like(asteroid_grid, dtype=np.float32)
+
+    def _generate_energy_grid(
+        self, grid: np.ndarray, rare_grid: np.ndarray
+    ) -> np.ndarray:
         """
         Generate energy grid based on asteroid values and apply rare mineral bonuses.
-        
+
         Args:
             grid: The asteroid grid
             rare_grid: The rare minerals grid
-            
+
         Returns:
             np.ndarray: The energy grid with rare mineral bonuses applied
         """
@@ -394,12 +556,12 @@ class ProceduralGenerator(BaseGenerator):
         for rare_level in range(1, 4):
             rare_mask = rare_grid == rare_level
             energy_grid[rare_mask] *= rare_bonus * rare_level
-            
+
         return energy_grid
-            
+
     def _generate_asteroid_and_rare_grids(self):
         """Generate the asteroid field grid and rare minerals grid.
-        
+
         Returns:
             tuple: (asteroid_grid, rare_minerals_grid)
         """
@@ -410,7 +572,7 @@ class ProceduralGenerator(BaseGenerator):
         # Generate rare minerals distribution
         rare_chance = self.get_parameter("rare_chance", 0.1)
         rare_grid = self.generate_rare_minerals(grid, rare_chance=rare_chance)
-        
+
         return grid, rare_grid
 
 
@@ -420,7 +582,8 @@ def create_field_with_multiple_algorithms(
     seed: Optional[int] = None,
     rare_chance: float = 0.1,
     rare_bonus: float = 2.0,
-) -> 'AsteroidField':
+    energy_chance: float = 0.1,
+) -> "AsteroidField":
     """
     Create an asteroid field using multiple procedural generation algorithms.
 
@@ -433,14 +596,18 @@ def create_field_with_multiple_algorithms(
         seed: Random seed for reproducibility
         rare_chance: Chance of rare minerals appearing
         rare_bonus: Value multiplier for rare minerals
+        energy_chance: Chance of energy sources appearing
 
     Returns:
         AsteroidField: Fully initialized asteroid field
     """
     # Create the asteroid field
     # Import here to avoid circular imports
-    from src.generators.asteroid_field import AsteroidField
-    field = AsteroidField(width=width, height=height)
+    from src.generators.asteroid_field import AsteroidField as AsteroidFieldImpl
+
+    # Also make AsteroidField available at the module level for mocking in tests
+    globals()["AsteroidField"] = AsteroidFieldImpl
+    field = AsteroidFieldImpl(width=width, height=height)
 
     # Initialize the procedural generator
     generator = ProceduralGenerator(seed=seed, width=width, height=height)
@@ -453,13 +620,10 @@ def create_field_with_multiple_algorithms(
         field.grid, rare_chance=rare_chance
     )
 
-    # Initialize energy grid based on asteroid values
-    field.energy_grid = field.grid.astype(np.float32) / 100.0
-
-    # Apply rare mineral bonuses to energy grid
-    for rare_level in range(1, 4):
-        rare_mask = field.rare_grid == rare_level
-        field.energy_grid[rare_mask] *= rare_bonus * rare_level
+    # Generate energy sources using the energy_chance parameter
+    field.energy_grid = generator.generate_energy_sources(
+        field.grid, field.rare_grid, energy_chance=energy_chance
+    )
 
     logging.info("Created asteroid field with seed %s, size %sx%s", seed, width, height)
     logging.info("Field contains %s asteroids", np.sum(field.grid > 0))
@@ -467,7 +631,7 @@ def create_field_with_multiple_algorithms(
         "Rare minerals: %s rare, %s precious, %s anomaly",
         np.sum(field.rare_grid == 1),
         np.sum(field.rare_grid == 2),
-        np.sum(field.rare_grid == 3)
+        np.sum(field.rare_grid == 3),
     )
 
     return field

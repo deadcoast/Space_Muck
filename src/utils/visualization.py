@@ -7,12 +7,12 @@ helping developers understand and debug procedural generation.
 
 import logging
 import os
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional
 
 import numpy as np
 
 try:
-    import matplotlib
+    # matplotlib is imported to check availability
     import matplotlib.pyplot as plt
     from matplotlib.colors import LinearSegmentedColormap
 
@@ -109,10 +109,7 @@ class GeneratorVisualizer:
 
         # Save if requested
         if save:
-            save_path = os.path.join(self.output_dir, filename)
-            plt.savefig(save_path, dpi=300, bbox_inches="tight")
-            logging.info(f"Saved visualization to {save_path}")
-
+            self._extracted_from_compare_grids_43(filename, "Saved visualization to ")
         # Show if requested
         if show:
             plt.show()
@@ -177,15 +174,18 @@ class GeneratorVisualizer:
 
         # Save if requested
         if save:
-            save_path = os.path.join(self.output_dir, filename)
-            plt.savefig(save_path, dpi=300, bbox_inches="tight")
-            logging.info(f"Saved comparison to {save_path}")
-
+            self._extracted_from_compare_grids_43(filename, "Saved comparison to ")
         # Show if requested
         if show:
             plt.show()
 
         return fig
+
+    # TODO Rename this here and in `visualize_grid` and `compare_grids`
+    def _extracted_from_compare_grids_43(self, filename, arg1):
+        save_path = os.path.join(self.output_dir, filename)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        logging.info(f"{arg1}{save_path}")
 
     def visualize_evolution(
         self,
@@ -285,35 +285,44 @@ class GeneratorVisualizer:
             return False
 
         try:
-            # Normalize grid values if requested
-            if normalize:
-                min_val = np.min(grid)
-                max_val = np.max(grid)
-                if max_val > min_val:
-                    normalized_grid = (grid - min_val) * 255 / (max_val - min_val)
-                else:
-                    normalized_grid = np.zeros_like(grid)
-            else:
-                # Clip values to 0-255 range
-                normalized_grid = np.clip(grid, 0, 255)
-
-            # Convert to 8-bit unsigned integer
-            img_data = normalized_grid.astype(np.uint8)
-
-            # Apply colormap if matplotlib is available
-            if MATPLOTLIB_AVAILABLE:
-                cmap = self.default_cmaps.get(colormap, plt.cm.terrain)
-                img_data = (cmap(img_data) * 255).astype(np.uint8)
-
-            # Create and save image
-            img = Image.fromarray(img_data)
-            save_path = os.path.join(self.output_dir, filename)
-            img.save(save_path)
-            logging.info(f"Exported grid to {save_path}")
-            return True
+            return self._extracted_from_export_grid_as_image_26(
+                normalize, grid, colormap, filename
+            )
         except Exception as e:
             logging.error(f"Failed to export grid: {str(e)}")
             return False
+
+    # TODO Rename this here and in `export_grid_as_image`
+    def _extracted_from_export_grid_as_image_26(
+        self, normalize, grid, colormap, filename
+    ):
+        # Normalize grid values if requested
+        if normalize:
+            min_val = np.min(grid)
+            max_val = np.max(grid)
+            normalized_grid = (
+                (grid - min_val) * 255 / (max_val - min_val)
+                if max_val > min_val
+                else np.zeros_like(grid)
+            )
+        else:
+            # Clip values to 0-255 range
+            normalized_grid = np.clip(grid, 0, 255)
+
+        # Convert to 8-bit unsigned integer
+        img_data = normalized_grid.astype(np.uint8)
+
+        # Apply colormap if matplotlib is available
+        if MATPLOTLIB_AVAILABLE:
+            cmap = self.default_cmaps.get(colormap, plt.cm.terrain)
+            img_data = (cmap(img_data) * 255).astype(np.uint8)
+
+        # Create and save image
+        img = Image.fromarray(img_data)
+        save_path = os.path.join(self.output_dir, filename)
+        img.save(save_path)
+        logging.info(f"Exported grid to {save_path}")
+        return True
 
     def visualize_grid_comparison(
         self,

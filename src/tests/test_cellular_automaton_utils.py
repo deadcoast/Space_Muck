@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import sys
 import os
-from typing import Set
+from typing import Dict, Set, Any
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -35,11 +35,11 @@ class TestCellularAutomatonUtils(unittest.TestCase):
         self.glider[3, 3] = 1
 
         # Standard Conway's Game of Life rules
-        self.birth_set = {3}
-        self.survival_set = {2, 3}
+        self.birth_set: Set[int] = {3}
+        self.survival_set: Set[int] = {2, 3}
 
         # Test genome for rule generation
-        self.test_genome = {
+        self.test_genome: Dict[str, Any] = {
             "metabolism_rate": 1.0,
             "expansion_drive": 1.5,  # High expansion drive
             "mutation_rate": 0.01,

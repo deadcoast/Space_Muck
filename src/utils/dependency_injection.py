@@ -6,8 +6,10 @@ This module provides a simple dependency injection container and decorators
 to facilitate better testability and decoupling of components.
 """
 
+
+import contextlib
 import inspect
-from typing import Dict, Any, Callable, Type, Optional, get_type_hints
+from typing import Any, Type, get_type_hints
 
 
 class DependencyContainer:
@@ -169,13 +171,8 @@ def inject(cls: Type) -> Type:
             # Try to inject the dependency if it has a type hint
             if param.name in type_hints:
                 param_type = type_hints[param.name]
-                try:
+                with contextlib.suppress(KeyError):
                     injected_kwargs[param.name] = container.resolve(param_type)
-                except KeyError:
-                    # If we can't resolve the dependency, just continue
-                    # The original __init__ will raise an appropriate error
-                    pass
-
         # Update kwargs with injected dependencies
         kwargs.update(injected_kwargs)
 

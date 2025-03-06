@@ -13,8 +13,24 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import networkx as nx
 import numpy as np
 import pygame
-import scipy.stats as stats
-from sklearn.cluster import KMeans
+
+# Optional scipy imports
+try:
+    import scipy.stats as stats
+
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("Warning: scipy.stats not available. Some features may be limited.")
+
+# Optional sklearn imports
+try:
+    from sklearn.cluster import KMeans
+
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    print("Warning: sklearn not available. Clustering features will be limited.")
 
 # Optional dependencies
 try:
@@ -761,10 +777,12 @@ class MinerEntity(BaseEntity):
             "centrality": self.territory_centrality,
             "distance_stats": distance_stats,
         }
-        
-    def _calculate_territory_metrics(self, main_center, main_cluster_idx, clusters, points):
+
+    def _calculate_territory_metrics(
+        self, main_center, main_cluster_idx, clusters, points
+    ):
         """Calculate basic territory metrics based on clustering results.
-        
+
         Args:
             main_center: Center coordinates of the main cluster
             main_cluster_idx: Index of the main cluster
@@ -778,66 +796,130 @@ class MinerEntity(BaseEntity):
         main_cluster_points = points[clusters == main_cluster_idx]
         distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
         self.territory_radius = int(np.max(distances))
-        
+
         # Calculate territory density
         area = math.pi * self.territory_radius**2
         self.territory_density = len(main_cluster_points) / area if area > 0 else 0
-    
+
     def _perform_clustering(self, points, k):
         """Perform KMeans clustering and find the main cluster.
-        
+
         Args:
             points: Array of points to cluster
             k: Number of clusters
-            
+
         Returns:
             tuple: (clusters, centers, main_cluster_idx, main_center)
         """
-        # Perform KMeans clustering
-        kmeans = KMeans(n_clusters=k).fit(points)
-        clusters = kmeans.labels_
-        centers = kmeans.cluster_centers_
+        # Check if sklearn is available
+        if not SKLEARN_AVAILABLE:
+            # Fallback to simple centroid calculation if sklearn is not available
+            logging.warning("sklearn not available, using simple clustering fallback")
+            return self._perform_simple_clustering(points, k)
+
+        try:
+            # Perform KMeans clustering
+            kmeans = KMeans(n_clusters=k).fit(points)
+            clusters = kmeans.labels_
+            centers = kmeans.cluster_centers_
+
+            # Find main cluster (largest population)
+            cluster_sizes = [np.sum(clusters == i) for i in range(k)]
+            main_cluster_idx = np.argmax(cluster_sizes)
+            main_center = centers[main_cluster_idx]
+
+            return clusters, centers, main_cluster_idx, main_center
+        except Exception as e:
+            logging.error(f"KMeans clustering failed: {e}")
+            return self._perform_simple_clustering(points, k)
+
+    def _perform_simple_clustering(self, points, k):
+        """Simple clustering fallback when sklearn is not available.
+
+        Args:
+            points: Array of points to cluster
+            k: Number of clusters
+
+        Returns:
+            tuple: (clusters, centers, main_cluster_idx, main_center)
+        """
+        if len(points) == 0:
+            # Handle empty points array
+            dummy_center = np.array([0, 0])
+            return np.array([]), np.array([dummy_center]), 0, dummy_center
+
+        # Calculate centroid of all points as fallback
+        centroid = np.mean(points, axis=0)
+
+        # Assign all points to one cluster
+        clusters = np.zeros(len(points), dtype=int)
+        centers = np.array([centroid])
+
+        # If we need more than one cluster, use a simple distance-based approach
+        if k > 1:
+            # Start with random centers
+            indices = np.random.choice(len(points), size=k, replace=False)
+            centers = points[indices]
+
+            # Assign points to nearest center
+            for i in range(3):  # Just a few iterations for simplicity
+                # Calculate distances to each center
+                distances = np.sqrt(
+                    ((points[:, np.newaxis, :] - centers) ** 2).sum(axis=2)
+                )
+                clusters = np.argmin(distances, axis=1)
+
+                # Update centers
+                for j in range(k):
+                    if np.sum(clusters == j) > 0:
+                        centers[j] = np.mean(points[clusters == j], axis=0)
 
         # Find main cluster (largest population)
-        cluster_sizes = [np.sum(clusters == i) for i in range(k)]
+        cluster_sizes = [np.sum(clusters == i) for i in range(len(centers))]
         main_cluster_idx = np.argmax(cluster_sizes)
         main_center = centers[main_cluster_idx]
-        
+
         return clusters, centers, main_cluster_idx, main_center
 
     def _analyze_territory_clusters(
         self, k: int, points: np.ndarray, entity_locations: np.ndarray
     ) -> Dict[str, Any]:
         """Analyze territory using KMeans clustering to identify colonies and calculate metrics.
-        
+
         Args:
             k: Number of clusters to identify
             points: Array of (x,y) coordinates representing entity locations
             entity_locations: Raw entity location data from the field grid
-            
+
         Returns:
             Dictionary containing territory metrics including center, radius, density,
             resource access, fragmentation, and cluster information
-            
+
         Raises:
             Exception: If clustering fails or calculation errors occur
         """
         try:
             # Perform clustering and find main cluster
-            clusters, centers, main_cluster_idx, main_center = self._perform_clustering(points, k)
-            
+            clusters, centers, main_cluster_idx, main_center = self._perform_clustering(
+                points, k
+            )
+
             # Get cluster sizes for metrics
             cluster_sizes = [np.sum(clusters == i) for i in range(k)]
 
             # Calculate basic territory metrics
-            self._calculate_territory_metrics(main_center, main_cluster_idx, clusters, points)
+            self._calculate_territory_metrics(
+                main_center, main_cluster_idx, clusters, points
+            )
 
             # Territory density is calculated in _calculate_territory_metrics
 
             # Calculate resource access (how many asteroids are within territory)
             if self.field:
-                return self._calculate_resource_access(main_center, cluster_sizes, centers, k)
-            
+                return self._calculate_resource_access(
+                    main_center, cluster_sizes, centers, k
+                )
+
             # If we don't have a field reference, return basic metrics
             return {
                 "center": self.territory_center,
@@ -853,18 +935,22 @@ class MinerEntity(BaseEntity):
             logging.error(f"Error in territory cluster analysis: {str(e)}")
             log_exception(e)
             raise
-            
+
     def _calculate_resource_access(
-        self, main_center: np.ndarray, cluster_sizes: List[int], centers: np.ndarray, k: int
+        self,
+        main_center: np.ndarray,
+        cluster_sizes: List[int],
+        centers: np.ndarray,
+        k: int,
     ) -> Dict[str, Any]:
         """Calculate resource access within territory and other advanced metrics.
-        
+
         Args:
             main_center: Coordinates of the main cluster center
             cluster_sizes: List of population counts for each cluster
             centers: Array of cluster center coordinates
             k: Number of clusters
-            
+
         Returns:
             Dictionary containing territory metrics
         """

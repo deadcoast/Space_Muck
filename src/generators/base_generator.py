@@ -1018,7 +1018,7 @@ class BaseGenerator(BaseEntity):
                 grid,
                 num_clusters=num_clusters,
                 cluster_radius=cluster_radius,
-                value_multiplier=cluster_value_multiplier,
+                cluster_value_multiplier=cluster_value_multiplier,
             )
 
             end_time = time.time()

@@ -19,9 +19,9 @@ MINIMAP_PADDING = 10  # Padding around minimap
 # Define race colors that are used in miner_entity.py
 COLOR_RACE_1 = (50, 100, 255)  # Blue race
 COLOR_RACE_2 = (255, 50, 150)  # Magenta race
-COLOR_RACE_3 = (255, 165, 0)   # Orange race
-COLOR_RACE_4 = (0, 200, 80)    # Green race - for future expansion
-COLOR_RACE_5 = (200, 50, 50)   # Red race - for future expansion
+COLOR_RACE_3 = (255, 165, 0)  # Orange race
+COLOR_RACE_4 = (0, 200, 80)  # Green race - for future expansion
+COLOR_RACE_5 = (200, 50, 50)  # Red race - for future expansion
 
 # Define entity colors
 COLOR_ENTITY_DEFAULT = (200, 200, 200)
@@ -54,8 +54,20 @@ COMBAT_BASE_HULL_STRENGTH = 100  # Base hull integrity points
 COMBAT_BASE_EVASION = 0.1  # 10% base chance to evade attacks
 COMBAT_BASE_ARMOR = 0.05  # 5% base damage reduction
 
-COMBAT_WEAPON_UPGRADE_COST = [0, 1500, 4000, 10000, 20000]  # Costs for weapon levels 1-5
-COMBAT_SHIELD_UPGRADE_COST = [0, 2000, 5000, 12000, 25000]  # Costs for shield levels 1-5
+COMBAT_WEAPON_UPGRADE_COST = [
+    0,
+    1500,
+    4000,
+    10000,
+    20000,
+]  # Costs for weapon levels 1-5
+COMBAT_SHIELD_UPGRADE_COST = [
+    0,
+    2000,
+    5000,
+    12000,
+    25000,
+]  # Costs for shield levels 1-5
 COMBAT_HULL_UPGRADE_COST = [0, 3000, 7000, 15000, 30000]  # Costs for hull levels 1-5
 
 COMBAT_ENEMY_TYPES = ["pirate", "patrol", "mercenary", "elite"]  # Types of enemy ships

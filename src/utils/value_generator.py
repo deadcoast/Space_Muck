@@ -6,8 +6,10 @@ This module provides common value generation functions that can be used
 by different generator classes to avoid code duplication.
 """
 
+
+import itertools
+
 # Standard library imports
-from typing import Any, Dict, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
@@ -50,18 +52,20 @@ def generate_value_distribution(
 
 def add_value_clusters(
     value_grid: np.ndarray,
+    binary_grid: np.ndarray = None,
     num_clusters: int = 5,
     cluster_radius: int = 10,
-    value_multiplier: float = 2.0,
+    cluster_value_multiplier: float = 2.0,
 ) -> np.ndarray:
     """
     Add value clusters to a grid - some areas have higher value entities.
 
     Args:
         value_grid: Grid with entity values
+        binary_grid: Binary grid indicating entity presence (optional)
         num_clusters: Number of high-value clusters to create
         cluster_radius: Radius of each cluster
-        value_multiplier: Multiplier for values in clusters
+        cluster_value_multiplier: Multiplier for values in clusters
 
     Returns:
         np.ndarray: Grid with value clusters added
@@ -69,8 +73,10 @@ def add_value_clusters(
     height, width = value_grid.shape
     result_grid = value_grid.copy()
 
+    # Use binary_grid if provided, otherwise use value_grid > 0
+    entity_mask = binary_grid > 0 if binary_grid is not None else value_grid > 0
     # Find cells with entities
-    entity_cells = np.argwhere(value_grid > 0)
+    entity_cells = np.argwhere(entity_mask)
 
     if len(entity_cells) == 0:
         return result_grid
@@ -82,23 +88,25 @@ def add_value_clusters(
         center_y, center_x = entity_cells[idx]
 
         # Apply multiplier to entities in radius
-        for y in range(
-            max(0, center_y - cluster_radius),
-            min(height, center_y + cluster_radius + 1),
-        ):
-            for x in range(
+        for y, x in itertools.product(
+            range(
+                max(0, center_y - cluster_radius),
+                min(height, center_y + cluster_radius + 1),
+            ),
+            range(
                 max(0, center_x - cluster_radius),
                 min(width, center_x + cluster_radius + 1),
-            ):
-                if value_grid[y, x] > 0:
-                    # Calculate distance from center
-                    distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+            ),
+        ):
+            if value_grid[y, x] > 0:
+                # Calculate distance from center
+                distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
 
-                    # Apply multiplier with falloff based on distance
-                    if distance <= cluster_radius:
-                        falloff = 1.0 - (distance / cluster_radius)
-                        multiplier = 1.0 + (value_multiplier - 1.0) * falloff
-                        result_grid[y, x] = int(value_grid[y, x] * multiplier)
+                # Apply multiplier with falloff based on distance
+                if distance <= cluster_radius:
+                    falloff = 1.0 - (distance / cluster_radius)
+                    multiplier = 1.0 + (cluster_value_multiplier - 1.0) * falloff
+                    result_grid[y, x] = int(value_grid[y, x] * multiplier)
 
     return result_grid
 

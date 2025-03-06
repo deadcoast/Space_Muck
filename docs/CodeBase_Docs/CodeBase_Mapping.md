@@ -48,13 +48,97 @@ This document provides a navigation guide to the Space Muck codebase, helping to
 ### Unit Tests
 
 - `/src/tests/test_base_entity.py`: Tests for the base entity class
+  - Tests entity initialization and properties
+  - Tests entity serialization and deserialization
+  - Tests entity validation and error handling
+  - Tests entity movement and positioning
+  - Tests entity state management
+
 - `/src/tests/test_gpu_utils.py`: Tests for GPU acceleration utilities
+  - Tests GPU availability detection
+  - Tests memory transfer between CPU and GPU
+  - Tests GPU-accelerated operations
+  - Tests fallback mechanisms when GPU is unavailable
 
-### Benchmarks
-
-- `/src/tests/bunchmarks/benchmark_comprehensive_gpu.py`: Comprehensive benchmarking for GPU-accelerated operations
 - `/src/tests/test_base_generator.py`: Tests for the base generator class
+  - Tests generator initialization and properties
+  - Tests noise generation functionality
+  - Tests cellular automaton operations
+  - Tests caching mechanisms
+  - Tests value distribution generation
+
 - `/src/tests/test_fleet_manager.py`: Tests for the fleet management system
+  - Tests fleet creation and management
+  - Tests combat mechanics and damage distribution
+  - Tests formation-based tactics
+  - Tests resource allocation and distribution
+  - Tests fleet serialization and deserialization
+
+- `/src/tests/test_symbiote_evolution_generator.py`: Comprehensive tests for the symbiote evolution generator
+  - Tests initialization parameters and default values
+  - Tests evolution algorithm integration
+  - Tests mineral distribution and consumption
+  - Tests mutation mapping and base genome generation
+  - Tests serialization (to_dict/from_dict)
+  - Tests colony generation
+  - Tests evolution simulation over time with detailed history verification
+  - Tests mineral consumption impact on population and mutations
+  - Tests visualization capabilities (with matplotlib dependency checks)
+  - Includes robust error handling and dependency verification
+  - Features a comprehensive test runner for standalone execution
+
+- `/src/tests/test_asteroid_generator.py`: Comprehensive tests for the asteroid generator
+  - Tests initialization parameters and default values
+  - Tests asteroid field generation with various patterns (belt, cluster, mixed)
+  - Tests pattern generation with different parameters and noise scales
+  - Tests mineral distribution generation with multiple distribution types
+  - Tests rare resource generation with configurable probabilities
+  - Tests energy field generation with different energy types (standard, radiation, plasma)
+  - Tests asteroid field serialization and object creation
+  - Tests performance benchmarking and caching verification
+  - Tests visualization capabilities (with matplotlib dependency checks)
+  - Includes robust error handling and dependency verification
+  - Features a comprehensive test runner for standalone execution
+
+- `/src/tests/test_procedural_generator.py`: Tests for procedural generation utilities
+  - Tests procedural algorithm selection
+  - Tests parameter validation
+  - Tests generation consistency with same seed
+  - Tests different generation patterns
+  - Tests integration with other generator components
+
+### Test Utilities
+
+- `/src/tests/test_imports.py`: Comprehensive import verification tool
+  - Tests core module imports
+  - Tests optional dependency detection
+  - Tests basic functionality of key components
+  - Provides troubleshooting information for import issues
+
+- `/src/tests/directory_tree.py`: Utilities for generating directory structure representations
+  - Supports custom depth and exclusion patterns
+  - Provides formatted output for documentation
+
+### Test Tools
+
+- `/src/tests/tools/check_linting.py`: Linting verification tools
+  - Runs flake8, pylint, ruff, and sourcery
+  - Reports code quality issues
+
+- `/src/tests/tools/integration_tests.py`: High-level integration tests
+  - Tests interactions between multiple components
+  - Tests end-to-end workflows
+
+- `/src/tests/tools/test_combat_system.py`: Combat system tests
+  - Tests combat mechanics
+  - Tests damage calculation
+  - Tests combat resolution
+
+- `/src/tests/tools/test_dependency_config.py`: Tests for dependency configuration
+  - Tests optional dependency handling
+  - Tests fallback mechanisms
+
+- `/src/tests/README.md`: Documentation for the test suite
 
 ## Benchmarks
 

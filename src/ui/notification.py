@@ -248,7 +248,7 @@ class NotificationManager:
 
         # Draw full notification panel
         self._draw_full_panel(surface)
-        
+
     def _draw_compact_notifications(self, surface: pygame.Surface) -> None:
         """Draw compact notification panel showing only recent notifications."""
         filtered_notifications = self.get_filtered_notifications()
@@ -258,7 +258,7 @@ class NotificationManager:
 
         if visible_count == 0:
             return
-            
+
         # Draw a small transparent panel for recent notifications
         compact_height = visible_count * self.notification_height + 10
 
@@ -276,14 +276,23 @@ class NotificationManager:
 
         # Draw each notification
         for i in range(visible_count):
-            self._draw_compact_notification(surface, filtered_notifications[i], i, alpha)
+            self._draw_compact_notification(
+                surface, filtered_notifications[i], i, alpha
+            )
 
         # Draw "more" indicator if there are additional notifications
         if len(filtered_notifications) > visible_count:
-            self._draw_more_indicator(surface, filtered_notifications, visible_count, compact_height, alpha)
-            
-    def _draw_compact_notification(self, surface: pygame.Surface, notification: Dict[str, Any], 
-                                  index: int, alpha: int) -> None:
+            self._draw_more_indicator(
+                surface, filtered_notifications, visible_count, compact_height, alpha
+            )
+
+    def _draw_compact_notification(
+        self,
+        surface: pygame.Surface,
+        notification: Dict[str, Any],
+        index: int,
+        alpha: int,
+    ) -> None:
         """Draw a single notification in compact mode."""
         text = notification["text"]
         color = notification["color"]
@@ -314,9 +323,15 @@ class NotificationManager:
             color,
             alpha=alpha,
         )
-        
-    def _draw_more_indicator(self, surface: pygame.Surface, notifications: List[Dict[str, Any]],
-                            visible_count: int, compact_height: int, alpha: int) -> None:
+
+    def _draw_more_indicator(
+        self,
+        surface: pygame.Surface,
+        notifications: List[Dict[str, Any]],
+        visible_count: int,
+        compact_height: int,
+        alpha: int,
+    ) -> None:
         """Draw indicator showing there are more notifications available."""
         draw_text(
             surface,
@@ -328,7 +343,7 @@ class NotificationManager:
             align="right",
             alpha=alpha,
         )
-        
+
     def _draw_full_panel(self, surface: pygame.Surface) -> None:
         """Draw the full notification panel with all notifications."""
         # Calculate panel alpha
@@ -346,10 +361,10 @@ class NotificationManager:
         # Draw notifications
         filtered_notifications = self.get_filtered_notifications()
         visible_count = min(self.max_visible_notifications, len(filtered_notifications))
-        
+
         if visible_count > 0:
             self._draw_notification_content(filtered_notifications, surface, alpha)
-            
+
     def _draw_panel_background(self, surface: pygame.Surface, alpha: int) -> None:
         """Draw the main notification panel background and header."""
         draw_panel(
@@ -364,12 +379,12 @@ class NotificationManager:
             header_height=30,
             header_color=(40, 40, 60, alpha),
         )
-        
+
     def _draw_category_filters(self, surface: pygame.Surface, alpha: int) -> None:
         """Draw the category filter buttons at the top of the panel."""
         filters = ["all", "system", "mining", "race", "event", "upgrade"]
         filter_width = self.panel_width / len(filters)
-        
+
         for i, filter_name in enumerate(filters):
             filter_x = self.panel_x + i * filter_width
             filter_rect = pygame.Rect(filter_x, self.panel_y + 30, filter_width, 20)
@@ -403,11 +418,9 @@ class NotificationManager:
     def _draw_notification_content(self, filtered_notifications, surface, alpha):
         content_y = self.panel_y + 55  # Below filters
 
-            # Draw scrollbar if needed
+        # Draw scrollbar if needed
         if len(filtered_notifications) > self.max_visible_notifications:
-            self._draw_scrollbar(
-                filtered_notifications, content_y, surface, alpha
-            )
+            self._draw_scrollbar(filtered_notifications, content_y, surface, alpha)
         # Adjust visible notifications based on scroll offset
         start_idx = self.scroll_offset
         end_idx = min(
@@ -494,18 +507,12 @@ class NotificationManager:
             )
 
     def _draw_scrollbar(self, filtered_notifications, content_y, surface, alpha):
-        scrollbar_height = (
-            self.panel_height - 65
-        )  # Account for header and filters
-        visible_ratio = self.max_visible_notifications / len(
-            filtered_notifications
-        )
+        scrollbar_height = self.panel_height - 65  # Account for header and filters
+        visible_ratio = self.max_visible_notifications / len(filtered_notifications)
         thumb_height = max(30, scrollbar_height * visible_ratio)
 
         # Calculate thumb position
-        max_scroll = (
-            len(filtered_notifications) - self.max_visible_notifications
-        )
+        max_scroll = len(filtered_notifications) - self.max_visible_notifications
         scroll_ratio = self.scroll_offset / max_scroll if max_scroll > 0 else 0
         thumb_y = content_y + scroll_ratio * (scrollbar_height - thumb_height)
 
@@ -541,7 +548,7 @@ class NotificationManager:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             return self._handle_mouse_event(event)
         return False
-        
+
     def _handle_key_event(self, event: pygame.event.Event) -> bool:
         """Handle keyboard events for the notification panel."""
         # Toggle notification panel
@@ -560,14 +567,14 @@ class NotificationManager:
 
         # Handle filter keys
         return bool(self._handle_filter_key(event))
-        
+
     def _handle_scroll_key(self, event: pygame.event.Event) -> bool:
         """Handle keyboard scrolling for notifications."""
         filtered_notifications = self.get_filtered_notifications()
         max_scroll = max(
             0, len(filtered_notifications) - self.max_visible_notifications
         )
-        
+
         # Simple scroll up/down
         if event.key == pygame.K_UP:
             self.scroll_offset = max(0, self.scroll_offset - 1)
@@ -575,7 +582,7 @@ class NotificationManager:
         elif event.key == pygame.K_DOWN:
             self.scroll_offset = min(max_scroll, self.scroll_offset + 1)
             return True
-            
+
         # Page up/down
         elif event.key == pygame.K_PAGEUP:
             self.scroll_offset = max(
@@ -587,7 +594,7 @@ class NotificationManager:
                 max_scroll, self.scroll_offset + self.max_visible_notifications
             )
             return True
-            
+
         # Home/end
         elif event.key == pygame.K_HOME:
             self.scroll_offset = 0
@@ -595,9 +602,9 @@ class NotificationManager:
         elif event.key == pygame.K_END:
             self.scroll_offset = max_scroll
             return True
-            
+
         return False
-        
+
     def _handle_filter_key(self, event: pygame.event.Event) -> bool:
         """Handle number keys for toggling notification filters."""
         if event.key in [
@@ -614,24 +621,26 @@ class NotificationManager:
                 self.toggle_filter(filters[filter_idx])
                 return True
         return False
-        
+
     def _handle_mouse_event(self, event: pygame.event.Event) -> bool:
         """Handle mouse events for the notification panel."""
         # Only process if panel is visible and click is within panel
-        if not (self.show_full_panel and 
-                self.panel_x <= event.pos[0] <= self.panel_x + self.panel_width):
+        if not (
+            self.show_full_panel
+            and self.panel_x <= event.pos[0] <= self.panel_x + self.panel_width
+        ):
             return False
-            
+
         # Handle filter clicks
         if self.panel_y + 30 <= event.pos[1] <= self.panel_y + 50:
             return self._handle_filter_click(event)
-            
+
         # Handle scrolling with mouse wheel
         if self.panel_y <= event.pos[1] <= self.panel_y + self.panel_height:
             return self._handle_mouse_scroll(event)
-            
+
         return False
-        
+
     def _handle_filter_click(self, event: pygame.event.Event) -> bool:
         """Handle clicks on filter buttons."""
         filters = [
@@ -644,12 +653,12 @@ class NotificationManager:
         ]
         filter_width = self.panel_width / len(filters)
         filter_idx = int((event.pos[0] - self.panel_x) / filter_width)
-        
+
         if 0 <= filter_idx < len(filters):
             self.toggle_filter(filters[filter_idx])
             return True
         return False
-        
+
     def _handle_mouse_scroll(self, event: pygame.event.Event) -> bool:
         """Handle mouse wheel scrolling."""
         filtered_notifications = self.get_filtered_notifications()
@@ -657,14 +666,14 @@ class NotificationManager:
             0,
             len(filtered_notifications) - self.max_visible_notifications,
         )
-        
+
         if event.button == 4:  # Scroll up
             self.scroll_offset = max(0, self.scroll_offset - 1)
             return True
         elif event.button == 5:  # Scroll down
             self.scroll_offset = min(max_scroll, self.scroll_offset + 1)
             return True
-            
+
         return False
 
     def clear(self, category: Optional[str] = None) -> None:

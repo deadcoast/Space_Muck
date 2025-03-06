@@ -6,58 +6,214 @@ Unit tests for the MinerEntity class.
 import unittest
 import sys
 import os
+import random
 import numpy as np
-from unittest.mock import patch, MagicMock
+import logging
+
+# Removed unused import: from contextlib import suppress
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock modules before importing entities
-sys.modules["pygame"] = MagicMock()
-sys.modules["perlin_noise"] = MagicMock()
-sys.modules["perlin_noise"].PerlinNoise = MagicMock()
-sys.modules["networkx"] = MagicMock()
-sys.modules["scipy"] = MagicMock()
-sys.modules["scipy.stats"] = MagicMock()
-sys.modules["sklearn"] = MagicMock()
-sys.modules["sklearn.cluster"] = MagicMock()
-sys.modules["sklearn.cluster"].KMeans = MagicMock()
+# Global flags for dependency availability
+NUMPY_AVAILABLE = True
+PYGAME_AVAILABLE = False
+PERLIN_NOISE_AVAILABLE = False
+NETWORKX_AVAILABLE = False
+SCIPY_AVAILABLE = False
+SKLEARN_AVAILABLE = False
+SYMBIOTE_ALGORITHM_AVAILABLE = False
 
-# Mock src modules
-sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
-    MagicMock()
+# Set up logging - use a basic configuration instead of mocking
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-sys.modules["src.utils.logging_setup"] = MagicMock()
-sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
+
+# Try importing optional dependencies with proper error handling
+# Check for pygame availability using importlib
+try:
+    import importlib.util
+
+    PYGAME_AVAILABLE = importlib.util.find_spec("pygame") is not None
+except ImportError:
+    PYGAME_AVAILABLE = False
+
+# Check for perlin_noise availability using importlib
+try:
+    import importlib.util
+
+    PERLIN_NOISE_AVAILABLE = importlib.util.find_spec("perlin_noise") is not None
+except ImportError:
+    PERLIN_NOISE_AVAILABLE = False
+
+# Check for networkx availability using importlib
+try:
+    import importlib.util
+
+    NETWORKX_AVAILABLE = importlib.util.find_spec("networkx") is not None
+except ImportError:
+    NETWORKX_AVAILABLE = False
+
+# Check for scipy availability using importlib
+try:
+    import importlib.util
+
+    SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
+except ImportError:
+    SCIPY_AVAILABLE = False
+
+# Check for sklearn availability using importlib
+try:
+    import importlib.util
+
+    SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
+# Check for symbiote algorithm availability using importlib
+try:
+    import importlib.util
+
+    symbiote_spec = importlib.util.find_spec("algorithms.symbiote_algorithm")
+    if symbiote_spec is not None:
+        SYMBIOTE_ALGORITHM_AVAILABLE = True
+    else:
+        # Check alternative path
+        symbiote_spec = importlib.util.find_spec("src.algorithms.symbiote_algorithm")
+        SYMBIOTE_ALGORITHM_AVAILABLE = symbiote_spec is not None
+except ImportError:
+    SYMBIOTE_ALGORITHM_AVAILABLE = False
 
 # Import the class to test
-from entities.miner_entity import MinerEntity  # noqa: E402
+try:
+    from entities.miner_entity import MinerEntity
+except ImportError:
+    # Try alternate import path
+    from src.entities.miner_entity import MinerEntity
 
 
-class MockAsteroidField:
-    """Mock class for AsteroidField."""
+# Try importing AsteroidField for proper test implementation
+try:
+    from generators.asteroid_field import AsteroidField
+except ImportError:
+    try:
+        from src.generators.asteroid_field import AsteroidField
+    except ImportError:
+        # If we can't import it, define a simplified version for testing
+        class AsteroidField:
+            """Simplified AsteroidField for testing."""
 
-    def __init__(self, width=100, height=100):
-        self.width = width
-        self.height = height
-        self.grid = np.zeros((height, width))
-        self.rare_grid = np.zeros((height, width))
-        self.energy_grid = np.zeros((height, width))
-        self.entity_grid = np.zeros((height, width), dtype=int)
-        self.colony_grid = np.zeros((height, width), dtype=int)
+            def __init__(self, width=100, height=100):
+                self.width = width
+                self.height = height
+                self.grid = np.zeros((height, width), dtype=np.int16)
+                self.rare_grid = np.zeros((height, width), dtype=np.int8)
+                self.energy_grid = np.zeros((height, width), dtype=np.float32)
+                self.entity_grid = np.zeros((height, width), dtype=np.int8)
+                self.races = []
+
+
+class TestAsteroidField(AsteroidField):
+    """Test implementation of AsteroidField for testing MinerEntity.
+
+    Provides controlled behavior for deterministic testing.
+    """
+
+    def __init__(self, width=100, height=100, controlled_resources=False):
+        """Initialize a simplified AsteroidField for testing.
+
+        Args:
+            width: Width of the field
+            height: Height of the field
+            controlled_resources: Whether to use controlled resource values
+        """
+        super().__init__(width=width, height=height)
+        self.colony_grid = np.zeros((height, width), dtype=np.int8)
         self.entities = {}
         self.tick = 0
+        self.controlled_resources = controlled_resources
+
+        # Create a deterministic resource distribution for testing
+        if controlled_resources:
+            # Create a simple resource pattern
+            self.grid.fill(0)
+            self.grid[20:40, 20:40] = 50  # Central resource patch
+            self.grid[10:15, 10:15] = 80  # High-value corner patch
+
+            # Add some rare resources
+            self.rare_grid.fill(0)
+            self.rare_grid[25:35, 25:35] = 1  # Central rare patch
+
+            # Calculate and store field statistics for deterministic testing
+            self._update_stats()
 
     def get_entity_count(self, race_id, x_start=0, y_start=0, width=None, height=None):
-        """Mock method to get entity count."""
-        # Return a fixed value to avoid MagicMock comparison issues
-        return 100
+        """Get the count of entities for a specific race in a region.
+
+        Args:
+            race_id: The race ID to count
+            x_start: Starting X coordinate
+            y_start: Starting Y coordinate
+            width: Width of the region (default: full width)
+            height: Height of the region (default: full height)
+
+        Returns:
+            int: Count of entities
+        """
+        # Handle default values
+        if width is None:
+            width = self.width - x_start
+        if height is None:
+            height = self.height - y_start
+
+        # Ensure coordinates are within bounds
+        x_end = min(x_start + width, self.width)
+        y_end = min(y_start + height, self.height)
+
+        # Count entities of this race in the specified region
+        return np.sum(self.entity_grid[y_start:y_end, x_start:x_end] == race_id)
 
     def get_resource_value(self, x, y):
-        """Mock method to get resource value."""
-        # Return a fixed value to avoid MagicMock comparison issues
-        return 1.0 if 0 <= x < self.width and 0 <= y < self.height else 0.0
+        """Get the resource value at a specific location.
+
+        Args:
+            x: X coordinate
+            y: Y coordinate
+
+        Returns:
+            float: Resource value
+        """
+        # Check if coordinates are within bounds
+        if 0 <= x < self.width and 0 <= y < self.height:
+            # Calculate resource value based on grid value and rare status
+            base_value = float(self.grid[y, x]) / 100.0  # Normalize to 0-1
+            rare_multiplier = 3.0 if self.rare_grid[y, x] > 0 else 1.0
+            return base_value * rare_multiplier
+        return 0.0
+
+    def _update_stats(self):
+        """Update field statistics for resource density calculations."""
+        # Calculate total resource values
+        if NUMPY_AVAILABLE:
+            self.total_resources = float(np.sum(self.grid))
+            self.total_rare_resources = float(np.sum(self.rare_grid))
+            self.resource_count = np.count_nonzero(self.grid)
+            self.rare_count = np.count_nonzero(self.rare_grid)
+        else:
+            # Fallback for non-numpy environments
+            self.total_resources = sum(sum(row) for row in self.grid)
+            self.total_rare_resources = sum(sum(row) for row in self.rare_grid)
+            self.resource_count = sum(
+                1 for row in self.grid for cell in row if cell > 0
+            )
+            self.rare_count = sum(
+                1 for row in self.rare_grid for cell in row if cell > 0
+            )
+
+        # Set field statistics
+        self.avg_resource_value = self.total_resources / max(1, self.resource_count)
+        self.resource_density = self.resource_count / (self.width * self.height)
+        self.rare_density = self.rare_count / (self.width * self.height)
 
 
 class TestMinerEntity(unittest.TestCase):
@@ -65,11 +221,11 @@ class TestMinerEntity(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        # Mock the evolution_algorithm to avoid MagicMock comparison issues
-        evolution_mock = MagicMock()
-        evolution_mock.process_mineral_feeding.return_value = (120, 0.25, [])
+        # Set random seed for reproducibility
+        random.seed(42)
+        np.random.seed(42)
 
-        # Create a miner entity for testing
+        # Create a miner entity for testing with fixed parameters
         self.miner = MinerEntity(
             race_id=1,
             color=(0, 255, 0),
@@ -79,22 +235,40 @@ class TestMinerEntity(unittest.TestCase):
             position=(10, 20),
         )
 
-        # Replace the evolution_algorithm with our mock
-        self.miner.evolution_algorithm = evolution_mock
+        # Create a simple deterministic evolution algorithm for testing
+        # This replaces any mock-based approaches with a real implementation
+        class SimpleEvolutionAlgorithm:
+            def process_mineral_feeding(
+                self, race_id, minerals, population, aggression=0.2
+            ):
+                # Deterministic response for testing
+                # Calculate new population based on minerals
+                mineral_sum = sum(minerals.values()) if minerals else 0
+                growth_factor = 1.2 if mineral_sum > 0 else 1.0
+                new_population = int(population * growth_factor)
 
-        # Patch the populate method to avoid MagicMock comparison issues
-        def safe_populate(field):
-            try:
-                self.miner.field = field
-                return True
-            except Exception as e:
-                print(f"Safe populate error: {e}")
-                return False
+                # Calculate new aggression value
+                new_aggression = aggression * 0.9 if mineral_sum > 0 else aggression
 
-        self.miner.populate = safe_populate
+                # Generate possible mutations
+                mutations = []
+                if mineral_sum > 0 and random.random() < 0.3:
+                    mutations.append({"attribute": "metabolism_rate", "magnitude": 1.1})
 
-        # Create a mock field
-        self.field = MockAsteroidField(width=100, height=100)
+                return new_population, new_aggression, mutations
+
+        self.miner.evolution_algorithm = SimpleEvolutionAlgorithm()
+
+        # Create a test asteroid field with controlled resources
+        self.field = TestAsteroidField(width=100, height=100, controlled_resources=True)
+
+        # Track what we've created for cleanup
+        self.created_objects = [self.miner, self.field]
+
+    def tearDown(self):
+        """Clean up after tests."""
+        # Clear references to created objects
+        self.created_objects = []
 
     def test_initialization(self):
         """Test that miner entity initializes with correct values."""
@@ -183,37 +357,63 @@ class TestMinerEntity(unittest.TestCase):
         self.miner.field = None
         self.assertIsNone(self.miner.field)
 
-        # Test with invalid field object - we'll skip this test
-        # since it's causing MagicMock comparison issues
-        # Instead, we'll just verify we can set field to None again
+        # Test with field set to None
+        # We're testing the ability to clear the field reference
+        # This verifies the entity can handle having no associated field
         self.miner.field = None
         self.assertIsNone(self.miner.field)
 
-    @patch("random.random")
-    @patch("random.randint")
-    def test_populate_with_valid_field(self, mock_randint, mock_random):
+    def test_populate_with_valid_field(self):
         """Test populate method with valid field."""
-        # Set up mocks
-        mock_randint.return_value = 50
-        mock_random.return_value = 0.0  # Ensure cells are populated
+        # Set random seed for deterministic testing
+        random.seed(42)
 
-        # Create a field with actual attributes instead of using MagicMock
-        field = MockAsteroidField(width=100, height=100)
+        # Create a field with controlled resources
+        field = TestAsteroidField(width=100, height=100, controlled_resources=True)
 
-        # Test with valid field
-        self.miner.trait = "adaptive"  # Set trait for deterministic testing
+        # Set trait for deterministic testing
+        self.miner.trait = "adaptive"
 
-        # Instead of calling populate which has MagicMock comparison issues,
-        # we'll directly set the field and verify it's stored
-        self.miner.field = field
-        self.assertIs(self.miner.field, field)
+        # Call the actual populate method instead of directly setting the field
+        self.miner.populate(field)
 
-        # Test with other traits - just verify we can set the trait without errors
-        self.miner.trait = "expansive"
-        self.assertEqual(self.miner.trait, "expansive")
+        # Verify population worked by checking the field reference was set
+        self.assertIs(self.miner.field, field, "Field should be stored in the miner")
 
-        self.miner.trait = "selective"
-        self.assertEqual(self.miner.trait, "selective")
+        # Check that at least some cells were populated
+        # Count populated cells to ensure the populate method worked
+        populated_cells = field.get_entity_count(self.miner.race_id)
+        self.assertGreater(
+            populated_cells, 0, "At least some cells should be populated"
+        )
+
+        # Reset and test with other traits
+        for trait in ["expansive", "selective"]:
+            # Create a new miner with a different trait
+            miner = MinerEntity(
+                race_id=2,
+                color=(255, 0, 0),
+                birth_set={3},
+                survival_set={2, 3},
+                initial_density=0.001,
+            )
+            miner.trait = trait
+
+            # Populate with the same field
+            miner.populate(field)
+
+            # Verify field was set correctly
+            self.assertIs(
+                miner.field, field, f"Field should be stored in the {trait} miner"
+            )
+
+            # Check that at least some cells were populated
+            populated_cells = field.get_entity_count(miner.race_id)
+            self.assertGreater(
+                populated_cells,
+                0,
+                f"At least some cells should be populated for {trait} trait",
+            )
 
     def test_population_tracking(self):
         """Test population tracking."""
@@ -238,14 +438,7 @@ class TestMinerEntity(unittest.TestCase):
         # Set up initial state
         self.miner.hunger = 0.8  # High hunger
         self.miner.field = self.field
-        self.miner.population = 100
-
-        # Directly set behavior since update_behavior is internal
-        self.miner.current_behavior = "feeding"
-
-        # Verify behavior was set
-        self.assertEqual(self.miner.current_behavior, "feeding")
-
+        self._extracted_from__test_with_population_and_behavior_6(100, "feeding")
         # Test with other behaviors
         self.miner.current_behavior = "expanding"
         self.assertEqual(self.miner.current_behavior, "expanding")
@@ -277,57 +470,122 @@ class TestMinerEntity(unittest.TestCase):
 
     def test_process_minerals(self):
         """Test the process_minerals method with various resource types."""
-        # Set up initial state
+        # Set up initial state with deterministic values
         self.miner.population = 100
+        self.miner.hunger = 0.5  # Medium hunger level
         self.miner.aggression = 0.2
-        self.miner.mineral_consumption = {}
-
-        # Test with various mineral types
-        minerals = {"common": 10, "rare": 5, "precious": 2, "anomaly": 1}
-
-        # Test processing minerals with non-empty dictionary
-        self._process_minerals_handler(
-            minerals, expected_fed=True, expected_population_change=True
-        )
-
-        # Test with empty minerals dict
-        self._process_minerals_handler(
-            {}, expected_fed=False, expected_population_change=False
-        )
-
-    def _process_minerals_handler(
-        self, minerals, expected_fed, expected_population_change
-    ):
-        """Helper method to test mineral processing."""
-        # Save initial state
-        initial_population = self.miner.population
+        # Initialize with all mineral types to avoid KeyError when incrementing
+        self.miner.mineral_consumption = {
+            "common": 0,
+            "rare": 0,
+            "precious": 0,
+            "anomaly": 0,
+        }
         self.miner.fed_this_turn = False
 
-        try:
-            # Simulate the effects of process_minerals
-            self.miner.fed_this_turn = expected_fed
-            self.miner.mineral_consumption = minerals.copy() if minerals else {}
+        # Configure genome for deterministic testing
+        self.miner.genome = {
+            "metabolism_rate": 1.0,
+            "mutation_rate": 0.01,
+            "adaptability": 0.5,
+            "aggression_base": 0.2,
+            "expansion_drive": 1.0,
+            "intelligence": 0.5,
+        }
 
-            if expected_population_change:
-                # Simulate population growth
-                self.miner.population = int(initial_population * 1.2)  # 20% growth
-            else:
-                # Population remains the same
-                self.miner.population = initial_population
+        # Test with non-empty minerals dictionary
+        minerals = {"common": 10, "rare": 5, "precious": 2, "anomaly": 1}
+        initial_population = self.miner.population
 
-            process_success = True
-        except Exception as e:
-            process_success = False
-            print(f"Error simulating mineral processing: {e}")
+        self._extracted_from_test_process_minerals_26(
+            minerals,
+            "Miner should be fed this turn",
+            initial_population,
+            "Population should increase after feeding",
+        )
+        # Verify mineral consumption tracking
+        self.assertEqual(
+            self.miner.mineral_consumption,
+            minerals,
+            "Mineral consumption should be tracked",
+        )
 
-        # Verify the simulation was successful
-        self.assertTrue(process_success)
-        self.assertEqual(self.miner.fed_this_turn, expected_fed)
-
-        if expected_population_change:
-            self.assertGreater(self.miner.population, initial_population)
+        # Verify population changes after feeding
+        if SYMBIOTE_ALGORITHM_AVAILABLE:
+            # With real algorithm, population should change according to algorithm
+            self.assertNotEqual(
+                self.miner.population,
+                initial_population,
+                "Population should change with real algorithm",
+            )
         else:
-            self.assertEqual(self.miner.population, initial_population)
+            # With simple algorithm, population should increase by 20%
+            self.assertAlmostEqual(
+                self.miner.population,
+                int(initial_population * 1.2),
+                delta=1,
+                msg="Population should increase by approximately 20%",
+            )
+
+        # Reset state for second test
+        self.miner.population = 100
+        self.miner.hunger = 0.5
+        self.miner.fed_this_turn = False
+
+        # Test with empty minerals dictionary
+        empty_minerals = {}
+        initial_population = self.miner.population
+
+        # Reset fed status for testing empty minerals
+        self.miner.fed_this_turn = False
+
+        # Process empty minerals
+        self.miner.process_minerals(empty_minerals)
+
+        # Verify behavior with no minerals - fed_this_turn should remain False
+        self.assertFalse(
+            self.miner.fed_this_turn, "Miner should not be fed with empty minerals"
+        )
+        self.assertEqual(
+            self.miner.hunger, 0.5, "Hunger should not decrease with no minerals"
+        )
+        self.assertEqual(
+            self.miner.population,
+            initial_population,
+            "Population should not change without minerals",
+        )
+
+        # Final test with large quantities of minerals
+        self.miner.population = 100
+        self.miner.hunger = 0.8  # High hunger
+        self.miner.fed_this_turn = False
+
+        # Large mineral amounts
+        large_minerals = {"common": 50, "rare": 25, "precious": 10, "anomaly": 5}
+        initial_population = self.miner.population
+
+        # Reset fed status before testing large minerals
+        self.miner.fed_this_turn = False
+
+        self._extracted_from_test_process_minerals_26(
+            large_minerals,
+            "Miner should be fed with large minerals",
+            initial_population,
+            "Population should increase with large minerals",
+        )
+
+    # TODO Rename this here and in `test_process_minerals`
+    def _extracted_from_test_process_minerals_26(
+        self, arg0, arg1, initial_population, arg3
+    ):
+        # Process minerals
+        self.miner.process_minerals(arg0)
+
+        # Verify minerals were processed successfully - check state changes
+        self.assertTrue(self.miner.fed_this_turn, arg1)
+
+        # Verify population increase due to feeding
+        self.assertGreater(self.miner.population, initial_population, arg3)
 
     def test_apply_mutations(self):
         """Test the apply_mutations method."""
@@ -382,33 +640,62 @@ class TestMinerEntity(unittest.TestCase):
 
     def test_mining_efficiency(self):
         """Test the mining efficiency property and its effects."""
+        # Test default mining efficiency
         self._mining_efficiency_handler(0.5, "selective", 0.6)
+
         # Test setting a different value
         self.miner.mining_efficiency = 0.7
         self._mining_efficiency_handler(0.7, "adaptive", 0.5)
 
-    def _mining_efficiency_handler(self, arg0, arg1, arg2):
+        # Test specific trait effects on mining efficiency
+        self.miner.trait = "expansive"
+        # Expansive trait should prioritize quantity over quality
+        # Check if it affects mining efficiency as expected
+        self.miner.mining_efficiency = 0.8
+        self.assertEqual(
+            self.miner.mining_efficiency,
+            0.8,
+            "Mining efficiency should be settable for expansive trait",
+        )
+
+    def _mining_efficiency_handler(self, expected_value, trait, new_value):
+        """Test helper for mining efficiency with different traits.
+
+        Args:
+            expected_value: The expected initial mining efficiency value
+            trait: The trait to set on the miner
+            new_value: The new mining efficiency value to set
+        """
         # Verify initial mining efficiency
-        self.assertEqual(self.miner.mining_efficiency, arg0)
+        self.assertEqual(
+            self.miner.mining_efficiency,
+            expected_value,
+            f"Initial mining efficiency should be {expected_value}",
+        )
 
-        # Test mining efficiency for selective trait
-        self.miner.trait = arg1
+        # Set the specified trait
+        self.miner.trait = trait
 
-        # Since we're using MagicMock, we can't test actual mutation behavior
-        # Instead, we'll directly set mining_efficiency to test property access
-        self.miner.mining_efficiency = arg2
-        self.assertEqual(self.miner.mining_efficiency, arg2)
+        # Test setting mining efficiency with this trait
+        self.miner.mining_efficiency = new_value
+
+        # Verify the new value was set correctly
+        self.assertEqual(
+            self.miner.mining_efficiency,
+            new_value,
+            f"Mining efficiency should be settable to {new_value} with {trait} trait",
+        )
 
     def test_calculate_resource_density(self):
         """Test the calculate_resource_density method."""
         # Set up field with known resource distribution
-        field = MockAsteroidField(width=50, height=50)
+        field = TestAsteroidField(width=50, height=50)
 
-        # Create a resource pattern in the field
+        # Create a controlled resource pattern in the field
         # Place resources in a 10x10 area centered at (25, 25)
-        # Instead of using a loop, create a grid of resources directly
+        field.grid.fill(0)  # Clear existing resources
         y_indices, x_indices = np.meshgrid(range(20, 30), range(20, 30), indexing="ij")
-        field.grid[y_indices, x_indices] = 1  # Resource value > 0
+        field.grid[y_indices, x_indices] = 50  # Resource value = 50
 
         # Set up miner entity with territory centered at (25, 25)
         self.miner.territory_center = (25, 25)
@@ -426,34 +713,79 @@ class TestMinerEntity(unittest.TestCase):
         # Calculate resource density
         self.miner.calculate_resource_density(field, behavior_probabilities)
 
-        # Since we're using MagicMock, we need to check that the method was called
-        # rather than checking the actual values
-        self.assertIsNotNone(behavior_probabilities["migrating"])
+        # Verify migration probability was updated based on resource density
+        self.assertGreater(
+            behavior_probabilities["migrating"],
+            0.0,
+            "Migration probability should be updated based on resources",
+        )
+
+        # Save the migration probability for comparison
+        high_resource_migration = behavior_probabilities["migrating"]
 
         # Test with no resources
-        field.grid = np.zeros((50, 50))  # Clear all resources
-        self._behavior_handler(behavior_probabilities, field)
-        # Test with small population (should have less effect on migration)
-        self.miner.population = 20  # Small population
-        self._behavior_handler(behavior_probabilities, field)
-        # Migration probability should be lower with smaller population
-        self.assertLessEqual(behavior_probabilities["migrating"], 0.1)
+        field.grid.fill(0)  # Clear all resources
+        field._update_stats()  # Update field statistics
 
-    def _behavior_handler(self, behavior_probabilities, field):
-        behavior_probabilities["migrating"] = 0.0  # Reset
+        # Reset migration probability
+        behavior_probabilities["migrating"] = 0.0
 
         # Calculate resource density with no resources
         self.miner.calculate_resource_density(field, behavior_probabilities)
 
-        # Verify the method was called
+        # Save the no-resource migration probability for comparison
+        no_resource_migration = behavior_probabilities["migrating"]
+
+        # Verify migration probability with no resources
+        # The migration probability should be greater with no resources than with resources
+        self.assertGreater(
+            no_resource_migration,
+            high_resource_migration,
+            "Migration probability should be higher when resources are scarce",
+        )
+
+        # Test with small population (should have less effect on migration)
+        self.miner.population = 20  # Small population
+        behavior_probabilities["migrating"] = 0.0  # Reset
+
+        # Calculate resource density with small population
+        self.miner.calculate_resource_density(field, behavior_probabilities)
+
+        # Verify migration probability with small population
+        self.assertLessEqual(
+            behavior_probabilities["migrating"],
+            0.1,
+            "Small population should have less impact on migration probability",
+        )
+
+    def _behavior_handler(self, behavior_probabilities, field):
+        """Helper method for testing behavior probability updates."""
+        # Reset migration probability
+        behavior_probabilities["migrating"] = 0.0
+
+        # Calculate resource density
+        self.miner.calculate_resource_density(field, behavior_probabilities)
+
+        # Verify migration probability was updated
         self.assertIsNotNone(behavior_probabilities["migrating"])
+        self.assertGreaterEqual(
+            behavior_probabilities["migrating"],
+            0.0,
+            "Migration probability should be non-negative",
+        )
 
     def test_performance_large_scale(self):
         """Test performance with large number of miners and operations."""
         import time
 
-        # Create a large field
-        large_field = MockAsteroidField(width=500, height=500)
+        # Skip this test if numpy isn't available as it's performance-critical
+        if not NUMPY_AVAILABLE:
+            self.skipTest("Skipping performance test without numpy")
+
+        # Create a large field with random resources
+        large_field = TestAsteroidField(
+            width=500, height=500, controlled_resources=False
+        )
 
         # Measure time to populate a large field
         start_time = time.time()
@@ -469,11 +801,15 @@ class TestMinerEntity(unittest.TestCase):
         )
         miners = [test_miner]  # Use a list with one miner
 
+        # Set a fixed random seed to ensure deterministic population
+        random.seed(42)
+        np.random.seed(42)
+
+        # Directly configure the miner's initial_density to ensure population
+        test_miner.initial_density = 0.05  # Higher density for guaranteed population
+
         # Populate the field with this miner
-        with patch("random.random") as mock_random:
-            # Make sure some cells are populated
-            mock_random.return_value = 0.0005
-            test_miner.populate(large_field)
+        test_miner.populate(large_field)
 
         population_time = time.time() - start_time
         # This is a rough performance check, not a strict assertion
@@ -538,7 +874,7 @@ class TestMinerEntity(unittest.TestCase):
 
         # Test with invalid territory center (None)
         self.miner.territory_center = None
-        field = MockAsteroidField()
+        field = TestAsteroidField(width=100, height=100, controlled_resources=True)
         behavior_probabilities = {"migrating": 0.0}
 
         # Since territory_center is None, we expect the method to return early
@@ -564,12 +900,15 @@ class TestMinerEntity(unittest.TestCase):
             print(f"Exception with out-of-bounds territory_center: {e}")
 
     def _test_with_population_and_behavior(self, population_value, behavior_type):
-        # Test with extreme population values
-        self.miner.population = population_value
-        # Directly set behavior instead of calling update_behavior
-        self.miner.current_behavior = behavior_type
-        # Verify the behavior is set
-        self.assertEqual(self.miner.current_behavior, behavior_type)
+        self._extracted_from__test_with_population_and_behavior_6(
+            population_value, behavior_type
+        )
+
+    # TODO Rename this here and in `test_behavior_management` and `_test_with_population_and_behavior`
+    def _extracted_from__test_with_population_and_behavior_6(self, arg0, arg1):
+        self.miner.population = arg0
+        self.miner.current_behavior = arg1
+        self.assertEqual(self.miner.current_behavior, arg1)
 
 
 if __name__ == "__main__":
