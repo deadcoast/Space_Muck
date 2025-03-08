@@ -45,17 +45,19 @@ except ImportError:
 try:
     from generators.asteroid_generator import AsteroidGenerator
     from generators.base_generator import BaseGenerator
-    
+
     # Check for NoiseGenerator availability instead of importing it directly
     try:
-        NOISE_GENERATOR_AVAILABLE = importlib.util.find_spec("utils.noise_generator") is not None
+        NOISE_GENERATOR_AVAILABLE = (
+            importlib.util.find_spec("utils.noise_generator") is not None
+        )
         if NOISE_GENERATOR_AVAILABLE:
             # NoiseGenerator is used in other parts of the test suite
             from utils.noise_generator import NoiseGenerator  # noqa: F401
     except Exception as e:
         print(f"Error checking for NoiseGenerator: {e}")
         NOISE_GENERATOR_AVAILABLE = False
-    
+
     GENERATOR_IMPORTS_SUCCESSFUL = True
 except ImportError as e:
     print(f"Error importing generator classes: {e}")
@@ -63,33 +65,36 @@ except ImportError as e:
     NOISE_GENERATOR_AVAILABLE = False
     # Define placeholder classes so the test file can load without errors
     import random  # Add import for the placeholder classes
-    
+
     class BaseGenerator:
         def __init__(self, **kwargs):
             self.seed = 12345
             self.random = random.Random(self.seed)
             self.parameters = {}
-        
+
         def set_parameter(self, name, value):
             self.parameters[name] = value
-            
+
         def get_parameter(self, name, default=None):
             return self.parameters.get(name, default)
-    
+
     class AsteroidGenerator(BaseGenerator):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             # random is already available from the parent import
-        
+
         def generate_field(self, *args, **kwargs):
             return np.zeros((10, 10))
-        
+
         def _ring_pattern(self, *args, **kwargs):
             return np.zeros((10, 10))
 
+
 # Check for AsteroidField availability instead of importing it directly
 try:
-    ASTEROID_FIELD_AVAILABLE = importlib.util.find_spec("generators.asteroid_field") is not None
+    ASTEROID_FIELD_AVAILABLE = (
+        importlib.util.find_spec("generators.asteroid_field") is not None
+    )
     if not ASTEROID_FIELD_AVAILABLE:
         print("AsteroidField import failed. Some tests will be skipped.")
     ASTEROID_FIELD_IMPORT_SUCCESSFUL = ASTEROID_FIELD_AVAILABLE
@@ -410,7 +415,7 @@ class TestAsteroidGenerator(unittest.TestCase):
     def test_generate_energy_field(self):
         """Test the generate_energy_field method."""
         # Skip if numpy is not available
-# sourcery skip: no-conditionals-in-tests
+        # sourcery skip: no-conditionals-in-tests
         if not np:
             self.skipTest("numpy not available")
 

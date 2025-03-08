@@ -140,25 +140,25 @@ def should_ignore(path, ignore_patterns):
     """Check if path should be ignored based on patterns."""
     if not ignore_patterns:
         return False
-        
+
     # Get the path as string and the filename/dirname
     path_str = str(path)
     name = path.name
-    
+
     for pattern in ignore_patterns:
         # Exact name match (needed for directories like .git)
         if pattern == name:
             return True
-            
+
         # Handle glob patterns with fnmatch
         if "*" in pattern or "?" in pattern:
             if glob.fnmatch.fnmatch(name, pattern):
                 return True
-            
+
         # Direct substring match in full path
         elif pattern in path_str:
             return True
-    
+
     return False
 
 
@@ -200,7 +200,7 @@ def main():
 
     # Set up ignore patterns - ALWAYS use default ignore patterns
     ignore_patterns = DEFAULT_IGNORE.copy()
-    
+
     # Add any additional custom ignore patterns
     if args.ignore:
         ignore_patterns.extend(args.ignore)
@@ -233,15 +233,19 @@ def main():
 
     # Save to file
     with open(output_file, "w") as f:
-        f.write("# Directory Tree\n\n")
-        f.write(f"Generated for: {directory}\n\n")
-        if ignore_patterns:
-            f.write(f"Excluded patterns: {', '.join(ignore_patterns)}\n\n")
-        f.write("```\n")
-        f.write(console.export_text())
-        f.write("\n```\n")
-
+        _extracted_from_main_40(f, directory, ignore_patterns, console)
     print(f"Tree saved to {output_file}")
+
+
+# TODO Rename this here and in `main`
+def _extracted_from_main_40(f, directory, ignore_patterns, console):
+    f.write("# Directory Tree\n\n")
+    f.write(f"Generated for: {directory}\n\n")
+    if ignore_patterns:
+        f.write(f"Excluded patterns: {', '.join(ignore_patterns)}\n\n")
+    f.write("```\n")
+    f.write(console.export_text())
+    f.write("\n```\n")
 
 
 if __name__ == "__main__":

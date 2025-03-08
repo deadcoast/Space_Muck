@@ -93,16 +93,16 @@ try:
 except ImportError:
     # If we can't import it, define a simplified version for testing
     class AsteroidField:
-            """Simplified AsteroidField for testing."""
+        """Simplified AsteroidField for testing."""
 
-            def __init__(self, width=100, height=100):
-                self.width = width
-                self.height = height
-                self.grid = np.zeros((height, width), dtype=np.int16)
-                self.rare_grid = np.zeros((height, width), dtype=np.int8)
-                self.energy_grid = np.zeros((height, width), dtype=np.float32)
-                self.entity_grid = np.zeros((height, width), dtype=np.int8)
-                self.races = []
+        def __init__(self, width=100, height=100):
+            self.width = width
+            self.height = height
+            self.grid = np.zeros((height, width), dtype=np.int16)
+            self.rare_grid = np.zeros((height, width), dtype=np.int8)
+            self.energy_grid = np.zeros((height, width), dtype=np.float32)
+            self.entity_grid = np.zeros((height, width), dtype=np.int8)
+            self.races = []
 
 
 class TestAsteroidField(AsteroidField):

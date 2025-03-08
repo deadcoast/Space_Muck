@@ -6,19 +6,16 @@ including converters, recipes, and production chains.
 """
 
 from converters.converter_models import (
-    Converter, 
-    Recipe, 
-    ConverterType, 
-    ConverterTier, 
+    Converter,
+    Recipe,
+    ConverterType,
+    ConverterTier,
     ResourceType,
     ConversionProcess,
     ChainStep,
     ProductionChain,
     EfficiencyFactor,
-    OptimizationSuggestion
+    OptimizationSuggestion,
 )
 
-from converters.converter_registry import (
-    ConverterRegistry,
-    converter_registry
-)
+from converters.converter_registry import ConverterRegistry, converter_registry

@@ -88,7 +88,7 @@ class AsteroidGenerator(BaseGenerator):
             position=position,
             noise_generator=noise_generator,
         )
-        
+
         # Create a random number generator using the seed
         self.random = random.Random(self.seed)
 
