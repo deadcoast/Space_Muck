@@ -584,28 +584,15 @@ class ASCIIButton:
         }
 
     def _set_button_chars(self) -> None:
-        """
-        Set button characters based on UI style.
-        """
-        if self.style == UIStyle.QUANTUM:
-            self.prefix = "◧"
-            self.suffix = "◨"
-        elif self.style == UIStyle.SYMBIOTIC:
-            self.prefix = "▐"
-            self.suffix = "▌"
-        elif self.style == UIStyle.MECHANICAL:
-            self.prefix = "["
-            self.suffix = "]"
-        elif self.style == UIStyle.ASTEROID:
-            self.prefix = "◄"
-            self.suffix = "►"
-        elif self.style == UIStyle.FLEET:
-            self.prefix = "◀"
-            self.suffix = "▶"
-        else:
-            # Default
-            self.prefix = "<"
-            self.suffix = ">"
+        """Set button characters based on UI style."""
+        style_chars = {
+            UIStyle.QUANTUM: ("◧", "◨"),      # ◧, ◨
+            UIStyle.SYMBIOTIC: ("▐", "▌"),   # ▐, ▌
+            UIStyle.MECHANICAL: ("[", "]"),
+            UIStyle.ASTEROID: ("◄", "►"),    # ◄, ►
+            UIStyle.FLEET: ("◀", "▶"),      # ◀, ▶
+        }
+        self.prefix, self.suffix = style_chars.get(self.style, ("<", ">"))
 
     def is_hover(self, mouse_pos: Tuple[int, int]) -> bool:
         """Check if the mouse is hovering over this button."""
@@ -644,6 +631,36 @@ class ASCIIButton:
 
         return False
 
+    def _get_hover_color(self, color: Tuple[int, int, int],
+                         hover_color: Optional[Tuple[int, int, int]]) -> Tuple[int, int, int]:
+        """Get the appropriate hover color based on style."""
+        if hover_color is not None:
+            return hover_color
+
+        style_colors = {
+            UIStyle.QUANTUM: (180, 180, 255),
+            UIStyle.SYMBIOTIC: (180, 255, 180),
+            UIStyle.MECHANICAL: (200, 200, 255),
+            UIStyle.ASTEROID: (255, 200, 180),
+            UIStyle.FLEET: (180, 220, 255),
+        }
+        return style_colors.get(self.style, (200, 200, 255))
+
+    def _get_animation_alpha(self) -> int:
+        """Calculate alpha value based on animation state."""
+        if not self.animation["active"]:
+            return 255
+
+        current_time = time.time()
+        elapsed = current_time - self.animation["start_time"]
+        progress = min(1.0, elapsed / self.animation["duration"])
+
+        if progress < 1.0:
+            return int(255 * (0.7 + 0.3 * math.sin(progress * math.pi * 4)))
+
+        self.animation["active"] = False
+        return 255
+
     def draw(
         self,
         surface: pygame.Surface,
@@ -663,35 +680,9 @@ class ASCIIButton:
         Returns:
             pygame.Rect: The drawn area
         """
-        # Get style-specific hover color if not provided
-        if hover_color is None:
-            if self.style == UIStyle.QUANTUM:
-                hover_color = (180, 180, 255)
-            elif self.style == UIStyle.SYMBIOTIC:
-                hover_color = (180, 255, 180)
-            elif self.style == UIStyle.MECHANICAL:
-                hover_color = (200, 200, 255)
-            elif self.style == UIStyle.ASTEROID:
-                hover_color = (255, 200, 180)
-            elif self.style == UIStyle.FLEET:
-                hover_color = (180, 220, 255)
-            else:
-                hover_color = (200, 200, 255)
-
-        # Draw button text with borders
+        hover_color = self._get_hover_color(color, hover_color)
         draw_color = hover_color if self.hover else color
-        alpha = 255
-
-        # Apply animation effect if active
-        if self.animation["active"]:
-            current_time = time.time()
-            elapsed = current_time - self.animation["start_time"]
-            progress = min(1.0, elapsed / self.animation["duration"])
-
-            if progress < 1.0:
-                alpha = int(255 * (0.7 + 0.3 * math.sin(progress * math.pi * 4)))
-            else:
-                self.animation["active"] = False
+        alpha = self._get_animation_alpha()
 
         button_text = f"{self.prefix}{self.text}{self.suffix}"
         self.rect = draw_text(
@@ -739,25 +730,7 @@ class ASCIIMetricsPanel:
         }
         self.max_history = 60  # Keep 1 hour of minute-by-minute data
 
-        # Style-based colors
-        if self.style == UIStyle.QUANTUM:
-            self.colors = {
-                "high": (100, 200, 255),
-                "medium": (80, 160, 200),
-                "low": (60, 120, 150),
-            }
-        elif self.style == UIStyle.SYMBIOTIC:
-            self.colors = {
-                "high": (100, 255, 100),
-                "medium": (80, 200, 80),
-                "low": (60, 150, 60),
-            }
-        else:
-            self.colors = {
-                "high": (200, 200, 200),
-                "medium": (160, 160, 160),
-                "low": (120, 120, 120),
-            }
+        self._initialize_style_colors()
 
     def update_metrics(self, metrics: Dict[str, Any]) -> None:
         """Update current metrics and historical data.
@@ -779,13 +752,37 @@ class ASCIIMetricsPanel:
         """Get trend indicator based on recent values."""
         if len(values) < 2:
             return "-"
-        avg_old = sum(values[:-5]) / len(values[:-5]) if len(values) > 5 else values[0]
-        avg_new = sum(values[-5:]) / 5 if len(values) >= 5 else values[-1]
-        if avg_new > avg_old * 1.05:
-            return "↗"
-        elif avg_new < avg_old * 0.95:
-            return "↘"
-        return "→"
+
+        recent = values[-5:] if len(values) >= 5 else values
+        old_values = values[:-5] if len(values) > 5 else [values[0]]
+        
+        avg_old = sum(old_values) / len(old_values)
+        avg_new = sum(recent) / len(recent)
+
+        trend_indicators = {
+            lambda x: x > 1.05: "↗",  # Significant increase
+            lambda x: x < 0.95: "↘",  # Significant decrease
+            lambda x: True: "→",      # Stable
+        }
+
+        ratio = avg_new / avg_old
+        return next(indicator for condition, indicator in trend_indicators.items()
+                   if condition(ratio))
+
+    def _draw_metric_label(self, surface: pygame.Surface, font: pygame.font.Font,
+                          x: int, y: int, label: str, color: Tuple[int, int, int]) -> int:
+        """Draw the metric label and return its width."""
+        text = f"{label}: "
+        draw_text(surface, font, text, (x, y), color)
+        return font.size(text)[0]
+
+    def _get_bar_chars(self, fill_width: int, bar_width: int) -> str:
+        """Generate the bar string with appropriate characters."""
+        chars = ["=", "#", "%", "@"]
+        return "".join(
+            chars[min(3, int(4 * i / fill_width))] if i < fill_width else "="
+            for i in range(bar_width)
+        )
 
     def _draw_metric_bar(
         self,
@@ -800,19 +797,15 @@ class ASCIIMetricsPanel:
         color: Tuple[int, int, int],
     ) -> None:
         """Draw a metric bar with label and value."""
-        # Draw label
-        draw_text(surface, font, f"{label}: ", (x, y), color)
-        label_width = font.size(f"{label}: ")[0]
+        # Draw label and get its width
+        label_width = self._draw_metric_label(surface, font, x, y, label, color)
 
-        # Draw bar
+        # Calculate bar dimensions
         bar_width = int((width - label_width) * 0.6)
         fill_width = int(bar_width * (value / max_value))
 
-        chars = ["=", "#", "%", "@"]
-        bar_str = "".join(
-            chars[min(3, int(4 * i / fill_width))] if i < fill_width else "="
-            for i in range(bar_width)
-        )
+        # Draw bar
+        bar_str = self._get_bar_chars(fill_width, bar_width)
         draw_text(surface, font, bar_str, (x + label_width, y), color)
 
         # Draw value
@@ -823,6 +816,42 @@ class ASCIIMetricsPanel:
             value_str,
             (x + label_width + bar_width + font.size(" ")[0], y),
             color,
+        )
+
+    def _get_metric_color(self, metric_name: str) -> Tuple[int, int, int]:
+        """Get the appropriate color for a metric based on its value."""
+        if metric_name == "utilization":
+            value = self.metrics["utilization"]
+            thresholds = [(80, "high"), (50, "medium"), (0, "low")]
+        elif metric_name == "efficiency":
+            value = self.metrics["efficiency"]
+            thresholds = [(90, "high"), (70, "medium"), (0, "low")]
+        else:
+            return self.colors["medium"]
+
+        return next(self.colors[level] for threshold, level in thresholds
+                   if value > threshold)
+
+    def _draw_throughput(self, surface: pygame.Surface, font: pygame.font.Font,
+                        x: int, y: int) -> None:
+        """Draw throughput metrics."""
+        throughput = self.metrics["throughput"]
+        trend = self._get_trend_indicator(self.history["throughput"])
+        draw_text(
+            surface, font,
+            f"Throughput: {throughput:.1f} units/min {trend}",
+            (x, y), self.colors["high"]
+        )
+
+    def _draw_uptime(self, surface: pygame.Surface, font: pygame.font.Font,
+                     x: int, y: int) -> None:
+        """Draw uptime information."""
+        hours = int(self.metrics["uptime"])
+        minutes = int((self.metrics["uptime"] - hours) * 60)
+        draw_text(
+            surface, font,
+            f"Uptime: {hours}h {minutes}m",
+            (x, y), self.colors["low"]
         )
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
@@ -845,94 +874,44 @@ class ASCIIMetricsPanel:
         y = self.rect.y + margin * 2  # Extra margin for title
         width = self.rect.width - margin * 2
 
-        # Draw throughput metrics
-        throughput = self.metrics["throughput"]
-        trend = self._get_trend_indicator(self.history["throughput"])
-        draw_text(
-            surface,
-            font,
-            f"Throughput: {throughput:.1f} units/min {trend}",
-            (x, y),
-            self.colors["high"],
-        )
+        # Draw metrics
+        self._draw_throughput(surface, font, x, y)
 
         # Draw energy usage bar
         y += margin
         self._draw_metric_bar(
-            surface,
-            font,
-            x,
-            y,
-            width,
-            self.metrics["energy_usage"],
-            100.0,
-            "Energy",
-            self.colors["medium"],
+            surface, font, x, y, width,
+            self.metrics["energy_usage"], 100.0,
+            "Energy", self.colors["medium"]
         )
 
         # Draw queue size
         y += margin
         draw_text(
-            surface,
-            font,
+            surface, font,
             f"Queue: {self.metrics['queue_size']} items",
-            (x, y),
-            self.colors["medium"],
+            (x, y), self.colors["medium"]
         )
 
         # Draw utilization
         y += margin
-        util_color = (
-            self.colors["high"]
-            if self.metrics["utilization"] > 80
-            else (
-                self.colors["medium"]
-                if self.metrics["utilization"] > 50
-                else self.colors["low"]
-            )
-        )
         self._draw_metric_bar(
-            surface,
-            font,
-            x,
-            y,
-            width,
-            self.metrics["utilization"],
-            100.0,
-            "Util%",
-            util_color,
+            surface, font, x, y, width,
+            self.metrics["utilization"], 100.0,
+            "Util%", self._get_metric_color("utilization")
         )
 
         # Draw uptime
         y += margin
-        hours = int(self.metrics["uptime"])
-        minutes = int((self.metrics["uptime"] - hours) * 60)
-        draw_text(
-            surface, font, f"Uptime: {hours}h {minutes}m", (x, y), self.colors["low"]
-        )
+        self._draw_uptime(surface, font, x, y)
 
         # Draw efficiency with trend
         y += margin
         eff_trend = self._get_trend_indicator(self.history["efficiency"])
-        eff_color = (
-            self.colors["high"]
-            if self.metrics["efficiency"] > 90
-            else (
-                self.colors["medium"]
-                if self.metrics["efficiency"] > 70
-                else self.colors["low"]
-            )
-        )
         self._draw_metric_bar(
-            surface,
-            font,
-            x,
-            y,
-            width,
-            self.metrics["efficiency"],
-            100.0,
-            f"Eff% {eff_trend}",
-            eff_color,
+            surface, font, x, y, width,
+            self.metrics["efficiency"], 100.0,
+            f"Eff%{eff_trend}", self._get_metric_color("efficiency")
         )
 
         return panel_rect
@@ -997,28 +976,142 @@ class ASCIIChainVisualizer:
         self.connections = connections
         self.flow_rates = flow_rates or {}
     
+    def _get_node_color(self, converter: Dict[str, Any]) -> Tuple[int, int, int]:
+        """Get the appropriate color for a converter node based on its status."""
+        status_colors = {
+            'active': (100, 255, 100),    # Green for active
+            'error': (255, 100, 100),     # Red for error
+            'idle': (200, 200, 100),      # Yellow for idle
+            'paused': (100, 100, 255),    # Blue for paused
+        }
+        return status_colors.get(converter.get('status', ''), COLOR_TEXT)
+
+    def _draw_node_stats(self, surface: pygame.Surface, font: pygame.font.Font,
+                        x: int, y: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
+        """Draw converter statistics below the node."""
+        stats = [
+            f"Eff: {converter.get('efficiency', 0):.1f}%",
+            f"Rate: {converter.get('rate', 0):.1f}/s",
+            f"Queue: {converter.get('queue_size', 0)}"
+        ]
+        for i, stat in enumerate(stats):
+            draw_text(surface, font, stat, (x, y + i), color)
+
     def _draw_node(self, surface: pygame.Surface, font: pygame.font.Font,
                    x: int, y: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
-        """Draw a converter node."""
-        # Draw node box
-        width = len(converter['name']) + 4
-        draw_text(surface, font, self.chars['node'] * width, (x, y), color)
-        draw_text(surface, font, f" {converter['name']} ", (x + 1, y + 1), color)
-        draw_text(surface, font, self.chars['node'] * width, (x, y + 2), color)
+        """Draw a converter node with detailed information."""
+        # Calculate dimensions
+        name_width = len(converter['name']) + 4
+        stats_width = max(len("Eff: 100.0%"), len("Rate: 100.0/s"), len("Queue: 100"))
+        width = max(name_width, stats_width) + 2
+        height = 5  # 1 for top border, 1 for name, 3 for stats
+
+        # Draw borders
+        top_border = f"{self.chars['corner']}{self.chars['node'] * (width - 2)}{self.chars['corner']}"
+        draw_text(surface, font, top_border, (x, y), color)
+        
+        # Draw name
+        name_padding = (width - 2 - len(converter['name'])) // 2
+        name_line = (f"{self.chars['node']}"
+                    f"{' ' * name_padding}{converter['name']}{' ' * name_padding}"
+                    f"{self.chars['node']}")
+        if (width - 2 - len(converter['name'])) % 2 == 1:
+            name_line = name_line[:-1] + ' ' + name_line[-1]
+        draw_text(surface, font, name_line, (x, y + 1), color)
+
+        # Draw separator
+        draw_text(surface, font, f"{self.chars['corner']}{self.chars['node'] * (width - 2)}{self.chars['corner']}",
+                 (x, y + 2), color)
+
+        # Draw stats
+        self._draw_node_stats(surface, font, x + 1, y + 3, converter, color)
+
+        # Draw bottom border
+        draw_text(surface, font, top_border, (x, y + height), color)
     
     def _draw_connection(self, surface: pygame.Surface, font: pygame.font.Font,
                         start_x: int, start_y: int, end_x: int, end_y: int,
                         flow_rate: Optional[float], color: Tuple[int, int, int]) -> None:
-        """Draw a connection between nodes with optional flow rate."""
-        # Draw horizontal line
-        line = self.chars['flow'] * (end_x - start_x - 1) + self.chars['arrow']
-        draw_text(surface, font, line, (start_x + 1, start_y), color)
-        
-        # Draw flow rate if provided
+        """Draw a connection between nodes with optional flow rate and resource type."""
+        # Calculate connection points
+        dx = end_x - start_x
+
+        # Calculate vertical offset if nodes are on different rows
+        dy = end_y - start_y
+        needs_vertical = dy != 0
+
+        if needs_vertical:
+            # Draw vertical lines
+            v_line = '|'
+            mid_y = start_y + dy // 2
+
+            # Draw first vertical segment
+            for y in range(start_y + 1, mid_y):
+                draw_text(surface, font, v_line, (start_x, y), color)
+
+            # Draw second vertical segment
+            for y in range(mid_y, end_y):
+                draw_text(surface, font, v_line, (end_x, y), color)
+
+            # Draw horizontal segments with corners
+            if dx > 0:
+                h_line = self.chars['flow'] * (abs(dx) - 1)
+                draw_text(surface, font, self.chars['corner'] + h_line + self.chars['arrow'],
+                         (start_x, mid_y), color)
+            else:
+                h_line = self.chars['flow'] * (abs(dx) - 1)
+                draw_text(surface, font, self.chars['arrow'] + h_line + self.chars['corner'],
+                         (end_x, mid_y), color)
+        else:
+            # Draw simple horizontal line
+            h_line = self.chars['flow'] * (abs(dx) - 1)
+            if dx > 0:
+                draw_text(surface, font, h_line + self.chars['arrow'], (start_x + 1, start_y), color)
+            else:
+                draw_text(surface, font, self.chars['arrow'] + h_line, (end_x + 1, start_y), color)
+
+        # Draw flow information if provided
         if flow_rate is not None:
+            # Flow rate with animation
             rate_str = f"{flow_rate:.1f}/s"
-            rate_x = start_x + (end_x - start_x - len(rate_str)) // 2
-            draw_text(surface, font, rate_str, (rate_x, start_y - 1), color)
+            rate_x = start_x + (dx - len(rate_str)) // 2
+            rate_y = start_y - 1 if not needs_vertical else mid_y - 1
+            draw_text(surface, font, rate_str, (rate_x, rate_y), color)
+
+            # Determine animation path
+            if needs_vertical:
+                # Animate along vertical segments
+                anim_chars = ['⋅', '∙', '•', '∙']
+                anim_idx = int(time.time() * 4) % len(anim_chars)
+                anim_char = anim_chars[anim_idx]
+
+                # First vertical segment
+                for y in range(start_y + 1, mid_y):
+                    if (y + int(time.time() * 8)) % 3 == 0:
+                        draw_text(surface, font, anim_char, (start_x, y), color)
+
+                # Horizontal segment
+                num_indicators = abs(dx) // 4
+                for i in range(num_indicators):
+                    x_pos = start_x + (i * 4) + ((int(time.time() * 8) + i) % 4)
+                    if x_pos < end_x - 1:
+                        draw_text(surface, font, anim_char, (x_pos, mid_y), color)
+
+                # Second vertical segment
+                for y in range(mid_y, end_y):
+                    if (y + int(time.time() * 8)) % 3 == 0:
+                        draw_text(surface, font, anim_char, (end_x, y), color)
+            else:
+                # Simple horizontal animation
+                anim_chars = ['⋅', '∙', '•', '∙']
+                anim_idx = int(time.time() * 4) % len(anim_chars)
+                anim_char = anim_chars[anim_idx]
+                
+                num_indicators = abs(dx) // 4
+                for i in range(num_indicators):
+                    x_pos = start_x + (i * 4) + ((int(time.time() * 8) + i) % 4)
+                    if x_pos < end_x - 1:
+                        draw_text(surface, font, anim_char, (x_pos, start_y), color)
     
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
         """Draw the chain visualization.
@@ -1047,42 +1140,50 @@ class ASCIIChainVisualizer:
         start_x = self.rect.x + margin
         start_y = self.rect.y + margin * 2  # Extra margin for title
         
-        # Draw nodes and connections
+        # Calculate optimal layout
+        total_width = self.rect.width - (margin * 2)
+        node_width = max(len(conv['name']) for conv in self.converters) + 8
+        max_nodes_per_row = max(1, total_width // (node_width + 4))
+        
+        # Position nodes in a grid layout
         node_positions = {}  # idx -> (x, y)
         for i, conv in enumerate(self.converters):
-            x = start_x + (i * node_spacing)
-            y = start_y
+            row = i // max_nodes_per_row
+            col = i % max_nodes_per_row
+            
+            x = start_x + (col * (node_width + 4))
+            y = start_y + (row * node_spacing)
             node_positions[i] = (x, y)
             
-            # Choose color based on converter status
-            if conv.get('status') == 'active':
-                color = (100, 255, 100)  # Green for active
-            elif conv.get('status') == 'error':
-                color = (255, 100, 100)  # Red for error
-            else:
-                color = COLOR_TEXT  # Default color
-            
+            # Draw node with appropriate color
+            color = self._get_node_color(conv)
             self._draw_node(surface, font, x, y, conv, color)
         
-        # Draw connections
+        # Draw connections with improved routing
         for from_idx, to_idx in self.connections:
             if from_idx in node_positions and to_idx in node_positions:
                 start = node_positions[from_idx]
                 end = node_positions[to_idx]
                 flow_rate = self.flow_rates.get((from_idx, to_idx))
                 
-                # Use style-based color for flow
-                if self.style == UIStyle.QUANTUM:
-                    color = (100, 200, 255)
-                elif self.style == UIStyle.SYMBIOTIC:
-                    color = (100, 255, 100)
-                else:
-                    color = (200, 200, 200)
+                # Get style-based color with alpha for active flows
+                base_color = {
+                    UIStyle.QUANTUM: (100, 200, 255),
+                    UIStyle.SYMBIOTIC: (100, 255, 100),
+                }.get(self.style, (200, 200, 200))
                 
+                # Adjust color alpha based on flow rate
+                if flow_rate:
+                    alpha = min(255, int(128 + (flow_rate * 127)))
+                    color = tuple(min(255, c * alpha // 255) for c in base_color)
+                else:
+                    color = base_color
+                
+                # Draw connection with animated flow
                 self._draw_connection(surface, font,
-                                     start[0], start[1] + 1,
-                                     end[0], end[1] + 1,
-                                     flow_rate, color)
+                                    start[0], start[1] + 6,  # Adjusted for node height
+                                    end[0], end[1] + 6,
+                                    flow_rate, color)
         
         return panel_rect
 
