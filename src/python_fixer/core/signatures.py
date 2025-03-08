@@ -895,12 +895,33 @@ class SignatureAnalyzer:
     def _generate_project_metrics(self) -> Dict[str, float]:
         """Generate comprehensive project-wide metrics"""
         metrics = defaultdict(float)
+        n_sigs = len(self.signatures) or 1
+
+        # Calculate standard metrics
         for sig in self.signatures.values():
             for metric_name, value in sig.metrics.model_dump().items():
                 metrics[f"avg_{metric_name}"] += value
+            # Add validation score (1.0 if valid, 0.0 if invalid)
+            metrics["validation_score"] += float(sig.validate())
 
-        n_sigs = len(self.signatures) or 1
-        return {k: v / n_sigs for k, v in metrics.items()}
+        # Calculate compatibility metrics
+        total_possible_pairs = (n_sigs * (n_sigs - 1)) / 2
+        incompatible_count = len(self.incompatible_pairs)
+        metrics["compatibility_score"] = 1.0 - (incompatible_count / total_possible_pairs if total_possible_pairs > 0 else 0)
+        metrics["total_incompatible_pairs"] = float(incompatible_count)
+        metrics["validation_coverage"] = len([s for s in self.signatures.values() if s.validate()])
+
+        # Average all accumulated metrics
+        result = {k: v / n_sigs for k, v in metrics.items() 
+                 if k not in {"compatibility_score", "total_incompatible_pairs"}}
+        # Add non-averaged metrics
+        result.update({
+            "compatibility_score": metrics["compatibility_score"],
+            "total_incompatible_pairs": metrics["total_incompatible_pairs"],
+            "total_signatures": float(n_sigs)
+        })
+
+        return result
 
     def _generate_visualizations(self) -> Dict[str, str]:
         """Generate visualization outputs"""
