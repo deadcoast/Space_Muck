@@ -7,24 +7,39 @@ including the main dashboard, detailed views, chain management and efficiency mo
 
 from typing import Dict, List, Optional, Tuple, Any, Callable
 import pygame
+import time
 
-from ui.ascii_ui import ASCIIBox, ASCIIPanel, ASCIIProgressBar, ASCIIButton, draw_ascii_table
+from ui.ascii_ui import (
+    ASCIIBox,
+    ASCIIPanel,
+    ASCIIProgressBar,
+    ASCIIButton,
+    draw_ascii_table,
+)
 from ui.draw_utils import draw_text, draw_panel
+from ui.event_system import EventSystem, EventType, MetricType, EventData, MetricData
 from converters.converter_models import (
-    Converter, Recipe, ConversionProcess, ProductionChain,
-    ChainStep, ConverterType, ConverterTier, ResourceType,
-    EfficiencyFactor, OptimizationSuggestion
+    Converter,
+    Recipe,
+    ConversionProcess,
+    ProductionChain,
+    ChainStep,
+    ConverterType,
+    ConverterTier,
+    ResourceType,
+    EfficiencyFactor,
+    OptimizationSuggestion,
 )
 from config import COLOR_TEXT, COLOR_BG
 
 
 class ConverterDashboard:
     """Main dashboard for converter management overview."""
-    
+
     def __init__(self, x: int, y: int, width: int, height: int):
         """
         Initialize the converter dashboard.
-        
+
         Args:
             x: X position
             y: Y position
@@ -38,75 +53,58 @@ class ConverterDashboard:
         self.panel = ASCIIPanel(
             pygame.Rect(x, y, width, height),
             title="Converter Management System",
-            border_style="double"
+            border_style="double",
         )
         self.converters: List[Converter] = []
         self.selected_converter_id: Optional[str] = None
-        
+
         # Dashboard components
         self.converter_list_box = ASCIIBox(
-            x + 10, 
-            y + 40, 
-            30, 
-            10, 
-            title="Converters", 
-            border_style="single"
+            x + 10, y + 40, 30, 10, title="Converters", border_style="single"
         )
-        
+
         self.status_box = ASCIIBox(
-            x + width - 200, 
-            y + 40, 
-            25, 
-            5, 
-            title="Status", 
-            border_style="single"
+            x + width - 200, y + 40, 25, 5, title="Status", border_style="single"
         )
-        
+
         # Buttons
         self.details_button = ASCIIButton(
-            x + 20, 
-            y + height - 40, 
-            "View Details", 
-            self.view_details
+            x + 20, y + height - 40, "View Details", self.view_details
         )
-        
+
         self.chain_button = ASCIIButton(
-            x + 120, 
-            y + height - 40, 
-            "Manage Chains", 
-            self.manage_chains
+            x + 120, y + height - 40, "Manage Chains", self.manage_chains
         )
-        
+
         self.efficiency_button = ASCIIButton(
-            x + 220, 
-            y + height - 40, 
-            "Efficiency Monitor", 
-            self.monitor_efficiency
+            x + 220, y + height - 40, "Efficiency Monitor", self.monitor_efficiency
         )
-    
+
     def set_converters(self, converters: List[Converter]) -> None:
         """
         Set the list of converters to display.
-        
+
         Args:
             converters: List of converters
         """
         self.converters = converters
         self.update_converter_list()
-    
+
     def update_converter_list(self) -> None:
         """Update the converter list display."""
         self.converter_list_box.content = []
         for i, converter in enumerate(self.converters):
             prefix = ">" if converter.id == self.selected_converter_id else " "
-            color = (100, 255, 100) if len(converter.active_processes) > 0 else COLOR_TEXT
-            self.converter_list_box.add_text(
-                1, 
-                1 + i, 
-                f"{prefix} {converter.name} ({converter.type.value.capitalize()})", 
-                {"color": color}
+            color = (
+                (100, 255, 100) if len(converter.active_processes) > 0 else COLOR_TEXT
             )
-    
+            self.converter_list_box.add_text(
+                1,
+                1 + i,
+                f"{prefix} {converter.name} ({converter.type.value.capitalize()})",
+                {"color": color},
+            )
+
     def update_status_box(self) -> None:
         """Update the status box with current information."""
         self.status_box.content = []
@@ -124,113 +122,113 @@ class ConverterDashboard:
 
         for y_pos, (type_name, count) in enumerate(type_counts.items(), start=2):
             self.status_box.add_text(1, y_pos, f"{type_name.capitalize()}: {count}")
-    
+
     def select_converter(self, converter_id: str) -> None:
         """
         Select a converter by ID.
-        
+
         Args:
             converter_id: ID of the converter to select
         """
         self.selected_converter_id = converter_id
         self.update_converter_list()
-    
+
     def view_details(self) -> None:
         """Handler for View Details button."""
         # To be implemented with event/callback system
         pass
-    
+
     def manage_chains(self) -> None:
         """Handler for Manage Chains button."""
         # To be implemented with event/callback system
         pass
-    
+
     def monitor_efficiency(self) -> None:
         """Handler for Efficiency Monitor button."""
         # To be implemented with event/callback system
         pass
-    
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
         Handle events for the dashboard.
-        
+
         Args:
             event: Pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
         # Handle button events
         if self.details_button.handle_event(event):
             return True
-        
+
         if self.chain_button.handle_event(event):
             return True
-        
+
         if self.efficiency_button.handle_event(event):
             return True
-        
+
         # Handle converter selection
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             char_width, char_height = 8, 16  # Approximate for typical font
-            
+
             for i, converter in enumerate(self.converters):
                 # Check if mouse is over a converter in the list
                 item_rect = pygame.Rect(
                     self.converter_list_box.x + char_width,
                     self.converter_list_box.y + (i + 1) * char_height,
                     self.converter_list_box.width * char_width - 2 * char_width,
-                    char_height
+                    char_height,
                 )
-                
+
                 if item_rect.collidepoint(mouse_pos):
                     self.select_converter(converter.id)
                     return True
-        
+
         return False
-    
+
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """
         Draw the dashboard.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
         """
         # Update status before drawing
         self.update_status_box()
-        
+
         # Draw panel background
         self.panel.draw(surface, font)
-        
+
         # Draw components
         self.converter_list_box.draw(surface, font)
         self.status_box.draw(surface, font)
-        
+
         # Draw buttons
         self.details_button.draw(surface, font)
         self.chain_button.draw(surface, font)
         self.efficiency_button.draw(surface, font)
-        
+
         # Draw instruction text
         draw_text(
-            surface, 
-            "Select a converter to view details or manage chains", 
-            self.x + 10, 
-            self.y + self.height - 70, 
-            font=font, 
-            color=COLOR_TEXT
+            surface,
+            "Select a converter to view details or manage chains",
+            self.x + 10,
+            self.y + self.height - 70,
+            font=font,
+            color=COLOR_TEXT,
         )
 
 
 class ConverterDetailsView:
     """Detailed view of a single converter with process management."""
-    
+
     def __init__(self, x: int, y: int, width: int, height: int):
         """
         Initialize the converter details view.
-        
+
         Args:
             x: X position
             y: Y position
@@ -244,141 +242,216 @@ class ConverterDetailsView:
         self.panel = ASCIIPanel(
             pygame.Rect(x, y, width, height),
             title="Converter Details",
-            border_style="double"
+            border_style="double",
         )
         self.converter: Optional[Converter] = None
-        
+
         # Details components
         self.info_box = ASCIIBox(
-            x + 10, 
-            y + 40, 
-            40, 
-            7, 
-            title="Information", 
-            border_style="single"
+            x + 10, y + 40, 40, 7, title="Information", border_style="single"
         )
-        
+
         self.processes_box = ASCIIBox(
-            x + 10, 
-            y + 160, 
-            width - 20, 
-            10, 
-            title="Active Processes", 
-            border_style="single"
+            x + 10,
+            y + 160,
+            width - 20,
+            10,
+            title="Active Processes",
+            border_style="single",
         )
-        
+
         # Progress bars for processes
         self.progress_bars: List[Tuple[str, ASCIIProgressBar]] = []
-        
+
         # Buttons
         self.start_process_button = ASCIIButton(
-            x + 20, 
-            y + height - 40, 
-            "Start Process", 
-            self.start_process
+            x + 20, y + height - 40, "Start Process", self.start_process
         )
-        
+
         self.cancel_process_button = ASCIIButton(
-            x + 150, 
-            y + height - 40, 
-            "Cancel Process", 
-            self.cancel_process
+            x + 150, y + height - 40, "Cancel Process", self.cancel_process
         )
-        
+
         self.back_button = ASCIIButton(
-            x + width - 100, 
-            y + height - 40, 
-            "Back", 
-            self.go_back
+            x + width - 100, y + height - 40, "Back", self.go_back
         )
-    
+
     def set_converter(self, converter: Converter) -> None:
         """
         Set the converter to display.
-        
+
         Args:
             converter: Converter to display
         """
         self.converter = converter
         self.update_info_box()
         self.update_processes_box()
-    
+
     def update_info_box(self) -> None:
         """Update the information box with current converter details."""
         if not self.converter:
             return
-            
+
         self.info_box.content = []
-        
+
+        # Basic information
         self.info_box.add_text(1, 1, f"Name: {self.converter.name}")
-        self.info_box.add_text(1, 2, f"Type: {self.converter.type.value.capitalize()}")
-        self.info_box.add_text(1, 3, f"Tier: {self.converter.tier.name.capitalize()}")
-        self.info_box.add_text(1, 4, f"Efficiency: {self.converter.base_efficiency:.2f}")
-        self.info_box.add_text(1, 5, f"Energy: {self.converter.current_energy:.1f}/{self.converter.energy_capacity:.1f}")
-    
+
+        # Type info with background panel
+        type_panel = draw_panel(
+            pygame.Rect(0, 0, 20, 3), border_style="single", bg_color=COLOR_BG
+        )
+        draw_text(type_panel, 1, 1, f"Type: {self.converter.type.value.capitalize()}")
+
+        # Tier with color coding based on ConverterTier
+        tier_colors: Dict[ConverterTier, Tuple[int, int, int]] = {
+            ConverterTier.BASIC: (200, 200, 200),  # Gray
+            ConverterTier.STANDARD: (100, 255, 100),  # Green
+            ConverterTier.ADVANCED: (100, 100, 255),  # Blue
+            ConverterTier.ELITE: (255, 215, 0),  # Gold
+        }
+        tier_color = tier_colors.get(self.converter.tier, COLOR_TEXT)
+        self.info_box.add_text(
+            1,
+            3,
+            f"Tier: {self.converter.tier.name.capitalize()}",
+            {"color": tier_color},
+        )
+
+        # Process info with ResourceType display
+        if self.converter.active_processes:
+            process: ConversionProcess = self.converter.active_processes[0]
+            input_type: ResourceType = process.recipe.input_type
+            output_type: ResourceType = process.recipe.output_type
+            self.info_box.add_text(
+                1, 4, f"Converting: {input_type.value} → {output_type.value}"
+            )
+
+        # Efficiency with color coding and factors
+        efficiency_color = (
+            (100, 255, 100)
+            if self.converter.base_efficiency >= 0.9
+            else (
+                (255, 255, 100)
+                if self.converter.base_efficiency >= 0.7
+                else (255, 100, 100)
+            )
+        )
+        self.info_box.add_text(
+            1,
+            5,
+            f"Efficiency: {self.converter.base_efficiency:.2f}",
+            {"color": efficiency_color},
+        )
+
+        # Energy status
+        energy_ratio = self.converter.current_energy / self.converter.energy_capacity
+        energy_color = (
+            (100, 255, 100)
+            if energy_ratio >= 0.7
+            else (255, 255, 100) if energy_ratio >= 0.3 else (255, 100, 100)
+        )
+        self.info_box.add_text(
+            1,
+            6,
+            f"Energy: {self.converter.current_energy:.1f}/{self.converter.energy_capacity:.1f}",
+            {"color": energy_color},
+        )
+
+        # Display current efficiency factors if available
+        if (
+            hasattr(self.converter, "efficiency_factors")
+            and self.converter.efficiency_factors
+        ):
+            factor: EfficiencyFactor = self.converter.efficiency_factors[0]
+            self.info_box.add_text(
+                1, 7, f"Active Factor: {factor.name} ({factor.value:+.2f})"
+            )
+
+        # Show optimization suggestion if available
+        if (
+            hasattr(self.converter, "optimization_suggestions")
+            and self.converter.optimization_suggestions
+        ):
+            suggestion: OptimizationSuggestion = (
+                self.converter.optimization_suggestions[0]
+            )
+            self.info_box.add_text(
+                1,
+                8,
+                f"Suggestion: {suggestion.description}",
+                {"color": (255, 215, 0)},  # Gold color for suggestions
+            )
+
+        # Add chain step information if available
+        if hasattr(self.converter, "chain_step"):
+            step: ChainStep = self.converter.chain_step
+            self.info_box.add_text(
+                1, 9, f"Chain Step: {step.position} in {step.chain_id}"
+            )
+
+        # Add callback for efficiency monitoring
+        self.optimize_callback: Callable[[], Any] = lambda: self.monitor_efficiency()
+
     def update_processes_box(self) -> None:
         """Update the processes box with current process information."""
         if not self.converter:
             return
-            
+
         self.processes_box.content = []
         self.progress_bars = []
-        
+
         if not self.converter.active_processes:
             self.processes_box.add_text(1, 1, "No active processes")
             return
-        
+
         # Headers
         self.processes_box.add_text(1, 1, "Recipe")
         self.processes_box.add_text(20, 1, "Progress")
         self.processes_box.add_text(40, 1, "Time")
-        
+
         # Process entries
         for i, process in enumerate(self.converter.active_processes):
             y_pos = i + 2
-            
+
             # Recipe name
-            self.processes_box.add_text(
-                1, 
-                y_pos, 
-                process.recipe.name[:18]
-            )
-            
+            self.processes_box.add_text(1, y_pos, process.recipe.name[:18])
+
             # Progress bar
             progress_bar = ASCIIProgressBar(
                 self.processes_box.x + 20 * 8,  # Approximate char width
                 self.processes_box.y + y_pos * 16,  # Approximate char height
                 15,  # Width in characters
-                process.progress
+                process.progress,
             )
             self.progress_bars.append((process.id, progress_bar))
-            
+
             # Time left (placeholder)
             time_left = "--:--"
             self.processes_box.add_text(40, y_pos, time_left)
-    
+
     def start_process(self) -> None:
         """Handler for Start Process button."""
         # To be implemented with event/callback system
         pass
-    
+
     def cancel_process(self) -> None:
         """Handler for Cancel Process button."""
         # To be implemented with event/callback system
         pass
-    
+
     def go_back(self) -> None:
         """Handler for Back button."""
         # To be implemented with event/callback system
         pass
-    
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
         Handle events for the details view.
-        
+
         Args:
             event: Pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
@@ -390,11 +463,11 @@ class ConverterDetailsView:
             return True
 
         return bool(self.back_button.handle_event(event))
-    
+
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """
         Draw the details view.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -403,18 +476,18 @@ class ConverterDetailsView:
         if self.converter:
             self.update_info_box()
             self.update_processes_box()
-        
+
         # Draw panel background
         self.panel.draw(surface, font)
-        
+
         # Draw components
         self.info_box.draw(surface, font)
         self.processes_box.draw(surface, font)
-        
+
         # Draw progress bars
         for _, progress_bar in self.progress_bars:
             progress_bar.draw(surface, font)
-        
+
         # Draw buttons
         self.start_process_button.draw(surface, font)
         self.cancel_process_button.draw(surface, font)
@@ -423,11 +496,11 @@ class ConverterDetailsView:
 
 class ChainManagementInterface:
     """Interface for creating and managing production chains."""
-    
+
     def __init__(self, x: int, y: int, width: int, height: int):
         """
         Initialize the chain management interface.
-        
+
         Args:
             x: X position
             y: Y position
@@ -441,77 +514,65 @@ class ChainManagementInterface:
         self.panel = ASCIIPanel(
             pygame.Rect(x, y, width, height),
             title="Production Chain Management",
-            border_style="double"
+            border_style="double",
         )
-        
+
         # Chain management components
         self.chains_box = ASCIIBox(
-            x + 10, 
-            y + 40, 
-            30, 
-            8, 
-            title="Production Chains", 
-            border_style="single"
+            x + 10, y + 40, 30, 8, title="Production Chains", border_style="single"
         )
-        
+
         self.chain_details_box = ASCIIBox(
-            x + width - 350, 
-            y + 40, 
-            42, 
-            15, 
-            title="Chain Details", 
-            border_style="single"
+            x + width - 350,
+            y + 40,
+            42,
+            15,
+            title="Chain Details",
+            border_style="single",
         )
-        
+
         # Buttons
         self.create_chain_button = ASCIIButton(
-            x + 20, 
-            y + height - 40, 
-            "Create Chain", 
-            self.create_chain
+            x + 20, y + height - 40, "Create Chain", self.create_chain
         )
-        
+
         self.edit_chain_button = ASCIIButton(
-            x + 130, 
-            y + height - 40, 
-            "Edit Chain", 
-            self.edit_chain
+            x + 130, y + height - 40, "Edit Chain", self.edit_chain
         )
-        
+
         self.delete_chain_button = ASCIIButton(
-            x + 220, 
-            y + height - 40, 
-            "Delete Chain", 
-            self.delete_chain
+            x + 220, y + height - 40, "Delete Chain", self.delete_chain
         )
-        
+
         self.back_button = ASCIIButton(
-            x + width - 100, 
-            y + height - 40, 
-            "Back", 
-            self.go_back
+            x + width - 100, y + height - 40, "Back", self.go_back
         )
-        
+
         # Data
         self.chains: List[ProductionChain] = []
         self.selected_chain_id: Optional[str] = None
         self.converters: List[Converter] = []
         self.recipes: List[Recipe] = []
-    
+
     def set_chains(self, chains: List[ProductionChain]) -> None:
         """
         Set the list of chains to display.
-        
+
         Args:
             chains: List of production chains
         """
         self.chains = chains
         self.update_chains_box()
-    
-    def set_data(self, chains: List[ProductionChain], converters: List[Converter], recipes: List[Recipe]) -> None:
+
+    def set_data(
+        self,
+        chains: List[ProductionChain],
+        converters: List[Converter],
+        recipes: List[Recipe],
+    ) -> None:
         """
         Set all data for chain management.
-        
+
         Args:
             chains: List of production chains
             converters: List of available converters
@@ -521,25 +582,22 @@ class ChainManagementInterface:
         self.converters = converters
         self.recipes = recipes
         self.update_chains_box()
-    
+
     def update_chains_box(self) -> None:
         """Update the chains box with current chains list."""
         self.chains_box.content = []
-        
+
         if not self.chains:
             self.chains_box.add_text(1, 1, "No chains created")
             return
-        
+
         for i, chain in enumerate(self.chains):
             prefix = ">" if chain.id == self.selected_chain_id else " "
             color = (100, 255, 100) if chain.active else COLOR_TEXT
             self.chains_box.add_text(
-                1, 
-                1 + i, 
-                f"{prefix} {chain.name}", 
-                {"color": color}
+                1, 1 + i, f"{prefix} {chain.name}", {"color": color}
             )
-    
+
     def update_chain_details(self) -> None:
         """Update the chain details box with selected chain information."""
         self.chain_details_box.content = []
@@ -549,49 +607,89 @@ class ChainManagementInterface:
             return
 
         # Find selected chain
-        selected_chain = next((c for c in self.chains if c.id == self.selected_chain_id), None)
+        selected_chain = next(
+            (c for c in self.chains if c.id == self.selected_chain_id), None
+        )
         if not selected_chain:
             return
 
-        # Basic info
+        # Basic info with color-coded status
         self.chain_details_box.add_text(1, 1, f"Name: {selected_chain.name}")
         status = "Active" if selected_chain.active else "Inactive"
-        self.chain_details_box.add_text(1, 2, f"Status: {status}")
+        status_color = (100, 255, 100) if selected_chain.active else (255, 100, 100)
+        self.chain_details_box.add_text(
+            1, 2, f"Status: {status}", {"color": status_color}
+        )
 
+        # Group converters by type
+        type_counts: Dict[ConverterType, int] = {}
+        type_colors = {
+            ConverterType.BASIC: (200, 200, 200),  # Gray
+            ConverterType.ADVANCED: (100, 100, 255),  # Blue
+            ConverterType.SPECIALIZED: (255, 215, 0),  # Gold
+            ConverterType.INDUSTRIAL: (255, 100, 255),  # Purple
+        }
+
+        for step in selected_chain.steps:
+            if converter := next(
+                (c for c in self.converters if c.id == step.converter_id), None
+            ):
+                conv_type = converter.type
+                type_counts[conv_type] = type_counts.get(conv_type, 0) + 1
+
+        # Display converter type distribution
+        y_pos = 4
+        if type_counts:
+            self.chain_details_box.add_text(1, y_pos, "Converter Types:")
+            y_pos += 1
+            for conv_type, count in type_counts.items():
+                color = type_colors.get(conv_type, COLOR_TEXT)
+                self.chain_details_box.add_text(
+                    3,
+                    y_pos,
+                    f"{conv_type.value.capitalize()}: {count}",
+                    {"color": color},
+                )
+                y_pos += 1
+
+        # Description if available
         if selected_chain.description:
-            self.chain_details_box.add_text(1, 3, "Description:")
-            # Wrap description to fit box width
+            y_pos += 1
+            self.chain_details_box.add_text(1, y_pos, "Description:")
+            y_pos += 1
             wrapped_desc = self._wrap_text(selected_chain.description, 40)
-            for i, line in enumerate(wrapped_desc):
-                self.chain_details_box.add_text(1, 4 + i, line)
+            for line in wrapped_desc:
+                self.chain_details_box.add_text(1, y_pos, line)
+                y_pos += 1
 
-        # List steps
-        y_pos = 7
+        # List steps with converter type colors
+        y_pos += 1
         self.chain_details_box.add_text(1, y_pos, "Production Steps:")
         y_pos += 1
 
         for i, step in enumerate(selected_chain.steps):
-            converter_name = next(
-                (c.name for c in self.converters if c.id == step.converter_id),
-                "Unknown",
+            converter = next(
+                (c for c in self.converters if c.id == step.converter_id), None
             )
-            recipe_name = next(
-                (r.name for r in self.recipes if r.id == step.recipe_id), "Unknown"
-            )
-            self.chain_details_box.add_text(
-                1, 
-                y_pos + i, 
-                f"{i+1}. {recipe_name} -> {converter_name}"
-            )
-    
+            recipe = next((r for r in self.recipes if r.id == step.recipe_id), None)
+
+            if converter and recipe:
+                color = type_colors.get(converter.type, COLOR_TEXT)
+                self.chain_details_box.add_text(
+                    1,
+                    y_pos + i,
+                    f"{i+1}. {recipe.name} -> {converter.name} ({converter.type.value})",
+                    {"color": color},
+                )
+
     def _wrap_text(self, text: str, width: int) -> List[str]:
         """
         Wrap text to fit within a given width.
-        
+
         Args:
             text: Text to wrap
             width: Maximum line width
-            
+
         Returns:
             List of wrapped lines
         """
@@ -611,99 +709,99 @@ class ChainManagementInterface:
             lines.append(current_line)
 
         return lines
-    
+
     def select_chain(self, chain_id: str) -> None:
         """
         Select a chain by ID.
-        
+
         Args:
             chain_id: ID of the chain to select
         """
         self.selected_chain_id = chain_id
         self.update_chains_box()
         self.update_chain_details()
-    
+
     def create_chain(self) -> None:
         """Handler for Create Chain button."""
         # To be implemented with event/callback system
         pass
-    
+
     def edit_chain(self) -> None:
         """Handler for Edit Chain button."""
         # To be implemented with event/callback system
         pass
-    
+
     def delete_chain(self) -> None:
         """Handler for Delete Chain button."""
         # To be implemented with event/callback system
         pass
-    
+
     def go_back(self) -> None:
         """Handler for Back button."""
         # To be implemented with event/callback system
         pass
-    
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
         Handle events for the chain management interface.
-        
+
         Args:
             event: Pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
         # Handle button events
         if self.create_chain_button.handle_event(event):
             return True
-        
+
         if self.edit_chain_button.handle_event(event):
             return True
-        
+
         if self.delete_chain_button.handle_event(event):
             return True
-        
+
         if self.back_button.handle_event(event):
             return True
-        
+
         # Handle chain selection
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             char_width, char_height = 8, 16  # Approximate for typical font
-            
+
             for i, chain in enumerate(self.chains):
                 # Check if mouse is over a chain in the list
                 item_rect = pygame.Rect(
                     self.chains_box.x + char_width,
                     self.chains_box.y + (i + 1) * char_height,
                     self.chains_box.width * char_width - 2 * char_width,
-                    char_height
+                    char_height,
                 )
-                
+
                 if item_rect.collidepoint(mouse_pos):
                     self.select_chain(chain.id)
                     return True
-        
+
         return False
-    
+
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """
         Draw the chain management interface.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
         """
         # Update components before drawing
         self.update_chain_details()
-        
+
         # Draw panel background
         self.panel.draw(surface, font)
-        
+
         # Draw components
         self.chains_box.draw(surface, font)
         self.chain_details_box.draw(surface, font)
-        
+
         # Draw buttons
         self.create_chain_button.draw(surface, font)
         self.edit_chain_button.draw(surface, font)
@@ -717,7 +815,7 @@ class EfficiencyMonitor:
     def __init__(self, x: int, y: int, width: int, height: int):
         """
         Initialize the efficiency monitor.
-        
+
         Args:
             x: X position
             y: Y position
@@ -731,7 +829,7 @@ class EfficiencyMonitor:
         self.panel = ASCIIPanel(
             pygame.Rect(x, y, width, height),
             title="Efficiency Monitor",
-            border_style="double"
+            border_style="double",
         )
 
         # Efficiency components
@@ -739,34 +837,25 @@ class EfficiencyMonitor:
         self.efficiency_table_y = y + 40
 
         self.suggestions_box = ASCIIBox(
-            x + width - 350, 
-            y + 40, 
-            42, 
-            15, 
-            title="Optimization Suggestions", 
-            border_style="single"
+            x + width - 350,
+            y + 40,
+            42,
+            15,
+            title="Optimization Suggestions",
+            border_style="single",
         )
 
         # Buttons
         self.optimize_button = ASCIIButton(
-            x + 20, 
-            y + height - 40, 
-            "Apply Optimization", 
-            self.apply_optimization
+            x + 20, y + height - 40, "Apply Optimization", self.apply_optimization
         )
 
         self.analyze_button = ASCIIButton(
-            x + 170, 
-            y + height - 40, 
-            "Analyze System", 
-            self.analyze_system
+            x + 170, y + height - 40, "Analyze System", self.analyze_system
         )
 
         self.back_button = ASCIIButton(
-            x + width - 100, 
-            y + height - 40, 
-            "Back", 
-            self.go_back
+            x + width - 100, y + height - 40, "Back", self.go_back
         )
 
         # Data
@@ -775,10 +864,15 @@ class EfficiencyMonitor:
         self.suggestions: List[OptimizationSuggestion] = []
         self.selected_suggestion_index: int = -1
 
-    def set_data(self, converters: List[Converter], factors: List[EfficiencyFactor], suggestions: List[OptimizationSuggestion]) -> None:
+    def set_data(
+        self,
+        converters: List[Converter],
+        factors: List[EfficiencyFactor],
+        suggestions: List[OptimizationSuggestion],
+    ) -> None:
         """
         Set data for the efficiency monitor.
-        
+
         Args:
             converters: List of converters
             factors: List of efficiency factors
@@ -790,42 +884,101 @@ class EfficiencyMonitor:
         self.selected_suggestion_index = -1
 
     def update_suggestions_box(self) -> None:
-        """Update the suggestions box with current suggestions."""
+        """Update the suggestions box with current suggestions and efficiency factors."""
         self.suggestions_box.content = []
+        y_pos = 1
 
+        # Display current efficiency factors if available
+        if self.efficiency_factors:
+            self.suggestions_box.add_text(
+                1, y_pos, "Current Efficiency Factors:", {"color": (200, 200, 200)}
+            )
+            y_pos += 1
+
+            for factor in self.efficiency_factors:
+                # Color code based on factor value
+                factor_color = (
+                    (100, 255, 100)
+                    if factor.value > 0.1  # Green for positive
+                    else (
+                        (255, 100, 100)
+                        if factor.value < -0.1  # Red for negative
+                        else (200, 200, 200)
+                    )  # Gray for minimal impact
+                )
+
+                self.suggestions_box.add_text(
+                    3,
+                    y_pos,
+                    f"{factor.name}: {factor.value:+.2f}",
+                    {"color": factor_color},
+                )
+                y_pos += 1
+            y_pos += 1  # Add spacing
+
+        # Display optimization suggestions
         if not self.suggestions:
-            self.suggestions_box.add_text(1, 1, "No optimization suggestions available")
+            self.suggestions_box.add_text(
+                1, y_pos, "No optimization suggestions available"
+            )
             return
 
-        self.suggestions_box.add_text(1, 1, "Available Optimizations:")
+        self.suggestions_box.add_text(
+            1, y_pos, "Available Optimizations:", {"color": (200, 200, 200)}
+        )
+        y_pos += 1
 
         for i, suggestion in enumerate(self.suggestions):
             prefix = ">" if i == self.selected_suggestion_index else " "
-            y_pos = i + 3
 
-            self.suggestions_box.add_text(
-                1, 
-                y_pos, 
-                f"{prefix} {suggestion.description[:38]}"
+            # Color code based on potential gain
+            gain_color = (
+                (255, 215, 0)
+                if suggestion.potential_gain > 0.5  # Gold for high impact
+                else (
+                    (100, 255, 100)
+                    if suggestion.potential_gain > 0.2  # Green for medium impact
+                    else (200, 200, 200)
+                )  # Gray for low impact
             )
 
+            # Format suggestion with truncated description
             self.suggestions_box.add_text(
-                3, 
-                y_pos + 1, 
-                f"Gain: +{suggestion.potential_gain:.2f}"
+                1,
+                y_pos,
+                f"{prefix} {suggestion.description[:38]}",
+                {"color": gain_color},
             )
 
+            # Show potential gain with color coding
+            self.suggestions_box.add_text(
+                3,
+                y_pos + 1,
+                f"Gain: +{suggestion.potential_gain:.2f}",
+                {"color": gain_color},
+            )
+
+            # Show cost if available
             if suggestion.cost is not None:
-                self.suggestions_box.add_text(
-                    20, 
-                    y_pos + 1, 
-                    f"Cost: {suggestion.cost}"
+                cost_color = (
+                    (255, 100, 100)
+                    if suggestion.cost > 1000  # Red for high cost
+                    else (
+                        (255, 255, 100)
+                        if suggestion.cost > 500  # Yellow for medium cost
+                        else (100, 255, 100)
+                    )  # Green for low cost
                 )
+                self.suggestions_box.add_text(
+                    20, y_pos + 1, f"Cost: {suggestion.cost}", {"color": cost_color}
+                )
+
+            y_pos += 3  # Space for next suggestion
 
     def select_suggestion(self, index: int) -> None:
         """
         Select a suggestion by index.
-        
+
         Args:
             index: Index of the suggestion to select
         """
@@ -850,10 +1003,10 @@ class EfficiencyMonitor:
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
         Handle events for the efficiency monitor.
-        
+
         Args:
             event: Pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
@@ -881,7 +1034,7 @@ class EfficiencyMonitor:
                     self.suggestions_box.x + char_width,
                     self.suggestions_box.y + y_pos * char_height,
                     self.suggestions_box.width * char_width - 2 * char_width,
-                    char_height * 2
+                    char_height * 2,
                 )
 
                 if item_rect.collidepoint(mouse_pos):
@@ -893,7 +1046,7 @@ class EfficiencyMonitor:
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """
         Draw the efficiency monitor.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -911,13 +1064,15 @@ class EfficiencyMonitor:
                 current = converter.get_overall_efficiency()
                 max_possible = current * 1.5  # Placeholder for max possible
 
-                rows.append([
-                    converter.name,
-                    converter.type.value.capitalize(),
-                    f"{converter.base_efficiency:.2f}",
-                    f"{current:.2f}",
-                    f"{max_possible:.2f}"
-                ])
+                rows.append(
+                    [
+                        converter.name,
+                        converter.type.value.capitalize(),
+                        f"{converter.base_efficiency:.2f}",
+                        f"{current:.2f}",
+                        f"{max_possible:.2f}",
+                    ]
+                )
 
             draw_ascii_table(
                 surface,
@@ -926,7 +1081,7 @@ class EfficiencyMonitor:
                 headers,
                 rows,
                 font=font,
-                border_style="single"
+                border_style="single",
             )
 
         # Update and draw suggestions box
@@ -957,6 +1112,12 @@ class ConverterInterface:
         self.current_view = (
             "dashboard"  # "dashboard", "details", "chains", "efficiency"
         )
+        self.last_update = time.time()
+        self.update_interval = 1.0  # seconds
+
+        # Create event system
+        self.event_system = EventSystem()
+        self._setup_event_handlers()
 
         # Create component interfaces
         interface_width = min(screen_width - 40, 800)
@@ -984,6 +1145,160 @@ class ConverterInterface:
 
         # Setup view transitions
         self._setup_callbacks()
+
+    def _setup_event_handlers(self) -> None:
+        """Set up event handlers for metrics and notifications."""
+        # Converter events
+        self.event_system.subscribe(
+            EventType.CONVERTER_SELECTED, self._handle_converter_selected
+        )
+        self.event_system.subscribe(
+            EventType.PROCESS_STARTED, self._handle_process_started
+        )
+        self.event_system.subscribe(
+            EventType.PROCESS_COMPLETED, self._handle_process_completed
+        )
+
+        # Chain events
+        self.event_system.subscribe(EventType.CHAIN_CREATED, self._handle_chain_created)
+        self.event_system.subscribe(
+            EventType.CHAIN_MODIFIED, self._handle_chain_modified
+        )
+        self.event_system.subscribe(EventType.CHAIN_DELETED, self._handle_chain_deleted)
+
+        # Efficiency events
+        self.event_system.subscribe(
+            EventType.EFFICIENCY_UPDATED, self._handle_efficiency_updated
+        )
+
+        # Metric handlers
+        self.event_system.subscribe_metric(
+            MetricType.THROUGHPUT, self._handle_throughput_update
+        )
+        self.event_system.subscribe_metric(
+            MetricType.ENERGY_USAGE, self._handle_energy_update
+        )
+        self.event_system.subscribe_metric(
+            MetricType.UTILIZATION, self._handle_utilization_update
+        )
+
+    def _handle_converter_selected(self, event: EventData) -> None:
+        """Handle converter selection events."""
+        if converter_id := event.data.get("converter_id"):
+            self._show_details_view()
+            self.details_view.set_converter(
+                next(c for c in self.converters if c.id == converter_id)
+            )
+
+    def _handle_process_started(self, event: EventData) -> None:
+        """Handle process start events."""
+        self._extracted_from__handle_process_completed_3(event)
+
+    def _handle_process_completed(self, event: EventData) -> None:
+        """Handle process completion events."""
+        self._extracted_from__handle_process_completed_3(event)
+
+    # TODO Rename this here and in `_handle_process_started` and `_handle_process_completed`
+    def _extracted_from__handle_process_completed_3(self, event):
+        converter_id = event.data.get("converter_id")
+        process_id = event.data.get("process_id")
+        if converter_id and process_id:
+            self._update_converter_metrics(converter_id)
+
+    def _handle_chain_created(self, event: EventData) -> None:
+        """Handle chain creation events."""
+        # Update metrics regardless of chain_id since we update all chains
+        self._update_chain_metrics()
+
+    def _handle_chain_modified(self, event: EventData) -> None:
+        """Handle chain modification events."""
+        # Update metrics regardless of chain_id since we update all chains
+        self._update_chain_metrics()
+
+    def _handle_chain_deleted(self, event: EventData) -> None:
+        """Handle chain deletion events."""
+        # Update metrics regardless of chain_id since we update all chains
+        self._update_chain_metrics()
+
+    def _handle_efficiency_updated(self, event: EventData) -> None:
+        """Handle efficiency update events."""
+        if converter_id := event.data.get("converter_id"):
+            self._update_efficiency_metrics(converter_id)
+
+    def _handle_throughput_update(self, metric: MetricData) -> None:
+        """Handle throughput metric updates."""
+        if self.current_view == "dashboard":
+            self.dashboard.update_status_box()
+
+    def _handle_energy_update(self, metric: MetricData) -> None:
+        """Handle energy usage metric updates."""
+        if self.current_view == "details":
+            self.details_view.update_info_box()
+
+    def _handle_utilization_update(self, metric: MetricData) -> None:
+        """Handle utilization metric updates."""
+        if self.current_view == "efficiency":
+            self.efficiency_monitor.update_suggestions_box()
+
+    def _update_converter_metrics(self, converter_id: str) -> None:
+        """Update metrics for a specific converter."""
+        converter = next((c for c in self.converters if c.id == converter_id), None)
+        if not converter:
+            return
+
+        # Update throughput
+        throughput = sum(p.output_rate for p in converter.active_processes)
+        self.event_system.update_metric(
+            MetricType.THROUGHPUT, throughput, "units/min", f"converter_{converter_id}"
+        )
+
+        # Update energy usage
+        energy_usage = sum(p.energy_consumption for p in converter.active_processes)
+        self.event_system.update_metric(
+            MetricType.ENERGY_USAGE, energy_usage, "kW", f"converter_{converter_id}"
+        )
+
+        # Update utilization
+        utilization = len(converter.active_processes) / converter.max_processes
+        self.event_system.update_metric(
+            MetricType.UTILIZATION, utilization, "%", f"converter_{converter_id}"
+        )
+
+    def _update_chain_metrics(self) -> None:
+        """Update metrics for all production chains."""
+        for chain in self.chains:
+            total_throughput = 0
+            total_energy = 0
+
+            for step in chain.steps:
+                if step.converter and step.recipe:
+                    total_throughput += step.recipe.output_rate
+                    total_energy += step.recipe.energy_cost
+
+            self.event_system.update_metric(
+                MetricType.THROUGHPUT,
+                total_throughput,
+                "units/min",
+                f"chain_{chain.id}",
+            )
+
+            self.event_system.update_metric(
+                MetricType.ENERGY_USAGE, total_energy, "kW", f"chain_{chain.id}"
+            )
+
+    def _update_efficiency_metrics(self, converter_id: str) -> None:
+        """Update efficiency metrics for a specific converter."""
+        if converter := next(
+            (c for c in self.converters if c.id == converter_id), None
+        ):
+            self.event_system.update_metric(
+                MetricType.EFFICIENCY,
+                converter.base_efficiency,
+                "%",
+                f"converter_{converter_id}",
+            )
+        else:
+            return
 
     def _setup_callbacks(self) -> None:
         """Set up callbacks for view transitions."""
@@ -1088,6 +1403,11 @@ class ConverterInterface:
             surface: Surface to draw on
             font: Font to use for rendering
         """
+        current_time = time.time()
+        if current_time - self.last_update >= self.update_interval:
+            self._update_metrics()
+            self.last_update = current_time
+
         # Draw the current active view
         if self.current_view == "dashboard":
             self.dashboard.draw(surface, font)
@@ -1107,3 +1427,16 @@ class ConverterInterface:
             font=font,
             color=COLOR_TEXT,
         )
+
+    def _update_metrics(self) -> None:
+        """Update all metrics periodically."""
+        # Update converter metrics
+        for converter in self.converters:
+            self._update_converter_metrics(converter.id)
+
+        # Update chain metrics
+        self._update_chain_metrics()
+
+        # Update efficiency metrics
+        for converter in self.converters:
+            self._update_efficiency_metrics(converter.id)

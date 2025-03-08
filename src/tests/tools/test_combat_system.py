@@ -41,22 +41,21 @@ class DeterministicCombatSystem(CombatSystem):
         if self._flee_outcome is True:
             # Force successful flee
             return self._handle_successful_flee(enemy)
-        else:
-            # Force failed flee
-            log_message = "Player failed to flee! Enemy gets a free attack."
-            self.combat_log.append(log_message)
+        # Force failed flee
+        log_message = "Player failed to flee! Enemy gets a free attack."
+        self.combat_log.append(log_message)
 
-            # Enemy attack
-            attack_result = self.enemy_attack()
+        # Enemy attack
+        attack_result = self.enemy_attack()
 
-            return {
-                "success": True,
-                "flee_success": False,
-                "message": log_message,
-                "enemy_attack": attack_result,
-                "enemy_stats": enemy.get_stats(),
-                "player_stats": self.player.get_combat_stats(),
-            }
+        return {
+            "success": True,
+            "flee_success": False,
+            "message": log_message,
+            "enemy_attack": attack_result,
+            "enemy_stats": enemy.get_stats(),
+            "player_stats": self.player.get_combat_stats(),
+        }
 
 
 class TestCombatSystem(unittest.TestCase):

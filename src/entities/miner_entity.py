@@ -862,7 +862,7 @@ class MinerEntity(BaseEntity):
             centers = points[indices]
 
             # Assign points to nearest center
-            for i in range(3):  # Just a few iterations for simplicity
+            for _ in range(3):
                 # Calculate distances to each center
                 distances = np.sqrt(
                     ((points[:, np.newaxis, :] - centers) ** 2).sum(axis=2)
