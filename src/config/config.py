@@ -77,6 +77,77 @@ STATE_MENU: str = "MENU"
 STATE_PAUSE: str = "PAUSE"
 STATE_GAMEOVER: str = "GAMEOVER"
 
+# Game Configuration
+GAME_CONFIG: Dict[str, Any] = {
+    "version": VERSION,
+    "states": {
+        STATE_MENU: {
+            "name": "Main Menu",
+            "allowed_transitions": [STATE_PLAY, STATE_SHOP],
+            "entry_actions": ["reset_game", "show_menu"],
+            "exit_actions": ["hide_menu"],
+            "validation_rules": ["check_save_game"],
+        },
+        STATE_PLAY: {
+            "name": "Playing",
+            "allowed_transitions": [STATE_PAUSE, STATE_SHOP, STATE_MAP, STATE_MENU, STATE_GAMEOVER],
+            "entry_actions": ["resume_game", "hide_menu"],
+            "exit_actions": ["save_game_state"],
+            "validation_rules": ["check_player_alive", "check_game_initialized"],
+        },
+        STATE_PAUSE: {
+            "name": "Paused",
+            "allowed_transitions": [STATE_PLAY, STATE_MENU],
+            "entry_actions": ["pause_game", "show_pause_menu"],
+            "exit_actions": ["hide_pause_menu"],
+            "validation_rules": ["check_game_active"],
+        },
+        STATE_SHOP: {
+            "name": "Shop",
+            "allowed_transitions": [STATE_PLAY, STATE_MENU],
+            "entry_actions": ["pause_game", "show_shop"],
+            "exit_actions": ["hide_shop", "save_purchases"],
+            "validation_rules": ["check_shop_available"],
+        },
+        STATE_MAP: {
+            "name": "Map View",
+            "allowed_transitions": [STATE_PLAY],
+            "entry_actions": ["pause_game", "show_map"],
+            "exit_actions": ["hide_map"],
+            "validation_rules": ["check_map_available"],
+        },
+        STATE_GAMEOVER: {
+            "name": "Game Over",
+            "allowed_transitions": [STATE_MENU],
+            "entry_actions": ["show_game_over", "save_high_score"],
+            "exit_actions": ["reset_game"],
+            "validation_rules": [],
+        },
+    },
+    "initial_state": STATE_MENU,
+    "debug_enabled": True,  # Enable state debugging features
+    "state_history_limit": 100,  # Maximum number of state transitions to track
+    "state_timing": {
+        "transition_timeout": 5.0,  # Maximum seconds for state transition
+        "validation_timeout": 1.0,  # Maximum seconds for state validation
+        "action_timeout": 2.0,  # Maximum seconds for entry/exit actions
+    },
+    "performance_metrics": {
+        "fps_window_size": 60,  # Number of frames to average for FPS calculation
+        "frame_time_window": 1000,  # Window size in ms for frame time tracking
+        "state_timing_precision": 3,  # Decimal places for state timing measurements
+        "transition_metrics": True,  # Track state transition performance
+        "validation_metrics": True,  # Track validation rule performance
+        "action_metrics": True,  # Track entry/exit action performance
+    },
+    "error_handling": {
+        "max_retries": 3,  # Maximum retry attempts for failed transitions
+        "retry_delay": 0.1,  # Delay between retries in seconds
+        "fallback_state": STATE_MENU,  # Default state to fall back to on error
+        "log_level": "WARNING",  # Logging level for state errors
+    },
+}
+
 # Asteroid field generation parameters
 INITIAL_DENSITY: float = 0.3  # Initial asteroid density
 RARE_THRESHOLD: float = 0.92  # Threshold for rare asteroid generation

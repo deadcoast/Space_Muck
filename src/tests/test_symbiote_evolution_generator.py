@@ -35,36 +35,35 @@ logger = logging.getLogger(__name__)
 MATHPLOTLIB_AVAILABLE = False  # Variable name matches the one used in tests
 MATHEMATICS_AVAILABLE = False  # Used for consistency with the rest of the code
 
-# Check if matplotlib is available
-if importlib.util.find_spec("matplotlib") is not None:
+# Try importing optional dependencies
+try:
     import matplotlib.pyplot as plt
-
     MATPLOTLIB_AVAILABLE = True
-else:
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
     logger.info("Matplotlib not available - visualization tests will be skipped")
 
-# Check for perlin_noise (required dependency for noise generation)
-PERLIN_NOISE_AVAILABLE = False
-if importlib.util.find_spec("perlin_noise") is not None:
-    # Only mark as available - actual import happens in SymbioteEvolutionGenerator
+try:
+    import perlin_noise
     PERLIN_NOISE_AVAILABLE = True
-else:
+except ImportError:
+    PERLIN_NOISE_AVAILABLE = False
     logger.warning("perlin_noise module not available - some tests may fail")
 
-# Check for scipy (optional dependency for advanced statistical processing)
-SCIPY_AVAILABLE = False
-if importlib.util.find_spec("scipy") is not None:
-    # We don't need to import for tests, just checking availability
+# Try importing scipy (optional dependency for advanced statistical processing)
+try:
+    import scipy
     SCIPY_AVAILABLE = True
-else:
+except ImportError:
+    SCIPY_AVAILABLE = False
     logger.info("SciPy not available - some advanced tests will be skipped")
 
-# Check for scikit-image (optional dependency for image processing)
-SKIMAGE_AVAILABLE = False
-if importlib.util.find_spec("skimage") is not None:
-    # We don't need to import for tests, just checking availability
+# Try importing scikit-image (optional dependency for image processing)
+try:
+    import skimage
     SKIMAGE_AVAILABLE = True
-else:
+except ImportError:
+    SKIMAGE_AVAILABLE = False
     logger.info("scikit-image not available - some tests will be skipped")
 
 # Import actual logging_setup module (no mocking)

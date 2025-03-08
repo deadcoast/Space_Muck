@@ -49,18 +49,68 @@ from config import (  # noqa: E402
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
+    RACE_INITIAL_DENSITY,
     COLOR_PLAYER,
 )
 
-# Manual definitions for missing constants
-VERSION = "1.0.0"
-UPDATE_INTERVAL = 10
-DEBUG_MODE = False
-SHOW_GRID = True
-SHOW_FPS = True
-STATE_PLAY = "PLAY"
-STATE_SHOP = "SHOP"
-RACE_INITIAL_DENSITY = 0.005
+# Game configuration constants
+GAME_CONFIG = {
+    "version": "1.0.0",
+    "intervals": {
+        "update": 10,
+        "auto_upgrade": 300,  # Every 5 seconds at 60 FPS
+        "memory_check": 60,  # Every second at 60 FPS
+    },
+    "display": {
+        "show_grid": True,
+        "show_fps": True,
+        "show_minimap": True,
+        "show_tooltips": True,
+        "show_debug": False,
+    },
+    "states": {
+        "play": "PLAY",
+        "shop": "SHOP",
+        "paused": "PAUSED",
+        "game_over": "GAME_OVER",
+    },
+    "state_transitions": {
+        "PLAY": ["SHOP", "PAUSED", "GAME_OVER"],
+        "SHOP": ["PLAY", "PAUSED"],
+        "PAUSED": ["PLAY", "SHOP"],
+        "GAME_OVER": ["PLAY"],
+    },
+    "race": {
+        "initial_density": 0.005,
+        "evolution_threshold": 100,
+        "max_races": 3,
+    },
+    "resources": {
+        "memory_warning_threshold": 90,  # Percentage
+        "fps_history_size": 60,  # Number of frames to track
+        "gc_threshold": 85,  # Percentage
+    },
+}
+
+
+# State machine error types
+class GameStateError(Exception):
+    """Base class for game state related errors."""
+
+    pass
+
+
+class InvalidStateTransitionError(GameStateError):
+    """Raised when attempting an invalid state transition."""
+
+    pass
+
+
+class StateValidationError(GameStateError):
+    """Raised when state validation fails."""
+
+    pass
+
 
 # Game components
 from generators.asteroid_field import AsteroidField  # noqa: E402
@@ -81,11 +131,7 @@ from ui.draw_utils import (  # noqa: E402
 from systems.combat_system import CombatSystem  # noqa: E402
 from systems.encounter_generator import EncounterGenerator  # noqa: E402
 from systems.game_loop import GameLoop, get_game_loop  # noqa: E402
-from systems.event_system import (
-    EventBus,
-    get_event_bus,
-    get_event_batcher,
-)  # noqa: E402
+from events.event_bus import get_event_bus  # noqa: E402
 from utils.logging_setup import (  # noqa: E402
     log_exception,
     log_performance_start,
@@ -96,27 +142,52 @@ from utils.logging_setup import (  # noqa: E402
 
 
 class Game:
-    """Main game class that orchestrates all game components."""
+    """Main game class that orchestrates all game components.
+
+    Following the standardized manager pattern, this class handles:
+    - Resource tracking and capacity management
+    - State management with proper logging
+    - Performance monitoring and optimization
+    - Event system integration
+
+    Attributes:
+        screen (pygame.Surface): Main display surface
+        clock (pygame.time.Clock): Game clock for timing
+        state (str): Current game state
+        field (AsteroidField): Main asteroid field
+        player (Player): Player instance
+        stats (Dict[str, Any]): Game statistics tracking
+    """
 
     def __init__(self) -> None:
-        """Initialize the game and all its components."""
-        # Initialize Pygame
-        pygame.init()
-        pygame.mixer.init()  # Initialize sound system
-        pygame.font.init()  # Ensure fonts are initialized
+        """Initialize the game and all its components.
 
-        # Create display surface
-        self.screen: pygame.Surface = pygame.display.set_mode(
-            (WINDOW_WIDTH, WINDOW_HEIGHT)
-        )
-        pygame.display.set_caption(f"Space Muck - Procedural Edition v{VERSION}")
+        Follows initialization pattern:
+        1. Core systems (pygame, display, clock)
+        2. State and resource tracking
+        3. UI components
+        4. Game systems
+        5. Entity initialization
+        """
+        # Initialize core systems with error handling
+        with LogContext("Core System Initialization"):
+            pygame.init()
+            pygame.mixer.init()  # Initialize sound system
+            pygame.font.init()  # Ensure fonts are initialized
 
-        # Set up game clock and timing
-        self.clock: pygame.time.Clock = pygame.time.Clock()
-        self.delta_time: float = 0.0  # Time since last frame in seconds
-        self.frame_counter: int = 0
-        self.game_time: float = 0.0  # Total game time in seconds
-        self.fps_history: List[float] = []  # Store recent FPS values
+            # Create display surface
+            self.screen: pygame.Surface = pygame.display.set_mode(
+                (WINDOW_WIDTH, WINDOW_HEIGHT)
+            )
+            pygame.display.set_caption(
+                f"Space Muck - Procedural Edition v{GAME_CONFIG['version']}"
+            )
+
+        # Initialize state tracking
+        self._init_state_tracking()
+
+        # Initialize resource tracking
+        self._init_resource_tracking()
 
         # Initialize UI components with LogContext for error handling
         with LogContext("UI Initialization"):
@@ -124,26 +195,311 @@ class Game:
             self.notifier: NotificationManager = NotificationManager()
             self.renderer: AsteroidFieldRenderer = AsteroidFieldRenderer()
 
-        # Game state
-        self.state: str = STATE_PLAY
-        self.previous_state: str = STATE_PLAY
-        self.paused: bool = False
-        self.game_over: bool = False
+    def _init_state_tracking(self) -> None:
+        """Initialize game state tracking following state machine pattern.
 
-        # Performance settings
-        self.update_interval: int = UPDATE_INTERVAL
-        self.last_field_update_time: float = 0
-        self.auto_upgrade_interval: int = 300  # Every 5 seconds at 60 FPS
-        self.last_memory_check: float = 0
+        Sets up state tracking with validation and history:
+        - Current state
+        - State transition rules
+        - State history with timestamps
+        - Performance metrics
+        """
+        # Initialize state
+        self.state = GAME_CONFIG["states"]["play"]
+        self.previous_state = None
 
-        # Game options and toggles
-        self.show_minimap: bool = True
-        self.show_debug: bool = DEBUG_MODE
+        # State history tracks transitions with timestamps
+        self.state_history = []
+        self._record_state_transition(None, self.state)
+
+        # Performance tracking
+        self.state_metrics = {
+            "transitions": 0,
+            "invalid_attempts": 0,
+            "avg_time_in_state": {},
+        }
+
+    def change_state(self, new_state: str) -> None:
+        """Change the game state with validation.
+
+        Args:
+            new_state: The state to transition to
+
+        Raises:
+            InvalidStateTransitionError: If transition is not allowed
+            StateValidationError: If state validation fails
+        """
+        try:
+            self._extracted_from_change_state_13(new_state)
+        except GameStateError as e:
+            self.state_metrics["invalid_attempts"] += 1
+            logging.warning(f"Invalid state transition attempted: {str(e)}")
+            raise
+
+    # TODO Rename this here and in `change_state`
+    def _extracted_from_change_state_13(self, new_state):
+        # Validate the transition
+        self._validate_state_transition(new_state)
+
+        # Record the transition
+        old_state = self.state
+        self.previous_state = old_state
+        self.state = new_state
+
+        # Update history and metrics
+        self._record_state_transition(old_state, new_state)
+        self.state_metrics["transitions"] += 1
+
+        logging.info(f"State transition: {old_state} -> {new_state}")
+
+    def _validate_state_transition(self, new_state: str) -> None:
+        """Validate if a state transition is allowed.
+
+        Args:
+            new_state: The state to validate transition to
+
+        Raises:
+            InvalidStateTransitionError: If transition is not allowed
+            StateValidationError: If state validation fails
+        """
+        if new_state not in GAME_CONFIG["state_transitions"].get(self.state, []):
+            raise InvalidStateTransitionError(
+                f"Cannot transition from {self.state} to {new_state}"
+            )
+
+    def _record_state_transition(
+        self, old_state: Optional[str], new_state: str
+    ) -> None:
+        """Record a state transition in history.
+
+        Args:
+            old_state: The state transitioning from (None if initial state)
+            new_state: The state transitioning to
+        """
+        timestamp = time.time()
+
+        # Update state history
+        self.state_history.append(
+            {"from": old_state, "to": new_state, "timestamp": timestamp}
+        )
+
+        # Trim history if too long (keep last 100 transitions)
+        if len(self.state_history) > 100:
+            self.state_history = self.state_history[-100:]
+
+        # Update average time in state
+        if old_state:
+            if last_transition := next(
+                (
+                    t
+                    for t in reversed(self.state_history[:-1])
+                    if t["to"] == old_state
+                ),
+                None,
+            ):
+                time_in_state = timestamp - last_transition["timestamp"]
+                avg = self.state_metrics["avg_time_in_state"].get(old_state, 0)
+                if avg == 0:
+                    self.state_metrics["avg_time_in_state"][old_state] = time_in_state
+                else:
+                    # Rolling average
+                    self.state_metrics["avg_time_in_state"][old_state] = (avg * 0.9) + (
+                        time_in_state * 0.1
+                    )
+
+        # Core timing
+        self.clock: pygame.time.Clock = pygame.time.Clock()
+        self.delta_time: float = 0.0
+
+        # Initialize state machine components
+        self.state = "menu"
+        self.previous_state = None
+        self._state_valid = True
+
+        # Initialize state history tracking
+        self._state_history = []
+        self._state_timestamps = {state: 0.0 for state in GAME_CONFIG["states"]}
+        self._state_transition_counts = {state: 0 for state in GAME_CONFIG["states"]}
+
+        # Initialize display and automation settings
+        self.show_debug = False
+        self.auto_upgrade = False
+
+        # Initialize event bus and subscribe to state changes
+        self.event_bus = get_event_bus("default")
+        self.event_bus.subscribe("state_change", self._handle_state_change)
+
+        # Initialize frame tracking
+        self.frame_counter: int = 0
+        self.game_time: float = 0.0
+        self.fps_history: List[float] = []
+
+        # Initialize state machine
+        self.state = GAME_CONFIG["states"]["play"]
+        self.previous_state = self.state
+        self._state_valid = True
+
+        # Initialize state history tracking
+        self._state_history = []
+        self._state_timestamps = {
+            state: 0.0 for state in GAME_CONFIG["states"].values()
+        }
+        self._state_transition_counts = {
+            state: 0 for state in GAME_CONFIG["states"].values()
+        }
+        # State validation flags
+        self._state_valid: bool = True
+        self._last_validation_time: float = 0.0
+        self._validation_interval: float = 1.0  # Validate state every second
+
+        # Display settings
+        self.zoom_level: float = 1.0
+        self.show_minimap: bool = GAME_CONFIG["display"]["show_minimap"]
+        self.show_debug: bool = GAME_CONFIG["display"]["show_debug"]
+        self.show_tooltips: bool = GAME_CONFIG["display"]["show_tooltips"]
+        self.show_grid: bool = GAME_CONFIG["display"]["show_grid"]
+
+        # Automation flags
         self.auto_mine: bool = False
         self.auto_upgrade: bool = False
-        self.show_tooltips: bool = True
-        self.show_grid: bool = SHOW_GRID
-        self.zoom_level: float = 1.0
+
+        # Register state change handler
+        event_bus = get_event_bus("game")
+        event_bus.subscribe("state_change", self._handle_state_change)
+        # Register state change handler
+        event_bus = get_event_bus("game")
+        event_bus.subscribe("state_change", self._handle_state_change)
+
+    def _validate_state_transition(self, new_state: str) -> bool:
+        """Validate if a state transition is allowed.
+
+        Args:
+            new_state: The state to transition to
+
+        Returns:
+            bool: True if transition is valid
+
+        Raises:
+            InvalidStateTransitionError: If transition is not allowed
+            StateValidationError: If state validation fails
+        """
+        try:
+            # Validate state exists
+            if new_state not in GAME_CONFIG["states"].values():
+                raise InvalidStateTransitionError(f"Invalid state: {new_state}")
+
+            # Validate transition is allowed
+            allowed_transitions = GAME_CONFIG["state_transitions"].get(self.state, [])
+            if new_state not in allowed_transitions:
+                raise InvalidStateTransitionError(
+                    f"Cannot transition from {self.state} to {new_state}"
+                )
+
+            # Validate state-specific conditions
+            if new_state == GAME_CONFIG["states"]["shop"]:
+                # Can only enter shop if player has enough currency
+                min_currency = GAME_CONFIG.get("shop_entry_min_currency", 0)
+                if self.player.currency < min_currency:
+                    raise StateValidationError(
+                        f"Need at least {min_currency} currency to enter shop"
+                    )
+
+            elif new_state == GAME_CONFIG["states"]["play"]:
+                # Ensure player is in valid position before resuming
+                if not (
+                    0 <= self.player.x < self.field.width
+                    and 0 <= self.player.y < self.field.height
+                ):
+                    raise StateValidationError("Player position invalid for play state")
+
+            elif new_state == GAME_CONFIG["states"]["game_over"]:
+                # Log game stats before transitioning
+                logging.info(f"Game Over - Final Stats: {self.stats}")
+
+            # Log successful validation
+            logging.debug(f"Validated transition from {self.state} to {new_state}")
+            return True
+
+        except (InvalidStateTransitionError, StateValidationError) as e:
+            # Log validation failure
+            logging.warning(f"State transition validation failed: {str(e)}")
+            raise
+
+    def _record_state_transition(self, new_state: str) -> None:
+        """Record a state transition in history.
+
+        Args:
+            new_state: The state being transitioned to
+        """
+        transition = {
+            "from_state": self.state,
+            "to_state": new_state,
+            "timestamp": time.time(),
+            "game_time": self.game_time,
+            "frame": self.frame_counter,
+        }
+        self._state_history.append(transition)
+        self._state_transition_counts[new_state] += 1
+
+        # Keep history size bounded
+        if len(self._state_history) > 1000:
+            self._state_history.pop(0)
+
+    def change_state(self, new_state: str) -> None:
+        """Change the game state with validation and history tracking.
+
+        Args:
+            new_state: The state to transition to
+
+        Raises:
+            InvalidStateTransitionError: If transition is not allowed
+        """
+        try:
+            if self._validate_state_transition(new_state):
+                self._extracted_from_change_state_12(new_state)
+        except GameStateError as e:
+            logging.error(f"State transition failed: {e}")
+            self._state_valid = False
+            raise
+
+    # TODO Rename this here and in `change_state`
+    def _extracted_from_change_state_12(self, new_state):
+        self._record_state_transition(new_state)
+        self.previous_state = self.state
+        self.state = new_state
+        self._state_timestamps[new_state] = time.time()
+
+        # Emit state change event
+        get_event_bus().emit(
+            "state_change",
+            {
+                "from_state": self.previous_state,
+                "to_state": new_state,
+                "timestamp": time.time(),
+            },
+        )
+
+        logging.info(
+            f"State changed: {self.previous_state} -> {new_state} "
+            f"(Total transitions to {new_state}: "
+            f"{self._state_transition_counts[new_state]})"
+        )
+
+    def _init_resource_tracking(self) -> None:
+        """Initialize resource and performance tracking."""
+        # Performance timers
+        self.last_field_update_time: float = 0.0
+        self.last_memory_check: float = 0.0
+
+        # Intervals
+        self.update_interval: int = GAME_CONFIG["intervals"]["update"]
+        self.auto_upgrade_interval: int = GAME_CONFIG["intervals"]["auto_upgrade"]
+
+        # Resource thresholds
+        self._memory_warning_threshold: float = GAME_CONFIG["resources"][
+            "memory_warning_threshold"
+        ]
+        self._gc_threshold: float = GAME_CONFIG["resources"]["gc_threshold"]
 
         # Field generation parameters
         self.seed: int = random.randint(1, 1000000)
@@ -172,7 +528,17 @@ class Game:
         with LogContext("Race Initialization"):
             self.initialize_symbiote_races()
 
-        # UI state
+        # Initialize UI state
+        self._init_ui_state()
+
+        # Initialize statistics tracking
+        self._init_statistics()
+
+        # Register event handlers
+        self._register_event_handlers()
+
+    def _init_ui_state(self) -> None:
+        """Initialize UI state variables with proper type hints."""
         self.selected_race_index: int = -1
         self.hover_position: Tuple[int, int] = (0, 0)
         self.tooltip_text: Optional[str] = None
@@ -181,8 +547,9 @@ class Game:
         self.cursor_over_ui: bool = False
         self.display_controls_help: bool = False
 
-        # Statistics tracking
-        self.stats: Dict[str, Any] = {
+    def _init_statistics(self) -> None:
+        """Initialize game statistics tracking."""
+        self.stats: Dict[str, int] = {
             "total_mined": 0,
             "total_rare_mined": 0,
             "total_precious_mined": 0,
@@ -197,6 +564,117 @@ class Game:
             "encounters": 0,
             "discoveries": 0,
         }
+
+    def _register_event_handlers(self) -> None:
+        """Register event handlers for game events."""
+        event_bus = get_event_bus()
+        event_bus.subscribe("state_change", self._handle_state_change)
+        event_bus.subscribe("resource_update", self._handle_resource_update)
+        event_bus.subscribe("performance_warning", self._handle_performance_warning)
+
+    def _handle_state_change(self, event_data: Dict[str, Any]) -> None:
+        """Handle game state change events.
+
+        Args:
+            event_data: Dictionary containing state change information
+        """
+        new_state = event_data.get("new_state")
+        if new_state is None:
+            logging.warning("State change event received without new_state")
+            return
+
+        if new_state not in GAME_CONFIG["states"].values():
+            logging.error(f"Invalid state received: {new_state}")
+            return
+
+        self.previous_state = self.state
+        self.state = new_state
+        self._state_timestamps[new_state] = time.time()
+        logging.info(f"Game state changed from {self.previous_state} to {self.state}")
+
+    def _handle_resource_update(self, event_data: Dict[str, Any]) -> None:
+        """Handle resource update events.
+
+        Args:
+            event_data: Dictionary containing resource update information
+        """
+        resource_type = event_data.get("type")
+        if resource_type is None:
+            logging.warning("Resource update event received without type")
+            return
+
+        # Update resource tracking
+        if resource_type == "memory":
+            self._check_memory_usage()
+        elif resource_type == "performance":
+            self._check_performance_metrics()
+
+    def _handle_performance_warning(self, event_data: Dict[str, Any]) -> None:
+        """Handle performance warning events.
+
+        Args:
+            event_data: Dictionary containing performance warning information
+        """
+        warning_type = event_data.get("type")
+        if warning_type is None:
+            logging.warning("Performance warning event received without type")
+            return
+
+        if warning_type == "memory":
+            self._handle_memory_warning(event_data)
+        elif warning_type == "fps":
+            self._handle_fps_warning(event_data)
+
+    def _check_memory_usage(self) -> None:
+        """Check current memory usage and trigger garbage collection if needed."""
+        current_memory = log_memory_usage()
+        if current_memory > self._gc_threshold:
+            logging.info("Memory usage high, triggering garbage collection")
+            gc.collect()
+
+    def _check_performance_metrics(self) -> None:
+        """Check and log performance metrics."""
+        current_fps = self.clock.get_fps()
+        self.fps_history.append(current_fps)
+
+        # Keep history size bounded
+        if len(self.fps_history) > GAME_CONFIG["resources"]["fps_history_size"]:
+            self.fps_history.pop(0)
+
+        # Calculate average FPS
+        avg_fps = sum(self.fps_history) / len(self.fps_history)
+        if avg_fps < 30:  # Warning threshold
+            get_event_bus().emit(
+                "performance_warning",
+                {"type": "fps", "current_fps": avg_fps, "threshold": 30},
+            )
+
+    def _handle_memory_warning(self, event_data: Dict[str, Any]) -> None:
+        """Handle memory warning events.
+
+        Args:
+            event_data: Dictionary containing memory warning information
+        """
+        current_usage = event_data.get("usage", 0)
+        if current_usage > self._memory_warning_threshold:
+            self.notifier.add_notification(
+                "High memory usage detected. Some features may be disabled.",
+                notification_type="warning",
+            )
+
+    def _handle_fps_warning(self, event_data: Dict[str, Any]) -> None:
+        """Handle FPS warning events.
+
+        Args:
+            event_data: Dictionary containing FPS warning information
+        """
+        current_fps = event_data.get("current_fps", 0)
+        threshold = event_data.get("threshold", 30)
+        if current_fps < threshold:
+            self.notifier.add_notification(
+                f"Low FPS detected ({current_fps:.1f}). Optimizing performance...",
+                notification_type="warning",
+            )
 
         # Visual settings initialization
         self.initialize_visual_settings()
@@ -252,50 +730,109 @@ class Game:
             self.field.races.append(race)
 
     def initialize_visual_settings(self) -> None:
-        """Initialize visual settings and precompute resources."""
-        # Load and scale UI elements
+        """Initialize visual settings and precompute resources following manager pattern.
+
+        This method follows standardized initialization steps:
+        1. Initialize visual configuration with type-safe defaults
+        2. Set up UI elements with error handling
+        3. Create and cache visual resources
+        4. Initialize renderer components
+        """
+        # Initialize visual configuration
+        self._init_visual_config()
+
         try:
-            self.ui_font = pygame.font.SysFont("Arial", 16)
-            self.title_font = pygame.font.SysFont("Arial", 24, bold=True)
+            # Initialize UI fonts with type hints
+            self._init_fonts()
 
-            # Create background pattern for performance
-            bg_pattern_size = 64
-            self.bg_pattern = pygame.Surface((bg_pattern_size, bg_pattern_size))
-            self.bg_pattern.fill(COLOR_BG)
+            # Create and cache background resources
+            self._init_background_resources()
 
-            # Add subtle noise to background
-            for y, x in itertools.product(
-                range(bg_pattern_size), range(bg_pattern_size)
-            ):
-                noise = random.randint(-5, 5)
-                color = max(0, min(255, COLOR_BG[0] + noise))
-                self.bg_pattern.set_at((x, y), (color, color, color + 2))
+            # Initialize cursor resources
+            self._init_cursor_resources()
 
-            # Create cursor surface
-            self.cursor_size = 12
-            self.cursor_surface = pygame.Surface(
-                (self.cursor_size, self.cursor_size), pygame.SRCALPHA
-            )
-            pygame.draw.circle(
-                self.cursor_surface,
-                COLOR_PLAYER,
-                (self.cursor_size // 2, self.cursor_size // 2),
-                self.cursor_size // 2,
-            )
-            pygame.draw.circle(
-                self.cursor_surface,
-                (255, 255, 255),
-                (self.cursor_size // 2, self.cursor_size // 2),
-                self.cursor_size // 2,
-                1,
-            )
-
-            # Pre-compute asteroid field renderer caches
-            self.renderer.initialize(self.field)
+            # Initialize renderer caches
+            with LogContext("Renderer Cache Initialization"):
+                self.renderer.initialize(self.field)
 
         except Exception as e:
             logging.error(f"Error initializing visuals: {e}")
             log_exception(e)
+            raise GameInitializationError("Failed to initialize visual settings") from e
+
+    def _init_visual_config(self) -> None:
+        """Initialize visual configuration with type-safe defaults."""
+        self.visual_config: Dict[str, Any] = {
+            "ui": {
+                "font_size_normal": 16,
+                "font_size_title": 24,
+                "font_family": "Arial",
+            },
+            "background": {
+                "pattern_size": 64,
+                "noise_range": (-5, 5),
+                "base_color": COLOR_BG,
+            },
+            "cursor": {
+                "size": 12,
+                "inner_color": COLOR_PLAYER,
+                "outline_color": (255, 255, 255),
+                "outline_width": 1,
+            },
+        }
+
+    def _init_fonts(self) -> None:
+        """Initialize UI fonts with proper error handling."""
+        config = self.visual_config["ui"]
+        try:
+            self.ui_font = pygame.font.SysFont(
+                config["font_family"], config["font_size_normal"]
+            )
+            self.title_font = pygame.font.SysFont(
+                config["font_family"], config["font_size_title"], bold=True
+            )
+        except pygame.error as e:
+            logging.error(f"Failed to initialize fonts: {e}")
+            raise GameInitializationError("Font initialization failed") from e
+
+    def _init_background_resources(self) -> None:
+        """Create and cache background pattern resources."""
+        config = self.visual_config["background"]
+        pattern_size = config["pattern_size"]
+
+        # Create background pattern surface
+        self.bg_pattern = pygame.Surface((pattern_size, pattern_size))
+        self.bg_pattern.fill(config["base_color"])
+
+        # Add subtle noise to background
+        noise_min, noise_max = config["noise_range"]
+        for y, x in itertools.product(range(pattern_size), range(pattern_size)):
+            noise = random.randint(noise_min, noise_max)
+            color = max(0, min(255, config["base_color"][0] + noise))
+            self.bg_pattern.set_at((x, y), (color, color, color + 2))
+
+    def _init_cursor_resources(self) -> None:
+        """Initialize cursor-related visual resources."""
+        config = self.visual_config["cursor"]
+
+        # Create cursor surface
+        self.cursor_size = config["size"]
+        self.cursor_surface = pygame.Surface(
+            (self.cursor_size, self.cursor_size), pygame.SRCALPHA
+        )
+
+        # Draw cursor circle and outline
+        center = (self.cursor_size // 2, self.cursor_size // 2)
+        radius = self.cursor_size // 2
+
+        pygame.draw.circle(self.cursor_surface, config["inner_color"], center, radius)
+        pygame.draw.circle(
+            self.cursor_surface,
+            config["outline_color"],
+            center,
+            radius,
+            config["outline_width"],
+        )
 
     def add_welcome_notifications(self) -> None:
         """Add initial helpful notifications for new players."""
@@ -455,38 +992,7 @@ class Game:
             # Save player data if needed
             # This could be expanded to save game state for future sessions
             try:
-                # Display a farewell message to the player
-                play_time_min = self.game_time / 60
-
-                if play_time_min >= 1:
-                    farewell_msg = f"Thanks for playing Space Muck! You played for {play_time_min:.1f} minutes."
-                else:
-                    farewell_msg = "Thanks for playing Space Muck!"
-
-                # Add session highlights if available
-                if self.stats.get("combats_won", 0) > 0:
-                    combat_ratio = self.stats.get("combats_won", 0) / max(
-                        1, self.stats.get("total_combats", 1)
-                    )
-                    farewell_msg += f"\nCombat success rate: {combat_ratio:.1%}"
-
-                if self.stats.get("discoveries", 0) > 0:
-                    farewell_msg += (
-                        f"\nUnique discoveries: {self.stats.get('discoveries', 0)}"
-                    )
-
-                self.notifier.add(farewell_msg, category="system", importance=3)
-
-                # Perform system cleanup
-                log_memory_usage("Before final cleanup")
-
-                # Run garbage collection to free memory
-                gc_start = time.time()
-                gc.collect()
-                logging.info(
-                    f"Final garbage collection completed in {time.time() - gc_start:.4f} seconds"
-                )
-
+                self._extracted_from_quit_game_64()
                 # Close any open resources or connections
                 # (Adding placeholder for future implementation)
 
@@ -501,29 +1007,74 @@ class Game:
             log_exception("Error during game exit", e)
             return False  # Still exit even if there's an error
 
+    # TODO Rename this here and in `quit_game`
+    def _extracted_from_quit_game_64(self):
+        # Display a farewell message to the player
+        play_time_min = self.game_time / 60
+
+        farewell_msg = (
+            f"Thanks for playing Space Muck! You played for {play_time_min:.1f} minutes."
+            if play_time_min >= 1
+            else "Thanks for playing Space Muck!"
+        )
+        # Add session highlights if available
+        if self.stats.get("combats_won", 0) > 0:
+            combat_ratio = self.stats.get("combats_won", 0) / max(
+                1, self.stats.get("total_combats", 1)
+            )
+            farewell_msg += f"\nCombat success rate: {combat_ratio:.1%}"
+
+        if self.stats.get("discoveries", 0) > 0:
+            farewell_msg += f"\nUnique discoveries: {self.stats.get('discoveries', 0)}"
+
+        self.notifier.add(farewell_msg, category="system", importance=3)
+
+        # Perform system cleanup
+        log_memory_usage("Before final cleanup")
+
+        # Run garbage collection to free memory
+        gc_start = time.time()
+        gc.collect()
+        logging.info(
+            f"Final garbage collection completed in {time.time() - gc_start:.4f} seconds"
+        )
+
     def handle_key_press(self, key: int) -> None:
-        """Handle keyboard input."""
-        if key == pygame.K_n:
-            return
-        # Global keys (work in all states)
-        if key == pygame.K_ESCAPE:
-            if self.state != STATE_PLAY:
-                # Return to play state
-                self.state = STATE_PLAY
-            else:
-                # Toggle pause
-                self.paused = not self.paused
+        """Handle keyboard input with state validation."""
+        try:
+            # Handle global keys (work in all states)
+            if key == pygame.K_ESCAPE:
+                if self.state == GAME_CONFIG["states"]["play"]:
+                    self.change_state(GAME_CONFIG["states"]["paused"])
+                elif self.state == GAME_CONFIG["states"]["paused"]:
+                    self.change_state(GAME_CONFIG["states"]["play"])
+                elif self.state == GAME_CONFIG["states"]["shop"]:
+                    self.change_state(GAME_CONFIG["states"]["play"])
 
-        elif key == pygame.K_F1:
-            # Toggle debug mode
-            self.show_debug = not self.show_debug
+            elif key == pygame.K_F3:
+                # Toggle debug mode
+                self.show_debug = not self.show_debug
+                logging.info(
+                    f"Debug mode {'enabled' if self.show_debug else 'disabled'}"
+                )
 
-        elif key == pygame.K_h:
-            # Toggle control help
-            self.display_controls_help = not self.display_controls_help
+            elif key == pygame.K_h:
+                # Toggle control help
+                self.display_controls_help = not self.display_controls_help
+                logging.info(
+                    f"Control help {'shown' if self.display_controls_help else 'hidden'}"
+                )
 
-        elif self.state == STATE_PLAY:
-            self.handle_play_state_keys(key)
+            # Handle state-specific keys
+            elif self.state == GAME_CONFIG["states"]["play"]:
+                self.handle_play_state_keys(key)
+
+        except GameStateError as e:
+            logging.warning(f"Invalid key press in state {self.state}: {e}")
+            self.notifier.add_notification(
+                "Cannot perform that action in the current state",
+                notification_type="warning",
+            )
 
     def handle_mouse_motion(self, event) -> None:
         """Handle mouse motion events."""
@@ -559,86 +1110,126 @@ class Game:
                 break
 
     def handle_play_state_keys(self, key: int) -> None:
-        """Handle keys specific to play state."""
-        if key == pygame.K_s:
-            # Open shop
-            self.state = STATE_SHOP
+        """Handle keys specific to play state with validation."""
+        try:
+            # Validate we're in play state
+            if self.state != GAME_CONFIG["states"]["play"]:
+                raise StateValidationError(
+                    f"Play state keys called in {self.state} state"
+                )
 
-        elif key == pygame.K_m:
-            # Toggle minimap
-            self.show_minimap = not self.show_minimap
+            if key == pygame.K_s:
+                # Open shop
+                self.change_state(GAME_CONFIG["states"]["shop"])
 
-        elif key == pygame.K_g:
-            # Toggle grid
-            self.show_grid = not self.show_grid
+            elif key == pygame.K_m:
+                # Toggle minimap
+                self.show_minimap = not self.show_minimap
+                logging.info(f"Minimap {'shown' if self.show_minimap else 'hidden'}")
 
-        elif key == pygame.K_a:
-            # Toggle auto-mine
-            self.auto_mine = not self.auto_mine
-            self.notifier.add(
-                f"Auto-mining {'enabled' if self.auto_mine else 'disabled'}",
-                category="mining",
-            )
+            elif key == pygame.K_g:
+                # Toggle grid
+                self.show_grid = not self.show_grid
+                logging.info(f"Grid {'shown' if self.show_grid else 'hidden'}")
 
-        elif key == pygame.K_SPACE:
-            # Mine asteroids
-            if not self.paused:
+            elif key == pygame.K_a:
+                # Toggle auto-mine
+                self.auto_mine = not self.auto_mine
+                status = "enabled" if self.auto_mine else "disabled"
+                self.notifier.add(f"Auto-mining {status}", category="mining")
+                logging.info(f"Auto-mining {status}")
+
+            elif key == pygame.K_SPACE:
+                # Mine asteroids
                 self.mine()
 
-        elif key == pygame.K_r:
-            # Regenerate field
-            self.regenerate_field()
+            elif key == pygame.K_r:
+                # Regenerate field
+                self.regenerate_field()
+                logging.info("Field regenerated")
 
-        elif key == pygame.K_f:
-            # Feed symbiotes
-            self.feed_symbiotes()
+            elif key == pygame.K_f:
+                # Feed symbiotes
+                self.feed_symbiotes()
+                logging.info("Symbiotes fed")
 
-        elif key == pygame.K_u:
-            # Toggle auto-upgrade
-            self.auto_upgrade = not self.auto_upgrade
-            self.notifier.add(
-                f"Auto-upgrade {'enabled' if self.auto_upgrade else 'disabled'}",
-                category="upgrade",
+            elif key == pygame.K_u:
+                # Toggle auto-upgrade
+                self.auto_upgrade = not self.auto_upgrade
+                status = "enabled" if self.auto_upgrade else "disabled"
+                self.notifier.add(f"Auto-upgrade {status}", category="upgrade")
+                logging.info(f"Auto-upgrade {status}")
+
+            elif key in [pygame.K_PLUS, pygame.K_EQUALS]:
+                # Zoom in
+                self.zoom_level = min(2.0, self.zoom_level + 0.1)
+                logging.debug(f"Zoom level increased to {self.zoom_level:.1f}")
+
+            elif key in [pygame.K_MINUS, pygame.K_UNDERSCORE]:
+                # Zoom out
+                self.zoom_level = max(0.5, self.zoom_level - 0.1)
+                logging.debug(f"Zoom level decreased to {self.zoom_level:.1f}")
+
+            elif key == pygame.K_p:
+                # Add ship to fleet
+                if self.player.add_ship():
+                    msg = "New mining ship added to your fleet!"
+                    self.notifier.add(msg, category="mining")
+                    logging.info(msg)
+                else:
+                    msg = "Cannot add more ships (max reached or insufficient funds)"
+                    self.notifier.add(msg, category="mining")
+                    logging.warning(msg)
+
+        except GameStateError as e:
+            logging.warning(f"Invalid play state action: {e}")
+            self.notifier.add_notification(
+                "Action not allowed in current state", notification_type="warning"
             )
 
-        elif key in [pygame.K_PLUS, pygame.K_EQUALS]:
-            # Zoom in
-            self.zoom_level = min(2.0, self.zoom_level + 0.1)
-
-        elif key in [pygame.K_MINUS, pygame.K_UNDERSCORE]:
-            # Zoom out
-            self.zoom_level = max(0.5, self.zoom_level - 0.1)
-
-        elif key == pygame.K_p:
-            # Add ship to fleet
-            if self.player.add_ship():
-                self.notifier.add(
-                    "New mining ship added to your fleet!", category="mining"
-                )
-            else:
-                self.notifier.add(
-                    "Cannot add more ships (max reached or insufficient funds)",
-                    category="mining",
-                )
-
     def handle_mouse_click(self, pos: Tuple[int, int]) -> None:
-        """Handle mouse clicks based on game state."""
-        if self.state == STATE_PLAY:
-            # Check if click was on UI element
-            if self.check_cursor_over_ui():
+        """Handle mouse clicks based on game state with validation."""
+        try:
+            # Handle shop state
+            if self.state == GAME_CONFIG["states"]["shop"]:
+                self.shop.handle_click(pos)
+                logging.debug(f"Shop click at position {pos}")
                 return
 
-            # Convert screen position to grid position
-            grid_x, grid_y = self.screen_to_grid(pos[0], pos[1])
+            # Handle play state
+            if self.state == GAME_CONFIG["states"]["play"]:
+                # Check if click was on UI element
+                if self.check_cursor_over_ui():
+                    logging.debug("Click ignored - over UI element")
+                    return
 
-            # Check if position is valid
-            if 0 <= grid_x < self.field.width and 0 <= grid_y < self.field.height:
-                # Move player there
-                dx = grid_x - self.player.x
-                dy = grid_y - self.player.y
-                self.player.move(dx, dy, self.field)
-                # Set a flag to indicate the player has moved (for encounter checks)
-                self.player.has_moved = True
+                # Convert screen position to grid position
+                grid_x, grid_y = self.screen_to_grid(pos[0], pos[1])
+
+                # Check if position is valid
+                if 0 <= grid_x < self.field.width and 0 <= grid_y < self.field.height:
+                    # Calculate movement delta
+                    dx = grid_x - self.player.x
+                    dy = grid_y - self.player.y
+
+                    # Move player there
+                    self.player.move(dx, dy, self.field)
+                    self.player.has_moved = True  # For encounter checks
+                    logging.debug(f"Player moved to grid position ({grid_x}, {grid_y})")
+                else:
+                    logging.debug(f"Invalid grid position: ({grid_x}, {grid_y})")
+
+            # Other states ignore clicks
+            elif self.state == GAME_CONFIG["states"]["paused"]:
+                logging.debug("Click ignored in paused state")
+            elif self.state == GAME_CONFIG["states"]["game_over"]:
+                logging.debug("Click ignored in game over state")
+
+        except GameStateError as e:
+            logging.warning(f"Invalid mouse click in state {self.state}: {e}")
+            self.notifier.add_notification(
+                "Cannot interact in the current state", notification_type="warning"
+            )
 
     def check_cursor_over_ui(self) -> bool:
         """Check if the cursor is over a UI element."""
@@ -931,20 +1522,7 @@ class Game:
 
             # STAGE 4: Entity Lifecycle and Simulation
             try:
-                # Update symbiote races, evolutions, and discoveries
-                entity_start = log_performance_start("Entity lifecycle processing")
-                self.check_race_evolutions()
-                self.check_for_discoveries()
-                log_performance_end("Entity lifecycle processing", entity_start)
-
-                # Generate entity-related context
-                entity_stats = {
-                    "active_races": getattr(self, "race_count", 0),
-                    "evolution_stage": getattr(self, "evolution_stage", 1),
-                    "discovery_count": self.stats.get("discoveries", 0),
-                }
-                update_context["entities"] = entity_stats
-
+                self._extracted_from_update_play_state_96(update_context)
             except Exception as stage4_error:
                 log_exception(
                     "Error in Entity Lifecycle processing (Stage 4)", stage4_error
@@ -1023,6 +1601,22 @@ class Game:
             self.notifier.add(
                 f"Game system error: {str(e)}", category="error", importance=3
             )
+
+    # TODO Rename this here and in `update_play_state`
+    def _extracted_from_update_play_state_96(self, update_context):
+        # Update symbiote races, evolutions, and discoveries
+        entity_start = log_performance_start("Entity lifecycle processing")
+        self.check_race_evolutions()
+        self.check_for_discoveries()
+        log_performance_end("Entity lifecycle processing", entity_start)
+
+        # Generate entity-related context
+        entity_stats = {
+            "active_races": getattr(self, "race_count", 0),
+            "evolution_stage": getattr(self, "evolution_stage", 1),
+            "discovery_count": self.stats.get("discoveries", 0),
+        }
+        update_context["entities"] = entity_stats
 
     def evaluate_game_state(self, context: Dict[str, Any]) -> None:
         """Evaluate the current game state and trigger appropriate events.
@@ -2090,7 +2684,7 @@ class Game:
             self.player.draw_ship_info(self.screen)
 
     def draw_debug_info(self) -> None:
-        """Draw debug information on the screen."""
+        """Draw debug information on the screen with enhanced state tracking."""
         # Get game loop instance for its metrics
         game_loop = get_game_loop()
         event_batcher = get_event_batcher()
@@ -2106,8 +2700,29 @@ class Game:
             sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
         )
 
+        # Get state timing info
+        current_time = time.time()
+        time_in_state = current_time - self._state_timestamps[self.state]
+        transitions_this_state = self._state_transition_counts[self.state]
+
         # Debug info sections
+        state_text = [
+            "=== State Info ===",
+            f"Current: {self.state}",
+            f"Previous: {self.previous_state}",
+            f"Time in State: {time_in_state:.1f}s",
+            f"Transitions: {transitions_this_state}",
+            f"State Valid: {self._state_valid}",
+            "Recent History:",
+        ]
+
+        # Add last 3 state transitions
+        state_text.extend(
+            f"  {transition['from_state']} -> {transition['to_state']} ({transition['game_time']:.1f}s)"
+            for transition in self._state_history[-3:]
+        )
         performance_text = [
+            "=== Performance ===",
             f"FPS: {fps:.1f} (Avg: {avg_fps:.1f})",
             f"Frame: {self.frame_counter} (GL: {game_loop.frame_counter})",
             f"Game Time: {self.game_time:.1f}s",
@@ -2116,7 +2731,8 @@ class Game:
         ]
 
         player_text = [
-            f"Player Pos: ({self.player.x}, {self.player.y})",
+            "=== Player Info ===",
+            f"Position: ({self.player.x}, {self.player.y})",
             f"Mining Power: {self.player.mining_power}",
             f"Rare Mining: {self.player.rare_mining_power}",
             f"Currency: {self.player.currency}",
@@ -2124,6 +2740,7 @@ class Game:
         ]
 
         field_text = [
+            "=== Field Info ===",
             f"Grid Size: {GRID_WIDTH}x{GRID_HEIGHT}",
             f"Zoom: {self.zoom_level:.2f}x",
             f"Entities: {len(self.field.entities)}",
@@ -2131,29 +2748,122 @@ class Game:
         ]
 
         game_loop_text = [
-            f"GL Update funcs: {len(game_loop.update_functions)}",
-            f"GL Render funcs: {len(game_loop.render_functions)}",
-            f"GL Event handlers: {len(game_loop.event_handlers)}",
-            f"GL Interval updates: {len(game_loop.interval_updates)}",
+            "=== Game Loop ===",
+            f"Update funcs: {len(game_loop.update_functions)}",
+            f"Render funcs: {len(game_loop.render_functions)}",
+            f"Event handlers: {len(game_loop.event_handlers)}",
+            f"Interval updates: {len(game_loop.interval_updates)}",
         ]
 
         event_system_text = [
-            f"GameEvents: {len(game_event_bus.event_history) if game_event_bus else 0}",
-            f"GameBus subs: {len(game_event_bus.subscriptions) if game_event_bus else 0}",
+            "=== Event System ===",
+            f"Game Events: {len(game_event_bus.event_history) if game_event_bus else 0}",
+            f"Bus Subscribers: {len(game_event_bus.subscriptions) if game_event_bus else 0}",
             f"Event Batching: {event_batcher.is_batching}",
         ]
 
-        # Draw debug panels
-        panel_y = 10
-        panel_height = 20
+        # Draw debug sections in columns
+        left_x = 10
+        right_x = WINDOW_WIDTH // 2 + 10
+        line_height = 20
 
-        # Draw performance section
-        y = panel_y
-        for text in performance_text:
-            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
-            y += panel_height
+        # Left column (State and Performance)
+        y = 10
+        for section in [state_text, performance_text]:
+            for line in section:
+                text = self.debug_font.render(line, True, (255, 255, 255))
+                self.screen.blit(text, (left_x, y))
+                y += line_height
+            y += 10  # Section spacing
 
-        # Draw player section
+        # Right column (Player, Field, Game Loop, Events)
+        y = 10
+        for section in [player_text, field_text, game_loop_text, event_system_text]:
+            for line in section:
+                text = self.debug_font.render(line, True, (255, 255, 255))
+                self.screen.blit(text, (right_x, y))
+                y += line_height
+            y += 10  # Section spacing
+
+        # Draw state validation warning if needed
+        if not self._state_valid:
+            warning_text = "WARNING: Invalid State Transition Detected!"
+            text = self.debug_font.render(warning_text, True, (255, 100, 100))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
+            self.screen.blit(text, text_rect)
+
+    def get_state_debug_info(self) -> Dict[str, Any]:
+        """Get detailed state debugging information.
+
+        Returns:
+            Dict containing state debug info including:
+            - Current and previous states
+            - Time spent in each state
+            - Transition counts
+            - Validation status
+            - Performance metrics
+        """
+        current_time = time.time()
+
+        state_times = {
+            state: current_time - timestamp if state == self.state else 0.0
+            for state, timestamp in self._state_timestamps.items()
+        }
+        return {
+            "current_state": self.state,
+            "previous_state": self.previous_state,
+            "state_valid": self._state_valid,
+            "last_validation_time": self._last_validation_time,
+            "state_times": state_times,
+            "transition_counts": self._state_transition_counts,
+            "state_history": self._state_history[-10:],  # Last 10 transitions
+            "performance": {
+                "current_fps": self.clock.get_fps(),
+                "avg_fps": (
+                    sum(self.fps_history) / len(self.fps_history)
+                    if self.fps_history
+                    else 0
+                ),
+                "frame_counter": self.frame_counter,
+                "game_time": self.game_time,
+            },
+        }
+
+    def log_state_debug_info(self) -> None:
+        """Log detailed state debugging information."""
+        debug_info = self.get_state_debug_info()
+
+        logging.debug("=== State Debug Information ===")
+        logging.debug(f"Current State: {debug_info['current_state']}")
+        logging.debug(f"Previous State: {debug_info['previous_state']}")
+        logging.debug(f"State Valid: {debug_info['state_valid']}")
+
+        # Log time in states
+        logging.debug("\nTime in States:")
+        for state, time_spent in debug_info["state_times"].items():
+            logging.debug(f"  {state}: {time_spent:.1f}s")
+
+        # Log transition counts
+        logging.debug("\nState Transition Counts:")
+        for state, count in debug_info["transition_counts"].items():
+            logging.debug(f"  {state}: {count}")
+
+        # Log recent state history
+        logging.debug("\nRecent State Transitions:")
+        for transition in debug_info["state_history"]:
+            logging.debug(
+                f"  {transition['from_state']} -> {transition['to_state']} "
+                f"at frame {transition['frame']}"
+            )
+
+        # Log performance metrics
+        perf = debug_info["performance"]
+        logging.debug("\nPerformance Metrics:")
+        logging.debug(f"  Current FPS: {perf['current_fps']:.1f}")
+        logging.debug(f"  Average FPS: {perf['avg_fps']:.1f}")
+        logging.debug(f"  Frame: {perf['frame_counter']}")
+        logging.debug(f"  Game Time: {perf['game_time']:.1f}s")
+
         y += 10  # Add spacing
         for text in player_text:
             draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
@@ -2260,29 +2970,7 @@ def run_game_loop(game):
 def main():
     """Main entry point for the game."""
     try:
-        # Configure logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
-        logging.info("Starting Space Muck game...")
-
-        # Initialize event system
-        game_event_bus = get_event_bus("GameEventBus")
-        resource_event_bus = get_event_bus("ResourceEventBus")
-        module_event_bus = get_event_bus("ModuleEventBus")
-        event_batcher = get_event_batcher()
-
-        logging.info("Event system initialized")
-
-        # Create the game instance
-        game = Game()
-
-        if success := run_game_loop(game):
-            logging.info("Game completed successfully")
-        else:
-            logging.warning("Game loop terminated with errors")
-
+        _extracted_from_main_5()
     except Exception as e:
         log_exception("Critical error in main function", e)
         raise
@@ -2290,6 +2978,32 @@ def main():
         # Ensure pygame is properly shut down
         pygame.quit()
         logging.info("Game shutdown complete")
+
+
+# TODO Rename this here and in `main`
+def _extracted_from_main_5():
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logging.info("Starting Space Muck game...")
+
+    # Initialize event system
+    game_event_bus = get_event_bus("GameEventBus")
+    resource_event_bus = get_event_bus("ResourceEventBus")
+    module_event_bus = get_event_bus("ModuleEventBus")
+    event_batcher = get_event_batcher()
+
+    logging.info("Event system initialized")
+
+    # Create the game instance
+    game = Game()
+
+    if success := run_game_loop(game):
+        logging.info("Game completed successfully")
+    else:
+        logging.warning("Game loop terminated with errors")
 
 
 if __name__ == "__main__":
