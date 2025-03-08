@@ -47,16 +47,21 @@ T = TypeVar("T")
 @runtime_checkable
 class TypeAnnotated(Protocol):
     """Protocol for objects with type annotations"""
+
     __annotations__: Dict[str, Any]
+
 
 @runtime_checkable
 class Documented(Protocol):
     """Protocol for objects with docstrings"""
+
     __doc__: Optional[str]
+
 
 @runtime_checkable
 class Callable(Protocol):
     """Protocol for callable objects with signature information"""
+
     __signature__: inspect.Signature
     __name__: str
     __module__: str
@@ -64,9 +69,11 @@ class Callable(Protocol):
     __annotations__: Dict[str, Any]
     __doc__: Optional[str]
 
+
 @runtime_checkable
 class SignatureComparable(Protocol):
     """Protocol for objects that can be compared based on their signatures"""
+
     def is_compatible_with(self, other: Any) -> bool:
         """Check if this signature is compatible with another"""
         ...
@@ -75,9 +82,11 @@ class SignatureComparable(Protocol):
         """Calculate similarity score with another signature"""
         ...
 
+
 @runtime_checkable
 class SignatureValidatable(Protocol):
     """Protocol for objects that can validate their signatures"""
+
     def validate(self) -> bool:
         """Validate the signature"""
         ...
@@ -86,9 +95,11 @@ class SignatureValidatable(Protocol):
         """Get list of validation errors"""
         ...
 
+
 @runtime_checkable
 class SignatureProvider(Protocol):
     """Protocol for objects that can provide signature information"""
+
     def get_signature(self) -> CodeSignature:
         """Get the signature information for this object"""
         ...
@@ -103,8 +114,17 @@ class SignatureProvider(Protocol):
 
 
 @dataclass
-class TypeInfo:
-    """Enhanced type information with inference confidence"""
+class TypeInfo(SignatureValidatable):
+    """Enhanced type information with inference confidence
+
+    Implements SignatureValidatable protocol for validation support.
+    Provides comprehensive type information including:
+    - Static type hints from code
+    - Inferred types from ML model
+    - Confidence scores for inference
+    - Source locations for type usage
+    - Type constraints for validation
+    """
 
     type_hint: Optional[str]
     inferred_type: Optional[str]
@@ -113,33 +133,146 @@ class TypeInfo:
     constraints: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        if not (0.0 <= self.confidence <= 1.0):
+            raise ValueError("Confidence must be between 0.0 and 1.0")
         self.validate()
 
-    def validate(self):
-        """Validate type consistency"""
-        if self.type_hint and self.inferred_type:
+    def validate(self) -> bool:
+        """Validate type consistency and constraints"""
+        # Check basic type presence
+        if not self.type_hint and not self.inferred_type:
+            self.confidence *= 0.5
+            return False
+
+        # Validate type hint consistency
+        if self.type_hint:
             try:
                 typeguard.check_type(value="", expected_type=eval(self.type_hint))
             except Exception:
                 self.confidence *= 0.5
+                return False
+
+        # Validate type hint and inferred type consistency
+        if (
+            self.type_hint
+            and self.inferred_type
+            and self.type_hint != self.inferred_type
+        ):
+            self.confidence *= 0.8
+            return False
+
+        # Validate constraints if present
+        for constraint in self.constraints:
+            try:
+                eval(constraint)
+            except Exception:
+                self.confidence *= 0.9
+                return False
+
+        return True
+
+    def get_validation_errors(self) -> List[str]:
+        """Get list of validation errors"""
+        errors = []
+
+        # Check type presence
+        if not self.type_hint and not self.inferred_type:
+            errors.append("No type information available")
+
+        # Validate type hint
+        if self.type_hint:
+            try:
+                typeguard.check_type(value="", expected_type=eval(self.type_hint))
+            except Exception as e:
+                errors.append(f"Invalid type hint '{self.type_hint}': {str(e)}")
+
+        # Check type consistency
+        if (
+            self.type_hint
+            and self.inferred_type
+            and self.type_hint != self.inferred_type
+        ):
+            errors.append(
+                f"Type hint '{self.type_hint}' conflicts with inferred type '{self.inferred_type}'"
+            )
+
+        # Check constraints
+        for constraint in self.constraints:
+            try:
+                eval(constraint)
+            except Exception as e:
+                errors.append(f"Constraint validation failed: {constraint} - {str(e)}")
+
+        return errors
 
 
 class SignatureMetrics(BaseModel):
-    """Advanced metrics for code signatures"""
+    """Advanced metrics for code signatures
 
-    complexity: float = Field(0.0, ge=0.0, le=1.0)
-    cohesion: float = Field(0.0, ge=0.0, le=1.0)
-    coupling: float = Field(0.0, ge=0.0, le=1.0)
-    maintainability: float = Field(0.0, ge=0.0, le=1.0)
-    type_safety: float = Field(0.0, ge=0.0, le=1.0)
-    documentation_score: float = Field(0.0, ge=0.0, le=1.0)
-    validation_score: float = Field(0.0, ge=0.0, le=1.0)
-    compatibility_score: float = Field(0.0, ge=0.0, le=1.0)
-    validation_coverage: float = Field(0.0, ge=0.0, le=1.0)
+    Provides comprehensive metrics for analyzing code signatures including:
+    - Structural metrics (complexity, cohesion, coupling)
+    - Quality metrics (maintainability, documentation)
+    - Type safety metrics (type hints, inference, constraints)
+    - Validation metrics (validation score, coverage, compatibility)
+
+    All metrics are normalized between 0.0 and 1.0
+    """
+
+    # Structural Metrics
+    complexity: float = Field(
+        0.0, ge=0.0, le=1.0, description="Cyclomatic complexity normalized to [0,1]"
+    )
+    cohesion: float = Field(
+        0.0, ge=0.0, le=1.0, description="Method and attribute cohesion score"
+    )
+    coupling: float = Field(
+        0.0, ge=0.0, le=1.0, description="Coupling with other components"
+    )
+
+    # Quality Metrics
+    maintainability: float = Field(
+        0.0, ge=0.0, le=1.0, description="Overall maintainability index"
+    )
+    documentation_score: float = Field(
+        0.0, ge=0.0, le=1.0, description="Documentation completeness and quality"
+    )
+
+    # Type Safety Metrics
+    type_safety: float = Field(
+        0.0, ge=0.0, le=1.0, description="Overall type safety score"
+    )
+    type_hint_coverage: float = Field(
+        0.0, ge=0.0, le=1.0, description="Proportion of components with type hints"
+    )
+    type_inference_confidence: float = Field(
+        0.0, ge=0.0, le=1.0, description="Average confidence of inferred types"
+    )
+    constraint_coverage: float = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Proportion of components with type constraints",
+    )
+
+    # Validation Metrics
+    validation_score: float = Field(
+        0.0, ge=0.0, le=1.0, description="Overall validation success rate"
+    )
+    validation_coverage: float = Field(
+        0.0, ge=0.0, le=1.0, description="Proportion of components validated"
+    )
+    compatibility_score: float = Field(
+        0.0, ge=0.0, le=1.0, description="Compatibility with related signatures"
+    )
+    error_rate: float = Field(
+        0.0, ge=0.0, le=1.0, description="Rate of validation errors"
+    )
 
 
 @dataclass
-class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable, SignatureComparable):
+class SignatureComponent(
+    TypeAnnotated, SignatureProvider, SignatureValidatable, SignatureComparable
+):
     """Component of a signature with enhanced analysis"""
 
     name: str
@@ -152,7 +285,11 @@ class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable,
 
     def __post_init__(self):
         # Initialize annotations from type info
-        self.__annotations__ = {self.name: eval(self.type_info.type_hint) if self.type_info.type_hint else Any}
+        self.__annotations__ = {
+            self.name: (
+                eval(self.type_info.type_hint) if self.type_info.type_hint else Any
+            )
+        }
 
     def get_signature(self) -> CodeSignature:
         """Get a minimal signature for this component"""
@@ -160,7 +297,7 @@ class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable,
             name=self.name,
             module_path=Path(),
             components=[],
-            return_type=self.type_info
+            return_type=self.type_info,
         )
 
     def get_type_info(self) -> Dict[str, TypeInfo]:
@@ -170,8 +307,7 @@ class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable,
     def get_metrics(self) -> SignatureMetrics:
         """Get basic metrics for this component"""
         return SignatureMetrics(
-            complexity=0.1,  # Base complexity
-            type_safety=self.type_info.confidence
+            complexity=0.1, type_safety=self.type_info.confidence  # Base complexity
         )
 
     def validate(self) -> bool:
@@ -184,7 +320,9 @@ class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable,
         if not self.type_info.type_hint and not self.type_info.inferred_type:
             errors.append(f"No type information for {self.name}")
         if self.type_info.confidence < 0.5:
-            errors.append(f"Low type confidence ({self.type_info.confidence}) for {self.name}")
+            errors.append(
+                f"Low type confidence ({self.type_info.confidence}) for {self.name}"
+            )
         return errors
 
     def is_compatible_with(self, other: Any) -> bool:
@@ -210,7 +348,13 @@ class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable,
 
 
 @dataclass
-class CodeSignature(TypeAnnotated, Documented, SignatureProvider, SignatureValidatable, SignatureComparable):
+class CodeSignature(
+    TypeAnnotated,
+    Documented,
+    SignatureProvider,
+    SignatureValidatable,
+    SignatureComparable,
+):
     """Enhanced code signature with comprehensive analysis"""
 
     name: str
@@ -227,14 +371,16 @@ class CodeSignature(TypeAnnotated, Documented, SignatureProvider, SignatureValid
     def __post_init__(self):
         # Initialize annotations from components and return type
         self.__annotations__ = {
-            comp.name: eval(comp.type_info.type_hint) if comp.type_info.type_hint else Any
+            comp.name: (
+                eval(comp.type_info.type_hint) if comp.type_info.type_hint else Any
+            )
             for comp in self.components
         }
         if self.return_type and self.return_type.type_hint:
-            self.__annotations__['return'] = eval(self.return_type.type_hint)
+            self.__annotations__["return"] = eval(self.return_type.type_hint)
         self.__doc__ = self.docstring
 
-    def get_signature(self) -> 'CodeSignature':
+    def get_signature(self) -> "CodeSignature":
         """Get this signature"""
         return self
 
@@ -242,7 +388,7 @@ class CodeSignature(TypeAnnotated, Documented, SignatureProvider, SignatureValid
         """Get type information for all components"""
         type_info = {comp.name: comp.type_info for comp in self.components}
         if self.return_type:
-            type_info['return'] = self.return_type
+            type_info["return"] = self.return_type
         return type_info
 
     def get_metrics(self) -> SignatureMetrics:
@@ -270,13 +416,18 @@ class CodeSignature(TypeAnnotated, Documented, SignatureProvider, SignatureValid
         if not isinstance(other, CodeSignature):
             return False
         # Check return type compatibility
-        if (self.return_type and other.return_type and 
-            self.return_type.type_hint != other.return_type.type_hint):
+        if (
+            self.return_type
+            and other.return_type
+            and self.return_type.type_hint != other.return_type.type_hint
+        ):
             return False
         # Check parameter compatibility (order matters)
         if len(self.components) != len(other.components):
             return False
-        return all(s.is_compatible_with(o) for s, o in zip(self.components, other.components))
+        return all(
+            s.is_compatible_with(o) for s, o in zip(self.components, other.components)
+        )
 
     def similarity_score(self, other: Any) -> float:
         """Calculate signature similarity using TF-IDF and cosine similarity"""
@@ -629,12 +780,12 @@ class SignatureAnalyzer:
         """Validate all signatures in the project"""
         self.validation_errors.clear()
         is_valid = True
-        
+
         for name, sig in self.signatures.items():
             if not sig.validate():
                 self.validation_errors[name] = sig.get_validation_errors()
                 is_valid = False
-        
+
         return is_valid
 
     def check_signature_compatibility(self) -> bool:
@@ -646,13 +797,19 @@ class SignatureAnalyzer:
         for source, target in self.dependency_graph.edges():
             source_sig = self.signatures.get(source)
             target_sig = self.signatures.get(target)
-            if source_sig and target_sig and not source_sig.is_compatible_with(target_sig):
+            if (
+                source_sig
+                and target_sig
+                and not source_sig.is_compatible_with(target_sig)
+            ):
                 self.incompatible_pairs.append((source, target))
                 is_compatible = False
 
         return is_compatible
 
-    def find_similar_signatures(self, threshold: float = 0.8) -> List[Tuple[str, str, float]]:
+    def find_similar_signatures(
+        self, threshold: float = 0.8
+    ) -> List[Tuple[str, str, float]]:
         """Find similar signatures based on similarity score"""
         similar_pairs = []
         seen = set()
@@ -699,8 +856,8 @@ class SignatureAnalyzer:
                 "validation_errors": self.validation_errors,
                 "is_compatible": is_compatible,
                 "incompatible_pairs": self.incompatible_pairs,
-                "similar_signatures": similar_signatures
-            }
+                "similar_signatures": similar_signatures,
+            },
         }
 
     def _analyze_file(self, file_path: Path):
@@ -739,44 +896,80 @@ class SignatureAnalyzer:
     def _calculate_metrics(self):
         """Calculate advanced metrics for all signatures"""
         for name, signature in self.signatures.items():
-            # Calculate complexity using cyclomatic complexity
+            # Calculate structural metrics
             complexity = self._calculate_complexity(signature)
-
-            # Calculate cohesion using spectral analysis
             cohesion = self._calculate_cohesion(signature)
-
-            # Calculate coupling using graph theory
             coupling = self._calculate_coupling(name)
 
-            # Calculate maintainability
+            # Calculate quality metrics
             maintainability = self._calculate_maintainability(signature)
+            documentation_score = self._calculate_doc_score(signature)
 
-            # Calculate type safety score
+            # Calculate type safety metrics
             type_safety = self._calculate_type_safety(signature)
+            if signature.components:
+                n_components = len(signature.components)
+                type_hint_coverage = (
+                    len([c for c in signature.components if c.type_info.type_hint])
+                    / n_components
+                )
+                type_inference_confidence = (
+                    sum(c.type_info.confidence for c in signature.components)
+                    / n_components
+                )
+                constraint_coverage = (
+                    len([c for c in signature.components if c.constraints])
+                    / n_components
+                )
+            else:
+                type_hint_coverage = type_inference_confidence = constraint_coverage = (
+                    0.0
+                )
 
             # Calculate validation metrics
             validation_score = float(signature.validate())
             validation_errors = signature.get_validation_errors()
-            validation_coverage = 1.0 - (len(validation_errors) / len(signature.components)) if validation_errors else 1.0
+            error_rate = (
+                len(validation_errors) / len(signature.components)
+                if signature.components
+                else 0.0
+            )
+            validation_coverage = 1.0 - error_rate
 
             # Calculate compatibility with related signatures
-            related_sigs = {s for s in self.signatures.values() if s.name != signature.name and 
-                          (s.name in signature.dependencies or signature.name in s.dependencies)}
+            related_sigs = {
+                s
+                for s in self.signatures.values()
+                if s.name != signature.name
+                and (
+                    s.name in signature.dependencies or signature.name in s.dependencies
+                )
+            }
             compatibility_score = 1.0
             if related_sigs:  # Only calculate if there are related signatures
-                compatibility_score = len([s for s in related_sigs if signature.is_compatible_with(s)]) / len(related_sigs)
+                compatibility_score = len(
+                    [s for s in related_sigs if signature.is_compatible_with(s)]
+                ) / len(related_sigs)
 
             # Update metrics
             signature.metrics = SignatureMetrics(
+                # Structural metrics
                 complexity=complexity,
                 cohesion=cohesion,
                 coupling=coupling,
+                # Quality metrics
                 maintainability=maintainability,
+                documentation_score=documentation_score,
+                # Type safety metrics
                 type_safety=type_safety,
-                documentation_score=self._calculate_doc_score(signature),
+                type_hint_coverage=type_hint_coverage,
+                type_inference_confidence=type_inference_confidence,
+                constraint_coverage=constraint_coverage,
+                # Validation metrics
                 validation_score=validation_score,
+                validation_coverage=validation_coverage,
                 compatibility_score=compatibility_score,
-                validation_coverage=validation_coverage
+                error_rate=error_rate,
             )
 
     def _calculate_complexity(self, signature: CodeSignature) -> float:
@@ -847,7 +1040,12 @@ class SignatureAnalyzer:
             # Adjust for type confidence and inference
             score += 0.2 * component.type_info.confidence
             if component.type_info.inferred_type:
-                score += 0.1 * (1.0 if component.type_info.inferred_type == component.type_info.type_hint else 0.5)
+                score += 0.1 * (
+                    1.0
+                    if component.type_info.inferred_type
+                    == component.type_info.type_hint
+                    else 0.5
+                )
 
             # Bonus for having constraints and validation
             if component.constraints:
@@ -940,19 +1138,28 @@ class SignatureAnalyzer:
         # Calculate compatibility metrics
         total_possible_pairs = (n_sigs * (n_sigs - 1)) / 2
         incompatible_count = len(self.incompatible_pairs)
-        metrics["compatibility_score"] = 1.0 - (incompatible_count / total_possible_pairs if total_possible_pairs > 0 else 0)
+        metrics["compatibility_score"] = 1.0 - (
+            incompatible_count / total_possible_pairs if total_possible_pairs > 0 else 0
+        )
         metrics["total_incompatible_pairs"] = float(incompatible_count)
-        metrics["validation_coverage"] = len([s for s in self.signatures.values() if s.validate()])
+        metrics["validation_coverage"] = len(
+            [s for s in self.signatures.values() if s.validate()]
+        )
 
         # Average all accumulated metrics
-        result = {k: v / n_sigs for k, v in metrics.items() 
-                 if k not in {"compatibility_score", "total_incompatible_pairs"}}
+        result = {
+            k: v / n_sigs
+            for k, v in metrics.items()
+            if k not in {"compatibility_score", "total_incompatible_pairs"}
+        }
         # Add non-averaged metrics
-        result.update({
-            "compatibility_score": metrics["compatibility_score"],
-            "total_incompatible_pairs": metrics["total_incompatible_pairs"],
-            "total_signatures": float(n_sigs)
-        })
+        result.update(
+            {
+                "compatibility_score": metrics["compatibility_score"],
+                "total_incompatible_pairs": metrics["total_incompatible_pairs"],
+                "total_signatures": float(n_sigs),
+            }
+        )
 
         return result
 

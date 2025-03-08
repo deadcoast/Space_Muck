@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+
 # Core dependencies that are always required
 from rich.console import Console
 from rich.table import Table
@@ -34,22 +35,23 @@ from rope.base import project as rope_project
 
 # Initialize optional dependencies
 OPTIONAL_DEPS = {
-    'libcst': cst,
-    'matplotlib': plt,
-    'mypy': mypy,
-    'networkx': None,  # Will be imported on demand
-    'numpy': None,  # Will be imported on demand
-    'sympy': sympy,
-    'toml': toml,
-    'radon': radon_cc,
-    'rope': rope_project
+    "libcst": cst,
+    "matplotlib": plt,
+    "mypy": mypy,
+    "networkx": None,  # Will be imported on demand
+    "numpy": None,  # Will be imported on demand
+    "sympy": sympy,
+    "toml": toml,
+    "radon": radon_cc,
+    "rope": rope_project,
 }
 
 # Try to import numpy for type hints
 try:
     import numpy
     import numpy.typing as npt
-    OPTIONAL_DEPS['numpy'] = numpy
+
+    OPTIONAL_DEPS["numpy"] = numpy
     NDArray = npt.NDArray[numpy.float64]
 except ImportError:
     NDArray = None  # Type will be Any
@@ -115,6 +117,7 @@ class ProjectMetrics:
 
 class ASTImportVisitor(ast.NodeVisitor):
     """Basic AST visitor for collecting imports."""
+
     def __init__(self):
         super().__init__()
         self.imports: Set[str] = set()
@@ -126,6 +129,7 @@ class ASTImportVisitor(ast.NodeVisitor):
     def visit_ImportFrom(self, node: ast.ImportFrom):
         if node.module:
             self.imports.add(node.module)
+
 
 class CodebaseOptimizer:
     """Unified system for Python codebase analysis and optimization."""
@@ -141,23 +145,28 @@ class CodebaseOptimizer:
         # Initialize core components
         self.modules: Dict[str, CodeModule] = {}
         self.metrics = ProjectMetrics()
-        
+
         # Initialize graphs if networkx is available
         self.dependency_graph = None
         try:
             import networkx
-            OPTIONAL_DEPS['networkx'] = networkx
+
+            OPTIONAL_DEPS["networkx"] = networkx
             self.dependency_graph = networkx.DiGraph()
         except ImportError:
-            console.print("[yellow]networkx not available - some features will be disabled")
+            console.print(
+                "[yellow]networkx not available - some features will be disabled"
+            )
 
         # Initialize rope project if available
         self.rope_project = None
-        if OPTIONAL_DEPS['rope']:
+        if OPTIONAL_DEPS["rope"]:
             try:
-                self.rope_project = OPTIONAL_DEPS['rope'].Project(str(self.root))
+                self.rope_project = OPTIONAL_DEPS["rope"].Project(str(self.root))
             except AttributeError:
-                console.print("[yellow]rope project initialization failed - some features will be disabled")
+                console.print(
+                    "[yellow]rope project initialization failed - some features will be disabled"
+                )
         else:
             console.print("[yellow]rope not available - some features will be disabled")
 
@@ -202,7 +211,9 @@ class CodebaseOptimizer:
             self._build_dependency_graph()
             self._analyze_circular_dependencies()
         else:
-            console.print("[yellow]Skipping dependency analysis - networkx not available")
+            console.print(
+                "[yellow]Skipping dependency analysis - networkx not available"
+            )
 
         # Advanced analysis steps
         self._calculate_cohesion_metrics()
@@ -223,7 +234,7 @@ class CodebaseOptimizer:
         self._generate_metrics()
 
         # Visualize results if matplotlib is available
-        if OPTIONAL_DEPS['matplotlib']:
+        if OPTIONAL_DEPS["matplotlib"]:
             self._generate_visualizations()
         else:
             console.print("[yellow]Skipping visualizations - matplotlib not available")
@@ -271,8 +282,8 @@ class CodebaseOptimizer:
                 source = f.read()
 
             # Use libcst if available, otherwise fallback to ast
-            if OPTIONAL_DEPS['libcst']:
-                cst = OPTIONAL_DEPS['libcst']['libcst']
+            if OPTIONAL_DEPS["libcst"]:
+                cst = OPTIONAL_DEPS["libcst"]["libcst"]
                 module = cst.parse_module(source)
                 visitor = ImportCollectorVisitor()
                 module.visit(visitor)
@@ -281,7 +292,7 @@ class CodebaseOptimizer:
                 tree = ast.parse(source)
                 visitor = ASTImportVisitor()
                 visitor.visit(tree)
-                
+
             console.print(f"[green]Successfully analyzed {file_path}")
 
         except Exception as e:
@@ -289,16 +300,16 @@ class CodebaseOptimizer:
             logging.error(f"File analysis failed for {file_path}", exc_info=e)
 
             # Calculate complexity metrics if radon is available
-            if OPTIONAL_DEPS['radon']:
-                cc_visit = OPTIONAL_DEPS['radon']['radon.complexity'].cc_visit
-                mi_visit = OPTIONAL_DEPS['radon']['radon.metrics'].mi_visit
+            if OPTIONAL_DEPS["radon"]:
+                cc_visit = OPTIONAL_DEPS["radon"]["radon.complexity"].cc_visit
+                mi_visit = OPTIONAL_DEPS["radon"]["radon.metrics"].mi_visit
                 complexity = cc_visit(source)
                 maintainability = mi_visit(source, multi=True)
 
                 # Create module node with complexity metrics
                 module_name = self._get_module_name(file_path)
-                if OPTIONAL_DEPS['numpy']:
-                    np = OPTIONAL_DEPS['numpy']
+                if OPTIONAL_DEPS["numpy"]:
+                    np = OPTIONAL_DEPS["numpy"]
                     node = CodeModule(
                         name=module_name,
                         path=file_path,
@@ -314,8 +325,16 @@ class CodebaseOptimizer:
                         name=module_name,
                         path=file_path,
                         dependencies=visitor.imports,
-                        complexity=sum(complexities) / len(complexities) if complexities else 0.0,
-                        maintainability=sum(maintainability) / len(maintainability) if maintainability else 0.0,
+                        complexity=(
+                            sum(complexities) / len(complexities)
+                            if complexities
+                            else 0.0
+                        ),
+                        maintainability=(
+                            sum(maintainability) / len(maintainability)
+                            if maintainability
+                            else 0.0
+                        ),
                         cyclomatic_complexity=sum(c.complexity for c in complexity),
                     )
             else:
@@ -330,7 +349,7 @@ class CodebaseOptimizer:
             self.modules[module_name] = node
 
             # Type checking if enabled and mypy is available
-            if self.enable_type_checking and OPTIONAL_DEPS['mypy']:
+            if self.enable_type_checking and OPTIONAL_DEPS["mypy"]:
                 self._check_types(file_path, node)
 
         except Exception as e:
@@ -338,7 +357,7 @@ class CodebaseOptimizer:
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using networkx"""
-        if not OPTIONAL_DEPS['networkx'] or not self.dependency_graph:
+        if not OPTIONAL_DEPS["networkx"] or not self.dependency_graph:
             console.print("[yellow]Skipping dependency graph - networkx not available")
             return
 
@@ -354,18 +373,26 @@ class CodebaseOptimizer:
 
         # Create a partition using a community detection algorithm
         try:
-            from networkx.algorithms.community import greedy_modularity_communities, modularity
+            from networkx.algorithms.community import (
+                greedy_modularity_communities,
+                modularity,
+            )
+
             communities = list(greedy_modularity_communities(self.dependency_graph))
-            self.metrics.modularity_score = modularity(self.dependency_graph, communities)
+            self.metrics.modularity_score = modularity(
+                self.dependency_graph, communities
+            )
         except ImportError:
-            console.print("[yellow]Skipping community detection - algorithm not available")
+            console.print(
+                "[yellow]Skipping community detection - algorithm not available"
+            )
 
         # Calculate coupling matrix if numpy is available
-        if OPTIONAL_DEPS['numpy']:
+        if OPTIONAL_DEPS["numpy"]:
             self._calculate_coupling_matrix()
 
     def _calculate_coupling_matrix(self):
-        np = OPTIONAL_DEPS['numpy']['numpy']
+        np = OPTIONAL_DEPS["numpy"]["numpy"]
         n = len(self.modules)
         coupling_matrix = np.zeros((n, n))
         module_indices = {name: i for i, name in enumerate(self.modules)}
@@ -380,16 +407,18 @@ class CodebaseOptimizer:
 
     def _analyze_circular_dependencies(self):
         """Detect and analyze circular dependencies with advanced cycle detection."""
-        with contextlib.suppress(OPTIONAL_DEPS['networkx'].NetworkXNoCycle):
-            if cycles := list(OPTIONAL_DEPS['networkx'].simple_cycles(self.dependency_graph)):
+        with contextlib.suppress(OPTIONAL_DEPS["networkx"].NetworkXNoCycle):
+            if cycles := list(
+                OPTIONAL_DEPS["networkx"].simple_cycles(self.dependency_graph)
+            ):
                 self.metrics.circular_deps = [
                     cycle for cycle in cycles if len(cycle) > 1
                 ]
 
             # Calculate cycle metrics
             if cycle_lengths := [len(cycle) for cycle in self.metrics.circular_deps]:
-                if OPTIONAL_DEPS['numpy']:
-                    np = OPTIONAL_DEPS['numpy']
+                if OPTIONAL_DEPS["numpy"]:
+                    np = OPTIONAL_DEPS["numpy"]
                     self.metrics.complexity_distribution["cycle_length_avg"] = np.mean(
                         cycle_lengths
                     )
@@ -398,17 +427,27 @@ class CodebaseOptimizer:
                     )
                 else:
                     # Fallback without numpy
-                    self.metrics.complexity_distribution["cycle_length_avg"] = sum(cycle_lengths) / len(cycle_lengths) if cycle_lengths else 0.0
-                    self.metrics.complexity_distribution["cycle_length_max"] = max(cycle_lengths, default=0.0)
+                    self.metrics.complexity_distribution["cycle_length_avg"] = (
+                        sum(cycle_lengths) / len(cycle_lengths)
+                        if cycle_lengths
+                        else 0.0
+                    )
+                    self.metrics.complexity_distribution["cycle_length_max"] = max(
+                        cycle_lengths, default=0.0
+                    )
 
             # Find strongly connected components (groups of mutually dependent modules)
-            if sccs := list(OPTIONAL_DEPS['networkx'].strongly_connected_components(self.dependency_graph)):
+            if sccs := list(
+                OPTIONAL_DEPS["networkx"].strongly_connected_components(
+                    self.dependency_graph
+                )
+            ):
                 large_sccs = [scc for scc in sccs if len(scc) > 1]
 
             # Calculate component coupling scores
             for scc in large_sccs:
                 subgraph = self.dependency_graph.subgraph(scc)
-                coupling_score = OPTIONAL_DEPS['networkx'].density(subgraph)
+                coupling_score = OPTIONAL_DEPS["networkx"].density(subgraph)
                 for module_name in scc:
                     if module_name in self.modules:
                         self.modules[module_name].cohesion_score = coupling_score
@@ -608,7 +647,9 @@ class CodebaseOptimizer:
                     # Calculate Laplacian matrix and eigenvalues
                     if (
                         eigenvals := sympy.Matrix(
-                            OPTIONAL_DEPS['networkx'].laplacian_matrix(subgraph).todense()
+                            OPTIONAL_DEPS["networkx"]
+                            .laplacian_matrix(subgraph)
+                            .todense()
                         ).eigenvals()
                     ) and (
                         sorted_eigenvals := sorted(
@@ -621,22 +662,24 @@ class CodebaseOptimizer:
 
     def _check_types(self, file_path: Path, node: CodeModule):
         """Perform type checking and validation"""
-        if OPTIONAL_DEPS['mypy']:
-            results = OPTIONAL_DEPS['mypy'].run([str(file_path)])
+        if OPTIONAL_DEPS["mypy"]:
+            results = OPTIONAL_DEPS["mypy"].run([str(file_path)])
             if results[0]:  # mypy output
                 if errors := results[0].split("\n"):
                     node.type_errors = [
-                        error for error in errors if error and not error.startswith("Found")
+                        error
+                        for error in errors
+                        if error and not error.startswith("Found")
                     ]
         else:
             console.print("[yellow]Skipping type checking - mypy not available")
 
     def _calculate_complexity_metrics(self):
         """Calculate advanced complexity and maintainability metrics"""
-        if not OPTIONAL_DEPS['radon']:
+        if not OPTIONAL_DEPS["radon"]:
             console.print("[yellow]Skipping complexity metrics - radon not available")
             return
-            
+
         complexities = []
         for node in self.modules.values():
             # Calculate weighted complexity based on multiple factors
@@ -648,19 +691,23 @@ class CodebaseOptimizer:
             complexities.append(weighted_complexity)
             node.complexity = weighted_complexity
 
-        if OPTIONAL_DEPS['numpy']:
-            self.metrics.avg_complexity = OPTIONAL_DEPS['numpy'].mean(complexities) if complexities else 0.0
+        if OPTIONAL_DEPS["numpy"]:
+            self.metrics.avg_complexity = (
+                OPTIONAL_DEPS["numpy"].mean(complexities) if complexities else 0.0
+            )
         else:
             # Fallback without numpy
-            self.metrics.avg_complexity = sum(complexities) / len(complexities) if complexities else 0.0
+            self.metrics.avg_complexity = (
+                sum(complexities) / len(complexities) if complexities else 0.0
+            )
         # Calculate import depth using longest paths
         for module_name in self.modules:
             try:
-                paths = OPTIONAL_DEPS['networkx'].single_source_shortest_path_length(
+                paths = OPTIONAL_DEPS["networkx"].single_source_shortest_path_length(
                     self.dependency_graph, module_name
                 )
                 self.metrics.import_depth[module_name] = max(paths.values())
-            except OPTIONAL_DEPS['networkx'].NetworkXError:
+            except OPTIONAL_DEPS["networkx"].NetworkXError:
                 self.metrics.import_depth[module_name] = 0
 
     def _generate_metrics(self):
@@ -669,9 +716,11 @@ class CodebaseOptimizer:
         self.metrics.total_imports = self.dependency_graph.number_of_edges()
 
         # Calculate additional graph metrics
-        with contextlib.suppress(OPTIONAL_DEPS['networkx'].NetworkXError):
+        with contextlib.suppress(OPTIONAL_DEPS["networkx"].NetworkXError):
             # Eigenvector centrality for module importance
-            centrality = OPTIONAL_DEPS['networkx'].eigenvector_centrality_numpy(self.dependency_graph)
+            centrality = OPTIONAL_DEPS["networkx"].eigenvector_centrality_numpy(
+                self.dependency_graph
+            )
 
             # Update module scores with centrality
             for module_name, score in centrality.items():
@@ -680,15 +729,17 @@ class CodebaseOptimizer:
 
     def _generate_visualizations(self):
         """Generate advanced visualizations of the dependency graph"""
-        if not (OPTIONAL_DEPS['matplotlib'] and OPTIONAL_DEPS['networkx']):
-            console.print("[yellow]Skipping visualization - matplotlib or networkx not available")
+        if not (OPTIONAL_DEPS["matplotlib"] and OPTIONAL_DEPS["networkx"]):
+            console.print(
+                "[yellow]Skipping visualization - matplotlib or networkx not available"
+            )
             return
 
-        plt = OPTIONAL_DEPS['matplotlib'].pyplot
+        plt = OPTIONAL_DEPS["matplotlib"].pyplot
         plt.figure(figsize=(15, 10))
 
         # Use force-directed layout for better visualization
-        pos = OPTIONAL_DEPS['networkx'].kamada_kawai_layout(self.dependency_graph)
+        pos = OPTIONAL_DEPS["networkx"].kamada_kawai_layout(self.dependency_graph)
 
         # Node sizes based on complexity
         node_sizes = [
@@ -707,7 +758,7 @@ class CodebaseOptimizer:
         ]
 
         # Draw the graph
-        OPTIONAL_DEPS['networkx'].draw(
+        OPTIONAL_DEPS["networkx"].draw(
             self.dependency_graph,
             pos,
             node_color=node_colors,
