@@ -35,15 +35,15 @@ from typing import Dict, List, Optional
 
 # Implementation map for tracking module enhancements
 IMPLEMENTATION_MAP = {
-    'project_map_parser': {
-        'path': 'src/analysis/parsers/project_map_parser.py',
-        'enhancements': [
-            'parse_map',
-            'parse_structure',
-            'parse_enhancements',
-            'parse_dependencies'
+    "project_map_parser": {
+        "path": "src/analysis/parsers/project_map_parser.py",
+        "enhancements": [
+            "parse_map",
+            "parse_structure",
+            "parse_enhancements",
+            "parse_dependencies",
         ],
-        'new_dependencies': ['re', 'pathlib', 'typing', 'logging']
+        "new_dependencies": ["re", "pathlib", "typing", "logging"],
     }
 }
 
@@ -81,7 +81,7 @@ class ProjectMapParser:
 
     def _parse_map(self) -> None:
         """Parse the different sections of the map.
-        
+
         Enhancement ID: MAP_PARSER_001
         Original Method: None (new)
         Changes:
@@ -103,15 +103,18 @@ class ProjectMapParser:
 
             for section, pattern in sections.items():
                 try:
-                    if (match := re.search(pattern, self.raw_content, re.DOTALL)) and \
-                       (parser := {
-                           "structure": self._parse_structure,
-                           "enhancements": self._parse_enhancements,
-                           "dependencies": self._parse_dependencies,
-                       }.get(section)):
+                    if (match := re.search(pattern, self.raw_content, re.DOTALL)) and (
+                        parser := {
+                            "structure": self._parse_structure,
+                            "enhancements": self._parse_enhancements,
+                            "dependencies": self._parse_dependencies,
+                        }.get(section)
+                    ):
                         parser(match.group(1).strip())
                     else:
-                        self.logger.warning(f"Section '{section}' not found or invalid in map content")
+                        self.logger.warning(
+                            f"Section '{section}' not found or invalid in map content"
+                        )
                 except Exception as e:
                     self.logger.error(f"Error parsing section '{section}': {str(e)}")
                     raise ValueError(f"Failed to parse section '{section}': {str(e)}")
@@ -194,7 +197,7 @@ class ProjectMapParser:
 
         pattern = re.compile(r"(?:[\d.]+\s+)?([^:]+):\s*(.+)")
         for line in enhancements_text.strip().split("\n"):
-            if (match := pattern.match(line.strip())):
+            if match := pattern.match(line.strip()):
                 module, enhancement = match.groups()
                 self.enhancements.append(
                     {"module": module.strip(), "enhancement": enhancement.strip()}
@@ -256,7 +259,9 @@ class ProjectMapParser:
         Raises:
             ValueError: If path_parts is invalid or contains invalid components
         """
-        if not isinstance(path_parts, list) or not all(isinstance(p, str) for p in path_parts):
+        if not isinstance(path_parts, list) or not all(
+            isinstance(p, str) for p in path_parts
+        ):
             raise ValueError("Path parts must be a list of strings")
 
         current: Dict = self.structure
@@ -395,7 +400,10 @@ class ProjectMapParser:
 
                 items = sorted(
                     structure.items(),
-                    key=lambda x: (not bool(x[1]), x[0]),  # Directories first, then files
+                    key=lambda x: (
+                        not bool(x[1]),
+                        x[0],
+                    ),  # Directories first, then files
                 )
 
                 for i, (name, substructure) in enumerate(items):
@@ -425,18 +433,23 @@ class ProjectMapParser:
 
             sections.append("\nEnhancement Targets:")
             for i, enhancement in enumerate(self.enhancements, 1):
-                if not isinstance(enhancement, dict) or \
-                   any(k not in enhancement or not isinstance(enhancement[k], str)
-                       for k in ["module", "enhancement"]):
+                if not isinstance(enhancement, dict) or any(
+                    k not in enhancement or not isinstance(enhancement[k], str)
+                    for k in ["module", "enhancement"]
+                ):
                     raise ValueError("Invalid enhancement format")
                 sections.append(
                     f"{i}. {enhancement['module']}: {enhancement['enhancement']}"
                 )
 
             # Dependencies
-            if not isinstance(self.dependencies, dict) or \
-               any(k not in self.dependencies for k in ["primary", "secondary"]) or \
-               any(not isinstance(deps, list) for deps in self.dependencies.values()):
+            if (
+                not isinstance(self.dependencies, dict)
+                or any(k not in self.dependencies for k in ["primary", "secondary"])
+                or any(
+                    not isinstance(deps, list) for deps in self.dependencies.values()
+                )
+            ):
                 raise ValueError("Invalid dependencies structure")
 
             sections.append("\nDependencies Found:")

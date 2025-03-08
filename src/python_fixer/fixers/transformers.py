@@ -85,7 +85,9 @@ class CircularDependencyTransformer(BaseTransformer):
             if success := self._resolve_cycle(analyzer, cycle):
                 variant_loggers.info(f"Resolved cycle: {' -> '.join(cycle)}")
             else:
-                variant_loggers.warning(f"Could not resolve cycle: {' -> '.join(cycle)}")
+                variant_loggers.warning(
+                    f"Could not resolve cycle: {' -> '.join(cycle)}"
+                )
 
     def _find_cycles(self, graph: Dict[str, List[str]]) -> List[List[str]]:
         """

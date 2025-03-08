@@ -16,12 +16,12 @@ class Correlator:
         """Find correlations with recent entries"""
         correlations = [
             recent
-            for recent in self.recent_entries[-self.max_distance:]
+            for recent in self.recent_entries[-self.max_distance :]
             if self._are_related(record, recent)
         ]
         self.recent_entries.append(record)
         if len(self.recent_entries) > self.max_distance * 2:
-            self.recent_entries = self.recent_entries[-self.max_distance:]
+            self.recent_entries = self.recent_entries[-self.max_distance :]
         return correlations
 
     def _are_related(self, record1: LogRecord, record2: LogRecord) -> bool:
@@ -99,5 +99,3 @@ class LogCorrelator:
         p1 = record1.extra.get("patterns", {}).get("pattern_id")
         p2 = record2.extra.get("patterns", {}).get("pattern_id")
         return p1 is not None and p2 is not None and p1 == p2
-
-

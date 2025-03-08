@@ -28,74 +28,73 @@ class ProjectAnalyzer:
         modules: Dictionary of analyzed module information
     """
 
-    def __init__(self, project_path: str, config_path: Path = None, backup: bool = True):
+    def __init__(
+        self, project_path: str, config_path: Path = None, backup: bool = True
+    ):
         self.project_path = Path(project_path)
         self.config_path = config_path
         self.backup = backup
         self.dependency_graph = nx.DiGraph()
         self.modules: Dict[str, Dict] = {}
         self.logger = logging.getLogger(__name__)
-        
+
         # Load configuration
         self.config = self._load_config() if config_path else self._default_config()
-        
+
     def _default_config(self) -> Dict:
         """Default configuration settings."""
         return {
-            'max_workers': 4,
-            'backup': True,
-            'fix_mode': 'interactive',
-            'git_integration': True,
-            'exclude_patterns': ['venv', '*.pyc', '__pycache__']
+            "max_workers": 4,
+            "backup": True,
+            "fix_mode": "interactive",
+            "git_integration": True,
+            "exclude_patterns": ["venv", "*.pyc", "__pycache__"],
         }
-        
+
     def _load_config(self) -> Dict:
         """Load configuration from file."""
         import toml
+
         try:
             return toml.load(self.config_path)
         except Exception as e:
             self.logger.warning(f"Error loading config: {e}. Using defaults.")
             return self._default_config()
-            
+
     def initialize_project(self) -> None:
         """Initialize project with default configuration."""
         if not self.project_path.exists():
             self.project_path.mkdir(parents=True)
-            
-        config_path = self.project_path / 'python_fixer.toml'
+
+        config_path = self.project_path / "python_fixer.toml"
         if not config_path.exists():
             config_path.write_text(toml.dumps(self._default_config()))
             self.logger.info(f"Created default config at {config_path}")
-            
-    def fix_project(self, mode: str = 'interactive') -> Dict:
+
+    def fix_project(self, mode: str = "interactive") -> Dict:
         """Fix import issues in the project.
-        
+
         Args:
             mode: Fix mode ('interactive' or 'automatic')
-            
+
         Returns:
             Dict containing fix metrics
         """
         analysis = self.analyze_project()
-        fixes = {
-            'imports_fixed': 0,
-            'files_modified': set(),
-            'backup_created': False
-        }
-        
+        fixes = {"imports_fixed": 0, "files_modified": set(), "backup_created": False}
+
         if self.backup:
             # TODO: Implement backup functionality
-            fixes['backup_created'] = True
-            
+            fixes["backup_created"] = True
+
         # Apply fixes based on analysis
-        for module_path, info in analysis['dependencies'].items():
-            if info.get('cycles') or info.get('unused_imports'):
+        for module_path, info in analysis["dependencies"].items():
+            if info.get("cycles") or info.get("unused_imports"):
                 self.logger.info(f"Found issues in {module_path}")
                 # TODO: Implement fix application
-                fixes['imports_fixed'] += 1
-                fixes['files_modified'].add(module_path)
-                    
+                fixes["imports_fixed"] += 1
+                fixes["files_modified"].add(module_path)
+
         return fixes
 
     def analyze_project(self) -> Dict:

@@ -4,10 +4,71 @@ Combat system module: Handles combat encounters between the player and enemy shi
 
 import logging
 import random
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 
 from entities.player import Player
 from entities.enemy_ship import EnemyShip
+
+
+def print_combat_header() -> None:
+    print("""
+┌─────────────────── [ SPACE COMBAT SYSTEM ] ────────────────────┐
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
+│  │ ATK │ │ DEF │ │ REP │ │ SCN │ │ TAR │ │ ESC │ │ HLP │     │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
+│                                                              │""")
+
+def print_combat_error(error_msg: str, details: List[str] = None) -> None:
+    print("""
+│  ┏━━━━━━━━━━━━━━━━━━ COMBAT ERROR ━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │
+│  ┃  ⚠ {:<52} ┃   │""".format(error_msg))
+    
+    if details:
+        for detail in details:
+            print("│  ┃  ✗ {:<52} ┃   │".format(detail))
+    
+    print("""
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │""")
+
+def print_combat_success(message: str, details: List[str] = None) -> None:
+    print("""
+│  ┏━━━━━━━━━━━━━━━━━━ COMBAT ACTION ━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │
+│  ┃  ✔ {:<52} ┃   │""".format(message))
+    
+    if details:
+        for detail in details:
+            print("│  ┃  ▶ {:<52} ┃   │".format(detail))
+    
+    print("""
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │""")
+
+def print_combat_suggestions(suggestions: List[str], ship_stats: Dict[str, Any] = None) -> None:
+    print("""
+│  ┏━━━━━━━━━━━━━━━━━━ SUGGESTIONS ━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │""")
+    
+    for suggestion in suggestions:
+        print("│  ┃  ▶ {:<52} ┃   │".format(suggestion))
+    
+    print("""
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │""")
+    
+    if ship_stats:
+        print("│  Ship: {:<10} | Hull: {:<3} | Shields: {:<3} | Power: {:<3}  │".format(
+            ship_stats.get('name', 'Unknown'),
+            f"{ship_stats.get('hull', 0)}%",
+            f"{ship_stats.get('shields', 0)}%",
+            f"{ship_stats.get('power', 0)}%"
+        ))
+    print("└──────────────────────────────────────────────────────────────┘")
 
 
 class CombatSystem:
@@ -114,6 +175,15 @@ class CombatSystem:
         """
         # Check if player is already in combat
         if self.combat_active:
+            print_combat_header()
+            print_combat_error("Already in combat", [
+                "Cannot start new combat while in active combat",
+                f"Current enemy: {self.current_enemy.ship_type} (Level {self.current_enemy.level})"
+            ])
+            print_combat_suggestions([
+                "Use 'end_combat' to end current combat",
+                "Use 'status' to check current combat status"
+            ])
             return {
                 "success": False,
                 "reason": "Already in combat",
@@ -138,6 +208,30 @@ class CombatSystem:
         enemy.in_combat = True
         enemy.target = self.player
 
+        # Show combat start interface
+        print_combat_header()
+        print_combat_success("COMBAT INITIATED", [
+            f"Engaging {enemy.ship_type} ship",
+            f"Enemy Level: {enemy.level} ({enemy.difficulty.upper()})",
+            f"Faction: {enemy.faction or 'Unknown'}"
+        ])
+
+        # Show initial stats
+        player_stats = self.player.get_combat_stats()
+        enemy_stats = enemy.get_stats()
+        
+        print_combat_success("COMBAT STATUS", [
+            f"Your Hull: {player_stats['hull_integrity']}% | Enemy Hull: {enemy_stats['hull_integrity']}%",
+            f"Your Shields: {player_stats['shield_strength']}% | Enemy Shields: {enemy_stats['shield_strength']}%",
+            f"Your Power: {player_stats['power_level']}% | Enemy Power: {enemy_stats['power_level']}%"
+        ])
+
+        print_combat_suggestions([
+            "Use 'attack' to engage the enemy",
+            "Use 'flee' to attempt escape",
+            "Use 'status' for detailed combat info"
+        ], player_stats)
+
         # Log the start of combat
         combat_start_log = f"Combat started with {enemy.ship_type} ship (Level {enemy.level}, {enemy.difficulty})"
         self.combat_log.append(combat_start_log)
@@ -145,8 +239,8 @@ class CombatSystem:
 
         return {
             "success": True,
-            "enemy": enemy.get_stats(),
-            "player": self.player.get_combat_stats(),
+            "enemy": enemy_stats,
+            "player": player_stats,
             "message": combat_start_log,
         }
 
@@ -161,6 +255,15 @@ class CombatSystem:
             Dict with combat end results
         """
         if not self.combat_active or not self.current_enemy:
+            print_combat_header()
+            print_combat_error("No active combat to end", [
+                "Cannot end combat when not in combat",
+                "No enemy ship detected"
+            ])
+            print_combat_suggestions([
+                "Use 'status' to check current combat status",
+                "Use 'scan' to search for enemy ships"
+            ])
             return {"success": False, "reason": "No active combat to end"}
 
         # Log the end of combat
@@ -195,6 +298,15 @@ class CombatSystem:
             Dict with attack results
         """
         if not self.combat_active or not self.current_enemy:
+            print_combat_header()
+            print_combat_error("No Active Combat Session", [
+                "Cannot execute attack without an active combat",
+                "No enemy ship detected in range"
+            ])
+            print_combat_suggestions([
+                "Use 'scan' to locate enemy ships",
+                "Use 'start_combat' to initiate combat"
+            ], self.player.get_combat_stats())
             return {"success": False, "reason": "No active combat"}
 
         # Player attacks enemy
@@ -205,10 +317,23 @@ class CombatSystem:
             log_message = (
                 f"Player attack missed! {self.current_enemy.ship_type} ship evaded."
             )
+            print_combat_success("Attack Evaded!", [
+                f"{self.current_enemy.ship_type} ship successfully dodged your attack",
+                "Enemy ship's evasion systems are active"
+            ])
         elif attack_result.get("critical_hit", False):
             log_message = f"Player scored a CRITICAL HIT! Dealt {attack_result.get('damage_dealt', 0)} damage to {self.current_enemy.ship_type} ship."
+            print_combat_success("CRITICAL HIT!", [
+                f"Dealt {attack_result.get('damage_dealt', 0)} damage to {self.current_enemy.ship_type}",
+                "Direct hit on enemy's weak point!",
+                f"Enemy hull integrity at {self.current_enemy.hull_integrity}%"
+            ])
         else:
             log_message = f"Player attacked for {attack_result.get('damage_dealt', 0)} damage to {self.current_enemy.ship_type} ship."
+            print_combat_success("Attack Successful", [
+                f"Dealt {attack_result.get('damage_dealt', 0)} damage to {self.current_enemy.ship_type}",
+                f"Enemy hull integrity at {self.current_enemy.hull_integrity}%"
+            ])
 
         self.combat_log.append(log_message)
 
@@ -234,6 +359,15 @@ class CombatSystem:
             Dict with attack results
         """
         if not self.combat_active or not self.current_enemy:
+            print_combat_header()
+            print_combat_error("No Active Combat Session", [
+                "Cannot execute attack without an active combat",
+                "No enemy ship detected in range"
+            ])
+            print_combat_suggestions([
+                "Use 'scan' to locate enemy ships",
+                "Use 'start_combat' to initiate combat"
+            ], self.player.get_combat_stats())
             return {"success": False, "reason": "No active combat"}
 
         # Enemy attacks player
@@ -242,10 +376,23 @@ class CombatSystem:
         # Log the attack
         if attack_result.get("evaded", False):
             log_message = "Enemy attack missed! Player evaded."
+            print_combat_success("Attack Evaded!", [
+                "Your ship's evasion systems worked perfectly",
+                f"Dodged attack from {self.current_enemy.ship_type} ship"
+            ])
         elif attack_result.get("critical_hit", False):
             log_message = f"Enemy scored a CRITICAL HIT! Dealt {attack_result.get('damage_dealt', 0)} damage to player."
+            print_combat_success("CRITICAL HIT TAKEN!", [
+                f"Took {attack_result.get('damage_dealt', 0)} damage from {self.current_enemy.ship_type}",
+                "WARNING: Hull breach detected!",
+                f"Ship hull integrity at {self.player.hull_integrity}%"
+            ])
         else:
             log_message = f"Enemy attacked for {attack_result.get('damage_dealt', 0)} damage to player."
+            print_combat_success("Enemy Attack Hit", [
+                f"Took {attack_result.get('damage_dealt', 0)} damage from {self.current_enemy.ship_type}",
+                f"Ship hull integrity at {self.player.hull_integrity}%"
+            ])
 
         self.combat_log.append(log_message)
 
@@ -270,45 +417,97 @@ class CombatSystem:
             Dict with turn results
         """
         if not self.combat_active or not self.current_enemy:
+            print_combat_header()
+            print_combat_error("No Active Combat Session", [
+                "Cannot execute attack without an active combat",
+                "No enemy ship detected in range"
+            ])
+            print_combat_suggestions([
+                "Use 'scan' to locate enemy ships",
+                "Use 'start_combat' to initiate combat"
+            ], self.player.get_combat_stats())
             return {"success": False, "reason": "No active combat"}
 
         self.turn_count += 1
-        turn_log = f"--- Turn {self.turn_count} ---"
-        self.combat_log.append(turn_log)
+        print_combat_header()
+        print_combat_success(f"COMBAT TURN {self.turn_count}", [
+            "Shields recharging...",
+            "Weapon systems online",
+            "Combat systems ready"
+        ])
 
         # Recharge shields at the start of the turn
         player_recharge = self.player.recharge_shield()
         enemy_recharge = self.current_enemy.recharge_shield()
 
+        turn_log = f"--- Turn {self.turn_count} ---"
+        self.combat_log.append(turn_log)
+
         if player_recharge > 0:
             self.combat_log.append(
                 f"Player shields recharged by {player_recharge} points."
             )
+            print_combat_success("Shields Recharged", [
+                f"Your shields recharged by {player_recharge} points",
+                f"Current shield strength: {self.player.shield_strength}%"
+            ])
+
         if enemy_recharge > 0:
             self.combat_log.append(
                 f"Enemy shields recharged by {enemy_recharge} points."
             )
+            print_combat_success("Enemy Shields Active", [
+                f"Enemy shields recharged by {enemy_recharge} points",
+                f"Enemy shield strength: {self.current_enemy.shield_strength}%"
+            ])
 
         # Determine initiative (who attacks first) based on attack speed
         player_goes_first = self.player.attack_speed >= self.current_enemy.attack_speed
+
+        # Show initiative determination
+        if player_goes_first:
+            print_combat_success("INITIATIVE GAINED", [
+                "Your ship's superior speed gives you the advantage",
+                "You will attack first",
+                f"Your speed: {self.player.attack_speed} vs Enemy: {self.current_enemy.attack_speed}"
+            ])
+        else:
+            print_combat_success("ENEMY HAS INITIATIVE", [
+                f"Enemy {self.current_enemy.ship_type} ship moves first",
+                "Prepare for incoming attack",
+                f"Enemy speed: {self.current_enemy.attack_speed} vs Yours: {self.player.attack_speed}"
+            ])
 
         # Execute attacks in order of initiative
         first_attack = None
         second_attack = None
 
         if player_goes_first:
+            print_combat_success("YOUR TURN", ["Executing attack sequence..."])
             first_attack = self.player_attack()
             # Only do enemy attack if they weren't destroyed
             if not first_attack.get("combat_ended", False):
+                print_combat_success("ENEMY TURN", ["Enemy preparing counter-attack..."])
                 second_attack = self.enemy_attack()
         else:
+            print_combat_success("ENEMY TURN", ["Enemy initiating attack sequence..."])
             first_attack = self.enemy_attack()
             # Only do player attack if they weren't defeated
             if not first_attack.get("combat_ended", False):
+                print_combat_success("YOUR TURN", ["Counter-attack opportunity..."])
                 second_attack = self.player_attack()
 
         # Check for combat timeout
         if self.turn_count >= self.max_turns:
+            print_combat_error("COMBAT TIMEOUT", [
+                "Maximum combat duration reached",
+                "Both ships disengaging",
+                "Combat ending in stalemate"
+            ])
+            print_combat_suggestions([
+                "Consider upgrading weapons for faster combat",
+                "Tactical retreat may be advisable"
+            ], self.player.get_combat_stats())
             return self.end_combat("Combat timeout - maximum turns reached")
 
         # Compile results
@@ -335,6 +534,15 @@ class CombatSystem:
             Dict with flee results
         """
         if not self.combat_active or not self.current_enemy:
+            print_combat_header()
+            print_combat_error("No Active Combat Session", [
+                "Cannot execute attack without an active combat",
+                "No enemy ship detected in range"
+            ])
+            print_combat_suggestions([
+                "Use 'scan' to locate enemy ships",
+                "Use 'start_combat' to initiate combat"
+            ], self.player.get_combat_stats())
             return {"success": False, "reason": "No active combat"}
 
         # Store current enemy reference to avoid it becoming None during the method execution
@@ -366,6 +574,12 @@ class CombatSystem:
         # Successful flee
         log_message = "Player successfully fled from combat!"
         self.combat_log.append(log_message)
+
+        print_combat_success("ESCAPE SUCCESSFUL!", [
+            f"Successfully fled from {enemy.ship_type} ship",
+            "Emergency warp drive engaged",
+            "Entering safe space..."
+        ])
 
         reputation_change = (
             self.player.change_reputation("galactic_navy", -2)
@@ -407,6 +621,12 @@ class CombatSystem:
         if loot["items"]:
             items_str = ", ".join([f"{item['name']}" for item in loot["items"]])
             log_message += f" Found items: {items_str}."
+
+        print_combat_success("ENEMY DESTROYED!", [
+            f"Enemy {self.current_enemy.ship_type} ship eliminated",
+            f"Gained {loot['credits']} credits and {loot['xp']} XP",
+            f"Found items: {items_str if loot['items'] else 'None'}"
+        ])
 
         self.combat_log.append(log_message)
 
@@ -488,6 +708,16 @@ class CombatSystem:
         # Log the defeat
         log_message = f"Player ship critically damaged! Lost {credit_loss} credits."
         self.combat_log.append(log_message)
+
+        print_combat_error("SHIP CRITICALLY DAMAGED", [
+            f"Hull integrity compromised - lost {credit_loss} credits",
+            "Emergency systems activated",
+            f"Current credits: {self.player.credits}"
+        ])
+        print_combat_suggestions([
+            "Return to nearest station for repairs",
+            "Avoid combat until fully repaired"
+        ], self.player.get_combat_stats())
 
         # Update reputation if enemy had faction alignment
         reputation_change = None
