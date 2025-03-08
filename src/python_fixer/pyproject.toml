@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python_fixer"
+version = "0.1.0"
+description = "Fix Python import and class structure issues in your project"
+authors = [
+    {name = "Codeium"}
+]
+requires-python = ">=3.7"
+dependencies = [
+    "pydantic",
+    "networkx",
+    "numpy",
+    "rich",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "hypothesis>=6.0.0",
+]
+
+[tool.setuptools]
+packages = ["python_fixer"]
+package-dir = {"" = ".."}
+namespace-packages = ["python_fixer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+
+[tool.setuptools.package-data]
+python_fixer = ["py.typed"]
