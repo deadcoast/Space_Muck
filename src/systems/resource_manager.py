@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum, auto
 
+
 # Resource Types and Categories
 class ResourceType(Enum):
     ENERGY = auto()
@@ -17,12 +18,14 @@ class ResourceType(Enum):
     FLUID = auto()
     DATA = auto()
 
+
 # Resource States
 class ResourceState(Enum):
     STABLE = auto()
     DEPLETING = auto()
     GROWING = auto()
     CRITICAL = auto()
+
 
 # Resource Flow Patterns
 FLOW_PATTERNS = {
@@ -35,14 +38,16 @@ FLOW_PATTERNS = {
 # Resource Thresholds
 RESOURCE_THRESHOLDS = {
     "critical_low": 0.1,  # 10% of capacity
-    "low": 0.25,         # 25% of capacity
-    "optimal": 0.75,     # 75% of capacity
-    "high": 0.9,         # 90% of capacity
+    "low": 0.25,  # 25% of capacity
+    "optimal": 0.75,  # 75% of capacity
+    "high": 0.9,  # 90% of capacity
 }
+
 
 @dataclass
 class ResourceFlow:
     """Represents a resource flow between source and destination."""
+
     source_id: str
     dest_id: str
     resource_type: ResourceType
@@ -50,35 +55,38 @@ class ResourceFlow:
     priority: int = 1
     active: bool = True
 
+
 class ResourceManager:
     """
     Central manager for handling all resource-related operations.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the resource manager."""
         # Resource tracking
         self.resources: Dict[str, Dict[ResourceType, float]] = {}
         self.capacities: Dict[str, Dict[ResourceType, float]] = {}
         self.states: Dict[str, Dict[ResourceType, ResourceState]] = {}
-        
+
         # Flow management
         self.flows: List[ResourceFlow] = []
-        self.flow_history: Dict[str, List[Tuple[float, float]]] = {}  # (timestamp, amount)
-        
+        self.flow_history: Dict[str, List[Tuple[float, float]]] = (
+            {}
+        )  # (timestamp, amount)
+
         # System state
         self.active = True
         self.paused = False
         self.update_interval = 1.0  # seconds
         self.last_update = 0.0
-        
+
         logging.info("ResourceManager initialized")
 
     def register_resource_node(
         self,
         node_id: str,
         resource_types: Dict[ResourceType, float],
-        capacities: Optional[Dict[ResourceType, float]] = None
+        capacities: Optional[Dict[ResourceType, float]] = None,
     ) -> bool:
         """
         Register a new resource node in the system.
@@ -99,9 +107,7 @@ class ResourceManager:
         self.capacities[node_id] = capacities or {
             rtype: amount * 2 for rtype, amount in resource_types.items()
         }
-        self.states[node_id] = {
-            rtype: ResourceState.STABLE for rtype in resource_types
-        }
+        self.states[node_id] = {rtype: ResourceState.STABLE for rtype in resource_types}
 
         logging.info(f"Registered resource node {node_id}")
         return True
@@ -127,7 +133,8 @@ class ResourceManager:
 
         # Remove associated flows
         self.flows = [
-            flow for flow in self.flows
+            flow
+            for flow in self.flows
             if flow.source_id != node_id and flow.dest_id != node_id
         ]
 
@@ -140,7 +147,7 @@ class ResourceManager:
         dest_id: str,
         resource_type: ResourceType,
         rate: float,
-        priority: int = 1
+        priority: int = 1,
     ) -> bool:
         """
         Add a new resource flow between nodes.
@@ -162,20 +169,19 @@ class ResourceManager:
 
         # Check resource type availability
         if resource_type not in self.resources[source_id]:
-            logging.error(f"Resource type {resource_type} not available at source {source_id}")
+            logging.error(
+                f"Resource type {resource_type} not available at source {source_id}"
+            )
             return False
 
         flow = ResourceFlow(source_id, dest_id, resource_type, rate, priority)
         self.flows.append(flow)
-        
+
         logging.info(f"Added resource flow: {source_id} -> {dest_id} ({resource_type})")
         return True
 
     def remove_resource_flow(
-        self,
-        source_id: str,
-        dest_id: str,
-        resource_type: ResourceType
+        self, source_id: str, dest_id: str, resource_type: ResourceType
     ) -> bool:
         """
         Remove a resource flow.
@@ -189,9 +195,11 @@ class ResourceManager:
             bool: True if flow removed successfully
         """
         for flow in self.flows:
-            if (flow.source_id == source_id and 
-                flow.dest_id == dest_id and 
-                flow.resource_type == resource_type):
+            if (
+                flow.source_id == source_id
+                and flow.dest_id == dest_id
+                and flow.resource_type == resource_type
+            ):
                 self.flows.remove(flow)
                 logging.info(f"Removed resource flow: {source_id} -> {dest_id}")
                 return True
@@ -227,7 +235,7 @@ class ResourceManager:
             available = source.get(flow.resource_type, 0)
             capacity = self.capacities[flow.dest_id].get(flow.resource_type, 0)
             current = dest.get(flow.resource_type, 0)
-            
+
             # Adjust transfer based on constraints
             transfer = min(transfer, available)
             transfer = min(transfer, capacity - current)
@@ -262,9 +270,7 @@ class ResourceManager:
         self.last_update = 0
 
     def get_resource_amount(
-        self,
-        node_id: str,
-        resource_type: ResourceType
+        self, node_id: str, resource_type: ResourceType
     ) -> Optional[float]:
         """
         Get the current amount of a resource at a node.
@@ -279,9 +285,7 @@ class ResourceManager:
         return self.resources.get(node_id, {}).get(resource_type)
 
     def get_resource_state(
-        self,
-        node_id: str,
-        resource_type: ResourceType
+        self, node_id: str, resource_type: ResourceType
     ) -> Optional[ResourceState]:
         """
         Get the current state of a resource at a node.

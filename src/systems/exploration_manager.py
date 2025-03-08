@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 import random
 
+
 # Exploration States
 class ExplorationState(Enum):
     UNEXPLORED = auto()
@@ -18,6 +19,7 @@ class ExplorationState(Enum):
     EXPLORED = auto()
     DEPLETED = auto()
     DANGEROUS = auto()
+
 
 # Region Types
 class RegionType(Enum):
@@ -27,6 +29,7 @@ class RegionType(Enum):
     SETTLEMENT = auto()
     HAZARD = auto()
 
+
 # Discovery Categories
 class DiscoveryType(Enum):
     RESOURCE = auto()
@@ -34,6 +37,7 @@ class DiscoveryType(Enum):
     ARTIFACT = auto()
     STRUCTURE = auto()
     PHENOMENON = auto()
+
 
 # Exploration Patterns
 EXPLORATION_PATTERNS = {
@@ -43,9 +47,11 @@ EXPLORATION_PATTERNS = {
     "random": "Random exploration pattern",
 }
 
+
 @dataclass
 class Region:
     """Represents an explorable region in space."""
+
     region_id: str
     position: Tuple[int, int]
     size: float
@@ -60,9 +66,11 @@ class Region:
         self.resources = self.resources or {}
         self.discoveries = self.discoveries or []
 
+
 @dataclass
 class ExplorationMission:
     """Represents an active exploration mission."""
+
     mission_id: str
     target_region: str
     pattern: str
@@ -75,43 +83,46 @@ class ExplorationMission:
         """Initialize optional fields."""
         self.discoveries = self.discoveries or []
 
+
 class ExplorationManager:
     """
     Central manager for handling all exploration-related operations.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the exploration manager."""
         # Region tracking
         self.regions: Dict[str, Region] = {}
-        self.region_grid: Dict[Tuple[int, int], str] = {}  # Position to region_id mapping
-        
+        self.region_grid: Dict[Tuple[int, int], str] = (
+            {}
+        )  # Position to region_id mapping
+
         # Mission management
         self.active_missions: Dict[str, ExplorationMission] = {}
         self.completed_missions: Set[str] = set()
-        
+
         # Discovery tracking
         self.discoveries: Dict[str, DiscoveryType] = {}
         self.discovery_locations: Dict[str, str] = {}  # Discovery to region_id mapping
-        
+
         # System state
         self.active = True
         self.paused = False
         self.update_interval = 1.0  # seconds
         self.last_update = 0.0
-        
+
         # Exploration settings
         self.scan_range = 10.0
         self.discovery_chance = 0.1
         self.hazard_threshold = 0.7
-        
+
         logging.info("ExplorationManager initialized")
 
     def register_region(
         self,
         position: Tuple[int, int],
         size: float,
-        region_type: RegionType = RegionType.EMPTY
+        region_type: RegionType = RegionType.EMPTY,
     ) -> str:
         """
         Register a new region for exploration.
@@ -130,23 +141,17 @@ class ExplorationManager:
 
         region_id = f"region_{len(self.regions)}"
         region = Region(
-            region_id=region_id,
-            position=position,
-            size=size,
-            type=region_type
+            region_id=region_id, position=position, size=size, type=region_type
         )
-        
+
         self.regions[region_id] = region
         self.region_grid[position] = region_id
-        
+
         logging.info(f"Registered region {region_id} at {position}")
         return region_id
 
     def start_exploration(
-        self,
-        region_id: str,
-        pattern: str = "grid",
-        duration: float = 60.0
+        self, region_id: str, pattern: str = "grid", duration: float = 60.0
     ) -> Optional[str]:
         """
         Start an exploration mission in a region.
@@ -177,12 +182,12 @@ class ExplorationManager:
             mission_id=mission_id,
             target_region=region_id,
             pattern=pattern,
-            duration=duration
+            duration=duration,
         )
-        
+
         self.active_missions[mission_id] = mission
         region.state = ExplorationState.SCANNING
-        
+
         logging.info(f"Started exploration mission {mission_id} in region {region_id}")
         return mission_id
 
@@ -233,17 +238,19 @@ class ExplorationManager:
             mission: Active mission that made the discovery
         """
         region = self.regions[mission.target_region]
-        
+
         # Generate discovery based on region type
         discovery_type = random.choice(list(DiscoveryType))
         discovery_id = f"discovery_{len(self.discoveries)}"
-        
+
         self.discoveries[discovery_id] = discovery_type
         self.discovery_locations[discovery_id] = mission.target_region
         mission.discoveries.append(discovery_id)
         region.discoveries.append(discovery_id)
-        
-        logging.info(f"New discovery {discovery_id} ({discovery_type}) in region {mission.target_region}")
+
+        logging.info(
+            f"New discovery {discovery_id} ({discovery_type}) in region {mission.target_region}"
+        )
 
     def _complete_mission(self, mission_id: str) -> None:
         """
@@ -254,7 +261,7 @@ class ExplorationManager:
         """
         mission = self.active_missions[mission_id]
         region = self.regions[mission.target_region]
-        
+
         # Update region state based on discoveries
         if len(region.discoveries) == 0:
             region.state = ExplorationState.DEPLETED
@@ -266,8 +273,10 @@ class ExplorationManager:
         # Archive mission
         mission.active = False
         self.completed_missions.add(mission_id)
-        
-        logging.info(f"Completed mission {mission_id} in region {mission.target_region}")
+
+        logging.info(
+            f"Completed mission {mission_id} in region {mission.target_region}"
+        )
 
     def get_region_state(self, region_id: str) -> Optional[ExplorationState]:
         """
@@ -294,9 +303,7 @@ class ExplorationManager:
         return self.regions[region_id].discoveries if region_id in self.regions else []
 
     def get_nearby_regions(
-        self,
-        position: Tuple[int, int],
-        range_limit: float
+        self, position: Tuple[int, int], range_limit: float
     ) -> List[str]:
         """
         Get regions within range of a position.
@@ -310,12 +317,12 @@ class ExplorationManager:
         """
         nearby = []
         x, y = position
-        
+
         for (rx, ry), region_id in self.region_grid.items():
             distance = ((rx - x) ** 2 + (ry - y) ** 2) ** 0.5
             if distance <= range_limit:
                 nearby.append(region_id)
-        
+
         return nearby
 
     def pause(self) -> None:

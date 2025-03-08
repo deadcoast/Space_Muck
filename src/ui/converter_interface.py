@@ -668,10 +668,10 @@ class ChainManagementInterface:
 
                 # Add connection to previous step
                 if i > 0:
-                    connections.append((i-1, i))
+                    connections.append((i - 1, i))
                     # Add flow rate if available
                     if hasattr(step, "flow_rate"):
-                        flow_rates[(i-1, i)] = step.flow_rate
+                        flow_rates[(i - 1, i)] = step.flow_rate
 
         # Update chain visualization
         self.chain_visualizer.set_chain(converters, connections, flow_rates)

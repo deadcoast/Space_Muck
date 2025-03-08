@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from datetime import datetime
 
+
 # Game States
 class GameState(Enum):
     INITIALIZING = auto()
@@ -21,11 +22,12 @@ class GameState(Enum):
     ERROR = auto()
     SHUTTING_DOWN = auto()
 
+
 # Event Types
 class GameEventType(Enum):
     STATE_CHANGED = auto()
     ERROR_OCCURRED = auto()
-    
+
     # Resource Events
     RESOURCE_CREATED = auto()
     RESOURCE_UPDATED = auto()
@@ -33,71 +35,72 @@ class GameEventType(Enum):
     RESOURCE_FLOW_STARTED = auto()
     RESOURCE_FLOW_STOPPED = auto()
     RESOURCE_THRESHOLD_REACHED = auto()
-    
+
     # Module Events
     MODULE_CHANGED = auto()
     MODULE_ERROR = auto()
-    
+
     # Threshold Events
     THRESHOLD_TRIGGERED = auto()
     THRESHOLD_CLEARED = auto()
 
+
 @dataclass
 class GameEvent:
     """Represents a game event."""
+
     type: GameEventType
     source: str
     data: Dict[str, any]
     timestamp: float
     priority: int = 1
 
+
 class GameContext:
     """
     Central context for managing game state and coordinating between systems.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the game context."""
         # State management
         self.state = GameState.INITIALIZING
         self.previous_state = None
         self.state_history: List[Tuple[GameState, float]] = []
-        
+
         # Event system
         self.event_queue: List[GameEvent] = []
         self.event_handlers: Dict[GameEventType, List[Callable[[GameEvent], None]]] = {
             event_type: [] for event_type in GameEventType
         }
-        
+
         # Resource tracking
         self.active_resources: Set[str] = set()
         self.resource_states: Dict[str, str] = {}
         self.resource_thresholds: Dict[str, float] = {}
         self.resource_capacities: Dict[str, float] = {}
         self.resource_flow_rates: Dict[str, float] = {}
-        
+
         # Flow tracking
         self.active_flows: Dict[str, Dict[str, float]] = {}  # source -> {dest -> rate}
         self.flow_history: List[Dict[str, any]] = []  # List of flow events
         self.max_flow_history = 1000  # Maximum number of flow events to keep
-        
+
         # Module tracking
         self.active_modules: Set[str] = set()
         self.module_states: Dict[str, str] = {}
         self.module_dependencies: Dict[str, Set[str]] = {}
-        
+
         # System state
         self.active = True
         self.error_count = 0
         self.last_update = 0.0
         self.update_interval = 1.0  # seconds
-        
+
         logging.info("GameContext initialized")
 
     def register_event_handler(
-        self,
-        event_type: GameEventType,
-        handler: Callable[[GameEvent], None]
+        self, event_type: GameEventType, handler: Callable[[GameEvent], None]
     ) -> bool:
         """
         Register a handler for a specific event type.
@@ -117,9 +120,7 @@ class GameContext:
         return True
 
     def unregister_event_handler(
-        self,
-        event_type: GameEventType,
-        handler: Callable[[GameEvent], None]
+        self, event_type: GameEventType, handler: Callable[[GameEvent], None]
     ) -> bool:
         """
         Unregister an event handler.
@@ -176,13 +177,13 @@ class GameContext:
             self._update_resource_states()
             self._update_module_states()
             self._check_thresholds()
-            
+
             self.last_update = 0
             self.error_count = 0
         except Exception as e:
             self.error_count += 1
             logging.error(f"Error in GameContext update: {e}")
-            
+
             if self.error_count >= 3:
                 self.transition_state(GameState.ERROR)
 
@@ -205,12 +206,14 @@ class GameContext:
         self.state_history.append((new_state, datetime.now().timestamp()))
 
         # Notify observers
-        self.dispatch_event(GameEvent(
-            type=GameEventType.STATE_CHANGED,
-            source="game_context",
-            data={"old_state": self.previous_state, "new_state": new_state},
-            timestamp=datetime.now().timestamp()
-        ))
+        self.dispatch_event(
+            GameEvent(
+                type=GameEventType.STATE_CHANGED,
+                source="game_context",
+                data={"old_state": self.previous_state, "new_state": new_state},
+                timestamp=datetime.now().timestamp(),
+            )
+        )
 
         logging.info(f"Game state transitioned: {self.previous_state} -> {new_state}")
         return True
@@ -221,7 +224,7 @@ class GameContext:
         initial_state: str = "stable",
         threshold: Optional[float] = None,
         capacity: Optional[float] = None,
-        flow_rate: Optional[float] = None
+        flow_rate: Optional[float] = None,
     ) -> bool:
         """
         Register a resource for tracking.
@@ -240,7 +243,7 @@ class GameContext:
 
         self.active_resources.add(resource_id)
         self.resource_states[resource_id] = initial_state
-        
+
         # Store additional resource metadata
         if threshold is not None:
             self.resource_thresholds[resource_id] = threshold
@@ -248,22 +251,24 @@ class GameContext:
             self.resource_capacities[resource_id] = capacity
         if flow_rate is not None:
             self.resource_flow_rates[resource_id] = flow_rate
-            
+
         # Initialize flow tracking
         self.active_flows[resource_id] = {}
-            
+
         # Notify observers of new resource
-        self.dispatch_event(GameEvent(
-            type=GameEventType.RESOURCE_CREATED,
-            source=resource_id,
-            data={
-                'state': initial_state,
-                'threshold': threshold,
-                'capacity': capacity,
-                'flow_rate': flow_rate
-            },
-            timestamp=datetime.now().timestamp()
-        ))
+        self.dispatch_event(
+            GameEvent(
+                type=GameEventType.RESOURCE_CREATED,
+                source=resource_id,
+                data={
+                    "state": initial_state,
+                    "threshold": threshold,
+                    "capacity": capacity,
+                    "flow_rate": flow_rate,
+                },
+                timestamp=datetime.now().timestamp(),
+            )
+        )
 
         logging.info(f"Registered resource {resource_id}")
         return True
@@ -272,7 +277,7 @@ class GameContext:
         self,
         module_id: str,
         initial_state: str = "inactive",
-        dependencies: Optional[Set[str]] = None
+        dependencies: Optional[Set[str]] = None,
     ) -> bool:
         """
         Register a module for tracking.
@@ -310,10 +315,7 @@ class GameContext:
                     logging.error(f"Error in event handler: {e}")
 
     def register_resource_flow(
-        self,
-        source_id: str,
-        dest_id: str,
-        flow_rate: float
+        self, source_id: str, dest_id: str, flow_rate: float
     ) -> bool:
         """Register a resource flow between two resources.
 
@@ -337,35 +339,32 @@ class GameContext:
 
         # Record flow start event
         flow_event = {
-            'type': 'flow_start',
-            'source': source_id,
-            'destination': dest_id,
-            'rate': flow_rate,
-            'timestamp': datetime.now().timestamp()
+            "type": "flow_start",
+            "source": source_id,
+            "destination": dest_id,
+            "rate": flow_rate,
+            "timestamp": datetime.now().timestamp(),
         }
         self.flow_history.append(flow_event)
         if len(self.flow_history) > self.max_flow_history:
             self.flow_history.pop(0)
 
         # Notify observers
-        self.dispatch_event(GameEvent(
-            type=GameEventType.RESOURCE_FLOW_STARTED,
-            source=source_id,
-            data={
-                'destination': dest_id,
-                'rate': flow_rate
-            },
-            timestamp=datetime.now().timestamp()
-        ))
+        self.dispatch_event(
+            GameEvent(
+                type=GameEventType.RESOURCE_FLOW_STARTED,
+                source=source_id,
+                data={"destination": dest_id, "rate": flow_rate},
+                timestamp=datetime.now().timestamp(),
+            )
+        )
 
-        logging.info(f"Registered resource flow: {source_id} -> {dest_id} at {flow_rate}/s")
+        logging.info(
+            f"Registered resource flow: {source_id} -> {dest_id} at {flow_rate}/s"
+        )
         return True
 
-    def stop_resource_flow(
-        self,
-        source_id: str,
-        dest_id: str
-    ) -> bool:
+    def stop_resource_flow(self, source_id: str, dest_id: str) -> bool:
         """Stop a resource flow.
 
         Args:
@@ -390,26 +389,25 @@ class GameContext:
 
         # Record flow stop event
         flow_event = {
-            'type': 'flow_stop',
-            'source': source_id,
-            'destination': dest_id,
-            'final_rate': flow_rate,
-            'timestamp': datetime.now().timestamp()
+            "type": "flow_stop",
+            "source": source_id,
+            "destination": dest_id,
+            "final_rate": flow_rate,
+            "timestamp": datetime.now().timestamp(),
         }
         self.flow_history.append(flow_event)
         if len(self.flow_history) > self.max_flow_history:
             self.flow_history.pop(0)
 
         # Notify observers
-        self.dispatch_event(GameEvent(
-            type=GameEventType.RESOURCE_FLOW_STOPPED,
-            source=source_id,
-            data={
-                'destination': dest_id,
-                'final_rate': flow_rate
-            },
-            timestamp=datetime.now().timestamp()
-        ))
+        self.dispatch_event(
+            GameEvent(
+                type=GameEventType.RESOURCE_FLOW_STOPPED,
+                source=source_id,
+                data={"destination": dest_id, "final_rate": flow_rate},
+                timestamp=datetime.now().timestamp(),
+            )
+        )
 
         logging.info(f"Stopped resource flow: {source_id} -> {dest_id}")
         return True
@@ -432,11 +430,11 @@ class GameContext:
             for dest_id, rate in flows.items():
                 # Update flow tracking
                 flow_event = {
-                    'type': 'flow_update',
-                    'source': source_id,
-                    'destination': dest_id,
-                    'rate': rate,
-                    'timestamp': datetime.now().timestamp()
+                    "type": "flow_update",
+                    "source": source_id,
+                    "destination": dest_id,
+                    "rate": rate,
+                    "timestamp": datetime.now().timestamp(),
                 }
                 self.flow_history.append(flow_event)
                 if len(self.flow_history) > self.max_flow_history:
@@ -445,20 +443,22 @@ class GameContext:
             if resource_id in self.resource_thresholds:
                 threshold = self.resource_thresholds[resource_id]
                 current_state = self.resource_states[resource_id]
-                
+
                 # Check if we need to trigger threshold events
-                if current_state == 'critical' and threshold > 0:
-                    self.dispatch_event(GameEvent(
-                        type=GameEventType.RESOURCE_THRESHOLD_REACHED,
-                        source=resource_id,
-                        data={
-                            'threshold': threshold,
-                            'state': current_state,
-                            'previous_state': self.previous_state
-                        },
-                        timestamp=datetime.now().timestamp(),
-                        priority=2  # Higher priority for threshold events
-                    ))
+                if current_state == "critical" and threshold > 0:
+                    self.dispatch_event(
+                        GameEvent(
+                            type=GameEventType.RESOURCE_THRESHOLD_REACHED,
+                            source=resource_id,
+                            data={
+                                "threshold": threshold,
+                                "state": current_state,
+                                "previous_state": self.previous_state,
+                            },
+                            timestamp=datetime.now().timestamp(),
+                            priority=2,  # Higher priority for threshold events
+                        )
+                    )
 
     def _update_module_states(self) -> None:
         """Update module states and check dependencies."""

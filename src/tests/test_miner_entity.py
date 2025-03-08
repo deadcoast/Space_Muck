@@ -29,60 +29,51 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-# Try importing optional dependencies with proper error handling
-# Check for pygame availability using importlib
+# Try importing optional dependencies
 try:
-    import importlib.util
-
-    PYGAME_AVAILABLE = importlib.util.find_spec("pygame") is not None
+    import pygame
+    PYGAME_AVAILABLE = True
 except ImportError:
     PYGAME_AVAILABLE = False
 
-# Check for perlin_noise availability using importlib
 try:
-    import importlib.util
-
-    PERLIN_NOISE_AVAILABLE = importlib.util.find_spec("perlin_noise") is not None
+    import perlin_noise
+    PERLIN_NOISE_AVAILABLE = True
 except ImportError:
     PERLIN_NOISE_AVAILABLE = False
 
-# Check for networkx availability using importlib
 try:
-    import importlib.util
-
-    NETWORKX_AVAILABLE = importlib.util.find_spec("networkx") is not None
+    import networkx
+    NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False
+    logger.info("networkx not available - graph tests will be skipped")
 
-# Check for scipy availability using importlib
 try:
-    import importlib.util
-
-    SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
+    import scipy
+    SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
+    logger.info("scipy not available - some tests will be skipped")
 
-# Check for sklearn availability using importlib
 try:
-    import importlib.util
-
-    SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
+    import sklearn
+    SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
+    logger.info("sklearn not available - some tests will be skipped")
 
-# Check for symbiote algorithm availability using importlib
+# Try importing symbiote algorithm
 try:
-    import importlib.util
-
-    symbiote_spec = importlib.util.find_spec("algorithms.symbiote_algorithm")
-    if symbiote_spec is not None:
-        SYMBIOTE_ALGORITHM_AVAILABLE = True
-    else:
-        # Check alternative path
-        symbiote_spec = importlib.util.find_spec("src.algorithms.symbiote_algorithm")
-        SYMBIOTE_ALGORITHM_AVAILABLE = symbiote_spec is not None
+    from algorithms import symbiote_algorithm
+    SYMBIOTE_ALGORITHM_AVAILABLE = True
 except ImportError:
-    SYMBIOTE_ALGORITHM_AVAILABLE = False
+    try:
+        from generators import symbiote_algorithm
+        SYMBIOTE_ALGORITHM_AVAILABLE = True
+    except ImportError:
+        SYMBIOTE_ALGORITHM_AVAILABLE = False
+        logger.info("symbiote_algorithm not available - some tests will be skipped")
 
 # Import the class to test
 from entities.miner_entity import MinerEntity

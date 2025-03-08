@@ -90,13 +90,16 @@ class AsteroidField:
     Uses NumPy for performance and supports complex cellular automaton rules.
     """
 
-    def __init__(self, width: int = GRID_WIDTH, height: int = GRID_HEIGHT) -> None:
+    def __init__(
+        self, width: int = GRID_WIDTH, height: int = GRID_HEIGHT, seed: int = None
+    ) -> None:
         """
         Initialize a new asteroid field with the specified dimensions.
 
         Args:
             width: Width of the field in cells
             height: Height of the field in cells
+            seed: Optional seed for random number generation
         """
         self.width = width
         self.height = height
@@ -181,12 +184,43 @@ class AsteroidField:
             (180, 180, 180),  # High value
         ]
 
+        # Set random seed if provided
+        if seed is not None:
+            random.seed(seed)
+            np.random.seed(seed)
+
         # Initialize with random pattern
         self.initialize_patterns()
 
         # Create render surface
         self.render_surface = pygame.Surface((VIEW_WIDTH, VIEW_HEIGHT))
         self.minimap_surface = pygame.Surface((150, 150))
+
+    def _initialize_field_with_generator(self) -> None:
+        """
+        Initialize the field using the ProceduralGenerator.
+        Handles grid generation, rare asteroids, energy grid, and life patterns.
+        """
+        generator = ProceduralGenerator(self.width, self.height)
+        self.grid = generator.generate_field(
+            density=self.field_density,
+            complexity=self.pattern_complexity,
+            turbulence=self.turbulence,
+        )
+
+        self.rare_grid = np.random.random((self.height, self.width)) < self.rare_chance
+        self.energy_grid = np.random.random((self.height, self.width))
+
+        self.total_asteroids = np.sum(self.grid > 0)
+        self.total_rare = np.sum(self.rare_grid)
+        self.total_energy = np.sum(self.energy_grid)
+
+        self._life_patterns_handler()
+
+        logging.info(
+            f"Field initialized with {self.total_asteroids} asteroids, "
+            + f"{self.total_rare} rare minerals."
+        )
 
     def initialize_patterns(self) -> None:
         """
@@ -195,19 +229,12 @@ class AsteroidField:
         """
         with LogContext("Asteroid field initialization"):
             self._initialize_handler()
-            try:
-                # Use the ProceduralGenerator to generate the asteroid field
-                self.generate_field_with_procedural_generator()
 
-                self._life_patterns_handler()
-                logging.info(
-                    f"Field initialized with {self.total_asteroids} asteroids, "
-                    + f"{self.total_rare} rare minerals."
-                )
+            try:
+                self._initialize_field_with_generator()
             except Exception as e:
-                log_exception(e)
+                log_exception("Field initialization failed", e)
                 logging.error(f"Failed to initialize patterns: {str(e)}")
-                # Fall back to legacy initialization method
                 self._legacy_initialize_patterns()
 
     def generate_field_with_procedural_generator(self) -> None:

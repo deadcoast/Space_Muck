@@ -905,7 +905,7 @@ class AsteroidFieldVisualizer(UIElement):
             grid.append(row)
         return grid
 
-    def _evolve_grid(self):    # sourcery skip: low-code-quality
+    def _evolve_grid(self):  # sourcery skip: low-code-quality
         """Evolve the asteroid field using cellular automaton rules"""
         new_grid = [[0 for _ in range(self.width - 2)] for _ in range(self.height - 2)]
 
@@ -1262,7 +1262,6 @@ class SpaceMuckMainUI:
     def _draw_header(self):
         """Draw the game header with ASCII art"""
         header_text = [
-            
             "╭─────────────────────────────────────────────────────╮",
             "│                                                     │",
             "│ ░░      ░░░       ░░░░      ░░░░      ░░░        ░░ │",
