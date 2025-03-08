@@ -678,6 +678,11 @@ class SignatureAnalyzer:
         # Calculate advanced metrics
         self._calculate_metrics()
 
+        # Validate signatures and check compatibility
+        is_valid = self.validate_all_signatures()
+        is_compatible = self.check_signature_compatibility()
+        similar_signatures = self.find_similar_signatures()
+
         # Generate clusters
         clusters = self._cluster_signatures()
 
@@ -686,6 +691,13 @@ class SignatureAnalyzer:
             "metrics": self._generate_project_metrics(),
             "clusters": clusters,
             "visualizations": self._generate_visualizations(),
+            "validation": {
+                "is_valid": is_valid,
+                "validation_errors": self.validation_errors,
+                "is_compatible": is_compatible,
+                "incompatible_pairs": self.incompatible_pairs,
+                "similar_signatures": similar_signatures
+            }
         }
 
     def _analyze_file(self, file_path: Path):
