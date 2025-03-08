@@ -17,7 +17,7 @@ import inspect
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, TypeVar, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, TypeVar, Union
 
 import libcst as cst
 import networkx as nx
@@ -45,10 +45,61 @@ T = TypeVar("T")
 
 
 @runtime_checkable
+class TypeAnnotated(Protocol):
+    """Protocol for objects with type annotations"""
+    __annotations__: Dict[str, Any]
+
+@runtime_checkable
+class Documented(Protocol):
+    """Protocol for objects with docstrings"""
+    __doc__: Optional[str]
+
+@runtime_checkable
 class Callable(Protocol):
     """Protocol for callable objects with signature information"""
-
     __signature__: inspect.Signature
+    __name__: str
+    __module__: str
+    __qualname__: str
+    __annotations__: Dict[str, Any]
+    __doc__: Optional[str]
+
+@runtime_checkable
+class SignatureComparable(Protocol):
+    """Protocol for objects that can be compared based on their signatures"""
+    def is_compatible_with(self, other: Any) -> bool:
+        """Check if this signature is compatible with another"""
+        ...
+
+    def similarity_score(self, other: Any) -> float:
+        """Calculate similarity score with another signature"""
+        ...
+
+@runtime_checkable
+class SignatureValidatable(Protocol):
+    """Protocol for objects that can validate their signatures"""
+    def validate(self) -> bool:
+        """Validate the signature"""
+        ...
+
+    def get_validation_errors(self) -> List[str]:
+        """Get list of validation errors"""
+        ...
+
+@runtime_checkable
+class SignatureProvider(Protocol):
+    """Protocol for objects that can provide signature information"""
+    def get_signature(self) -> CodeSignature:
+        """Get the signature information for this object"""
+        ...
+
+    def get_type_info(self) -> Dict[str, TypeInfo]:
+        """Get type information for all components"""
+        ...
+
+    def get_metrics(self) -> SignatureMetrics:
+        """Get signature metrics"""
+        ...
 
 
 @dataclass
@@ -85,7 +136,7 @@ class SignatureMetrics(BaseModel):
 
 
 @dataclass
-class SignatureComponent:
+class SignatureComponent(TypeAnnotated, SignatureProvider, SignatureValidatable, SignatureComparable):
     """Component of a signature with enhanced analysis"""
 
     name: str
@@ -94,6 +145,56 @@ class SignatureComponent:
     is_optional: bool = False
     constraints: List[str] = field(default_factory=list)
     usage_locations: Set[str] = field(default_factory=set)
+    __annotations__: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Initialize annotations from type info
+        self.__annotations__ = {self.name: eval(self.type_info.type_hint) if self.type_info.type_hint else Any}
+
+    def get_signature(self) -> CodeSignature:
+        """Get a minimal signature for this component"""
+        return CodeSignature(
+            name=self.name,
+            module_path=Path(),
+            components=[],
+            return_type=self.type_info
+        )
+
+    def get_type_info(self) -> Dict[str, TypeInfo]:
+        """Get type information for this component"""
+        return {self.name: self.type_info}
+
+    def get_metrics(self) -> SignatureMetrics:
+        """Get basic metrics for this component"""
+        return SignatureMetrics(
+            complexity=0.1,  # Base complexity
+            type_safety=self.type_info.confidence
+        )
+
+    def validate(self) -> bool:
+        """Validate the component"""
+        return len(self.get_validation_errors()) == 0
+
+    def get_validation_errors(self) -> List[str]:
+        """Get list of validation errors"""
+        errors = []
+        if not self.type_info.type_hint and not self.type_info.inferred_type:
+            errors.append(f"No type information for {self.name}")
+        if self.type_info.confidence < 0.5:
+            errors.append(f"Low type confidence ({self.type_info.confidence}) for {self.name}")
+        return errors
+
+    def is_compatible_with(self, other: Any) -> bool:
+        """Check if this component is compatible with another"""
+        if not isinstance(other, SignatureComponent):
+            return False
+        # Check type compatibility
+        if self.type_info.type_hint and other.type_info.type_hint:
+            return self.type_info.type_hint == other.type_info.type_hint
+        # If no type hints, fall back to inferred types
+        if self.type_info.inferred_type and other.type_info.inferred_type:
+            return self.type_info.inferred_type == other.type_info.inferred_type
+        return True  # No type information to compare
 
     def to_dict(self) -> Dict:
         return {
@@ -106,7 +207,7 @@ class SignatureComponent:
 
 
 @dataclass
-class CodeSignature:
+class CodeSignature(TypeAnnotated, Documented, SignatureProvider, SignatureValidatable, SignatureComparable):
     """Enhanced code signature with comprehensive analysis"""
 
     name: str
@@ -117,9 +218,67 @@ class CodeSignature:
     metrics: SignatureMetrics = field(default_factory=SignatureMetrics)
     dependencies: Set[str] = field(default_factory=set)
     call_graph: Optional[nx.DiGraph] = None
+    __annotations__: Dict[str, Any] = field(default_factory=dict)
+    __doc__: Optional[str] = None
 
-    def similarity_score(self, other: CodeSignature) -> float:
+    def __post_init__(self):
+        # Initialize annotations from components and return type
+        self.__annotations__ = {
+            comp.name: eval(comp.type_info.type_hint) if comp.type_info.type_hint else Any
+            for comp in self.components
+        }
+        if self.return_type and self.return_type.type_hint:
+            self.__annotations__['return'] = eval(self.return_type.type_hint)
+        self.__doc__ = self.docstring
+
+    def get_signature(self) -> 'CodeSignature':
+        """Get this signature"""
+        return self
+
+    def get_type_info(self) -> Dict[str, TypeInfo]:
+        """Get type information for all components"""
+        type_info = {comp.name: comp.type_info for comp in self.components}
+        if self.return_type:
+            type_info['return'] = self.return_type
+        return type_info
+
+    def get_metrics(self) -> SignatureMetrics:
+        """Get signature metrics"""
+        return self.metrics
+
+    def validate(self) -> bool:
+        """Validate the signature"""
+        return len(self.get_validation_errors()) == 0
+
+    def get_validation_errors(self) -> List[str]:
+        """Get list of validation errors"""
+        errors = []
+        # Check component types
+        for comp in self.components:
+            if not comp.validate():
+                errors.extend(comp.get_validation_errors())
+        # Check return type
+        if self.return_type and not self.return_type.type_hint:
+            errors.append(f"Missing return type hint for {self.name}")
+        return errors
+
+    def is_compatible_with(self, other: Any) -> bool:
+        """Check if this signature is compatible with another"""
+        if not isinstance(other, CodeSignature):
+            return False
+        # Check return type compatibility
+        if (self.return_type and other.return_type and 
+            self.return_type.type_hint != other.return_type.type_hint):
+            return False
+        # Check parameter compatibility (order matters)
+        if len(self.components) != len(other.components):
+            return False
+        return all(s.is_compatible_with(o) for s, o in zip(self.components, other.components))
+
+    def similarity_score(self, other: Any) -> float:
         """Calculate signature similarity using TF-IDF and cosine similarity"""
+        if not isinstance(other, CodeSignature):
+            return 0.0
         vectorizer = TfidfVectorizer()
         signatures = [
             f"{self.name} {' '.join(c.name for c in self.components)}",
@@ -460,6 +619,50 @@ class SignatureAnalyzer:
         self.signatures: Dict[str, CodeSignature] = {}
         self.dependency_graph = nx.DiGraph()
         self.type_inference_model = self._initialize_type_inference()
+        self.validation_errors: Dict[str, List[str]] = {}
+        self.incompatible_pairs: List[Tuple[str, str]] = []
+
+    def validate_all_signatures(self) -> bool:
+        """Validate all signatures in the project"""
+        self.validation_errors.clear()
+        is_valid = True
+        
+        for name, sig in self.signatures.items():
+            if not sig.validate():
+                self.validation_errors[name] = sig.get_validation_errors()
+                is_valid = False
+        
+        return is_valid
+
+    def check_signature_compatibility(self) -> bool:
+        """Check compatibility between related signatures"""
+        self.incompatible_pairs.clear()
+        is_compatible = True
+
+        # Check compatibility between connected signatures in dependency graph
+        for source, target in self.dependency_graph.edges():
+            source_sig = self.signatures.get(source)
+            target_sig = self.signatures.get(target)
+            if source_sig and target_sig and not source_sig.is_compatible_with(target_sig):
+                self.incompatible_pairs.append((source, target))
+                is_compatible = False
+
+        return is_compatible
+
+    def find_similar_signatures(self, threshold: float = 0.8) -> List[Tuple[str, str, float]]:
+        """Find similar signatures based on similarity score"""
+        similar_pairs = []
+        seen = set()
+
+        for name1, sig1 in self.signatures.items():
+            for name2, sig2 in self.signatures.items():
+                if name1 != name2 and (name2, name1) not in seen:
+                    similarity = sig1.similarity_score(sig2)
+                    if similarity >= threshold:
+                        similar_pairs.append((name1, name2, similarity))
+                        seen.add((name1, name2))
+
+        return sorted(similar_pairs, key=lambda x: x[2], reverse=True)
 
     def analyze_project(self) -> Dict[str, Any]:
         """Perform comprehensive signature analysis of project"""
