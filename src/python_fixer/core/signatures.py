@@ -133,6 +133,9 @@ class SignatureMetrics(BaseModel):
     maintainability: float = Field(0.0, ge=0.0, le=1.0)
     type_safety: float = Field(0.0, ge=0.0, le=1.0)
     documentation_score: float = Field(0.0, ge=0.0, le=1.0)
+    validation_score: float = Field(0.0, ge=0.0, le=1.0)
+    compatibility_score: float = Field(0.0, ge=0.0, le=1.0)
+    validation_coverage: float = Field(0.0, ge=0.0, le=1.0)
 
 
 @dataclass
