@@ -14,6 +14,7 @@ from ui.ascii_ui import (
     ASCIIPanel,
     ASCIIProgressBar,
     ASCIIButton,
+    ASCIIChainVisualizer,
     draw_ascii_table,
 )
 from ui.draw_utils import draw_text, draw_panel
@@ -497,6 +498,14 @@ class ConverterDetailsView:
 class ChainManagementInterface:
     """Interface for creating and managing production chains."""
 
+    # Color mapping for converter types
+    TYPE_COLORS = {
+        ConverterType.BASIC: (200, 200, 200),  # Gray
+        ConverterType.ADVANCED: (100, 100, 255),  # Blue
+        ConverterType.SPECIALIZED: (255, 215, 0),  # Gold
+        ConverterType.INDUSTRIAL: (255, 100, 255),  # Purple
+    }
+
     def __init__(self, x: int, y: int, width: int, height: int):
         """
         Initialize the chain management interface.
@@ -522,11 +531,22 @@ class ChainManagementInterface:
             x + 10, y + 40, 30, 8, title="Production Chains", border_style="single"
         )
 
-        self.chain_details_box = ASCIIBox(
+        # Chain visualization
+        self.chain_visualizer = ASCIIChainVisualizer(
             x + width - 350,
             y + 40,
             42,
             15,
+            title="Chain Visualization",
+            border_style="single",
+        )
+
+        # Chain details box below visualizer
+        self.chain_details_box = ASCIIBox(
+            x + width - 350,
+            y + 250,  # Positioned below visualizer
+            42,
+            8,
             title="Chain Details",
             border_style="single",
         )
@@ -599,11 +619,12 @@ class ChainManagementInterface:
             )
 
     def update_chain_details(self) -> None:
-        """Update the chain details box with selected chain information."""
+        """Update the chain details and visualization with selected chain information."""
         self.chain_details_box.content = []
 
         if not self.selected_chain_id:
             self.chain_details_box.add_text(1, 1, "No chain selected")
+            self.chain_visualizer.set_chain([], [])
             return
 
         # Find selected chain
@@ -621,52 +642,12 @@ class ChainManagementInterface:
             1, 2, f"Status: {status}", {"color": status_color}
         )
 
-        # Group converters by type
-        type_counts: Dict[ConverterType, int] = {}
-        type_colors = {
-            ConverterType.BASIC: (200, 200, 200),  # Gray
-            ConverterType.ADVANCED: (100, 100, 255),  # Blue
-            ConverterType.SPECIALIZED: (255, 215, 0),  # Gold
-            ConverterType.INDUSTRIAL: (255, 100, 255),  # Purple
-        }
+        # Prepare chain visualization data
+        converters = []
+        connections = []
+        flow_rates = {}
 
-        for step in selected_chain.steps:
-            if converter := next(
-                (c for c in self.converters if c.id == step.converter_id), None
-            ):
-                conv_type = converter.type
-                type_counts[conv_type] = type_counts.get(conv_type, 0) + 1
-
-        # Display converter type distribution
-        y_pos = 4
-        if type_counts:
-            self.chain_details_box.add_text(1, y_pos, "Converter Types:")
-            y_pos += 1
-            for conv_type, count in type_counts.items():
-                color = type_colors.get(conv_type, COLOR_TEXT)
-                self.chain_details_box.add_text(
-                    3,
-                    y_pos,
-                    f"{conv_type.value.capitalize()}: {count}",
-                    {"color": color},
-                )
-                y_pos += 1
-
-        # Description if available
-        if selected_chain.description:
-            y_pos += 1
-            self.chain_details_box.add_text(1, y_pos, "Description:")
-            y_pos += 1
-            wrapped_desc = self._wrap_text(selected_chain.description, 40)
-            for line in wrapped_desc:
-                self.chain_details_box.add_text(1, y_pos, line)
-                y_pos += 1
-
-        # List steps with converter type colors
-        y_pos += 1
-        self.chain_details_box.add_text(1, y_pos, "Production Steps:")
-        y_pos += 1
-
+        # Convert chain steps to visualization format
         for i, step in enumerate(selected_chain.steps):
             converter = next(
                 (c for c in self.converters if c.id == step.converter_id), None
@@ -674,13 +655,51 @@ class ChainManagementInterface:
             recipe = next((r for r in self.recipes if r.id == step.recipe_id), None)
 
             if converter and recipe:
-                color = type_colors.get(converter.type, COLOR_TEXT)
-                self.chain_details_box.add_text(
-                    1,
-                    y_pos + i,
-                    f"{i+1}. {recipe.name} -> {converter.name} ({converter.type.value})",
-                    {"color": color},
-                )
+                # Add converter node
+                converter_info = {
+                    "name": converter.name,
+                    "type": converter.type.value,
+                    "tier": getattr(converter, "tier", 1),
+                    "efficiency": getattr(converter, "efficiency", 100.0),
+                    "rate": getattr(step, "rate", 1.0),
+                    "queue_size": len(getattr(converter, "active_processes", [])),
+                }
+                converters.append(converter_info)
+
+                # Add connection to previous step
+                if i > 0:
+                    connections.append((i-1, i))
+                    # Add flow rate if available
+                    if hasattr(step, "flow_rate"):
+                        flow_rates[(i-1, i)] = step.flow_rate
+
+        # Update chain visualization
+        self.chain_visualizer.set_chain(converters, connections, flow_rates)
+
+        # Display converter type distribution
+        y_pos = 4
+        self.chain_details_box.add_text(1, y_pos, "Converter Types:")
+        y_pos += 1
+
+        # Group converters by type and display distribution
+        type_counts: Dict[ConverterType, int] = {}
+        for step in selected_chain.steps:
+            if converter := next(
+                (c for c in self.converters if c.id == step.converter_id), None
+            ):
+                conv_type = converter.type
+                type_counts[conv_type] = type_counts.get(conv_type, 0) + 1
+
+        # Display type counts with colors
+        for conv_type, count in type_counts.items():
+            color = self.TYPE_COLORS.get(conv_type, COLOR_TEXT)
+            self.chain_details_box.add_text(
+                3,
+                y_pos,
+                f"{conv_type.value.capitalize()}: {count}",
+                {"color": color},
+            )
+            y_pos += 1
 
     def _wrap_text(self, text: str, width: int) -> List[str]:
         """
@@ -800,6 +819,7 @@ class ChainManagementInterface:
 
         # Draw components
         self.chains_box.draw(surface, font)
+        self.chain_visualizer.draw(surface, font)
         self.chain_details_box.draw(surface, font)
 
         # Draw buttons

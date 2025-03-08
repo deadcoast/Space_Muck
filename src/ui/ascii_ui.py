@@ -267,7 +267,7 @@ class ASCIIBox:
                 char,
                 x * char_width,
                 y * char_height,
-                font=font,
+                size=font.get_height(),
                 color=color,
             )
 
@@ -284,7 +284,7 @@ class ASCIIBox:
         """Draw box borders on the surface."""
         # Top border
         top_border = self.borders["tl"] + self.borders["h"] * (self.width - 2) + self.borders["tr"]
-        draw_text(surface, top_border, 0, 0, font=font, color=base_color)
+        draw_text(surface, top_border, 0, 0, size=font.get_height(), color=base_color)
 
         # Bottom border
         bottom_border = self.borders["bl"] + self.borders["h"] * (self.width - 2) + self.borders["br"]
@@ -293,7 +293,7 @@ class ASCIIBox:
             bottom_border,
             0,
             (self.height - 1) * char_height,
-            font=font,
+            size=font.get_height(),
             color=base_color,
         )
 
@@ -304,7 +304,7 @@ class ASCIIBox:
                 self.borders["v"],
                 0,
                 i * char_height,
-                font=font,
+                size=font.get_height(),
                 color=base_color,
             )
             draw_text(
@@ -312,7 +312,7 @@ class ASCIIBox:
                 self.borders["v"],
                 (self.width - 1) * char_width,
                 i * char_height,
-                font=font,
+                size=font.get_height(),
                 color=base_color,
             )
 
@@ -325,7 +325,7 @@ class ASCIIBox:
             self.title,
             title_x * char_width,
             0,
-            font=font,
+            size=font.get_height(),
             color=base_color,
         )
 
@@ -335,7 +335,7 @@ class ASCIIBox:
         for x, y, text, props in self.content:
             color = props.get("color", base_color) if props else base_color
             draw_text(
-                surface, text, x * char_width, y * char_height, font=font, color=color
+                surface, text, x * char_width, y * char_height, size=font.get_height(), color=color
             )
 
 
@@ -493,7 +493,7 @@ class ASCIIProgressBar:
             return pygame.Rect(self.x, self.y, 0, 0)
 
         filled_text = self.fill_char * filled_width
-        return draw_text(surface, filled_text, self.x, self.y, font=font, color=fill_color)
+        return draw_text(surface, filled_text, self.x, self.y, size=font.get_height(), color=fill_color)
 
     def _draw_empty_portion(self, surface: pygame.Surface, font: pygame.font.Font,
                            filled_width: int, empty_width: int, filled_rect: pygame.Rect,
@@ -508,7 +508,7 @@ class ASCIIProgressBar:
             empty_text,
             self.x + filled_rect.width,
             self.y,
-            font=font,
+            size=font.get_height(),
             color=empty_color,
         )
 
@@ -686,7 +686,7 @@ class ASCIIButton:
 
         button_text = f"{self.prefix}{self.text}{self.suffix}"
         self.rect = draw_text(
-            surface, button_text, self.x, self.y, font=font, color=(*draw_color, alpha)
+            surface, button_text, self.x, self.y, size=font.get_height(), color=(*draw_color, alpha)
         )
 
         return self.rect
@@ -730,7 +730,49 @@ class ASCIIMetricsPanel:
         }
         self.max_history = 60  # Keep 1 hour of minute-by-minute data
 
-        self._initialize_style_colors()
+        # Base colors for different styles
+        style_colors = {
+            UIStyle.QUANTUM: {
+                'high': (100, 200, 255),    # Cyan
+                'medium': (255, 200, 100),  # Orange
+                'low': (255, 100, 100),     # Red
+                'primary': (100, 200, 255),  # Cyan
+                'accent1': (255, 100, 100),  # Red
+                'accent2': (100, 255, 100),  # Green
+                'accent3': (200, 100, 255),  # Purple
+            },
+            UIStyle.SYMBIOTIC: {
+                'high': (150, 255, 150),    # Light green
+                'medium': (255, 255, 150),  # Light yellow
+                'low': (255, 150, 150),     # Light red
+                'primary': (150, 255, 150),  # Light green
+                'accent1': (255, 150, 150),  # Light red
+                'accent2': (150, 150, 255),  # Light blue
+                'accent3': (255, 150, 255),  # Light purple
+            },
+            UIStyle.MECHANICAL: {
+                'high': (100, 255, 100),    # Green
+                'medium': (255, 255, 100),  # Yellow
+                'low': (255, 100, 100),     # Red
+                'primary': (100, 255, 100),  # Green
+                'accent1': (255, 100, 100),  # Red
+                'accent2': (100, 100, 255),  # Blue
+                'accent3': (255, 100, 255),  # Magenta
+            }
+        }
+        
+        # Get base colors for current style
+        base_colors = style_colors.get(self.style, style_colors[UIStyle.MECHANICAL])
+        
+        # Map colors to metrics
+        self.colors = {
+            **base_colors,  # Include high/medium/low and base colors
+            'throughput': base_colors['primary'],
+            'energy': base_colors['accent1'],
+            'queue': base_colors['accent2'],
+            'efficiency': base_colors['medium'],
+            'uptime': base_colors['accent3'],
+        }
 
     def update_metrics(self, metrics: Dict[str, Any]) -> None:
         """Update current metrics and historical data.
@@ -773,7 +815,7 @@ class ASCIIMetricsPanel:
                           x: int, y: int, label: str, color: Tuple[int, int, int]) -> int:
         """Draw the metric label and return its width."""
         text = f"{label}: "
-        draw_text(surface, font, text, (x, y), color)
+        draw_text(surface, text, x, y, size=font.get_height(), color=color)
         return font.size(text)[0]
 
     def _get_bar_chars(self, fill_width: int, bar_width: int) -> str:
@@ -806,16 +848,17 @@ class ASCIIMetricsPanel:
 
         # Draw bar
         bar_str = self._get_bar_chars(fill_width, bar_width)
-        draw_text(surface, font, bar_str, (x + label_width, y), color)
+        draw_text(surface, bar_str, x + label_width, y, size=font.get_height(), color=color)
 
         # Draw value
         value_str = f"{value:.1f}"
         draw_text(
             surface,
-            font,
             value_str,
-            (x + label_width + bar_width + font.size(" ")[0], y),
-            color,
+            x + label_width + bar_width + font.size(" ")[0],
+            y,
+            size=font.get_height(),
+            color=color,
         )
 
     def _get_metric_color(self, metric_name: str) -> Tuple[int, int, int]:
@@ -838,9 +881,11 @@ class ASCIIMetricsPanel:
         throughput = self.metrics["throughput"]
         trend = self._get_trend_indicator(self.history["throughput"])
         draw_text(
-            surface, font,
+            surface,
             f"Throughput: {throughput:.1f} units/min {trend}",
-            (x, y), self.colors["high"]
+            x, y,
+            size=font.get_height(),
+            color=self.colors["high"]
         )
 
     def _draw_uptime(self, surface: pygame.Surface, font: pygame.font.Font,
@@ -849,9 +894,11 @@ class ASCIIMetricsPanel:
         hours = int(self.metrics["uptime"])
         minutes = int((self.metrics["uptime"] - hours) * 60)
         draw_text(
-            surface, font,
+            surface,
             f"Uptime: {hours}h {minutes}m",
-            (x, y), self.colors["low"]
+            x, y,
+            size=font.get_height(),
+            color=self.colors["low"]
         )
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
@@ -888,9 +935,11 @@ class ASCIIMetricsPanel:
         # Draw queue size
         y += margin
         draw_text(
-            surface, font,
+            surface,
             f"Queue: {self.metrics['queue_size']} items",
-            (x, y), self.colors["medium"]
+            x, y,
+            size=font.get_height(),
+            color=self.colors["medium"]
         )
 
         # Draw utilization
@@ -940,28 +989,73 @@ class ASCIIChainVisualizer:
         self.connections: List[Tuple[int, int]] = []  # (from_idx, to_idx)
         self.flow_rates: Dict[Tuple[int, int], float] = {}  # (from, to) -> rate
         
+        # Enhanced tracking of converter states
+        self.converter_states: Dict[int, Dict[str, Any]] = {}
+        self.efficiency_history: Dict[int, List[float]] = {}
+        self.max_history_points = 60  # Keep one hour of minute-by-minute data
+        
+        # Animation and visual settings
+        self.animation_settings = {
+            'base_speed': 8.0,
+            'speed_scale': 0.1,  # For flow rate scaling
+            'max_speed': 24.0,   # Maximum animation speed
+            'pulse_frequency': 0.5,  # Pulses per second
+            'glow_intensity': 0.8,   # For status indicators
+        }
+        
+        # Performance optimization
+        self.cache_timeout = 1.0  # Seconds before refreshing cached calculations
+        self._cached_layouts: Dict[str, Any] = {}
+        self._last_cache_time = 0.0
+        
         # Style-based characters
-        if self.style == UIStyle.QUANTUM:
-            self.chars = {
+        style_chars = {
+            UIStyle.QUANTUM: {
                 'node': '@',
                 'flow': '~',
                 'arrow': '>',
-                'corner': '+'
-            }
-        elif self.style == UIStyle.SYMBIOTIC:
-            self.chars = {
+                'corner': '+',
+                'anim_chars': ['⋅', '∙', '•', '∙'],  # Quantum dots
+                'resource_chars': {
+                    'energy': '⚡',
+                    'matter': '⬢',
+                    'fluid': '⬡',
+                    'data': '⬟',
+                    'default': '⬡'
+                }
+            },
+            UIStyle.SYMBIOTIC: {
                 'node': '*',
                 'flow': '.',
                 'arrow': '>',
-                'corner': '+'
-            }
-        else:
-            self.chars = {
+                'corner': '+',
+                'anim_chars': ['·', '•', '○', '•'],  # Organic shapes
+                'resource_chars': {
+                    'energy': '✧',
+                    'matter': '✦',
+                    'fluid': '❋',
+                    'data': '✺',
+                    'default': '✧'
+                }
+            },
+            UIStyle.MECHANICAL: {
                 'node': '#',
                 'flow': '-',
                 'arrow': '>',
-                'corner': '+'
+                'corner': '+',
+                'anim_chars': ['.', 'o', 'O', 'o'],  # Mechanical progression
+                'resource_chars': {
+                    'energy': '⚊',
+                    'matter': '⚌',
+                    'fluid': '⚏',
+                    'data': '⚎',
+                    'default': '⚊'
+                }
             }
+        }
+        self.chars = style_chars.get(self.style, style_chars[UIStyle.MECHANICAL])
+        self.animation_offset = 0.0
+        self.last_animation_time = time.time()
     
     def set_chain(self, converters: List[Dict[str, Any]], connections: List[Tuple[int, int]],
                   flow_rates: Optional[Dict[Tuple[int, int], float]] = None) -> None:
@@ -975,64 +1069,228 @@ class ASCIIChainVisualizer:
         self.converters = converters
         self.connections = connections
         self.flow_rates = flow_rates or {}
+        
+        # Update converter states and initialize history if needed
+        current_time = time.time()
+        for idx, converter in enumerate(converters):
+            if idx not in self.converter_states:
+                self.converter_states[idx] = {
+                    'last_update': current_time,
+                    'status_duration': 0.0,
+                    'total_uptime': 0.0,
+                    'status_changes': [],
+                    'peak_efficiency': 0.0,
+                    'min_efficiency': 100.0,
+                }
+            if idx not in self.efficiency_history:
+                self.efficiency_history[idx] = []
+            
+            # Update state tracking
+            state = self.converter_states[idx]
+            efficiency = converter.get('efficiency', 0.0)
+            state['peak_efficiency'] = max(state['peak_efficiency'], efficiency)
+            state['min_efficiency'] = min(state['min_efficiency'], efficiency)
+            
+            # Track status changes
+            current_status = converter.get('status', 'idle')
+            if state['status_changes'] and state['status_changes'][-1][0] != current_status:
+                state['status_changes'].append((current_status, current_time))
+                if len(state['status_changes']) > 10:  # Keep last 10 status changes
+                    state['status_changes'] = state['status_changes'][-10:]
+            
+            # Update efficiency history
+            self.efficiency_history[idx].append(efficiency)
+            if len(self.efficiency_history[idx]) > self.max_history_points:
+                self.efficiency_history[idx] = self.efficiency_history[idx][-self.max_history_points:]
+        
+        # Clear cache to force layout recalculation
+        self._cached_layouts.clear()
+        self._last_cache_time = current_time
     
-    def _get_node_color(self, converter: Dict[str, Any]) -> Tuple[int, int, int]:
-        """Get the appropriate color for a converter node based on its status."""
+
+        
+
+        
+        # Status colors based on style
         status_colors = {
-            'active': (100, 255, 100),    # Green for active
-            'error': (255, 100, 100),     # Red for error
-            'idle': (200, 200, 100),      # Yellow for idle
-            'paused': (100, 100, 255),    # Blue for paused
+            UIStyle.QUANTUM: {
+                'active': (100, 200, 255),  # Cyan
+                'error': (255, 100, 100),   # Red
+                'idle': (255, 200, 100),    # Orange
+                'paused': (200, 100, 255)   # Purple
+            },
+            UIStyle.SYMBIOTIC: {
+                'active': (150, 255, 150),  # Light green
+                'error': (255, 150, 150),   # Light red
+                'idle': (255, 255, 150),    # Light yellow
+                'paused': (150, 150, 255)   # Light blue
+            },
+            UIStyle.MECHANICAL: {
+                'active': (100, 255, 100),  # Green
+                'error': (255, 100, 100),   # Red
+                'idle': (200, 200, 100),    # Yellow
+                'paused': (100, 100, 255)   # Blue
+            }
         }
-        return status_colors.get(converter.get('status', ''), COLOR_TEXT)
+        self.status_colors = status_colors.get(self.style, status_colors[UIStyle.MECHANICAL])
+
+    def _get_node_color(self, converter: Dict[str, Any], idx: int) -> Tuple[int, int, int]:
+        """Get the appropriate color for a converter node based on its status and efficiency."""
+        base_color = self.status_colors.get(converter.get('status', ''), COLOR_TEXT)
+        
+        # Get state information
+        state = self.converter_states.get(idx, {})
+        efficiency = converter.get('efficiency', 0.0)
+        peak_efficiency = state.get('peak_efficiency', 0.0)
+        
+        # Calculate color intensity based on current vs peak efficiency
+        if peak_efficiency > 0:
+            intensity = min(1.0, (efficiency / peak_efficiency) * 1.2)  # Allow 20% boost for visual pop
+            return tuple(int(c * intensity) for c in base_color)
+        
+        return base_color
+    
+    def _calculate_animation_speed(self, flow_rate: float) -> float:
+        """Calculate animation speed based on flow rate and settings."""
+        base_speed = self.animation_settings['base_speed']
+        speed_scale = self.animation_settings['speed_scale']
+        max_speed = self.animation_settings['max_speed']
+        
+        # Scale speed with flow rate, but cap it
+        speed = base_speed + (flow_rate * speed_scale)
+        return min(speed, max_speed)
+    
+    def _get_efficiency_trend(self, idx: int) -> float:
+        """Calculate efficiency trend for a converter."""
+        history = self.efficiency_history.get(idx, [])
+        if len(history) < 2:
+            return 0.0
+        
+        # Calculate trend over last 5 points or all points if fewer
+        window = min(5, len(history))
+        recent = history[-window:]
+        if not recent:
+            return 0.0
+        
+        # Simple linear regression for trend
+        x = list(range(len(recent)))
+        y = recent
+        x_mean = sum(x) / len(x)
+        y_mean = sum(y) / len(y)
+        
+        numerator = sum((xi - x_mean) * (yi - y_mean) for xi, yi in zip(x, y))
+        denominator = sum((xi - x_mean) ** 2 for xi in x)
+        
+        return numerator / denominator if denominator != 0 else 0.0
 
     def _draw_node_stats(self, surface: pygame.Surface, font: pygame.font.Font,
-                        x: int, y: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
+                        x: int, y: int, idx: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
         """Draw converter statistics below the node."""
+        # Get state information
+        state = self.converter_states.get(idx, {})
+        efficiency_trend = self._get_efficiency_trend(idx)
+        
+        # Get tier indicator character based on tier level
+        tier_chars = {
+            1: '⚍', 2: '⚎', 3: '⚏', 4: '⚌', 5: '⚋'
+        }
+        tier = converter.get('tier', 1)
+        tier_char = tier_chars.get(tier, '⚍')
+        
+        # Get status indicator
+        status_chars = {
+            'active': '▶',
+            'error': '⚠',
+            'idle': '⏸',
+            'paused': '⏹'
+        }
+        status = converter.get('status', 'idle')
+        status_char = status_chars.get(status, '?')
+        
+        # Format efficiency with trend indicator
+        efficiency = converter.get('efficiency', 0)
+        trend_char = '↗' if efficiency_trend > 0 else '↘' if efficiency_trend < 0 else '→'
+        peak_efficiency = state.get('peak_efficiency', 0.0)
+        
+        # Calculate utilization and uptime
+        utilization = converter.get('utilization', 0)
+        uptime = state.get('total_uptime', 0.0)
+        uptime_hours = uptime / 3600  # Convert seconds to hours
+        
+        # Get color based on utilization
+        util_color = (
+            self.status_colors['active'] if utilization > 80 else
+            self.status_colors['idle'] if utilization > 40 else
+            self.status_colors['error']
+        )
+        
+        # Format stats with enhanced information
         stats = [
-            f"Eff: {converter.get('efficiency', 0):.1f}%",
+            f"{tier_char} T{tier} {status_char}",
+            f"Eff: {efficiency:.1f}% {trend_char} (Peak: {peak_efficiency:.1f}%)",
+            f"Util: {utilization:.1f}% (Up: {uptime_hours:.1f}h)",
             f"Rate: {converter.get('rate', 0):.1f}/s",
             f"Queue: {converter.get('queue_size', 0)}"
         ]
-        for i, stat in enumerate(stats):
-            draw_text(surface, font, stat, (x, y + i), color)
+        
+        # Draw each stat with appropriate color
+        draw_text(surface, stats[0], x, y, size=font.get_height(), color=color)  # Tier and status
+        draw_text(surface, stats[1], x, y + 1, size=font.get_height(), color=color)  # Efficiency
+        draw_text(surface, stats[2], x, y + 2, size=font.get_height(), color=util_color)  # Utilization
+        draw_text(surface, stats[3], x, y + 3, size=font.get_height(), color=color)  # Rate
+        draw_text(surface, stats[4], x, y + 4, size=font.get_height(), color=color)  # Queue
 
     def _draw_node(self, surface: pygame.Surface, font: pygame.font.Font,
-                   x: int, y: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
+                   x: int, y: int, idx: int, converter: Dict[str, Any], color: Tuple[int, int, int]) -> None:
         """Draw a converter node with detailed information."""
         # Calculate dimensions
         name_width = len(converter['name']) + 4
-        stats_width = max(len("Eff: 100.0%"), len("Rate: 100.0/s"), len("Queue: 100"))
+        stats_width = max(
+            len("Eff: 100.0% (Peak: 100.0%)"),
+            len("Rate: 100.0/s (Max: 100.0/s)"),
+            len("Queue: 100 Uptime: 100%")
+        )
         width = max(name_width, stats_width) + 2
-        height = 5  # 1 for top border, 1 for name, 3 for stats
+        height = 8  # Added a line for extended stats
 
         # Draw borders
         top_border = f"{self.chars['corner']}{self.chars['node'] * (width - 2)}{self.chars['corner']}"
-        draw_text(surface, font, top_border, (x, y), color)
+        draw_text(surface, top_border, x, y, size=font.get_height(), color=color)
         
         # Draw name
         name_padding = (width - 2 - len(converter['name'])) // 2
-        name_line = (f"{self.chars['node']}"
-                    f"{' ' * name_padding}{converter['name']}{' ' * name_padding}"
-                    f"{self.chars['node']}")
+        name_line = f"{self.chars['node']}{' ' * name_padding}{converter['name']}{' ' * name_padding}{self.chars['node']}"
         if (width - 2 - len(converter['name'])) % 2 == 1:
-            name_line = name_line[:-1] + ' ' + name_line[-1]
-        draw_text(surface, font, name_line, (x, y + 1), color)
+            name_line = f"{name_line[:-1]} {name_line[-1]}"
+        draw_text(surface, name_line, x, y + 1, size=font.get_height(), color=color)
 
         # Draw separator
-        draw_text(surface, font, f"{self.chars['corner']}{self.chars['node'] * (width - 2)}{self.chars['corner']}",
-                 (x, y + 2), color)
+        separator = f"{self.chars['corner']}{self.chars['node'] * (width - 2)}{self.chars['corner']}"
+        draw_text(surface, separator, x, y + 2, size=font.get_height(), color=color)
 
         # Draw stats
-        self._draw_node_stats(surface, font, x + 1, y + 3, converter, color)
+        self._draw_node_stats(surface, font, x + 1, y + 3, idx, converter, color)
 
         # Draw bottom border
-        draw_text(surface, font, top_border, (x, y + height), color)
+        draw_text(surface, top_border, x, y + height, size=font.get_height(), color=color)
     
     def _draw_connection(self, surface: pygame.Surface, font: pygame.font.Font,
                         start_x: int, start_y: int, end_x: int, end_y: int,
-                        flow_rate: Optional[float], color: Tuple[int, int, int]) -> None:
-        """Draw a connection between nodes with optional flow rate and resource type."""
+                        flow_rate: Optional[float], color: Tuple[int, int, int],
+                        source_converter: Optional[Dict[str, Any]] = None) -> None:
+        """Draw a connection between nodes with optional flow rate and resource type.
+        
+        Args:
+            surface: Surface to draw on
+            font: Font to use for rendering
+            start_x: Starting X coordinate
+            start_y: Starting Y coordinate
+            end_x: Ending X coordinate
+            end_y: Ending Y coordinate
+            flow_rate: Optional flow rate between nodes
+            color: Color to draw with
+            source_converter: Optional source converter info for resource type
+        """
         # Calculate connection points
         dx = end_x - start_x
 
@@ -1047,71 +1305,125 @@ class ASCIIChainVisualizer:
 
             # Draw first vertical segment
             for y in range(start_y + 1, mid_y):
-                draw_text(surface, font, v_line, (start_x, y), color)
+                draw_text(surface, v_line, start_x, y, size=font.get_height(), color=color)
 
             # Draw second vertical segment
             for y in range(mid_y, end_y):
-                draw_text(surface, font, v_line, (end_x, y), color)
+                draw_text(surface, v_line, end_x, y, size=font.get_height(), color=color)
 
-            # Draw horizontal segments with corners
-            if dx > 0:
-                h_line = self.chars['flow'] * (abs(dx) - 1)
-                draw_text(surface, font, self.chars['corner'] + h_line + self.chars['arrow'],
-                         (start_x, mid_y), color)
-            else:
-                h_line = self.chars['flow'] * (abs(dx) - 1)
-                draw_text(surface, font, self.chars['arrow'] + h_line + self.chars['corner'],
-                         (end_x, mid_y), color)
-        else:
-            # Draw simple horizontal line
+            # Draw horizontal line
             h_line = self.chars['flow'] * (abs(dx) - 1)
             if dx > 0:
-                draw_text(surface, font, h_line + self.chars['arrow'], (start_x + 1, start_y), color)
+                prefix = self.chars['corner'] if needs_vertical else ''
+                suffix = self.chars['arrow']
+                x_pos = start_x + (0 if needs_vertical else 1)
             else:
-                draw_text(surface, font, self.chars['arrow'] + h_line, (end_x + 1, start_y), color)
+                prefix = self.chars['arrow']
+                suffix = self.chars['corner'] if needs_vertical else ''
+                x_pos = end_x + (0 if needs_vertical else 1)
+
+            y_pos = mid_y if needs_vertical else start_y
+            line_text = prefix + h_line + suffix
+            draw_text(surface, line_text, x_pos, y_pos, size=font.get_height(), color=color)
 
         # Draw flow information if provided
         if flow_rate is not None:
-            # Flow rate with animation
-            rate_str = f"{flow_rate:.1f}/s"
-            rate_x = start_x + (dx - len(rate_str)) // 2
-            rate_y = start_y - 1 if not needs_vertical else mid_y - 1
-            draw_text(surface, font, rate_str, (rate_x, rate_y), color)
+            # Get resource type and its visual indicator
+            resource_type = source_converter.get('output_type', '') if source_converter else ''
+            resource_char = self.chars['resource_chars'].get(resource_type.lower(), self.chars['resource_chars']['default'])
 
-            # Determine animation path
+            # Format flow rate with units and resource indicator
+            display_str = (
+                f"{resource_char} {flow_rate/1000:.1f}k/s" if flow_rate >= 1000 else
+                f"{resource_char} {flow_rate:.1f}/s"
+            )
+
+            # Add resource type name if space allows
+            if len(display_str) + len(resource_type) + 2 <= abs(dx):
+                display_str = f"{resource_type}: {display_str}"
+
+            # Calculate display position
+            rate_x = start_x + (dx - len(display_str)) // 2
+            rate_y = mid_y - 1 if needs_vertical else start_y - 1
+
+            # Draw with slightly dimmed color for better readability
+            dimmed_color = tuple(max(0, c - 40) for c in color)
+            draw_text(surface, display_str, rate_x, rate_y, size=font.get_height(), color=dimmed_color)
+
+            # Update animation timing with speed based on flow rate
+            self.last_animation_time, current_time = self.last_animation_time, time.time()
+            animation_speed = min(flow_rate / 10.0, 3.0) * 8  # Scale speed with flow rate, capped for readability
+            self.animation_offset = (self.animation_offset + (current_time - self.last_animation_time) * animation_speed) % 1000
+            self.last_animation_time = current_time
+
+            # Resource-specific animation patterns
+            anim_patterns = {
+                'energy': [
+                    '⚊⚋⚌⚍⚎⚏',  # Energy pulse
+                    '⚏⚎⚍⚌⚋⚊',  # Reverse pulse
+                ],
+                'matter': [
+                    '⬡⬢⬣',     # Matter flow
+                    '⬣⬢⬡',     # Reverse flow
+                ],
+                'fluid': [
+                    '⎾⏋⏌⎿',   # Fluid wave
+                    '⎿⏌⏋⎾',   # Reverse wave
+                ],
+                'data': [
+                    '⬒⬓⬔⬕',   # Data stream
+                    '⬕⬔⬓⬒',   # Reverse stream
+                ]
+            }
+
+            # Get animation pattern based on resource type
+            resource_type = source_converter.get('output_type', '').lower() if source_converter else ''
+            pattern_set = anim_patterns.get(resource_type, [self.chars['anim_chars']])
+
+            # Select pattern based on flow direction
+            pattern_idx = 0 if dx > 0 else 1 if len(pattern_set) > 1 else 0
+            pattern = pattern_set[pattern_idx]
+
+            h_spacing = len(pattern[0]) if isinstance(pattern[0], str) else 3
+            offset = int(self.animation_offset * 3)
+
+            # Get current animation character
+            pattern_pos = int(self.animation_offset * 4) % len(pattern)
+            anim_char = pattern[pattern_pos]
+
+            # Calculate animation points with improved spacing
+            points = []
+
             if needs_vertical:
-                # Animate along vertical segments
-                anim_chars = ['⋅', '∙', '•', '∙']
-                anim_idx = int(time.time() * 4) % len(anim_chars)
-                anim_char = anim_chars[anim_idx]
+                # Calculate animation parameters
+                v_spacing = 2  # Tighter vertical spacing for better visuals
+                # Vertical animation with resource-specific pattern
+                points.extend(
+                    (x, y) for x, y_range in [
+                        (start_x, range(start_y + 1, mid_y)),
+                        (end_x, range(mid_y, end_y))
+                    ] for y in y_range if (y + offset) % v_spacing == 0
+                )
 
-                # First vertical segment
-                for y in range(start_y + 1, mid_y):
-                    if (y + int(time.time() * 8)) % 3 == 0:
-                        draw_text(surface, font, anim_char, (start_x, y), color)
+            # Horizontal animation with pattern repetition
+            y_pos = mid_y if needs_vertical else start_y
+            h_offset = offset % h_spacing
 
-                # Horizontal segment
-                num_indicators = abs(dx) // 4
-                for i in range(num_indicators):
-                    x_pos = start_x + (i * 4) + ((int(time.time() * 8) + i) % 4)
-                    if x_pos < end_x - 1:
-                        draw_text(surface, font, anim_char, (x_pos, mid_y), color)
+            # Create flowing pattern effect
+            h_points = [
+                (start_x + (i * h_spacing) + h_offset, y_pos)
+                for i in range(abs(dx) // h_spacing)
+                if start_x + (i * h_spacing) + h_offset < end_x - 1
+            ]
 
-                # Second vertical segment
-                for y in range(mid_y, end_y):
-                    if (y + int(time.time() * 8)) % 3 == 0:
-                        draw_text(surface, font, anim_char, (end_x, y), color)
-            else:
-                # Simple horizontal animation
-                anim_chars = ['⋅', '∙', '•', '∙']
-                anim_idx = int(time.time() * 4) % len(anim_chars)
-                anim_char = anim_chars[anim_idx]
-                
-                num_indicators = abs(dx) // 4
-                for i in range(num_indicators):
-                    x_pos = start_x + (i * 4) + ((int(time.time() * 8) + i) % 4)
-                    if x_pos < end_x - 1:
-                        draw_text(surface, font, anim_char, (x_pos, start_y), color)
+            # Add horizontal points with pattern cycling
+            for idx, point in enumerate(h_points):
+                pattern_char = pattern[(pattern_pos + idx) % len(pattern)]
+                draw_text(surface, pattern_char, point[0], point[1], size=font.get_height(), color=color)
+
+            # Draw vertical points
+            for point in points:
+                draw_text(surface, anim_char, point[0], point[1], size=font.get_height(), color=color)
     
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
         """Draw the chain visualization.
@@ -1131,7 +1443,7 @@ class ASCIIChainVisualizer:
             # Draw empty state
             x = self.rect.x + self.rect.width // 4
             y = self.rect.y + self.rect.height // 2
-            draw_text(surface, font, "No converters in chain", (x, y), COLOR_TEXT)
+            draw_text(surface, "No converters in chain", x, y, size=font.get_height(), color=COLOR_TEXT)
             return panel_rect
         
         # Calculate layout
@@ -1145,7 +1457,12 @@ class ASCIIChainVisualizer:
         node_width = max(len(conv['name']) for conv in self.converters) + 8
         max_nodes_per_row = max(1, total_width // (node_width + 4))
         
-        # Position nodes in a grid layout
+        # Update animation state
+        current_time = time.time()
+        dt = current_time - self.last_animation_time
+        self.last_animation_time = current_time
+        
+        # Position nodes in a grid layout and update states
         node_positions = {}  # idx -> (x, y)
         for i, conv in enumerate(self.converters):
             row = i // max_nodes_per_row
@@ -1155,11 +1472,29 @@ class ASCIIChainVisualizer:
             y = start_y + (row * node_spacing)
             node_positions[i] = (x, y)
             
+            # Update state tracking
+            state = self.converter_states.setdefault(i, {})
+            if conv.get('status') == 'active':
+                state['total_uptime'] = state.get('total_uptime', 0.0) + dt
+            
+            # Update efficiency history
+            if 'efficiency' in conv:
+                history = self.efficiency_history.setdefault(i, [])
+                history.append(conv['efficiency'])
+                if len(history) > self.max_history_points:
+                    history.pop(0)
+                
+                # Update peak efficiency
+                state['peak_efficiency'] = max(
+                    state.get('peak_efficiency', 0.0),
+                    conv['efficiency']
+                )
+            
             # Draw node with appropriate color
-            color = self._get_node_color(conv)
-            self._draw_node(surface, font, x, y, conv, color)
+            color = self._get_node_color(conv, i)
+            self._draw_node(surface, font, x, y, i, conv, color)
         
-        # Draw connections with improved routing
+        # Draw connections with improved routing and animation
         for from_idx, to_idx in self.connections:
             if from_idx in node_positions and to_idx in node_positions:
                 start = node_positions[from_idx]
@@ -1172,9 +1507,10 @@ class ASCIIChainVisualizer:
                     UIStyle.SYMBIOTIC: (100, 255, 100),
                 }.get(self.style, (200, 200, 200))
                 
-                # Adjust color alpha based on flow rate
-                if flow_rate:
-                    alpha = min(255, int(128 + (flow_rate * 127)))
+                # Calculate animation speed based on flow rate
+                if flow_rate is not None:
+                    animation_speed = self._calculate_animation_speed(flow_rate)
+                    alpha = min(255, int(128 + (animation_speed * 127)))
                     color = tuple(min(255, c * alpha // 255) for c in base_color)
                 else:
                     color = base_color
@@ -1183,7 +1519,8 @@ class ASCIIChainVisualizer:
                 self._draw_connection(surface, font,
                                     start[0], start[1] + 6,  # Adjusted for node height
                                     end[0], end[1] + 6,
-                                    flow_rate, color)
+                                    flow_rate, color,
+                                    self.converters[from_idx])
         
         return panel_rect
 
@@ -1261,11 +1598,11 @@ class ASCIIRecipePanel:
         """Draw a single recipe entry."""
         # Draw selection indicator
         if is_selected:
-            draw_text(surface, font, ">", (x - 2, y), (255, 255, 100))
+            draw_text(surface, ">", x - 2, y, size=font.get_height(), color=(255, 255, 100))
         
         # Draw recipe name and base efficiency
         name_color = (100, 255, 100) if recipe.get('active', False) else COLOR_TEXT
-        draw_text(surface, font, recipe['name'], (x, y), name_color)
+        draw_text(surface, recipe['name'], x, y, size=font.get_height(), color=name_color)
         
         # Draw efficiency bar
         eff = recipe.get('efficiency', 0.0)
@@ -1277,13 +1614,13 @@ class ASCIIRecipePanel:
         eff_color = (100, 255, 100) if eff > 0.8 else \
                     (255, 255, 100) if eff > 0.5 else \
                     (255, 100, 100)
-        draw_text(surface, font, f"[{bar}] {eff*100:.1f}%", (bar_x, y), eff_color)
+        draw_text(surface, f"[{bar}] {eff*100:.1f}%", bar_x, y, size=font.get_height(), color=eff_color)
         
         # Draw input/output summary
         y += font.get_height()
-        inputs = ' + '.join(f"{amt}{res}" for res, amt in recipe.get('inputs', {}).items())
-        outputs = ' + '.join(f"{amt}{res}" for res, amt in recipe.get('outputs', {}).items())
-        draw_text(surface, font, f"  {inputs} -> {outputs}", (x, y), (160, 160, 160))
+        inputs = ' + '.join(str(item) for item in recipe.get('inputs', []))
+        outputs = ' + '.join(str(item) for item in recipe.get('outputs', []))
+        draw_text(surface, f"  {inputs} -> {outputs}", x, y, size=font.get_height(), color=(160, 160, 160))
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle pygame events.
@@ -1326,7 +1663,7 @@ class ASCIIRecipePanel:
             # Draw empty state
             x = self.rect.x + self.rect.width // 4
             y = self.rect.y + self.rect.height // 2
-            draw_text(surface, font, "No recipes available", (x, y), COLOR_TEXT)
+            draw_text(surface, "No recipes available", x, y, size=font.get_height(), color=COLOR_TEXT)
             return panel_rect
         
         # Calculate layout
@@ -1348,9 +1685,7 @@ class ASCIIRecipePanel:
                      (self.rect.centerx - 4, self.rect.y + margin),
                      COLOR_TEXT)
         if end_idx < len(self.recipes):
-            draw_text(surface, font, "v More v",
-                     (self.rect.centerx - 4, self.rect.bottom - margin * 4),
-                     COLOR_TEXT)
+            draw_text(surface, "v More v", self.rect.centerx - 4, self.rect.bottom - margin * 4, size=font.get_height(), color=COLOR_TEXT)
         
         # Update and draw control buttons
         self.button_height = font.get_height() * 3
@@ -1388,30 +1723,30 @@ class ASCIIEfficiencyMonitor:
         self.trend_direction = 0  # -1: down, 0: stable, 1: up
         
         # Style-based characters
-        if self.style == UIStyle.QUANTUM:
-            self.chars = {
+        style_chars = {
+            UIStyle.QUANTUM: {
                 'graph_bg': '·',
                 'graph_point': '◆',
                 'trend_up': '↗',
                 'trend_down': '↘',
                 'trend_stable': '→'
-            }
-        elif self.style == UIStyle.SYMBIOTIC:
-            self.chars = {
+            },
+            UIStyle.SYMBIOTIC: {
                 'graph_bg': '.',
                 'graph_point': '*',
                 'trend_up': '↑',
                 'trend_down': '↓',
                 'trend_stable': '-'
-            }
-        else:
-            self.chars = {
+            },
+            UIStyle.MECHANICAL: {
                 'graph_bg': '.',
                 'graph_point': '#',
                 'trend_up': '^',
                 'trend_down': 'v',
                 'trend_stable': '-'
             }
+        }
+        self.chars = style_chars.get(self.style, style_chars[UIStyle.MECHANICAL])
     
     def update_efficiency(self, current: float) -> None:
         """Update efficiency metrics with a new value.
@@ -1451,7 +1786,7 @@ class ASCIIEfficiencyMonitor:
         # Draw background grid
         for row in range(height):
             line = self.chars['graph_bg'] * width
-            draw_text(surface, font, line, (x, y + row * font.get_height()), (60, 60, 60))
+            draw_text(surface, line, x, y + row * font.get_height(), size=font.get_height(), color=(60, 60, 60))
         
         # Draw data points
         if self.history:
@@ -1470,7 +1805,7 @@ class ASCIIEfficiencyMonitor:
                     (255, 255, 100) if val > 0.5 else
                     (255, 100, 100)
                 )
-                draw_text(surface, font, self.chars['graph_point'], (px, py), color)
+                draw_text(surface, self.chars['graph_point'], px, py, size=font.get_height(), color=color)
     
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
         """Draw the efficiency monitor panel.
@@ -1499,7 +1834,7 @@ class ASCIIEfficiencyMonitor:
             (255, 100, 100)
         )
         current_text = f"Current: {self.current_efficiency*100:.1f}%"
-        draw_text(surface, font, current_text, (content_x, content_y), eff_color)
+        draw_text(surface, current_text, content_x, content_y, size=font.get_height(), color=eff_color)
         
         # Draw trend indicator
         trend_char = {
@@ -1513,13 +1848,12 @@ class ASCIIEfficiencyMonitor:
             -1: (255, 100, 100)
         }[self.trend_direction]
         trend_x = content_x + font.size(current_text)[0] + margin
-        draw_text(surface, font, trend_char, (trend_x, content_y), trend_color)
+        draw_text(surface, trend_char, trend_x, content_y, size=font.get_height(), color=trend_color)
         
         # Draw daily average
         avg_y = content_y + margin
-        draw_text(surface, font,
-                 f"24h Average: {self.daily_average*100:.1f}%",
-                 (content_x, avg_y), (200, 200, 200))
+        draw_text(surface, f"24h Average: {self.daily_average*100:.1f}%",
+                 content_x, avg_y, size=font.get_height(), color=(200, 200, 200))
         
         # Draw efficiency history graph
         graph_y = avg_y + margin * 2
@@ -1627,18 +1961,18 @@ class ASCIIChainBuilder:
         """Draw a single converter entry."""
         # Draw selection/connection indicator
         if is_selected:
-            draw_text(surface, font, ">", (x - 2, y), (255, 255, 100))
+            draw_text(surface, ">", x - 2, y, size=font.get_height(), color=(255, 255, 100))
         elif is_connecting:
-            draw_text(surface, font, "*", (x - 2, y), (100, 255, 100))
+            draw_text(surface, "*", x - 2, y, size=font.get_height(), color=(100, 255, 100))
         
         # Draw converter name and type
-        draw_text(surface, font, converter['name'], (x, y), COLOR_TEXT)
+        draw_text(surface, converter['name'], x, y, size=font.get_height(), color=COLOR_TEXT)
         
         # Draw input/output summary
         y += font.get_height()
         inputs = ' + '.join(f"{amt}{res}" for res, amt in converter.get('inputs', {}).items())
         outputs = ' + '.join(f"{amt}{res}" for res, amt in converter.get('outputs', {}).items())
-        draw_text(surface, font, f"  {inputs} -> {outputs}", (x, y), (160, 160, 160))
+        draw_text(surface, f"  {inputs} -> {outputs}", x, y, size=font.get_height(), color=(160, 160, 160))
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle pygame events.
@@ -1714,6 +2048,7 @@ class ASCIIChainBuilder:
         
         # Draw converter list
         list_y = content_y + margin * 2
+        
         converters = (
             self.selected_converters if self.mode == 'connect'
             else self.available_converters
@@ -1749,13 +2084,9 @@ class ASCIIChainBuilder:
         
         # Draw scroll indicators if needed
         if self.scroll_offset > 0:
-            draw_text(surface, font, "^ More ^",
-                     (self.rect.centerx - 4, self.rect.y + margin),
-                     COLOR_TEXT)
+            draw_text(surface, "^ More ^", self.rect.centerx - 4, self.rect.y + margin, size=font.get_height(), color=COLOR_TEXT)
         if end_idx < len(converters):
-            draw_text(surface, font, "v More v",
-                     (self.rect.centerx - 4, self.rect.bottom - margin * 4),
-                     COLOR_TEXT)
+            draw_text(surface, "v More v", self.rect.centerx - 4, self.rect.bottom - margin * 4, size=font.get_height(), color=COLOR_TEXT)
         
         # Update and draw control buttons
         button_height = font.get_height() * 3
@@ -1837,15 +2168,15 @@ class ASCIIChainTemplateManager:
         """Draw a single template entry."""
         # Draw selection indicator
         if is_selected:
-            draw_text(surface, font, ">", (x - 2, y), (255, 255, 100))
+            draw_text(surface, ">", x - 2, y, size=font.get_height(), color=(255, 255, 100))
         
         # Draw template name and details
-        draw_text(surface, font, template['name'], (x, y), COLOR_TEXT)
+        draw_text(surface, template['name'], x, y, size=font.get_height(), color=COLOR_TEXT)
         
         # Draw template info
         y += font.get_height()
         info = f"  {len(template['converters'])} converters, {len(template['connections'])} connections"
-        draw_text(surface, font, info, (x, y), (160, 160, 160))
+        draw_text(surface, info, x, y, size=font.get_height(), color=(160, 160, 160))
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle pygame events.
@@ -1910,18 +2241,13 @@ class ASCIIChainTemplateManager:
                     template, i == self.selected_idx
                 )
         else:
-            draw_text(surface, font, "No templates available",
-                     (content_x + margin, list_y), COLOR_TEXT)
+            draw_text(surface, "No templates available", content_x + margin, list_y, size=font.get_height(), color=COLOR_TEXT)
         
         # Draw scroll indicators if needed
         if self.scroll_offset > 0:
-            draw_text(surface, font, "^ More ^",
-                     (self.rect.centerx - 4, self.rect.y + margin),
-                     COLOR_TEXT)
+            draw_text(surface, "^ More ^", self.rect.centerx - 4, self.rect.y + margin, size=font.get_height(), color=COLOR_TEXT)
         if end_idx < len(self.templates):
-            draw_text(surface, font, "v More v",
-                     (self.rect.centerx - 4, self.rect.bottom - margin * 4),
-                     COLOR_TEXT)
+            draw_text(surface, "v More v", self.rect.centerx - 4, self.rect.bottom - margin * 4, size=font.get_height(), color=COLOR_TEXT)
         
         # Update and draw control buttons
         button_height = font.get_height() * 3
@@ -2005,20 +2331,20 @@ class ASCIITemplateListView:
         """Draw a single template entry."""
         # Draw selection indicator
         if is_selected:
-            draw_text(surface, font, ">", (x - 2, y), (255, 255, 100))
+            draw_text(surface, ">", x - 2, y, size=font.get_height(), color=(255, 255, 100))
         
         # Draw template name
-        draw_text(surface, font, template['name'], (x, y), COLOR_TEXT)
+        draw_text(surface, template['name'], x, y, size=font.get_height(), color=COLOR_TEXT)
         
         # Draw template details
         y += font.get_height()
         details = f"  Created: {template.get('created_at', 'Unknown')}"
-        draw_text(surface, font, details, (x, y), (160, 160, 160))
+        draw_text(surface, details, x, y, size=font.get_height(), color=(160, 160, 160))
         
         # Draw template stats
         y += font.get_height()
         stats = f"  Converters: {len(template['converters'])}, Efficiency: {template.get('efficiency', 0.0):.1%}"
-        draw_text(surface, font, stats, (x, y), (160, 160, 160))
+        draw_text(surface, stats, x, y, size=font.get_height(), color=(160, 160, 160))
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle pygame events.
@@ -2080,18 +2406,13 @@ class ASCIITemplateListView:
                     template, i == self.selected_idx
                 )
         else:
-            draw_text(surface, font, "No templates available",
-                     (content_x + margin, list_y), COLOR_TEXT)
+            draw_text(surface, "No templates available", content_x + margin, list_y, size=font.get_height(), color=COLOR_TEXT)
         
         # Draw scroll indicators if needed
         if self.scroll_offset > 0:
-            draw_text(surface, font, "^ More ^",
-                     (self.rect.centerx - 4, self.rect.y + margin),
-                     COLOR_TEXT)
+            draw_text(surface, "^ More ^", self.rect.centerx - 4, self.rect.y + margin, size=font.get_height(), color=COLOR_TEXT)
         if end_idx < len(self.templates):
-            draw_text(surface, font, "v More v",
-                     (self.rect.centerx - 4, self.rect.bottom - margin * 4),
-                     COLOR_TEXT)
+            draw_text(surface, "v More v", self.rect.centerx - 4, self.rect.bottom - margin * 4, size=font.get_height(), color=COLOR_TEXT)
         
         # Update and draw control buttons
         button_height = font.get_height() * 3
@@ -2231,7 +2552,7 @@ def draw_ascii_table(
 
     for i, line in enumerate(table_strings):
         line_rect = draw_text(
-            surface, line, x, y + i * char_height, font=font, color=color
+            surface, line, x, y + i * char_height, size=font.get_height(), color=color
         )
 
         table_rect = table_rect.union(line_rect) if table_rect else line_rect
