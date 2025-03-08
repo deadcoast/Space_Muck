@@ -5,7 +5,7 @@ This module manages the available converters, recipes and provides access to the
 throughout the game.
 """
 
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional
 import uuid
 
 from converters.converter_models import (
