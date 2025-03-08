@@ -1,6 +1,5 @@
 """Configure pytest for python_fixer tests."""
 
-import os
 import sys
 from pathlib import Path
 
