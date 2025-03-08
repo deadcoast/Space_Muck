@@ -1,6 +1,5 @@
 pathlib
 typing
-libcst
 matplotlib
 mypy
 networkx
@@ -10,3 +9,20 @@ sympy
 toml
 radon
 rich
+pydantic
+
+[dev]
+pytest
+pytest-cov
+black
+isort
+flake8
+mypy
+libcst
+
+[full]
+libcst
+
+[test]
+pytest
+pytest-cov

@@ -25,6 +25,7 @@ python_fixer.egg-info/entry_points.txt
 python_fixer.egg-info/requires.txt
 python_fixer.egg-info/top_level.txt
 tests/test_generator.py
+tests/test_signatures.py
 utils/__init__.py
 utils/context.py
 utils/metrics.py
