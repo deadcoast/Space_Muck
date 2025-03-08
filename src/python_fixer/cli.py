@@ -164,54 +164,74 @@ def print_fixes_summary(fixes: dict) -> None:
 
 def print_cli_header() -> None:
     """Print the CLI header with buttons."""
-    print("""
+    print(
+        """
 ┌─────────────────── [ ERROR-HANDLER CLI ] ────────────────────┐
 │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
 │  │ RUN │ │ VAL │ │ LOG │ │ CFG │ │ FIX │ │ SYS │ │ HLP │     │
 │  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
-│                                                              │""")
+│                                                              │"""
+    )
+
 
 def print_error_section(error_msg: str, details: List[str] = None) -> None:
     """Print the error output section."""
-    print("""
+    print(
+        """
 │  ┏━━━━━━━━━━━━━━━━━━ ERROR OUTPUT ━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ⚠ {:<52} ┃   │""".format(error_msg))
-    
+│  ┃  ⚠ {:<52} ┃   │""".format(
+            error_msg
+        )
+    )
+
     if details:
         for detail in details:
             print("│  ┃  ✗ {:<52} ┃   │".format(detail))
-    
-    print("""
+
+    print(
+        """
 │  ┃                                                       ┃   │
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
-│                                                              │""")
+│                                                              │"""
+    )
+
 
 def print_suggestions(suggestions: List[str]) -> None:
     """Print the suggestions section."""
-    print("""
+    print(
+        """
 │  ┏━━━━━━━━━━━━━━━━━━ SUGGESTIONS ━━━━━━━━━━━━━━━━━━━━━━┓   │
-│  ┃                                                       ┃   │""")
-    
+│  ┃                                                       ┃   │"""
+    )
+
     for suggestion in suggestions:
         print("│  ┃  ▶ {:<52} ┃   │".format(suggestion))
-    
-    print("""
+
+    print(
+        """
 │  ┃                                                       ┃   │
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
 │                                                              │
 │  System: Linux | User: admin | Version: 2.1.3 | Log: Active  │
-└──────────────────────────────────────────────────────────────┘""")
+└──────────────────────────────────────────────────────────────┘"""
+    )
+
 
 def print_command_section(command: str) -> None:
     """Print the command input section."""
-    print("""
+    print(
+        """
 │  ┏━━━━━━━━━━━━━━━━━━ COMMAND INPUT ━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
 │  ┃  {:<54} ┃   │
 │  ┃                                                       ┃   │
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
-│                                                              │""".format(command))
+│                                                              │""".format(
+            command
+        )
+    )
+
 
 def print_usage_examples() -> None:
     """Print example usage information."""
@@ -237,35 +257,40 @@ def handle_error(
     """
     error_msg = str(error)
     command = f"$ {' '.join(sys.argv)}"
-    
+
     print_cli_header()
     print_command_section(command)
-    
+
     details = []
     if isinstance(error, ValidationError):
-        if 'project' in error_msg.lower():
+        if "project" in error_msg.lower():
             details.append("Directory contains no Python files")
-        elif 'port' in error_msg.lower():
+        elif "port" in error_msg.lower():
             details.append("Port number is invalid or requires root privileges")
-    
+
     print_error_section(error_msg, details)
-    
+
     suggestions = [
         f"Try: {sys.argv[0]} validate --path {args.project_path if args else './project'}",
-        f"Try: {sys.argv[0]} --help for more information"
+        f"Try: {sys.argv[0]} --help for more information",
     ]
     print_suggestions(suggestions)
-    
+
     if args and args.verbose:
         import traceback
+
         traceback.print_exc()
-    
+
     if logger:
         try:
             logger.error("Command failed", exc_info=error)
         except Exception as log_error:
-            print("\033[93mWarning: Unable to write to log file: " + str(log_error) + "\033[0m")
-    
+            print(
+                "\033[93mWarning: Unable to write to log file: "
+                + str(log_error)
+                + "\033[0m"
+            )
+
     return 1
 
 
