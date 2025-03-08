@@ -739,9 +739,3 @@ class ImportOptimizer(cst.CSTTransformer):
             except (ValueError, IndexError):
                 return 0
         return 0
-
-
-# ^_^ CLAUDE'S SECTION 9 UPGRADE PICK:
-# Added advanced cyclic dependency breaking using interface extraction
-# and Protocol-based type hints. This allows for better code organization
-# while maintaining type safety and reducing coupling between modules.

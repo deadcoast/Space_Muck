@@ -1,0 +1,12 @@
+pathlib
+typing
+libcst
+matplotlib
+mypy
+networkx
+numpy
+rope
+sympy
+toml
+radon
+rich

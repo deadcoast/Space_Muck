@@ -17,24 +17,32 @@ from torch.ao.quantization.fx import tracer
 
 import variant_loggers
 from logger_refactor.logger_analysis import PatternAnalyzer, Correlator, Aggregator
-from logger_refactor.logger_record import StreamHandler, FileHandler, DEBUG, WARNING, ERROR, CRITICAL, LogRecord, \
-    getLevelName
+from logger_refactor.logger_record import (
+    StreamHandler,
+    FileHandler,
+    DEBUG,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    LogRecord,
+    getLevelName,
+)
 
 
 class EnhancedLogger:
     """Enhanced logging system with advanced features."""
 
     def __init__(
-            self,
-            name: str = "EnhancedLogger",
-            log_dir: Optional[Path] = None,
-            level: int = INFO,
-            enable_metrics: bool = True,
-            enable_ml: bool = True,
-            pattern_analyzer: Optional[PatternAnalyzer] = None,
-            correlator: Optional[Correlator] = None,
-            aggregator: Optional[Aggregator] = None,
-            handlers: Optional[List[Any]] = None
+        self,
+        name: str = "EnhancedLogger",
+        log_dir: Optional[Path] = None,
+        level: int = INFO,
+        enable_metrics: bool = True,
+        enable_ml: bool = True,
+        pattern_analyzer: Optional[PatternAnalyzer] = None,
+        correlator: Optional[Correlator] = None,
+        aggregator: Optional[Aggregator] = None,
+        handlers: Optional[List[Any]] = None,
     ):
         """Initialize the EnhancedLogger."""
         self.name = name
@@ -49,20 +57,22 @@ class EnhancedLogger:
 
         # Initialize formatter with JSON config
         self.formatter = variant_loggers.Formatter(
-            fmt=json.dumps({
-                "format": "{timestamp} - {level} - {module}.{function}:{line} - {message}",
-                "format_rules": [
-                    {
-                        "level": "ERROR",
-                        "format": "{timestamp} - {level} - {message}"
-                    },
-                    {
-                        "level": "INFO",
-                        "format": "{timestamp} - {level} - {module}.{function} - {message}"
-                    }
-                ],
-                "is_active": True
-            })
+            fmt=json.dumps(
+                {
+                    "format": "{timestamp} - {level} - {module}.{function}:{line} - {message}",
+                    "format_rules": [
+                        {
+                            "level": "ERROR",
+                            "format": "{timestamp} - {level} - {message}",
+                        },
+                        {
+                            "level": "INFO",
+                            "format": "{timestamp} - {level} - {module}.{function} - {message}",
+                        },
+                    ],
+                    "is_active": True,
+                }
+            )
         )
 
         # Setup console handler
@@ -103,7 +113,7 @@ class EnhancedLogger:
             line=kwargs.get("line", 0),
             extra=kwargs.get("extra", {}),
             process_id=os.getpid(),
-            thread_id=threading.get_ident()
+            thread_id=threading.get_ident(),
         )
 
     def _level_str_to_num(self, level_str: str) -> int:
@@ -113,7 +123,7 @@ class EnhancedLogger:
             "INFO": INFO,
             "WARNING": WARNING,
             "ERROR": ERROR,
-            "CRITICAL": CRITICAL
+            "CRITICAL": CRITICAL,
         }
         return level_map.get(level_str.upper(), INFO)
 
@@ -151,7 +161,9 @@ class EnhancedLogger:
         return uuid.uuid4().hex
 
     @asynccontextmanager
-    async def start_as_current_span(self, name: str, context: Optional[SpanContext] = None) -> Span:
+    async def start_as_current_span(
+        self, name: str, context: Optional[SpanContext] = None
+    ) -> Span:
         """Start a new tracing span as the current span."""
         if context is None:
             context = SpanContext(
@@ -159,7 +171,7 @@ class EnhancedLogger:
                 thread_id=threading.get_ident(),
                 is_remote=False,
                 span_id=self._generate_span_id(),
-                trace_id=self._generate_trace_id()
+                trace_id=self._generate_trace_id(),
             )
         span = Span(name=name, context=context)
         tracer.start_span(span)
@@ -184,7 +196,7 @@ class EnhancedLogger:
             module=context.module,
             function=context.function,
             line=context.line,
-            extra=context.extra.copy()
+            extra=context.extra.copy(),
         )
 
         # Start tracing span
@@ -257,7 +269,7 @@ class EnhancedLogger:
             f"<p>Total Logs: {agg_data['counts']}</p>",
             f"<p>Error Rate: {agg_data['error_rate']:.2%}</p>",
             "<h2>Log Entries</h2>",
-            "<table><tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>"
+            "<table><tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>",
         ]
 
         for entry in agg_data["entries"]:
@@ -279,9 +291,9 @@ class EnhancedLogger:
             "summary": {
                 "total_logs": agg_data["counts"],
                 "error_rate": agg_data["error_rate"],
-                "patterns": agg_data["patterns"]
+                "patterns": agg_data["patterns"],
             },
-            "entries": [entry.to_dict() for entry in agg_data["entries"]]
+            "entries": [entry.to_dict() for entry in agg_data["entries"]],
         }
         return json.dumps(report_data, indent=2)
 
@@ -293,14 +305,12 @@ class EnhancedLogger:
 
 
 if __name__ == "__main__":
+
     async def main():
         # Example usage
         log_dir = Path("./logs")
         logger = EnhancedLogger(
-            name="MyAppLogger",
-            log_dir=log_dir,
-            enable_metrics=True,
-            enable_ml=True
+            name="MyAppLogger", log_dir=log_dir, enable_metrics=True, enable_ml=True
         )
 
         # Log some test messages
@@ -310,7 +320,7 @@ if __name__ == "__main__":
             module="app",
             function="main",
             line=1,
-            extra={"tags": ["startup"]}
+            extra={"tags": ["startup"]},
         )
 
         await logger.log(
@@ -319,7 +329,7 @@ if __name__ == "__main__":
             module="app",
             function="process",
             line=2,
-            extra={"correlation_id": "test-123"}
+            extra={"correlation_id": "test-123"},
         )
 
         # Generate and save report
@@ -328,7 +338,6 @@ if __name__ == "__main__":
 
         # Clean up
         logger.close()
-
 
     # Run the example
     if sys.platform != "win32":

@@ -12,26 +12,42 @@ Features:
 
 import ast
 import contextlib
+import logging
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+from numpy.typing import NDArray
 
-import libcst as cst
-import matplotlib.pyplot as plt
-import mypy.api
-import networkx as nx
-import numpy as np
-import rope.base.project
-import sympy
-import toml
-from networkx.algorithms.community import greedy_modularity_communities, modularity
-from radon.complexity import cc_visit
-from radon.metrics import mi_visit
+# Core dependencies that are always required
 from rich.console import Console
 from rich.table import Table
+
+# Optional dependencies - these will be imported lazily
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+import sympy
+import toml
+import libcst as cst
+import mypy.api as mypy
+from radon import complexity as radon_cc
+from rope.base import project as rope_project
+
+# Initialize optional dependencies
+OPTIONAL_DEPS = {
+    'libcst': cst,
+    'matplotlib': plt,
+    'mypy': mypy,
+    'networkx': nx,
+    'numpy': np,
+    'sympy': sympy,
+    'toml': toml,
+    'radon': radon_cc,
+    'rope': rope_project
+}
 
 # Advanced console for rich output
 console = Console()
@@ -40,6 +56,7 @@ console = Console()
 @dataclass
 class CodeModule:
     """Represents a Python module with comprehensive metadata."""
+
     name: str
     path: Path
     # Analysis metrics
@@ -65,6 +82,7 @@ class CodeModule:
 @dataclass
 class ProjectMetrics:
     """Comprehensive project-wide metrics."""
+
     # Module statistics
     total_modules: int = 0
     total_imports: int = 0
@@ -77,7 +95,7 @@ class ProjectMetrics:
     circular_deps: List[List[str]] = field(default_factory=list)
     import_depth: Dict[str, int] = field(default_factory=dict)
     modularity_score: float = 0.0
-    coupling_matrix: Optional[np.ndarray] = None
+    coupling_matrix: Optional[NDArray[np.float64]] = None
     # Type system metrics
     type_coverage: float = 0.0
     type_error_count: int = 0
@@ -90,63 +108,109 @@ class ProjectMetrics:
     files_modified: Set[str] = field(default_factory=set)
 
 
+class ASTImportVisitor(ast.NodeVisitor):
+    """Basic AST visitor for collecting imports."""
+    def __init__(self):
+        super().__init__()
+        self.imports: Set[str] = set()
+
+    def visit_Import(self, node: ast.Import):
+        for name in node.names:
+            self.imports.add(name.name)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        if node.module:
+            self.imports.add(node.module)
+
 class CodebaseOptimizer:
     """Unified system for Python codebase analysis and optimization."""
 
-    def __init__(self, root_path: Path, config_path: Optional[Path] = None, backup: bool = True):
+    def __init__(
+        self, root_path: Path, config_path: Optional[Path] = None, backup: bool = True
+    ):
         # Initialize paths and configuration
         self.root = root_path.resolve()
         self.backup = backup
         self.config = self._load_config(config_path) if config_path else {}
-        
+
         # Initialize core components
         self.modules: Dict[str, CodeModule] = {}
         self.metrics = ProjectMetrics()
-        self.dependency_graph = nx.DiGraph()
-        self.rope_project = rope.base.project.Project(str(self.root))
         
+        # Initialize graphs if networkx is available
+        self.dependency_graph = None
+        if OPTIONAL_DEPS['networkx']:
+            self.dependency_graph = OPTIONAL_DEPS['networkx'].DiGraph()
+
+        # Initialize rope project if available
+        self.rope_project = None
+        if OPTIONAL_DEPS['rope']:
+            self.rope_project = OPTIONAL_DEPS['rope'].Project(str(self.root))
+
         # Initialize optimization components
         self.fix_strategies = self._initialize_fix_strategies()
         self.module_clusters = None
         self.optimal_order = None
-        
+
         # Performance settings
         self.max_workers = self.config.get("max_workers", 4)
         self.enable_caching = self.config.get("enable_caching", True)
         self.cache_dir = Path(self.config.get("cache_dir", ".python_fixer_cache"))
-        
+
         # Analysis settings
         self.enable_type_checking = self.config.get("enable_type_checking", True)
-        self.enable_complexity_analysis = self.config.get("enable_complexity_analysis", True)
-        
+        self.enable_complexity_analysis = self.config.get(
+            "enable_complexity_analysis", True
+        )
+
         # Setup logging
         self._setup_logging()
 
     def analyze_project(self) -> ProjectMetrics:
         """Perform comprehensive project analysis"""
-        console.rule("[bold blue]Starting Enhanced Project Analysis")
+        try:
+            console.rule("[bold blue]Starting Enhanced Project Analysis")
 
-        # Parallel file discovery and initial parsing
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            python_files = list(self.root.rglob("*.py"))
-            list(executor.map(self._analyze_file, python_files))
+            # Parallel file discovery and initial parsing
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                python_files = list(self.root.rglob("*.py"))
+                list(executor.map(self._analyze_file, python_files))
 
-        # Build dependency graph
-        self._build_dependency_graph()
+            # Build dependency graph
+            if OPTIONAL_DEPS['networkx']:
+                self._build_dependency_graph()
+                self._analyze_circular_dependencies()
+            else:
+                console.print("[yellow]Skipping dependency analysis - networkx not available")
 
-        # Advanced analysis steps
-        self._analyze_circular_dependencies()
-        self._calculate_cohesion_metrics()
-        self._analyze_type_coverage()
-        self._calculate_complexity_metrics()
+            # Advanced analysis steps
+            self._calculate_cohesion_metrics()
+            
+            if OPTIONAL_DEPS['mypy']:
+                self._analyze_type_coverage()
+            else:
+                console.print("[yellow]Skipping type analysis - mypy not available")
 
-        # Generate comprehensive metrics
-        self._generate_metrics()
+            if OPTIONAL_DEPS['radon']:
+                self._calculate_complexity_metrics()
+            else:
+                console.print("[yellow]Skipping complexity analysis - radon not available")
 
-        # Visualize results
-        self._generate_visualizations()
+            # Generate comprehensive metrics
+            self._generate_metrics()
 
-        return self.metrics
+            # Visualize results if matplotlib is available
+            if OPTIONAL_DEPS['matplotlib']:
+                self._generate_visualizations()
+            else:
+                console.print("[yellow]Skipping visualizations - matplotlib not available")
+
+            return self.metrics
+
+        except Exception as e:
+            console.print(f"[red]Error during project analysis: {str(e)}")
+            logging.error("Project analysis failed", exc_info=e)
+            return ProjectMetrics()
 
     def _analyze_type_coverage(self):
         """Analyze type coverage across all modules in the project."""
@@ -183,35 +247,72 @@ class CodebaseOptimizer:
         )
 
     def _analyze_file(self, file_path: Path):
-        """Analyze a single Python file using libcst"""
+        """Analyze a single Python file using AST or libcst if available"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 source = f.read()
 
-            # Parse with libcst for accurate analysis
-            module = cst.parse_module(source)
-            visitor = ImportCollectorVisitor()
-            module.visit(visitor)
+            # Use libcst if available, otherwise fallback to ast
+            if OPTIONAL_DEPS['libcst']:
+                cst = OPTIONAL_DEPS['libcst']['libcst']
+                module = cst.parse_module(source)
+                visitor = ImportCollectorVisitor()
+                module.visit(visitor)
+            else:
+                # Fallback to basic AST analysis
+                tree = ast.parse(source)
+                visitor = ASTImportVisitor()
+                visitor.visit(tree)
+                
+            console.print(f"[green]Successfully analyzed {file_path}")
 
-            # Calculate complexity metrics
-            complexity = cc_visit(source)
-            maintainability = mi_visit(source, multi=True)
+        except Exception as e:
+            console.print(f"[red]Error analyzing {file_path}: {str(e)}")
+            logging.error(f"File analysis failed for {file_path}", exc_info=e)
 
-            # Create module node
-            module_name = self._get_module_name(file_path)
-            node = CodeModule(
-                name=module_name,
-                path=file_path,
-                dependencies=visitor.imports,
-                complexity=float(np.mean([c.complexity for c in complexity])),
-                maintainability=np.mean(maintainability),
-                cyclomatic_complexity=sum(c.complexity for c in complexity),
-            )
+            # Calculate complexity metrics if radon is available
+            if OPTIONAL_DEPS['radon']:
+                cc_visit = OPTIONAL_DEPS['radon']['radon.complexity'].cc_visit
+                mi_visit = OPTIONAL_DEPS['radon']['radon.metrics'].mi_visit
+                complexity = cc_visit(source)
+                maintainability = mi_visit(source, multi=True)
+
+                # Create module node with complexity metrics
+                module_name = self._get_module_name(file_path)
+                if OPTIONAL_DEPS['numpy']:
+                    np = OPTIONAL_DEPS['numpy']['numpy']
+                    node = CodeModule(
+                        name=module_name,
+                        path=file_path,
+                        dependencies=visitor.imports,
+                        complexity=float(np.mean([c.complexity for c in complexity])),
+                        maintainability=np.mean(maintainability),
+                        cyclomatic_complexity=sum(c.complexity for c in complexity),
+                    )
+                else:
+                    # Fallback without numpy
+                    complexities = [c.complexity for c in complexity]
+                    node = CodeModule(
+                        name=module_name,
+                        path=file_path,
+                        dependencies=visitor.imports,
+                        complexity=sum(complexities) / len(complexities) if complexities else 0.0,
+                        maintainability=sum(maintainability) / len(maintainability) if maintainability else 0.0,
+                        cyclomatic_complexity=sum(c.complexity for c in complexity),
+                    )
+            else:
+                # Create basic module node without complexity metrics
+                module_name = self._get_module_name(file_path)
+                node = CodeModule(
+                    name=module_name,
+                    path=file_path,
+                    dependencies=visitor.imports,
+                )
 
             self.modules[module_name] = node
 
-            # Type checking if enabled
-            if self.enable_type_checking:
+            # Type checking if enabled and mypy is available
+            if self.enable_type_checking and OPTIONAL_DEPS['mypy']:
                 self._check_types(file_path, node)
 
         except Exception as e:
@@ -219,55 +320,69 @@ class CodebaseOptimizer:
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using networkx"""
+        if not OPTIONAL_DEPS['networkx'] or not self.dependency_graph:
+            console.print("[yellow]Skipping dependency graph - networkx not available")
+            return
+
         for module_name, node in self.modules.items():
-            self.import_graph.add_node(
+            self.dependency_graph.add_node(
                 module_name,
                 complexity=node.complexity,
                 maintainability=node.maintainability,
             )
 
             for dep in node.dependencies:
-                self.import_graph.add_edge(module_name, dep)
+                self.dependency_graph.add_edge(module_name, dep)
 
         # Create a partition using a community detection algorithm
-        communities = list(greedy_modularity_communities(self.import_graph))
+        try:
+            from networkx.algorithms.community import greedy_modularity_communities, modularity
+            communities = list(greedy_modularity_communities(self.dependency_graph))
+            self.metrics.modularity_score = modularity(self.dependency_graph, communities)
+        except ImportError:
+            console.print("[yellow]Skipping community detection - algorithm not available")
 
-        # Calculate modularity score using the partition
-        self.metrics.modularity_score = modularity(self.import_graph, communities)
+        # Calculate coupling matrix if numpy is available
+        if OPTIONAL_DEPS['numpy']:
+            np = OPTIONAL_DEPS['numpy']['numpy']
+            n = len(self.modules)
+            coupling_matrix = np.zeros((n, n))
+            module_indices = {name: i for i, name in enumerate(self.modules)}
 
-        # Calculate coupling matrix
-        n = len(self.modules)
-        coupling_matrix = np.zeros((n, n))
-        module_indices = {name: i for i, name in enumerate(self.modules)}
+            for module_name, node in self.modules.items():
+                i = module_indices[module_name]
+                for dep in node.dependencies:
+                    if dep in module_indices:
+                        j = module_indices[dep]
+                        coupling_matrix[i, j] = 1
 
-        for module_name, node in self.modules.items():
-            i = module_indices[module_name]
-            for dep in node.dependencies:
-                if dep in module_indices:
-                    j = module_indices[dep]
-                    coupling_matrix[i, j] = 1
-
-        self.metrics.coupling_matrix = coupling_matrix
+            self.metrics.coupling_matrix = coupling_matrix
 
     def _analyze_circular_dependencies(self):
         """Detect and analyze circular dependencies with advanced cycle detection."""
-        with contextlib.suppress(nx.NetworkXNoCycle):
-            if cycles := list(nx.simple_cycles(self.dependency_graph)):
-                self.metrics.circular_deps = [cycle for cycle in cycles if len(cycle) > 1]
+        with contextlib.suppress(OPTIONAL_DEPS['networkx'].NetworkXNoCycle):
+            if cycles := list(OPTIONAL_DEPS['networkx'].simple_cycles(self.dependency_graph)):
+                self.metrics.circular_deps = [
+                    cycle for cycle in cycles if len(cycle) > 1
+                ]
 
             # Calculate cycle metrics
             if cycle_lengths := [len(cycle) for cycle in self.metrics.circular_deps]:
-                self.metrics.complexity_distribution['cycle_length_avg'] = np.mean(cycle_lengths)
-                self.metrics.complexity_distribution['cycle_length_max'] = max(cycle_lengths)
+                self.metrics.complexity_distribution["cycle_length_avg"] = np.mean(
+                    cycle_lengths
+                )
+                self.metrics.complexity_distribution["cycle_length_max"] = max(
+                    cycle_lengths
+                )
 
             # Find strongly connected components (groups of mutually dependent modules)
-            if sccs := list(nx.strongly_connected_components(self.dependency_graph)):
+            if sccs := list(OPTIONAL_DEPS['networkx'].strongly_connected_components(self.dependency_graph)):
                 large_sccs = [scc for scc in sccs if len(scc) > 1]
 
             # Calculate component coupling scores
             for scc in large_sccs:
                 subgraph = self.dependency_graph.subgraph(scc)
-                coupling_score = nx.density(subgraph)
+                coupling_score = OPTIONAL_DEPS['networkx'].density(subgraph)
                 for module_name in scc:
                     if module_name in self.modules:
                         self.modules[module_name].cohesion_score = coupling_score
@@ -284,83 +399,97 @@ class CodebaseOptimizer:
             cycle_subgraph = self.dependency_graph.subgraph(cycle)
             most_connected = max(cycle, key=lambda n: cycle_subgraph.degree(n))
             edge_count = cycle_subgraph.number_of_edges()
-            
+
             # Calculate cycle-specific metrics
             target_module = max(
-                ((module, self.modules[module].complexity)
-                for module in cycle
-                if module in self.modules),
-                key=lambda x: x[1], default=(most_connected, 0)
+                (
+                    (module, self.modules[module].complexity)
+                    for module in cycle
+                    if module in self.modules
+                ),
+                key=lambda x: x[1],
+                default=(most_connected, 0),
             )[0]
-            
+
             # Generate targeted suggestions
             if edge_count > len(cycle) * 1.5:  # Dense cycle
                 # Analyze common interfaces and generate suggestions
                 if interfaces := self._extract_common_interfaces(cycle):
                     interface_suggestions = [
                         {
-                            'type': 'extract_interface',
-                            'modules': cycle,
-                            'interface_name': interface_name,
-                            'methods': methods,
-                            'suggestion': f"Create Protocol '{interface_name}' with methods {', '.join(methods)}"
-                        } for interface_name, methods in interfaces.items()
+                            "type": "extract_interface",
+                            "modules": cycle,
+                            "interface_name": interface_name,
+                            "methods": methods,
+                            "suggestion": f"Create Protocol '{interface_name}' with methods {', '.join(methods)}",
+                        }
+                        for interface_name, methods in interfaces.items()
                     ]
                     suggestions.extend(interface_suggestions)
                     for suggestion_data in interface_suggestions:
-                        console.print(f"[yellow]Suggestion: {suggestion_data['suggestion']}")
+                        console.print(
+                            f"[yellow]Suggestion: {suggestion_data['suggestion']}"
+                        )
                 else:
                     suggestion = f"Create an interface to abstract common functionality from {' -> '.join(cycle)}"
-                    suggestions.append({
-                        'type': 'extract_interface',
-                        'modules': cycle,
-                        'suggestion': suggestion
-                    })
+                    suggestions.append(
+                        {
+                            "type": "extract_interface",
+                            "modules": cycle,
+                            "suggestion": suggestion,
+                        }
+                    )
                     console.print(f"[yellow]Suggestion: {suggestion}")
             else:  # Sparse cycle
                 suggestion = f"Split {target_module} into smaller modules to break the dependency cycle"
-                suggestions.append({
-                    'type': 'split_module',
-                    'module': target_module,
-                    'suggestion': suggestion
-                })
+                suggestions.append(
+                    {
+                        "type": "split_module",
+                        "module": target_module,
+                        "suggestion": suggestion,
+                    }
+                )
                 console.print(f"[yellow]Suggestion: {suggestion}")
-            
+
             # Check for common anti-patterns
-            if deps := [self.modules[m].dependencies for m in cycle if m in self.modules]:
+            if deps := [
+                self.modules[m].dependencies for m in cycle if m in self.modules
+            ]:
                 if common_imports := set.intersection(*deps):
                     suggestion = f"Extract common dependencies: {common_imports}"
-                    suggestions.append({
-                        'type': 'extract_common',
-                        'modules': cycle,
-                        'dependencies': list(common_imports),
-                        'suggestion': suggestion
-                    })
+                    suggestions.append(
+                        {
+                            "type": "extract_common",
+                            "modules": cycle,
+                            "dependencies": list(common_imports),
+                            "suggestion": suggestion,
+                        }
+                    )
                     console.print(f"  {suggestion}")
-        
+
         return suggestions
 
     def _extract_common_interfaces(self, modules: List[str]) -> Dict[str, List[str]]:
         """Extract common interfaces from a set of modules.
-        
+
         Args:
             modules: List of module names to analyze
-            
+
         Returns:
             Dictionary mapping interface names to lists of method names
         """
         interfaces = {}
-        
+
         # Collect all class definitions and method signatures
         for module_name in modules:
             if module_name not in self.modules:
                 continue
-                
+
             module_path = self.modules[module_name].path
             try:
-                with open(module_path, 'r') as f:
+                with open(module_path, "r") as f:
                     tree = ast.parse(f.read())
-                
+
                 # Find all classes and their methods
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ClassDef):
@@ -368,43 +497,51 @@ class CodebaseOptimizer:
                         for child in node.body:
                             if isinstance(child, ast.FunctionDef):
                                 # Extract method signature
-                                args = [arg.arg for arg in child.args.args if arg.arg != 'self']
+                                args = [
+                                    arg.arg
+                                    for arg in child.args.args
+                                    if arg.arg != "self"
+                                ]
                                 returns = None
                                 if child.returns:
                                     returns = ast.unparse(child.returns)
-                                
+
                                 method_sig = {
-                                    'name': child.name,
-                                    'args': args,
-                                    'returns': returns,
-                                    'docstring': ast.get_docstring(child)
+                                    "name": child.name,
+                                    "args": args,
+                                    "returns": returns,
+                                    "docstring": ast.get_docstring(child),
                                 }
                                 methods.append(method_sig)
-                        
+
                         # Group similar methods across classes
                         if methods:
                             interface_name = f"{node.name}Interface"
-                            interfaces.setdefault(interface_name, []).extend([m['name'] for m in methods])
-            
+                            interfaces.setdefault(interface_name, []).extend(
+                                [m["name"] for m in methods]
+                            )
+
             except Exception as e:
                 console.print(f"[red]Error analyzing {module_name}: {e}")
-        
+
         # Filter to find common methods
         common_interfaces = {}
         for interface_name, methods in interfaces.items():
             # Count method occurrences and keep methods that appear in multiple classes
-            if common_methods := [m for m, count in Counter(methods).items() if count > 1]:
+            if common_methods := [
+                m for m, count in Counter(methods).items() if count > 1
+            ]:
                 common_interfaces[interface_name] = common_methods
-        
+
         return common_interfaces
 
     def _generate_protocol(self, interface_name: str, methods: List[Dict]) -> str:
         """Generate a Protocol class definition for an interface.
-        
+
         Args:
             interface_name: Name of the interface
             methods: List of method signatures
-            
+
         Returns:
             String containing the Protocol class definition
         """
@@ -412,47 +549,58 @@ class CodebaseOptimizer:
             "from typing import Protocol",
             "",
             f"class {interface_name}(Protocol):",
-            f'    """Protocol defining the interface for {interface_name}."""\n'
+            f'    """Protocol defining the interface for {interface_name}."""\n',
         ]
-        
+
         for method in methods:
-            args_str = ', '.join(['self'] + method['args'])
-            returns_str = f" -> {method['returns']}" if method['returns'] else ""
-            
-            if method['docstring']:
-                lines.extend([
-                    f"    def {method['name']}({args_str}){returns_str}:",
-                    f'        """{method["docstring"]}"""',
-                    "        ..."
-                ])
+            args_str = ", ".join(["self"] + method["args"])
+            returns_str = f" -> {method['returns']}" if method["returns"] else ""
+
+            if method["docstring"]:
+                lines.extend(
+                    [
+                        f"    def {method['name']}({args_str}){returns_str}:",
+                        f'        """{method["docstring"]}"""',
+                        "        ...",
+                    ]
+                )
             else:
-                lines.extend([
-                    f"    def {method['name']}({args_str}){returns_str}: ...",
-                    ""
-                ])
-        
-        return '\n'.join(lines)
+                lines.extend(
+                    [f"    def {method['name']}({args_str}){returns_str}: ...", ""]
+                )
+
+        return "\n".join(lines)
 
     def _calculate_cohesion_metrics(self):
         """Calculate advanced cohesion metrics using spectral graph theory"""
         for module_name, node in self.modules.items():
             # Create subgraph and calculate metrics if dependencies exist
             if deps := list(node.dependencies):
-                if (subgraph := self.dependency_graph.subgraph([module_name] + deps)) and len(subgraph) > 1:
+                if (
+                    subgraph := self.dependency_graph.subgraph([module_name] + deps)
+                ) and len(subgraph) > 1:
                     # Calculate Laplacian matrix and eigenvalues
-                    if (eigenvals := sympy.Matrix(nx.laplacian_matrix(subgraph).todense()).eigenvals()) and (
-                        sorted_eigenvals := sorted(float(v.real) for v in eigenvals.keys())
+                    if (
+                        eigenvals := sympy.Matrix(
+                            nx.laplacian_matrix(subgraph).todense()
+                        ).eigenvals()
+                    ) and (
+                        sorted_eigenvals := sorted(
+                            float(v.real) for v in eigenvals.keys()
+                        )
                     ):
-                        node.cohesion_score = sorted_eigenvals[1] if len(sorted_eigenvals) > 1 else 0.0
+                        node.cohesion_score = (
+                            sorted_eigenvals[1] if len(sorted_eigenvals) > 1 else 0.0
+                        )
 
     def _check_types(self, file_path: Path, node: CodeModule):
         """Perform type checking and validation"""
         results = mypy.api.run([str(file_path)])
         if results[0]:  # mypy output
             if errors := results[0].split("\n"):
-                node.type_errors = [error for error in errors
-                if error and not error.startswith("Found")
-            ]
+                node.type_errors = [
+                    error for error in errors if error and not error.startswith("Found")
+                ]
 
     def _calculate_complexity_metrics(self):
         """Calculate advanced complexity and maintainability metrics"""

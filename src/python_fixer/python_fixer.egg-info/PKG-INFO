@@ -1,0 +1,22 @@
+Metadata-Version: 2.2
+Name: python_fixer
+Version: 0.1.0
+Summary: Fix Python import and class structure issues in your project
+Author: Codeium
+Requires-Python: >=3.7
+Requires-Dist: pathlib
+Requires-Dist: typing
+Requires-Dist: libcst
+Requires-Dist: matplotlib
+Requires-Dist: mypy
+Requires-Dist: networkx
+Requires-Dist: numpy
+Requires-Dist: rope
+Requires-Dist: sympy
+Requires-Dist: toml
+Requires-Dist: radon
+Requires-Dist: rich
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

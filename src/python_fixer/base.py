@@ -25,11 +25,11 @@ DEFAULT_DASHBOARD_RELOAD = False
 def getLevelName(level: int) -> str:
     """Convert numeric level to string representation."""
     levels = {
-        DEBUG: 'DEBUG',
-        INFO: 'INFO',
-        WARNING: 'WARNING',
-        ERROR: 'ERROR',
-        CRITICAL: 'CRITICAL'
+        DEBUG: "DEBUG",
+        INFO: "INFO",
+        WARNING: "WARNING",
+        ERROR: "ERROR",
+        CRITICAL: "CRITICAL",
     }
     return levels.get(level, str(level))
 
@@ -37,6 +37,7 @@ def getLevelName(level: int) -> str:
 @dataclass
 class LogContext:
     """Structure to hold context information for log entries."""
+
     timestamp: datetime
     module: str
     function: str
@@ -50,15 +51,15 @@ class LogRecord:
     """Container for log record information."""
 
     def __init__(
-            self,
-            level: int,
-            message: str,
-            timestamp: str,
-            module: str = "unknown",
-            function: str = "unknown",
-            line: int = 0,
-            extra: Optional[Dict[str, Any]] = None,
-            web_visible: bool = True
+        self,
+        level: int,
+        message: str,
+        timestamp: str,
+        module: str = "unknown",
+        function: str = "unknown",
+        line: int = 0,
+        extra: Optional[Dict[str, Any]] = None,
+        web_visible: bool = True,
     ):
         self.level = level
         self.message = message
@@ -78,7 +79,7 @@ class LogRecord:
             "function": self.function,
             "line": self.line,
             "extra": self.extra,
-            "web_visible": getattr(self, 'web_visible', True)
+            "web_visible": getattr(self, "web_visible", True),
         }
 
 
@@ -115,8 +116,10 @@ class StreamHandler(Handler):
 
     def handle(self, record: LogRecord):
         if record.level >= self.level:
-            msg = self.formatter.format(record) if self.formatter else str(record.message)
-            self.stream.write(msg + '\n')
+            msg = (
+                self.formatter.format(record) if self.formatter else str(record.message)
+            )
+            self.stream.write(msg + "\n")
             self.stream.flush()
 
 
@@ -126,12 +129,14 @@ class FileHandler(Handler):
     def __init__(self, filename: str):
         super().__init__()
         self.filename = filename
-        self.file = open(filename, 'a')
+        self.file = open(filename, "a")
 
     def handle(self, record: LogRecord):
         if record.level >= self.level:
-            msg = self.formatter.format(record) if self.formatter else str(record.message)
-            self.file.write(msg + '\n')
+            msg = (
+                self.formatter.format(record) if self.formatter else str(record.message)
+            )
+            self.file.write(msg + "\n")
             self.file.flush()
 
     def close(self):
@@ -165,7 +170,7 @@ class Formatter:
                 module=record.module,
                 function=record.function,
                 line=record.line,
-                message=record.message
+                message=record.message,
             )
         except json.JSONDecodeError:
             # If fmt is not JSON, use it as a simple format string
@@ -175,7 +180,7 @@ class Formatter:
                 module=record.module,
                 function=record.function,
                 line=record.line,
-                message=record.message
+                message=record.message,
             )
 
 
@@ -207,7 +212,7 @@ class Logger:
                 level=level,
                 message=message,
                 timestamp=datetime.now().isoformat(),
-                extra=extra
+                extra=extra,
             )
             for handler in self.handlers:
                 handler.handle(record)

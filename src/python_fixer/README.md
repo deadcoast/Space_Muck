@@ -302,3 +302,46 @@ Python Import Fixer builds on several open-source technologies:
 - [rich](https://github.com/Textualize/rich) for beautiful terminal output
 - [fastapi](https://fastapi.tiangolo.com/) for the web dashboard
 - [typer](https://typer.tiangolo.com/) for the command-line interface
+
+╭─────────────── SPACE_MUCK ────────────────╮
+│                                           │
+│  ╭─────────────────────────────────────╮  │
+│  │                                     │  │
+│  │  PYTHON@SYSTEM:~$ _                 │  │
+│  │                                     │  │
+│  ╰─────────────────────────────────────╯  │
+│                                           │
+│  [COMMANDS]  [FILES]  [SYSTEM]  [HELP]    │
+│                                           │
+╰───────────────────────────────────────────╯
+
+
+┌─────────────────── [ ERROR-HANDLER CLI ] ────────────────────┐
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
+│  │ RUN │ │ VAL │ │ LOG │ │ CFG │ │ FIX │ │ SYS │ │ HLP │     │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━ COMMAND INPUT ━━━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │
+│  ┃  $ project-cli run --port 8080 --path ./myproject _   ┃   │
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━ ERROR OUTPUT ━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │
+│  ┃  ⚠ ValidationError: Invalid project path              ┃   │
+│  ┃  ✗ Directory './myproject' contains no Python files   ┃   │
+│  ┃  ! Additional context available with --verbose        ┃   │
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━ SUGGESTIONS ━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│  ┃                                                       ┃   │
+│  ┃  ▶ Try: project-cli validate --path ./myproject       ┃   │
+│  ┃  ▶ Try: project-cli run --path ./correct/path         ┃   │
+│  ┃  ▶ See: project-cli --help for more information       ┃   │
+│  ┃                                                       ┃   │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                              │
+│  System: Linux | User: admin | Version: 2.1.3 | Log: Active  │
+└──────────────────────────────────────────────────────────────┘
