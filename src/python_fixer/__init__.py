@@ -1,16 +1,13 @@
-"""
-Python Import Fixer - Advanced Python import and dependency analyzer/fixer.
-"""
+"""Python Import Fixer - Advanced Python import and dependency analyzer/fixer."""
 
-from python_fixer.core.analyzer import EnhancedAnalyzer
-from python_fixer.core.signatures import SignatureAnalyzer
-from python_fixer.logging.formatters import EnhancedFormatter
-from python_fixer.logging.structured import StructuredLogger
+from .core.analyzer import EnhancedAnalyzer
+from .core.signatures import SignatureAnalyzer
+from .logging.formatters import EnhancedFormatter
+from .logging.structured import StructuredLogger
+from .core.fixer import SmartFixer
 
-from python_fixer.core.fixer import SmartFixer
-
-__version__ = "1.0.0"
-__author__ = "Your Name"
+__version__ = "0.1.0"
+__author__ = "Codeium"
 
 # Expose main classes for easy import
 __all__ = [
