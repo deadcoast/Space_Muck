@@ -754,6 +754,18 @@ class SignatureAnalyzer:
             # Calculate type safety score
             type_safety = self._calculate_type_safety(signature)
 
+            # Calculate validation metrics
+            validation_score = float(signature.validate())
+            validation_errors = signature.get_validation_errors()
+            validation_coverage = 1.0 - (len(validation_errors) / len(signature.components)) if validation_errors else 1.0
+
+            # Calculate compatibility with related signatures
+            related_sigs = {s for s in self.signatures.values() if s.name != signature.name and 
+                          (s.name in signature.dependencies or signature.name in s.dependencies)}
+            compatibility_score = 1.0
+            if related_sigs:  # Only calculate if there are related signatures
+                compatibility_score = len([s for s in related_sigs if signature.is_compatible_with(s)]) / len(related_sigs)
+
             # Update metrics
             signature.metrics = SignatureMetrics(
                 complexity=complexity,
@@ -762,6 +774,9 @@ class SignatureAnalyzer:
                 maintainability=maintainability,
                 type_safety=type_safety,
                 documentation_score=self._calculate_doc_score(signature),
+                validation_score=validation_score,
+                compatibility_score=compatibility_score,
+                validation_coverage=validation_coverage
             )
 
     def _calculate_complexity(self, signature: CodeSignature) -> float:
@@ -819,12 +834,27 @@ class SignatureAnalyzer:
         return sum(factors) / len(factors)
 
     def _calculate_type_safety(self, signature: CodeSignature) -> float:
-        """Calculate type safety score"""
+        """Calculate type safety score based on type hints, validation, and constraints"""
         type_scores = []
         for component in signature.components:
-            score = component.type_info.confidence
+            # Base score from type hint presence and validation
+            score = 0.0
+            if component.type_info.type_hint:
+                score += 0.4  # Type hint present
+                if component.validate():  # Type validates correctly
+                    score += 0.3
+
+            # Adjust for type confidence and inference
+            score += 0.2 * component.type_info.confidence
+            if component.type_info.inferred_type:
+                score += 0.1 * (1.0 if component.type_info.inferred_type == component.type_info.type_hint else 0.5)
+
+            # Bonus for having constraints and validation
             if component.constraints:
-                score *= 1.2  # Bonus for having constraints
+                score *= 1.1  # Smaller bonus as we now factor in validation
+                if not component.get_validation_errors():  # All constraints satisfied
+                    score *= 1.1
+
             type_scores.append(min(1.0, score))
 
         return sum(type_scores) / (len(type_scores) or 1)
