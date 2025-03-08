@@ -1,8 +1,5 @@
 # Directory Tree
 
-Generated for: /Users/deadcoast/PycharmProjects/Space_Muck
-
-Excluded patterns: __pycache__, .git, .ruff_cache, .husky, .idea, .vscode, node_modules, dist, build, coverage, .venv, env, .env, .tox, .cache, .tmp, tmp, .npm, .yarn, .pnpm-store, out, .next, .nuxt, .jest, .pytest_cache, __tests__, __snapshots__, tests/fixtures, test-results, cypress/videos, cypress/screenshots, *.js.map, *.d.ts.map, *.tsbuildinfo, *.js.LICENSE.txt, *.chunk.js, *.pyc, *.pyo, .DS_Store, *.egg-info, *.log, *.lock, package-lock.json, yarn.lock, pnpm-lock.yaml, .eslintcache, .stylelintcache, .prettierignore, .eslintignore, .npmrc, .yarnrc, .gitignore, .gitattributes, .editorconfig, thumbs.db, desktop.ini, .git, *.config.js, *.config.ts, tsconfig*.json, jest.config.js, jest.config.ts, babel.config.js, webpack.*.js, rollup.*.js, vite.*.js, eslint-output.json, *.snap, CodeBase_Docs/CodeBase_Error_Log.md, CodeBase_Docs/CodeBase_Linting_Progress.md
 
 ```
 /Users/deadcoast/PycharmProjects/Space_Muck
@@ -10,28 +7,37 @@ Excluded patterns: __pycache__, .git, .ruff_cache, .husky, .idea, .vscode, node_
 ├── benchmark_results/
 │   └── benchmark_log.txt
 ├── docs/
-│   ├── CodeBase_Docs/
-│   │   ├── CodeBase_Architecture.md
-│   │   ├── CodeBase_Error_Fixes.md
-│   │   ├── CodeBase_Mapping.md
-│   │   └── CodeBase_Scratchpad.md
-│   ├── docs_first_phase/
-│   │   ├── CodeBase_Docs/
+│   ├── .legacy_files/
+│   │   ├── game_design/
+│   │   │   ├── algorithm_design.md
+│   │   │   └── game_ideaology.md
+│   │   ├── PhaseOne_CodeBase_Docs/
 │   │   │   ├── CodeBase_Architecture.md
 │   │   │   ├── CodeBase_Error_Fixes.md
 │   │   │   ├── CodeBase_Mapping.md
 │   │   │   └── CodeBase_Scratchpad.md
-│   │   ├── game_design/
-│   │   │   ├── algorithm_design.md
-│   │   │   └── game_ideaology.md
-│   │   ├── legacy_files/
-│   │   │   ├── RADS.py
-│   │   │   ├── space_muck_directory.py
-│   │   │   └── symbiote_algorithm.py
-│   │   ├── CombatSystem_Design.md
-│   │   ├── GPU_Acceleration_Guide.md
-│   │   └── GPU_Hardware_Compatibility.md
-│   └── asteroid_field.py.bak
+│   │   ├── PhaseTwo_CodeBase_Docs/
+│   │   │   ├── Categories/
+│   │   │   │   ├── CombatSystem_Design.md
+│   │   │   │   ├── GPU_Acceleration_Guide.md
+│   │   │   │   └── GPU_Hardware_Compatibility.md
+│   │   │   ├── CodeBase_Architecture.md
+│   │   │   ├── CodeBase_Error_Fixes.md
+│   │   │   ├── CodeBase_Mapping.md
+│   │   │   └── CodeBase_Scratchpad.md
+│   │   ├── RADS.py
+│   │   ├── space_muck_directory.py
+│   │   └── symbiote_algorithm.py
+│   └── System_Docs/
+│       ├── System_Restructuring/
+│       │   ├── System_Architecture_Diagrams.md
+│       │   ├── System_Architecture_Integration.md
+│       │   ├── System_Restructuring_Plan.md
+│       │   └── System_Scratchpad.md
+│       ├── System_Development_History.md
+│       ├── System_Directory_Tree.md
+│       ├── Windsurf_System_Architecture.md
+│       └── Windsurf_System_Integration.md
 ├── src/
 │   ├── algorithms/
 │   │   ├── __init__.py
@@ -143,15 +149,6 @@ Excluded patterns: __pycache__, .git, .ruff_cache, .husky, .idea, .vscode, node_
 │   │   └── visualization.py
 │   ├── __init__.py
 │   └── main.py
-├── test_visualizations/
-│   ├── basegenerator_ca_evolution.png
-│   ├── basegenerator_ca_evolution_grid.png
-│   ├── basegenerator_clustering.png
-│   ├── basegenerator_noise_comparison.png
-│   ├── ca_evolution.png
-│   ├── ca_evolution_grid.png
-│   ├── clustering.png
-│   └── noise_comparison.png
 ├── visualizations/
 │   ├── asteroid_generator_test.png
 │   ├── ca_benchmark_results.png
@@ -165,6 +162,9 @@ Excluded patterns: __pycache__, .git, .ruff_cache, .husky, .idea, .vscode, node_
 ├── README.md
 ├── requirements.txt
 ├── rich_directory_tree.py
-└── run_tests.sh
+├── run_tests.sh
+└── system_architechture_integration.md
 
 ```
+
+# Notes

@@ -80,6 +80,8 @@ from ui.draw_utils import (  # noqa: E402
 # Game systems
 from systems.combat_system import CombatSystem  # noqa: E402
 from systems.encounter_generator import EncounterGenerator  # noqa: E402
+from systems.game_loop import GameLoop, get_game_loop  # noqa: E402
+from systems.event_system import EventBus, get_event_bus, get_event_batcher  # noqa: E402
 from utils.logging_setup import (  # noqa: E402
     log_exception,
     log_performance_start,
@@ -91,6 +93,7 @@ from utils.logging_setup import (  # noqa: E402
 
 class Game:
     """Main game class that orchestrates all game components."""
+
 
     def __init__(self) -> None:
         """Initialize the game and all its components."""
@@ -1837,11 +1840,12 @@ class Game:
                 self.notifier.draw_tooltips(self.screen, WINDOW_WIDTH - 270, 50)
 
             # Draw FPS counter if enabled
-            if SHOW_FPS:
-                self.fps_history.append(self.clock.get_fps())
+            if SHOW_FPS and not self.show_debug:  # Only show simple FPS if debug info is off
+                fps = self.clock.get_fps()
+                self.fps_history.append(fps)
                 if len(self.fps_history) > 60:
                     self.fps_history.pop(0)
-                avg_fps = sum(self.fps_history) / len(self.fps_history)
+                avg_fps = sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
 
                 draw_text(self.screen, f"FPS: {avg_fps:.1f}", 10, 10, 14, COLOR_TEXT)
 
@@ -1945,13 +1949,134 @@ class Game:
                 self.zoom_level,
             )
 
-        # Draw debug info if enabled
-        if self.show_debug:
-            self.draw_debug_info()
-
         # Draw player's ship info if enabled
         if self.show_ship_info:
             self.player.draw_ship_info(self.screen)
+            
+    def draw_debug_info(self) -> None:
+        """Draw debug information on the screen."""
+        # Get game loop instance for its metrics
+        game_loop = get_game_loop()
+        event_batcher = get_event_batcher()
+        game_event_bus = get_event_bus("GameEventBus")
+        
+        # Calculate frame timing information
+        fps = self.clock.get_fps()
+        self.fps_history.append(fps)
+        if len(self.fps_history) > 100:
+            self.fps_history.pop(0)
+
+        avg_fps = sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
+        
+        # Debug info sections
+        performance_text = [
+            f"FPS: {fps:.1f} (Avg: {avg_fps:.1f})",
+            f"Frame: {self.frame_counter} (GL: {game_loop.frame_counter})",
+            f"Game Time: {self.game_time:.1f}s",
+            f"Delta: {self.delta_time*1000:.1f}ms",
+            f"Memory: {log_memory_usage(return_value=True):.1f} MB"
+        ]
+        
+        player_text = [
+            f"Player Pos: ({self.player.x}, {self.player.y})",
+            f"Mining Power: {self.player.mining_power}",
+            f"Rare Mining: {self.player.rare_mining_power}",
+            f"Currency: {self.player.currency}",
+            f"Health: {self.player.health}"
+        ]
+        
+        field_text = [
+            f"Grid Size: {GRID_WIDTH}x{GRID_HEIGHT}",
+            f"Zoom: {self.zoom_level:.2f}x",
+            f"Entities: {len(self.field.entities)}",
+            f"Races: {len(self.field.races)}"
+        ]
+        
+        game_loop_text = [
+            f"GL Update funcs: {len(game_loop.update_functions)}",
+            f"GL Render funcs: {len(game_loop.render_functions)}",
+            f"GL Event handlers: {len(game_loop.event_handlers)}",
+            f"GL Interval updates: {len(game_loop.interval_updates)}"
+        ]
+        
+        event_system_text = [
+            f"GameEvents: {len(game_event_bus.event_history) if game_event_bus else 0}",
+            f"GameBus subs: {len(game_event_bus.subscriptions) if game_event_bus else 0}",
+            f"Event Batching: {event_batcher.is_batching}"
+        ]
+        
+        # Draw debug panels
+        panel_y = 10
+        panel_height = 20
+        
+        # Draw performance section
+        y = panel_y
+        for text in performance_text:
+            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
+            y += panel_height
+        
+        # Draw player section
+        y += 10  # Add spacing
+        for text in player_text:
+            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
+            y += panel_height
+        
+        # Draw field section
+        y += 10  # Add spacing
+        for text in field_text:
+            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
+            y += panel_height
+        
+        # Draw game loop section
+        y += 10  # Add spacing
+        for text in game_loop_text:
+            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
+            y += panel_height
+        
+        # Draw event system section
+        y += 10  # Add spacing
+        for text in event_system_text:
+            draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
+            y += panel_height
+    
+    # Wrapper methods for the new game loop architecture
+    def handle_events_wrapper(self) -> bool:
+        """Wrapper around handle_events for the new GameLoop system.
+        
+        Returns:
+            bool: True if the game should exit, False otherwise
+        """
+        return not self.handle_events()
+    
+    def update_wrapper(self, delta_time: float) -> None:
+        """Wrapper around update for the new GameLoop system.
+        
+        Args:
+            delta_time: Time since last frame in seconds
+        """
+        # Update our internal time tracking
+        self.delta_time = delta_time
+        self.game_time += delta_time
+        
+        # Process the update if not paused
+        if not self.paused:
+            self.update()
+        
+        # Start event batching for this frame
+        event_batcher = get_event_batcher()
+        event_batcher.start_batch()
+        
+        # Dispatch game events
+        game_event_bus = get_event_bus("GameEventBus")
+        if game_event_bus:
+            game_event_bus.dispatch("frame_update", {
+                "frame": self.frame_counter,
+                "delta_time": delta_time,
+                "game_time": self.game_time
+            })
+        
+        # End event batching and dispatch all events
+        event_batcher.dispatch_batch()
 
 
 def run_game_loop(game):
@@ -1964,23 +2089,25 @@ def run_game_loop(game):
         bool: True if the game completed successfully, False otherwise.
     """
     try:
-        # Main game loop
-        running = True
-        while running:
-            # Process input events
-            running = game.handle_events()
-            
-            # Skip updates if paused
-            if not game.paused:
-                # Update game state
-                game.update()
-            
-            # Always render (even when paused)
-            game.draw()
-            
-            # Control frame rate
-            game.clock.tick(60)  # Cap at 60 FPS
-            
+        # Get the game loop instance
+        game_loop = get_game_loop()
+        
+        # Register event handlers, update functions, and render functions
+        game_loop.register_event_handler(game.handle_events_wrapper)
+        game_loop.register_update_function(game.update_wrapper)
+        game_loop.register_render_function(game.draw)
+        
+        # Register interval updates
+        game_loop.register_interval_update("field_update", game.update_interval / 60.0)  # Convert frames to seconds
+        
+        # Define a clock function that uses pygame's clock
+        def clock_func():
+            game_loop.delta_time = game.clock.get_time() / 1000.0  # Convert ms to seconds
+            return time.time()
+        
+        # Run the game loop
+        game_loop.run(clock_func)
+        
         return True
     except Exception as e:
         log_exception("Unhandled exception in main game loop", e)
@@ -1995,6 +2122,14 @@ def main():
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         logging.info("Starting Space Muck game...")
+        
+        # Initialize event system
+        game_event_bus = get_event_bus("GameEventBus")
+        resource_event_bus = get_event_bus("ResourceEventBus")
+        module_event_bus = get_event_bus("ModuleEventBus")
+        event_batcher = get_event_batcher()
+        
+        logging.info("Event system initialized")
         
         # Create the game instance
         game = Game()
