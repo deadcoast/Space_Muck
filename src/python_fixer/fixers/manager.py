@@ -42,8 +42,24 @@ class FixManager:
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
 
-        # Initialize FixManager with configuration
-        fix_manager = FixManager(config_path=config_path)
+        # Validate configuration integrity
+        fix_manager = self._validate_config(config_path)
+        if fix_manager and fix_manager != self.config:
+            logger.warning("Configuration validation failed: inconsistent state detected")
+
+    def _validate_config(self, config_path: Optional[str]) -> Optional[Dict[str, Any]]:
+        """Validate configuration by loading it independently.
+
+        :param config_path: Path to the configuration file.
+        :type config_path: Optional[str]
+        :return: Validated configuration dictionary or None if validation fails.
+        :rtype: Optional[Dict[str, Any]]
+        """
+        try:
+            return self._load_config(config_path) if config_path else {}
+        except Exception as e:
+            logger.error(f"Failed to validate configuration: {e}")
+            return None
 
     def _load_config(self, param: str) -> Dict[str, Any]:
         """
@@ -381,6 +397,16 @@ class FixManager:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
+            
+            # Log paths for debugging and verification
+            logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
+            
+            # Verify paths exist and are writable
+            temp_paths = [original_file_path, patched_file_path, patch_file_path]
+            for path in temp_paths:
+                if not os.access(os.path.dirname(path), os.W_OK):
+                    logger.error(f"Directory for {path} is not writable")
+                    return None
 
             # Write the original content to 'original.txt'
             try:

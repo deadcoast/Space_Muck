@@ -175,28 +175,30 @@ class EnhancementSystem:
             return False
 
         try:
-            class_name = enhancement["class_name"]
-            method_name = enhancement["method_name"]
-
-            target_class = self._get_target_class(class_name)
-
-            if enhancement["is_new"]:
-                # Remove added method
-                delattr(target_class, method_name)
-            else:
-                # Restore original method
-                original = self.original_methods[class_name][method_name]
-                setattr(target_class, method_name, original)
-
-            # Mark as inactive
-            enhancement["active"] = False
-            return True
-
+            return self._rollback_enhancement(enhancement)
         except Exception as e:
             self.logger.error(
                 f"Error rolling back enhancement {enhancement_id}: {str(e)}"
             )
             return False
+
+    def _rollback_enhancement(self, enhancement):
+        class_name = enhancement["class_name"]
+        method_name = enhancement["method_name"]
+
+        target_class = self._get_target_class(class_name)
+
+        if enhancement["is_new"]:
+            # Remove added method
+            delattr(target_class, method_name)
+        else:
+            # Restore original method
+            original = self.original_methods[class_name][method_name]
+            setattr(target_class, method_name, original)
+
+        # Mark as inactive
+        enhancement["active"] = False
+        return True
 
     def list_enhancements(self, active_only: bool = True) -> List[Dict]:
         """List all registered enhancements.

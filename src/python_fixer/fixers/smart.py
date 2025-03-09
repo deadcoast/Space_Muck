@@ -370,6 +370,25 @@ class FixManager:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
+            
+            # Log paths and verify writability
+            logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
+            
+            # Verify paths exist and are writable
+            temp_paths = [original_file_path, patched_file_path, patch_file_path]
+            for path in temp_paths:
+                if not os.access(os.path.dirname(path), os.W_OK):
+                    logger.error(f"Directory for {path} is not writable")
+                    return None
+                    
+            # Create patched file to verify patch can be applied
+            try:
+                with open(patched_file_path, 'w') as f:
+                    f.write(content)
+                logger.debug(f"Created patched file at {patched_file_path}")
+            except Exception as e:
+                logger.error(f"Failed to create patched file: {e}")
+                return None
 
             # Write the original content to 'original.txt'
             try:
@@ -500,9 +519,9 @@ class ExampleFix(Fix):
                 )
 
 
-class FixManager:
+class SmartFixManager:
     """
-    Manages the application of fixes.
+    Manages the application of fixes with enhanced capabilities.
     """
 
     def __init__(self, config_path: Optional[Path] = None):
@@ -760,7 +779,7 @@ class Analyzer:
                         "<html><head><title>Analysis Report</title></head><body>"
                     )
                     summary = data["summary"]
-                    await f.write(f"<h1>Analysis Report</h1>")
+                    await f.write("<h1>Analysis Report</h1>")
                     await f.write(
                         f"<p>Total Files Analyzed: {summary['total_files_analyzed']}</p>"
                     )
@@ -913,7 +932,13 @@ class Analyzer:
                 return
 
         # Initialize FixManager with configuration
-        fix_manager = FixManager(config_path=config_path)
+        fix_manager = SmartFixManager(config_path=config_path)
+        
+        # Apply initial configuration
+        if fix_manager.config:
+            logger.info("Applying initial configuration settings")
+            for fix in fix_manager.fixes:
+                fix.apply(self)
 
         # Example files to analyze
         files = ["example1.py", "example2.py"]

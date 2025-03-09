@@ -70,6 +70,16 @@ class PatchHandler:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
+            
+            # Log paths and verify writability
+            patch.logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
+            
+            # Ensure all paths are writable
+            temp_paths = [original_file_path, patched_file_path, patch_file_path]
+            for path in temp_paths:
+                if not os.access(os.path.dirname(path), os.W_OK):
+                    patch.logger.error(f"Directory for {path} is not writable")
+                    return None
 
             # Write the original content to 'original.txt'
             try:
@@ -270,8 +280,14 @@ if __name__ == "__main__":
         # Initialize analyzer
         analyzer = EnhancedAnalyzer(Path(self))
 
-        # Analyze project
+        # Analyze project and validate results
         analysis_result = analyzer.analyze_project()
+        if not analysis_result or not analysis_result.get('issues'):
+            console.warning("No issues found in project analysis")
+            return
+
+        # Log analysis summary
+        console.info(f"Found {len(analysis_result['issues'])} issues to fix")
 
         # Initialize fixer
         fixer_instance = SmartFixer(analyzer)

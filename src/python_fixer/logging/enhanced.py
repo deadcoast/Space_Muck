@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, List, Optional, Union
 import aiofiles
 from opentelemetry.sdk.trace import Span
 from opentelemetry.trace import SpanContext
@@ -220,8 +220,7 @@ class EnhancedLogger:
 
             # Handle correlations
             if self.correlator:
-                correlations = self.correlator.correlate(record)
-                if correlations:
+                if correlations := self.correlator.correlate(record):
                     record.extra["correlations"] = [r.to_dict() for r in correlations]
 
             # Write the log entry
@@ -272,13 +271,10 @@ class EnhancedLogger:
             "<table><tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>",
         ]
 
-        for entry in agg_data["entries"]:
-            html_content.append(
-                f"<tr><td>{entry.timestamp}</td>"
-                f"<td>{getLevelName(entry.level)}</td>"
-                f"<td>{entry.message}</td></tr>"
-            )
-
+        html_content.extend(
+            f"<tr><td>{entry.timestamp}</td><td>{getLevelName(entry.level)}</td><td>{entry.message}</td></tr>"
+            for entry in agg_data["entries"]
+        )
         html_content.extend(["</table></body></html>"])
         return "\n".join(html_content)
 
