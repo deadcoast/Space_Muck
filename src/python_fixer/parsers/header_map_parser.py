@@ -11,7 +11,7 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 
 class HeaderMapParser:
@@ -49,7 +49,7 @@ class HeaderMapParser:
             re.MULTILINE,
         )
 
-    def parse_header(self, content: str) -> Dict:
+    def parse_header(self, content: str) -> Dict[str, Union[str, List[str]]]:
         """Parse module header information from content.
 
         Args:
@@ -81,7 +81,7 @@ class HeaderMapParser:
             "naming": naming.strip() if naming else "",
         }
 
-    def generate_header(self, info: Dict) -> str:
+    def generate_header(self, info: Dict[str, Union[str, List[str]]]) -> str:
         """Generate a standardized header from information.
 
         Args:
@@ -112,7 +112,7 @@ class HeaderMapParser:
             naming=info["naming"],
         )
 
-    def update_header(self, content: str, updates: Dict) -> Tuple[str, bool]:
+    def update_header(self, content: str, updates: Dict[str, Union[str, List[str]]]) -> Tuple[str, bool]:
         """Update existing header with new information.
 
         Args:
@@ -132,13 +132,10 @@ class HeaderMapParser:
         # Generate new header
         new_header = self.generate_header(current_info)
 
-        # Replace old header or add new one
-        match = self._header_pattern.search(content)
-        if match:
-            new_content = content[: match.start()] + new_header + content[match.end() :]
-            return new_content, True
-        else:
+        if not (match := self._header_pattern.search(content)):
             return new_header + "\n" + content, True
+        new_content = content[: match.start()] + new_header + content[match.end() :]
+        return new_content, True
 
     def analyze_imports(self, content: str) -> List[str]:
         """Analyze module imports to maintain dependency list.
@@ -166,7 +163,7 @@ class HeaderMapParser:
             self.logger.error(f"Error analyzing imports: {str(e)}")
             return []
 
-    def _create_empty_header_info(self) -> Dict:
+    def _create_empty_header_info(self) -> Dict[str, Union[str, List[str]]]:
         """Create empty header information structure.
 
         Returns:
@@ -181,7 +178,7 @@ class HeaderMapParser:
             "naming": "",
         }
 
-    def extract_module_info(self, module_path: Path) -> Dict:
+    def extract_module_info(self, module_path: Path) -> Dict[str, Union[str, List[str], Optional[str]]]:
         """Extract complete module information including docstrings.
 
         Args:

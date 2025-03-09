@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python_fixer"
-dynamic = ["version"]
+version = "0.1.0"
 description = "Fix Python import and class structure issues in your project using ML-enhanced analysis"
 authors = [
     {name = "Codeium"}
@@ -53,10 +53,7 @@ docs = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["python_fixer"]
-
-[tool.setuptools.dynamic]
-version = {attr = "python_fixer.__version__"}
+packages = {find = {where = ["src"]}}
 
 [tool.black]
 line-length = 88
@@ -112,4 +109,3 @@ exclude_lines = [
     "return NotImplemented",
     "raise ImportError"
 ]
-

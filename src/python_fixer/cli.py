@@ -4,14 +4,26 @@ Main entry point for the Python Import Fixer tool.
 """
 
 import argparse
+import importlib.util
+import logging
 import os
 import sys
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
+# Import core dependencies
 from python_fixer.core.analyzer import ProjectAnalyzer
+from python_fixer.core.signals import SignalManager
 from python_fixer.logging.structured import StructuredLogger
-from python_fixer.web.dashboard import run_dashboard
+
+# Optional web dashboard import
+run_dashboard = None
+if importlib.util.find_spec("python_fixer.web.dashboard") is not None:
+    from python_fixer.web.dashboard import run_dashboard
+
+# Initialize signal manager and logger
+signal_manager = SignalManager()
+logger = StructuredLogger.get_logger(__name__)
 
 
 class CLIError(Exception):
@@ -74,6 +86,9 @@ def validate_port(port: int) -> None:
 
 
 def parse_args():
+    print("Command line arguments:", sys.argv)
+    print("Current working directory:", os.getcwd())
+    print("Creating argument parser...")
     parser = argparse.ArgumentParser(
         description="Fix Python import and class structure issues in your project",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -92,19 +107,24 @@ examples:
   python -m python_fixer dashboard /path/to/project --port 8000
 """,
     )
+    print("Adding subparsers...")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Init command
-    init_parser = subparsers.add_parser("init", help="Initialize a project")
-    init_parser.add_argument("project_path", type=Path, help="Path to the project")
-
-    # Analyze command
-    analyze_parser = subparsers.add_parser("analyze", help="Analyze project imports")
-    analyze_parser.add_argument("project_path", type=Path, help="Path to the project")
-
-    # Fix command
-    fix_parser = subparsers.add_parser("fix", help="Fix import issues")
-    fix_parser.add_argument("project_path", type=Path, help="Path to the project")
+    init_parser = _extracted_from_parse_args_26(
+        "Setting up init command...",
+        subparsers,
+        "init",
+        "Initialize a project",
+    )
+    analyze_parser = _extracted_from_parse_args_26(
+        "Setting up analyze command...",
+        subparsers,
+        "analyze",
+        "Analyze project imports",
+    )
+    fix_parser = _extracted_from_parse_args_26(
+        "Setting up fix command...", subparsers, "fix", "Fix import issues"
+    )
     fix_parser.add_argument(
         "--mode",
         choices=["interactive", "automatic"],
@@ -112,9 +132,12 @@ examples:
         help="Fix mode (default: interactive)",
     )
 
-    # Dashboard command
-    dashboard_parser = subparsers.add_parser("dashboard", help="Launch web dashboard")
-    dashboard_parser.add_argument("project_path", type=Path, help="Path to the project")
+    dashboard_parser = _extracted_from_parse_args_26(
+        "Setting up dashboard command...",
+        subparsers,
+        "dashboard",
+        "Launch web dashboard",
+    )
     dashboard_parser.add_argument(
         "--host",
         type=str,
@@ -128,7 +151,7 @@ examples:
         "--reload", action="store_true", help="Enable auto-reload for development"
     )
 
-    # Global options
+    print("Adding global options...")
     for p in [init_parser, analyze_parser, fix_parser, dashboard_parser]:
         p.add_argument(
             "--log-file",
@@ -140,7 +163,23 @@ examples:
             "--verbose", "-v", action="store_true", help="Enable verbose output"
         )
 
-    return parser.parse_args()
+    print("Parsing arguments...")
+    try:
+        args = parser.parse_args()
+        print(f"Parsed arguments: {args}")
+        return args
+    except Exception as e:
+        print(f"Error parsing arguments: {str(e)}")
+        raise
+
+
+# TODO Rename this here and in `parse_args`
+def _extracted_from_parse_args_26(arg0, subparsers, arg2, help):
+    print(arg0)
+    result = subparsers.add_parser(arg2, help=help)
+    result.add_argument("project_path", type=Path, help="Path to the project")
+
+    return result
 
 
 def print_analysis_summary(results: dict) -> None:
@@ -224,7 +263,7 @@ def print_command_section(command: str) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ COMMAND INPUT ━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  {:<54} ┃   │
+│  ┃  {:<54} ┃                                             ┃   │
 │  ┃                                                       ┃   │
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
 │                                                              │""".format(
@@ -243,7 +282,7 @@ def print_usage_examples() -> None:
 
 
 def handle_error(
-    error: Exception, args: argparse.Namespace = None, logger: StructuredLogger = None
+    error: Exception, args: argparse.Namespace = None, logger: Any = None
 ) -> int:
     """Handle an error and return the appropriate exit code.
 
@@ -300,76 +339,275 @@ def print_dashboard_info(host: str, port: int, reload: bool) -> None:
     print(f"  - Auto-reload: {'enabled' if reload else 'disabled'}\033[0m")
 
 
+def setup_args_and_logging():
+    """Parse and validate arguments, setup logging.
+
+    Returns:
+        Tuple[argparse.Namespace, StructuredLogger]: Parsed arguments and logger
+    """
+    print("Setting up arguments and logging...")
+    try:
+        return _extracted_from_setup_args_and_logging_9()
+    except Exception as e:
+        print(f"Error in setup: {str(e)}")
+        raise
+
+
+# TODO Rename this here and in `setup_args_and_logging`
+def parse_and_validate_args():
+    """Parse and validate command line arguments.
+
+    Returns:
+        argparse.Namespace: Parsed and validated arguments
+
+    Raises:
+        ValidationError: If validation of arguments fails
+        Exception: If argument parsing fails
+    """
+    print("Parsing arguments...")
+    args = parse_args()
+    print(f"Command: {args.command}")
+
+    print("Converting project path...")
+    args.project_path = Path(args.project_path)
+    print(f"Project path: {args.project_path}")
+
+    print("Validating project path...")
+    validate_project_path(args.project_path)
+    print("Project path validation successful")
+
+    if args.command == "dashboard":
+        print("Validating port...")
+        validate_port(args.port)
+        print("Port validation successful")
+
+    return args
+
+
+def _extracted_from_setup_args_and_logging_9():
+    """Parse arguments and set up logging with proper error handling.
+
+    Returns:
+        Tuple[argparse.Namespace, StructuredLogger]: Parsed arguments and logger
+
+    Raises:
+        ValidationError: If validation of arguments fails
+        Exception: If argument parsing or logger setup fails
+    """
+    logger = None
+    try:
+        args = parse_and_validate_args()
+
+        print("Setting up logger...")
+        log_file = Path(args.log_file) if args.log_file else None
+        print(f"Log file: {log_file}")
+
+        logger = StructuredLogger(
+            name="python_fixer",
+            log_file=log_file,
+            level="DEBUG" if args.verbose else "INFO",
+        )
+        print("Logger setup successful")
+
+        # Log successful setup
+        logger.info(
+            "Arguments and logging setup complete",
+            extra={
+                "command": args.command,
+                "project_path": str(args.project_path),
+                "log_file": str(log_file) if log_file else None,
+                "verbose": args.verbose,
+            },
+        )
+
+        return args, logger
+
+    except ValidationError as e:
+        if logger:
+            logger.error("Validation error during setup", exc_info=e)
+        raise
+    except Exception as e:
+        if logger:
+            logger.error("Unexpected error during setup", exc_info=e)
+        raise
+
+
 def main():
     args = None
     logger = None
+    analyzer = None
+    dashboard_process = None
 
-    try:
-        # Parse and validate arguments
-        args = parse_args()
-        validate_project_path(args.project_path)
-        if args.command == "dashboard":
-            validate_port(args.port)
+    def cleanup():
+        """Cleanup function for graceful shutdown."""
+        nonlocal analyzer, dashboard_process, logger
+        try:
+            if analyzer:
+                logger.info("Cleaning up analyzer resources...")
+                analyzer.cleanup()
+            if dashboard_process:
+                logger.info("Shutting down dashboard server...")
+                dashboard_process.terminate()
+        except Exception as e:
+            if logger:
+                logger.error(f"Error during cleanup: {e}")
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.exception("Cleanup error details:")
 
-        # Setup logging
-        logger = StructuredLogger(
-            name="python_fixer",
-            log_file=args.log_file,
-            level="DEBUG" if args.verbose else "INFO",
-        )
-        if args.command == "init":
-            print(f"\033[94mInitializing project at {args.project_path}...\033[0m")
-            analyzer = ProjectAnalyzer(args.project_path)
-            analyzer.initialize_project()
-            print("\033[92m✓ Project initialized successfully\033[0m")
+    with signal_manager.handler(cleanup):
+        try:
+            # Debug import paths
+            print("\033[94mDebug: Import Resolution\033[0m")
+            print("Python executable:", sys.executable)
+            print("Python version:", sys.version)
+            print("Python path:")
+            for p in sys.path:
+                print(f"  {p}")
+            
+            print("\nAttempting imports...")
+            import python_fixer
+            print("\033[92m✓ Successfully imported python_fixer\033[0m")
+            print("python_fixer location:", python_fixer.__file__)
+            
+            print("\nSetting up arguments and logging...")
+            args, logger = setup_args_and_logging()
+            print("Arguments and logging setup complete")
 
-        elif args.command == "analyze":
-            print(f"\033[94mAnalyzing project at {args.project_path}...\033[0m")
-            analyzer = ProjectAnalyzer(args.project_path)
-            results = analyzer.analyze_project()
-            logger.info("Analysis complete", extra={"metrics": results})
+            print("Creating default config...")
+            config = {
+                "verbose": args.verbose,
+                "enable_caching": True,
+                "cache_dir": ".python_fixer_cache",
+                "max_workers": 4,
+                "enable_type_checking": True,
+                "enable_complexity_analysis": True,
+            }
+            print(f"Config created: {config}")
 
-            print_analysis_summary(results)
+            if args.command == "init":
+                print(f"\033[94mInitializing project at {args.project_path}...\033[0m")
+                try:
+                    initialize_project(args, config)
+                except (ValidationError, ProjectError) as e:
+                    print(f"\033[91m✗ {str(e)}\033[0m")
+                    logger.error("Initialization failed", exc_info=e)
+                    return 1
 
-        elif args.command == "fix":
-            print(
-                f"\033[94mFixing imports in {args.project_path} (mode: {args.mode})...\033[0m"
-            )
-            analyzer = ProjectAnalyzer(args.project_path)
-            fixes = analyzer.fix_project(mode=args.mode)
-            logger.info("Fixes complete", extra={"metrics": fixes})
+            elif args.command == "analyze":
+                print(f"\033[94mAnalyzing project at {args.project_path}...\033[0m")
+                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                results = analyzer.analyze_project()
+                logger.info("Analysis complete", extra={"metrics": results})
+                print_analysis_summary(results)
 
-            print_fixes_summary(fixes)
+            elif args.command == "fix":
+                print(
+                    f"\033[94mFixing imports in {args.project_path} (mode: {args.mode})...\033[0m"
+                )
+                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                fixes = analyzer.fix_project(mode=args.mode)
+                logger.info("Fixes complete", extra={"metrics": fixes})
+                print_fixes_summary(fixes)
 
-        elif args.command == "dashboard":
-            print(f"\033[94mLaunching dashboard for {args.project_path}...\033[0m")
-            print_dashboard_info(args.host, args.port, args.reload)
+            elif args.command == "dashboard":
+                if not run_dashboard:
+                    raise ValidationError(
+                        "Web dashboard not available. Please install optional dependencies:"
+                        "\n  pip install python-fixer[web]"
+                    )
+                
+                print(f"\033[94mLaunching dashboard for {args.project_path}...\033[0m")
+                print_dashboard_info(args.host, args.port, args.reload)
 
-            try:
-                run_dashboard(
+                dashboard_process = run_dashboard(
                     project_path=args.project_path,
                     host=args.host,
                     port=args.port,
                     reload=args.reload,
                     log_level="DEBUG" if args.verbose else "INFO",
                 )
-            except KeyboardInterrupt:
-                print("\n\033[93m⚠ Dashboard stopped by user\033[0m")
+
+            return 0
+
+        except ValidationError as e:
+            return handle_error(e, args, logger)
+        except KeyboardInterrupt:
+            logger.warning("Operation cancelled by user")
+            return 130
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.exception("Error details:")
+            return handle_error(e, args, logger)
+
+
+# TODO Rename this here and in `main`
+def initialize_project(args, config):
+    """Initialize a project with proper error handling.
+
+    Args:
+        args: Command line arguments
+        config: Configuration dictionary
+
+    Raises:
+        ValidationError: If project validation fails
+        ProjectError: If project initialization fails
+    """
+    analyzer = None
+    logger = StructuredLogger.get_logger(__name__)
+
+    def cleanup():
+        """Cleanup function for graceful shutdown."""
+        try:
+            if analyzer:
+                logger.info("Cleaning up analyzer resources...")
+                analyzer.cleanup()
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.exception("Cleanup error details:")
+
+    with signal_manager.handler(cleanup):
+        try:
+            logger.info("Starting project initialization")
+            print("\033[94mValidating project path...\033[0m")
+            try:
+                validate_project_path(args.project_path)
+                print("\033[92m✓ Project path validation successful\033[0m")
+                logger.info("Project path validation successful")
+            except ValidationError as e:
+                print(f"\033[91m✗ Project path validation failed: {str(e)}\033[0m")
+                logger.error("Project path validation failed", exc_info=e)
+                raise
+
+            print("\033[94mCreating ProjectAnalyzer instance...\033[0m")
+            try:
+                print(f"  Project path: {args.project_path}")
+                print(f"  Config: {config}")
+                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                print("\033[92m✓ ProjectAnalyzer instance created successfully\033[0m")
+                logger.info("ProjectAnalyzer instance created successfully")
             except Exception as e:
-                print(f"\n\033[91m✗ Failed to start dashboard: {e}\033[0m")
-                logger.error("Dashboard failed", exc_info=e)
-                return 1
+                print(f"\033[91m✗ Failed to create ProjectAnalyzer instance: {str(e)}\033[0m")
+                logger.error("Failed to create ProjectAnalyzer instance", exc_info=e)
+                raise ProjectError(f"Failed to create analyzer: {str(e)}") from e
 
-        return 0
+            print("\033[94mInitializing project...\033[0m")
+            try:
+                analyzer.initialize_project()
+                print("\033[92m✓ Project initialized successfully\033[0m")
+                logger.info("Project initialized successfully")
+            except Exception as e:
+                print(f"\033[91m✗ Failed to initialize project: {str(e)}\033[0m")
+                logger.error("Failed to initialize project", exc_info=e)
+                raise ProjectError(f"Failed to initialize project: {str(e)}") from e
 
-    except ValidationError as e:
-        return handle_error(e, args, logger)
-    except KeyboardInterrupt:
-        print("\n\033[93m⚠ Operation cancelled by user\033[0m")
-        return 130
-    except Exception as e:
-        return handle_error(e, args, logger)
-
+        except ValidationError:
+            raise
+        except Exception as e:
+            print(f"\033[91m✗ Unexpected error during initialization: {str(e)}\033[0m")
+            logger.error("Unexpected error during initialization", exc_info=e)
+            raise ProjectError(f"Failed to initialize project: {str(e)}") from e
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,8 +1,0 @@
-pydantic
-networkx
-numpy
-rich
-
-[test]
-pytest
-pytest-cov

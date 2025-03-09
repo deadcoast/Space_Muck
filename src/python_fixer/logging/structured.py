@@ -47,10 +47,10 @@ class StructuredLogger:
     """Enhanced logger with structured output and convenience methods"""
 
     def __init__(
-        self, name: str, log_file: Optional[Path] = None, level: int = logging.INFO
+        self, name: str, log_file: Optional[Path] = None, level: str = "INFO"
     ):
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
+        self.logger.setLevel(getattr(logging, level.upper()))
 
         # Create formatters
         json_formatter = JSONFormatter()
@@ -62,6 +62,8 @@ class StructuredLogger:
 
         # File handler if requested
         if log_file:
+            log_file = Path(log_file)
+            log_file.parent.mkdir(parents=True, exist_ok=True)
             file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(json_formatter)
             self.logger.addHandler(file_handler)
