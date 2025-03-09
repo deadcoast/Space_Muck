@@ -31,11 +31,17 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 from typing_extensions import Protocol, runtime_checkable
 
+# Import libcst with error handling
+try:
+    import libcst as cst
+except ImportError:
+    cst = None
+
 # Optional dependency configuration
 OPTIONAL_DEPENDENCIES = {
     'libcst': {
         'module': 'libcst',
-        'import_as': 'libcst',
+        'import_as': 'cst',
         'required_for': ['AST parsing', 'code transformation'],
     },
     'numpy': {
@@ -385,15 +391,21 @@ class SignatureComponent(
     is_optional: bool = False
     constraints: List[str] = field(default_factory=list)
     usage_locations: Set[str] = field(default_factory=set)
-    __annotations__: Dict[str, Any] = field(default_factory=dict)
+    _type_annotations: Dict[str, Any] = field(default_factory=dict, init=False)
 
-    def __post_init__(self):
-        # Initialize annotations from type info
-        self.__annotations__ = {
-            self.name: (
-                eval(self.type_info.type_hint) if self.type_info.type_hint else Any
-            )
-        }
+    def __post_init__(self) -> None:
+        """Initialize type annotations and other post-init setup."""
+        # Initialize type annotations
+        self._type_annotations = {}
+        if self.type_info is not None:
+            self._type_annotations[self.name] = self.type_info.type_hint
+            # Initialize other annotations from type info
+            if self.type_info.type_hint:
+                try:
+                    type_obj = eval(self.type_info.type_hint)
+                    self.__dict__['__annotations__'] = {self.name: type_obj}
+                except (NameError, SyntaxError):
+                    self.__dict__['__annotations__'] = {self.name: Any}
 
     def get_signature(self) -> CodeSignature:
         """Get a minimal signature for this component"""
@@ -469,19 +481,31 @@ class CodeSignature(
     metrics: SignatureMetrics = field(default_factory=SignatureMetrics)
     dependencies: Set[str] = field(default_factory=set)
     call_graph: Optional[nx.DiGraph] = None
-    __annotations__: Dict[str, Any] = field(default_factory=dict)
+    _type_annotations: Dict[str, Any] = field(default_factory=dict, init=False)
     __doc__: Optional[str] = None
 
-    def __post_init__(self):
-        # Initialize annotations from components and return type
-        self.__annotations__ = {
-            comp.name: (
-                eval(comp.type_info.type_hint) if comp.type_info.type_hint else Any
-            )
-            for comp in self.components
-        }
+    def __post_init__(self) -> None:
+        """Initialize type annotations and docstring after dataclass initialization."""
+        # Initialize type annotations
+        self._type_annotations = {}
+        for comp in self.components:
+            if comp.type_info and comp.type_info.type_hint:
+                try:
+                    type_obj = eval(comp.type_info.type_hint)
+                    self._type_annotations[comp.name] = type_obj
+                except (NameError, SyntaxError):
+                    self._type_annotations[comp.name] = Any
+
+        # Add return type annotation if present
         if self.return_type and self.return_type.type_hint:
-            self.__annotations__["return"] = eval(self.return_type.type_hint)
+            try:
+                type_obj = eval(self.return_type.type_hint)
+                self._type_annotations["return"] = type_obj
+            except (NameError, SyntaxError):
+                self._type_annotations["return"] = Any
+
+        # Set annotations in __dict__ to avoid dataclass issues
+        self.__dict__["__annotations__"] = self._type_annotations
         self.__doc__ = self.docstring
 
     def get_signature(self) -> "CodeSignature":
@@ -777,11 +801,11 @@ class RichSyntaxHighlighter:
             console.print(f"[red]Error parsing code:[/] {str(e)}")
 
 
-class SignatureVisitor(cst.CSTVisitor):
+class SignatureVisitor:
     """
     Represents a visitor for inspecting and processing function or class
-    signatures in Python code using `libcst` for improved static analysis
-    with type hint inference.
+    signatures in Python code. Uses libcst if available, otherwise falls back
+    to ast module for basic functionality.
 
     This visitor collects information about the code structure, including
     functions, methods, classes, and their type annotations.
@@ -792,14 +816,14 @@ class SignatureVisitor(cst.CSTVisitor):
         signatures: A list to store `CodeSignature` objects based on discovered elements.
 
     Requirements:
-        - libcst: For AST traversal and code analysis
+        - libcst (optional): For enhanced AST traversal and code analysis
         - torch (optional): For type inference model support
     """
 
     def __init__(
         self, 
         file_path: Path, 
-        type_inference_model: Optional[torch.nn.Module] = None,
+        type_inference_model: Optional[Any] = None,
         enable_type_inference: bool = True
     ) -> None:
         """Initialize the SignatureVisitor.
@@ -808,46 +832,110 @@ class SignatureVisitor(cst.CSTVisitor):
             file_path: Path to the file being analyzed.
             type_inference_model: Optional ML model for type inference.
             enable_type_inference: Whether to use type inference (default: True).
-
-        Raises:
-            ImportError: If required dependencies are not available.
         """
-        if not DEPENDENCY_STATUS.get('libcst'):
-            raise ImportError(
-                "libcst is required for SignatureVisitor. "
-                "Please install it with: pip install libcst"
-            )
-
-        super().__init__()
         self.file_path = file_path
         self.signatures: List[CodeSignature] = []
         self.current_class: Optional[str] = None
-        self.type_inference_enabled = enable_type_inference
-
-        # Initialize type inference model
-        self.type_inference_model = None
         
-        # Check if type inference is requested
-        if not enable_type_inference:
-            return
-            
-        # Check for torch dependency
-        if not DEPENDENCY_STATUS.get('torch'):
-            console.warning(
-                "Type inference requested but torch not available. "
-                "Install torch for ML-based type inference support."
-            )
-            return
-            
-        # Initialize model if available
-        try:
-            self.type_inference_model = type_inference_model
-            if type_inference_model:
-                console.debug("Type inference model initialized successfully")
+        # Initialize type inference
+        self.type_inference_model = None
+        if enable_type_inference and type_inference_model is not None:
+            if not DEPENDENCY_STATUS.get('torch'):
+                console.warning(
+                    "Type inference requested but torch not available. "
+                    "Install torch for ML-based type inference support."
+                )
             else:
-                console.debug("No type inference model provided")
-        except Exception as e:
-            console.warning(f"Failed to initialize type inference model: {e}")
+                try:
+                    self.type_inference_model = type_inference_model
+                    console.debug("Type inference model initialized successfully")
+                except Exception as e:
+                    console.warning(f"Failed to initialize type inference model: {e}")
+        
+        # Initialize base class based on available dependencies
+        if cst is not None:
+            self._visitor = self._create_cst_visitor()
+        else:
+            self._visitor = self._create_ast_visitor()
+            
+    def _create_cst_visitor(self) -> Any:
+        """Create a libcst-based visitor if available."""
+        class CSTVisitor(cst.CSTVisitor):
+            def __init__(self, parent):
+                super().__init__()
+                self.parent = parent
+                
+            def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
+                # Extract function signature info using libcst
+                name = node.name.value
+                components = []
+                
+                # Get parameters
+                for param in node.params.params:
+                    param_name = param.name.value
+                    type_hint = None
+                    if param.annotation:
+                        type_hint = param.annotation.annotation.value
+                    components.append(SignatureComponent(
+                        name=param_name,
+                        type_info=TypeInfo(type_hint=type_hint)
+                    ))
+                    
+                # Get return type
+                return_type = None
+                if node.returns:
+                    return_type = TypeInfo(type_hint=node.returns.annotation.value)
+                    
+                # Create signature
+                sig = CodeSignature(
+                    name=name,
+                    module_path=self.parent.file_path,
+                    components=components,
+                    return_type=return_type,
+                    docstring=node.get_docstring()
+                )
+                self.parent.signatures.append(sig)
+                
+        return CSTVisitor(self)
+        
+    def _create_ast_visitor(self) -> Any:
+        """Create an ast-based visitor as fallback."""
+        class ASTVisitor(ast.NodeVisitor):
+            def __init__(self, parent):
+                self.parent = parent
+                
+            def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+                # Extract function signature info using ast
+                name = node.name
+                components = []
+                
+                # Get parameters
+                for arg in node.args.args:
+                    param_name = arg.arg
+                    type_hint = None
+                    if arg.annotation:
+                        type_hint = ast.unparse(arg.annotation)
+                    components.append(SignatureComponent(
+                        name=param_name,
+                        type_info=TypeInfo(type_hint=type_hint)
+                    ))
+                    
+                # Get return type
+                return_type = None
+                if node.returns:
+                    return_type = TypeInfo(type_hint=ast.unparse(node.returns))
+                    
+                # Create signature
+                sig = CodeSignature(
+                    name=name,
+                    module_path=self.parent.file_path,
+                    components=components,
+                    return_type=return_type,
+                    docstring=ast.get_docstring(node)
+                )
+                self.parent.signatures.append(sig)
+                
+        return ASTVisitor(self)
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
         """
@@ -873,7 +961,7 @@ class SignatureVisitor(cst.CSTVisitor):
             
             # Create return type info
             inferred_return_type = None
-            if not return_type and self.type_inference_enabled:
+            if not return_type and self.type_inference_model is not None:
                 inferred_return_type = self._infer_type_from_model(f"return_{name}")
 
             type_info = TypeInfo(
@@ -896,9 +984,9 @@ class SignatureVisitor(cst.CSTVisitor):
                     console.warning(f"Skipping parameter with empty name in {name}")
                     continue
 
-                # Infer type if needed and enabled
+                # Infer type if needed and model is available
                 inferred_type = None
-                if not param_type and self.type_inference_enabled:
+                if not param_type and self.type_inference_model is not None:
                     inferred_type = self._infer_type_from_model(param_name)
 
                 try:
@@ -1412,13 +1500,9 @@ class SignatureVisitor(cst.CSTVisitor):
         Returns:
             Validated and stripped name if valid, None otherwise
         """
-        # Check dependencies and initialization
-        if not DEPENDENCY_STATUS.get('torch'):
-            console.debug("PyTorch not available for type inference")
-            return None
-
-        if not self.type_inference_model:
-            console.debug("Type inference model not initialized")
+        # Check model availability
+        if self.type_inference_model is None:
+            console.debug("Type inference model not available")
             return None
 
         # Validate input name
@@ -1529,20 +1613,16 @@ class SignatureVisitor(cst.CSTVisitor):
             - Validates output shape
             - Handles various error cases
         """
-        try:
-            # Run model inference
-            if not (prediction := self._run_model_inference(tokenized_input, name)):
-                return None
-
-            # Validate prediction shape
-            if not self._validate_prediction_shape(prediction, num_types):
-                return None
-
-            return prediction
-
-        except Exception as e:
-            console.warning(f"Unexpected error during model inference: {e}")
+        # Run model inference
+        prediction = self._run_model_inference(tokenized_input, name)
+        if prediction is None:
             return None
+            
+        # Validate prediction shape
+        if not self._validate_prediction_shape(prediction, num_types):
+            return None
+            
+        return prediction
 
     def _run_model_inference(self, tokenized_input: torch.Tensor, name: str) -> Optional[torch.Tensor]:
         """
@@ -1560,10 +1640,14 @@ class SignatureVisitor(cst.CSTVisitor):
             - Handles model-specific errors
             - Provides detailed error messages
         """
+        if not DEPENDENCY_STATUS.get('torch'):
+            console.warning("PyTorch not available for model inference")
+            return None
+            
         try:
-            with torch.no_grad():  # Disable gradient computation
+            # Run model inference with gradient computation disabled
+            with torch.no_grad():
                 return self.type_inference_model(tokenized_input)
-
         except RuntimeError as e:
             console.warning(f"Model inference failed for '{name}': {e}")
             return None

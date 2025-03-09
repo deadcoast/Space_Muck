@@ -13,7 +13,7 @@ requires-python = ">=3.7"
 dependencies = [
     "pydantic>=2.0.0",
     "networkx>=3.0",
-    "numpy>=1.24.0",
+    "numpy<2.0.0",
     "rich>=13.0.0",
     "libcst>=1.0.0",
     "rustworkx>=0.13.0",
@@ -78,19 +78,57 @@ warn_unreachable = true
 strict_optional = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src/python_fixer/tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --tb=short --import-mode=importlib"
+addopts = """
+    -v
+    --tb=short
+    --import-mode=importlib
+    --doctest-modules
+    --cov=python_fixer
+    --cov-report=term-missing
+    --cov-report=html
+    --strict-markers
+    --strict-config
+    -p no:warnings
+    --cache-clear
+"""
 required_plugins = [
-    "pytest-cov",
-    "hypothesis"
+    "pytest-cov>=6.0.0",
+    "hypothesis>=6.0.0"
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:torch.*:",
     "ignore::UserWarning:torch.*:",
-    "ignore::FutureWarning:sklearn.*:"
+    "ignore::FutureWarning:sklearn.*:",
+    "ignore::pytest.PytestUnknownMarkWarning",
+    "ignore::pytest.PytestCollectionWarning"
+]
+norecursedirs = [
+    "*.egg",
+    "*.egg-info",
+    "dist",
+    "build",
+    "docs",
+    "__pycache__",
+    ".pytest_cache",
+    ".coverage",
+    "htmlcov"
+]
+markers = [
+    "slow: marks tests as slow (deselect with -m 'not slow')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "dependency: marks tests that require optional dependencies",
+    "ml: marks tests that use machine learning models"
+]
+empty_parameter_set_mark = "fail_at_collect"
+xfail_strict = true
+pythonpath = ["src"]
+env_files = [
+    ".env"
 ]
 
 [tool.setuptools.package-data]

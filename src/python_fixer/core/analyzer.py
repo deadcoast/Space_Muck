@@ -19,16 +19,14 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Any
 
 # Core dependencies that are always required
 from rich.console import Console
 from rich.table import Table
 
-from typing import TYPE_CHECKING, List, Optional, Dict, Any, Tuple
-
 # Optional dependencies
-from python_fixer.core.types import OPTIONAL_DEPS, Any
+from python_fixer.core.types import OPTIONAL_DEPS
 
 # Type hints for optional dependencies
 if TYPE_CHECKING:
@@ -600,27 +598,7 @@ class ProjectAnalyzer:
             return metrics
 
         try:
-            cc_visit = OPTIONAL_DEPS["radon"]["radon.complexity"].cc_visit
-            mi_visit = OPTIONAL_DEPS["radon"]["radon.metrics"].mi_visit
-
-            complexity = cc_visit(source)
-            maintainability = mi_visit(source, multi=True)
-            complexities = [c.complexity for c in complexity]
-
-            if OPTIONAL_DEPS["numpy"]:
-                np = OPTIONAL_DEPS["numpy"]
-                metrics.update({
-                    "complexity": float(np.mean(complexities)) if complexities else 0.0,
-                    "maintainability": float(np.mean(maintainability)),
-                    "cyclomatic_complexity": int(sum(complexities))
-                })
-            else:
-                metrics.update({
-                    "complexity": sum(complexities) / len(complexities) if complexities else 0.0,
-                    "maintainability": sum(maintainability) / len(maintainability) if maintainability else 0.0,
-                    "cyclomatic_complexity": sum(complexities)
-                })
-
+            self._extracted_from__calculate_file_metrics_20(source, metrics)
         except Exception as e:
             if self.logger:
                 self.logger.warning(
@@ -629,6 +607,29 @@ class ProjectAnalyzer:
                 )
 
         return metrics
+
+    # TODO Rename this here and in `_calculate_file_metrics`
+    def _extracted_from__calculate_file_metrics_20(self, source, metrics):
+        cc_visit = OPTIONAL_DEPS["radon"]["radon.complexity"].cc_visit
+        mi_visit = OPTIONAL_DEPS["radon"]["radon.metrics"].mi_visit
+
+        complexity = cc_visit(source)
+        maintainability = mi_visit(source, multi=True)
+        complexities = [c.complexity for c in complexity]
+
+        if OPTIONAL_DEPS["numpy"]:
+            np = OPTIONAL_DEPS["numpy"]
+            metrics.update({
+                "complexity": float(np.mean(complexities)) if complexities else 0.0,
+                "maintainability": float(np.mean(maintainability)),
+                "cyclomatic_complexity": int(sum(complexities))
+            })
+        else:
+            metrics.update({
+                "complexity": sum(complexities) / len(complexities) if complexities else 0.0,
+                "maintainability": sum(maintainability) / len(maintainability) if maintainability else 0.0,
+                "cyclomatic_complexity": sum(complexities)
+            })
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using networkx"""
@@ -956,6 +957,160 @@ class ProjectAnalyzer:
             str(file_path)
         ]
 
+    def _check_line_validity(self, line: str) -> bool:
+        """Check if a line is valid for processing.
+
+        Args:
+            line: Single line from mypy output
+
+        Returns:
+            True if line is valid, False otherwise
+        """
+        return bool(line) and not line.startswith("Found")
+
+    # Error type strings for mypy output
+    ERROR_TYPE = "error:"
+    WARNING_TYPE = "warning:"
+
+    def _check_line_type(self, line: str) -> Tuple[bool, bool]:
+        """Check if a line contains an error or warning.
+
+        Args:
+            line: Single line from mypy output
+
+        Returns:
+            Tuple containing (is_error, is_warning)
+        """
+        return self._check_error_and_warning_types(line)
+
+    def _check_error_and_warning_types(self, line: str) -> Tuple[bool, bool]:
+        """Check error and warning types.
+
+        Args:
+            line: Line to check
+
+        Returns:
+            (error, warning) types
+        """
+        return self._check_line_error_type(line, self.ERROR_TYPE), self._check_line_error_type(line, self.WARNING_TYPE)
+
+    def _check_line_error_type(self, line: str, error_type: str) -> bool:
+        """Check if a line contains a specific error type.
+
+        Args:
+            line: Single line from mypy output
+            error_type: Type of error to check for ("error:" or "warning:")
+
+        Returns:
+            True if the line contains the specified error type
+        """
+        return error_type in line
+
+    def _create_line_result(self, line: str, is_error: bool, is_warning: bool) -> Tuple[Optional[str], bool, bool]:
+        """Create a result tuple for a processed line.
+
+        Args:
+            line: Single line from mypy output
+            is_error: Whether the line is an error
+            is_warning: Whether the line is a warning
+
+        Returns:
+            Tuple containing (processed_line, is_error, is_warning)
+        """
+        return line, is_error, is_warning
+
+    def _process_mypy_line(self, line: str) -> Tuple[Optional[str], bool, bool]:
+        """Process a single line of mypy output.
+
+        Args:
+            line: Single line from mypy output
+
+        Returns:
+            Tuple containing (processed_line, is_error, is_warning)
+        """
+        if not self._check_line_validity(line):
+            return self._create_line_result(None, False, False)
+
+        is_error, is_warning = self._check_line_type(line)
+        return self._create_line_result(line, is_error, is_warning)
+
+    def _is_matching_error_type(self, is_error: bool, line_is_error: bool, line_is_warning: bool) -> bool:
+        """Check if a line matches the desired error type.
+
+        Args:
+            is_error: If True, check for errors; if False, check for warnings
+            line_is_error: Whether the line is an error
+            line_is_warning: Whether the line is a warning
+
+        Returns:
+            True if the line matches the desired error type
+        """
+        return is_error and line_is_error or not is_error and line_is_warning
+
+    def _count_error_type(self, processed_lines: List[Tuple[str, bool, bool]], is_error: bool = True) -> int:
+        """Count the number of errors or warnings in processed lines.
+
+        Args:
+            processed_lines: List of tuples containing (line, is_error, is_warning)
+            is_error: If True, count errors; if False, count warnings
+
+        Returns:
+            Number of errors or warnings found
+        """
+        return sum(self._is_matching_error_type(is_error, line_is_error, line_is_warning)
+                  for _, line_is_error, line_is_warning in processed_lines)
+
+    def _extract_error_lines(self, processed_lines: List[Tuple[str, bool, bool]]) -> List[str]:
+        """Extract error lines from processed mypy output.
+
+        Args:
+            processed_lines: List of tuples containing (line, is_error, is_warning)
+
+        Returns:
+            List of error message lines
+        """
+        return [line for line, _, _ in processed_lines]
+
+    def _count_mypy_errors(self, processed_lines: List[Tuple[str, bool, bool]]) -> Tuple[List[str], int, int]:
+        """Count errors and warnings from processed mypy output lines.
+
+        Args:
+            processed_lines: List of tuples containing (line, is_error, is_warning)
+
+        Returns:
+            Tuple containing (error_lines, error_count, warning_count)
+        """
+        error_lines = self._extract_error_lines(processed_lines)
+        error_count = self._count_error_type(processed_lines, is_error=True)
+        warning_count = self._count_error_type(processed_lines, is_error=False)
+
+        return error_lines, error_count, warning_count
+
+    def _split_mypy_output(self, output: str) -> List[str]:
+        """Split mypy output into individual lines.
+
+        Args:
+            output: Raw mypy output string
+
+        Returns:
+            List of individual lines
+        """
+        return output.split("\n")
+
+    def _process_mypy_lines(self, output: str) -> List[Tuple[str, bool, bool]]:
+        """Process each line of mypy output.
+
+        Args:
+            output: Raw mypy output string
+
+        Returns:
+            List of tuples containing (line, is_error, is_warning)
+        """
+        return [
+            result for line in self._split_mypy_output(output)
+            if (result := self._process_mypy_line(line))[0] is not None
+        ]
+
     def _process_mypy_output(self, output: str) -> Tuple[List[str], int, int]:
         """Process mypy output and classify errors.
 
@@ -965,23 +1120,35 @@ class ProjectAnalyzer:
         Returns:
             Tuple containing (error_lines, error_count, warning_count)
         """
-        errors = []
-        error_count = 0
-        warning_count = 0
+        processed_lines = self._process_mypy_lines(output)
+        return self._count_mypy_errors(processed_lines)
 
-        for line in output.split("\n"):
-            if not line or line.startswith("Found"):
-                continue
+    def _create_type_check_log_data(self, node: CodeModule, errors: List[str], error_count: int, warning_count: int) -> Dict[str, Any]:
+        """Create log data for type checking results.
 
-            # Classify error type
-            if "error:" in line:
-                error_count += 1
-            elif "warning:" in line:
-                warning_count += 1
+        Args:
+            node: CodeModule instance being checked
+            errors: List of error messages
+            error_count: Number of errors found
+            warning_count: Number of warnings found
 
-            errors.append(line)
+        Returns:
+            Dictionary containing log data
+        """
+        return {
+            "error_count": error_count,
+            "warning_count": warning_count,
+            "total_issues": len(errors),
+            "first_error": errors[0] if errors else None
+        }
 
-        return errors, error_count, warning_count
+    def _update_type_check_metrics(self, error_count: int) -> None:
+        """Update project-wide metrics with type checking results.
+
+        Args:
+            error_count: Number of errors found
+        """
+        self.metrics.type_error_count += error_count
 
     def _log_type_check_results(self, node: CodeModule, errors: List[str], error_count: int, warning_count: int) -> None:
         """Log type checking results and update metrics.
@@ -993,18 +1160,45 @@ class ProjectAnalyzer:
             warning_count: Number of warnings found
         """
         if self.logger:
-            self.logger.info(
-                f"Type checking completed for {node.name}",
-                extra={
-                    "error_count": error_count,
-                    "warning_count": warning_count,
-                    "total_issues": len(errors),
-                    "first_error": errors[0] if errors else None
-                }
-            )
+            log_data = self._create_type_check_log_data(node, errors, error_count, warning_count)
+            self.logger.info(f"Type checking completed for {node.name}", extra=log_data)
 
-        # Update project-wide metrics
-        self.metrics.type_error_count += error_count
+        self._update_type_check_metrics(error_count)
+
+    def _handle_type_check_error(self, node: CodeModule, error: Exception) -> None:
+        """Handle errors that occur during type checking.
+
+        Args:
+            node: CodeModule instance being checked
+            error: Exception that occurred
+        """
+        if isinstance(error, FileNotFoundError):
+            if self.logger:
+                self.logger.error(
+                    "mypy executable not found in PATH",
+                    extra={"module": node.name}
+                )
+            console.print("[red]Error: mypy not found in PATH. Please install mypy.")
+        else:
+            if self.logger:
+                self.logger.error(
+                    "Type checking failed",
+                    exc_info=error,
+                    extra={"module": node.name}
+                )
+            console.print(f"[red]Error during type checking of {node.name}: {str(error)}")
+
+    def _run_mypy(self, file_path: Path) -> Optional[str]:
+        """Run mypy on a file and return its output.
+
+        Args:
+            file_path: Path to the Python file to type check
+
+        Returns:
+            Mypy output string if successful, None otherwise
+        """
+        results = OPTIONAL_DEPS["mypy"].run(self._get_mypy_options(file_path))
+        return results[0] if results else None
 
     def _check_types(self, file_path: Path, node: CodeModule) -> None:
         """Perform type checking and validation using mypy.
@@ -1025,59 +1219,47 @@ class ProjectAnalyzer:
             return
 
         try:
-            # Run mypy with configured options
-            results = OPTIONAL_DEPS["mypy"].run(self._get_mypy_options(file_path))
-
-            # Process mypy output
-            if results[0]:  # mypy output is available
-                errors, error_count, warning_count = self._process_mypy_output(results[0])
+            if output := self._run_mypy(file_path):
+                errors, error_count, warning_count = self._process_mypy_output(output)
                 node.type_errors = errors
                 self._log_type_check_results(node, errors, error_count, warning_count)
 
-        except FileNotFoundError:
-            if self.logger:
-                self.logger.error(
-                    "mypy executable not found in PATH",
-                    extra={"module": node.name}
-                )
-            console.print("[red]Error: mypy not found in PATH. Please install mypy.")
-
         except Exception as e:
-            if self.logger:
-                self.logger.error(
-                    "Type checking failed",
-                    exc_info=e,
-                    extra={"module": node.name}
-                )
-            console.print(f"[red]Error during type checking of {node.name}: {str(e)}")
+            self._handle_type_check_error(node, e)
 
-    def _calculate_complexity_metrics(self):
-        """Calculate advanced complexity and maintainability metrics"""
-        if not OPTIONAL_DEPS["radon"]:
-            console.print("[yellow]Skipping complexity metrics - radon not available")
-            return
+    def _calculate_module_complexity(self, node: CodeModule) -> float:
+        """Calculate weighted complexity score for a module.
 
-        complexities = []
-        for node in self.modules.values():
-            # Calculate weighted complexity based on multiple factors
-            weighted_complexity = (
-                node.cyclomatic_complexity * 0.4
-                + (1 - node.maintainability / 100) * 0.3
-                + len(node.dependencies) * 0.3
-            )
-            complexities.append(weighted_complexity)
-            node.complexity = weighted_complexity
+        Args:
+            node: CodeModule instance to analyze
+
+        Returns:
+            Weighted complexity score
+        """
+        return (
+            node.cyclomatic_complexity * 0.4
+            + (1 - node.maintainability / 100) * 0.3
+            + len(node.dependencies) * 0.3
+        )
+
+    def _calculate_average_complexity(self, complexities: List[float]) -> float:
+        """Calculate average complexity using numpy if available.
+
+        Args:
+            complexities: List of complexity scores
+
+        Returns:
+            Average complexity score
+        """
+        if not complexities:
+            return 0.0
 
         if OPTIONAL_DEPS["numpy"]:
-            self.metrics.avg_complexity = (
-                OPTIONAL_DEPS["numpy"].mean(complexities) if complexities else 0.0
-            )
-        else:
-            # Fallback without numpy
-            self.metrics.avg_complexity = (
-                sum(complexities) / len(complexities) if complexities else 0.0
-            )
-        # Calculate import depth using longest paths
+            return OPTIONAL_DEPS["numpy"].mean(complexities)
+        return sum(complexities) / len(complexities)
+
+    def _calculate_import_depths(self) -> None:
+        """Calculate import depths using networkx."""
         for module_name in self.modules:
             try:
                 paths = OPTIONAL_DEPS["networkx"].single_source_shortest_path_length(
@@ -1086,6 +1268,26 @@ class ProjectAnalyzer:
                 self.metrics.import_depth[module_name] = max(paths.values())
             except OPTIONAL_DEPS["networkx"].NetworkXError:
                 self.metrics.import_depth[module_name] = 0
+
+    def _calculate_complexity_metrics(self) -> None:
+        """Calculate advanced complexity and maintainability metrics."""
+        if not OPTIONAL_DEPS["radon"]:
+            if self.logger:
+                self.logger.debug("Skipping complexity metrics - radon not available")
+            return
+
+        # Calculate module complexities
+        complexities = []
+        for node in self.modules.values():
+            complexity = self._calculate_module_complexity(node)
+            complexities.append(complexity)
+            node.complexity = complexity
+
+        # Calculate average complexity
+        self.metrics.avg_complexity = self._calculate_average_complexity(complexities)
+
+        # Calculate import depths
+        self._calculate_import_depths()
 
     def _generate_metrics(self):
         """Generate comprehensive analysis metrics"""
@@ -1315,31 +1517,34 @@ class ProjectAnalyzer:
     def _initialize_project_components(self) -> None:
         """Initialize all project components including cache, modules, and backups."""
         try:
-            print(f"Initializing project at {self.root}")
-            print(f"Config: {self.config}")
-            print(f"Cache enabled: {self.enable_caching}")
-
-            # Create cache directory if enabled
-            if self.enable_caching:
-                self._create_cache_directory()
-
-            # Initialize core components
-            self._initialize_modules()
-            self._initialize_dependency_graph()
-            self._initialize_metrics()
-
-            # Create backup if enabled
-            if self.backup:
-                self._create_backup_directory()
-
-            print("Project initialization complete")
-
+            self._extracted_from__initialize_project_components_4()
         except KeyboardInterrupt:
             print("\nProject component initialization interrupted by user")
             raise
         except Exception as e:
             print(f"Error during project component initialization: {str(e)}")
             raise
+
+    # TODO Rename this here and in `_initialize_project_components`
+    def _extracted_from__initialize_project_components_4(self):
+        print(f"Initializing project at {self.root}")
+        print(f"Config: {self.config}")
+        print(f"Cache enabled: {self.enable_caching}")
+
+        # Create cache directory if enabled
+        if self.enable_caching:
+            self._create_cache_directory()
+
+        # Initialize core components
+        self._initialize_modules()
+        self._initialize_dependency_graph()
+        self._initialize_metrics()
+
+        # Create backup if enabled
+        if self.backup:
+            self._create_backup_directory()
+
+        print("Project initialization complete")
 
     def _create_cache_directory(self) -> None:
         """Create a cache directory for the project."""

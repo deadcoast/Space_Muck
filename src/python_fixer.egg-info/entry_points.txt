@@ -1,0 +1,2 @@
+[console_scripts]
+python-fixer = python_fixer.cli:main
