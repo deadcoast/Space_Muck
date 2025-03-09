@@ -2,6 +2,9 @@
 
 import unittest
 from pathlib import Path
+
+import pytest
+
 from python_fixer.core.signatures import (
     TypeInfo,
     SignatureMetrics,
@@ -179,4 +182,4 @@ class TestCodeSignature(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__])

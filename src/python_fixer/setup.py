@@ -1,22 +1,12 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
+# This file is only here for backward compatibility.
+# All configuration is in pyproject.toml
 setup(
     name="python_fixer",
-    version="0.1.0",
-    description="Fix Python import and class structure issues in your project",
-    author="Codeium",
-    packages=find_packages(),
-    install_requires=[
-        "pydantic",
-        "networkx",
-        "numpy",
-        "rich",
-    ],
-    extras_require={
-        "test": [
-            "pytest",
-            "pytest-cov",
-        ],
-    },
+    packages=["python_fixer"],
+    package_dir={"python_fixer": "."},
+    include_package_data=True,
+    zip_safe=False,
     python_requires=">=3.7",
 )

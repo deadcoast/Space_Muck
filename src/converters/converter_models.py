@@ -166,10 +166,18 @@ class Converter:
         quality_modifier: float = 1.0,
         technology_modifier: float = 1.0,
         environmental_modifier: float = 1.0,
-    ) -> float:
+    ) -> Tuple[float, List[Union[str, float]]]:
         """Calculate the overall efficiency of this converter."""
         base = self.base_efficiency * (0.8 + 0.1 * self.tier.value)  # Tier bonus
-        return base * quality_modifier * technology_modifier * environmental_modifier
+        efficiency = base * quality_modifier * technology_modifier * environmental_modifier
+        # Return both efficiency and contributing factors
+        factors: List[Union[str, float]] = [
+            "Base Efficiency", base,
+            "Quality Modifier", quality_modifier,
+            "Technology Modifier", technology_modifier,
+            "Environmental Modifier", environmental_modifier
+        ]
+        return (efficiency, factors)
 
     def can_process(self, recipe: Recipe) -> bool:
         """Check if this converter can process the given recipe."""
@@ -183,7 +191,7 @@ class Converter:
         recipe: Recipe,
         input_resources: Dict[ResourceType, int],
         quality_modifier: float = 1.0,
-    ) -> Optional["ConversionProcess"]:
+    ) -> Union[Tuple["ConversionProcess", Dict[str, float]], None]:
         """
         Start a new conversion process if possible.
 
@@ -193,11 +201,20 @@ class Converter:
             quality_modifier: Quality modifier for the process
 
         Returns:
-            ConversionProcess or None if failed
+            Tuple of (ConversionProcess, metrics dict) or None if failed.
+            Metrics include efficiency, estimated time, and energy usage.
         """
         # Check compatibility
         if not self.can_process(recipe):
             return None
+            
+        # Calculate process metrics
+        efficiency, _ = self.get_overall_efficiency(quality_modifier=quality_modifier)
+        process_metrics = {
+            "efficiency": efficiency,
+            "estimated_time": recipe.get_time_with_efficiency(efficiency),
+            "energy_usage": recipe.get_energy_with_efficiency(efficiency)
+        }
 
         # Check input resources
         for resource_type, amount in recipe.inputs.items():
@@ -215,7 +232,7 @@ class Converter:
             quality_modifier=quality_modifier,
         )
         self.active_processes.append(process)
-        return process
+        return (process, process_metrics)
 
     def cancel_process(self, process_id: str) -> bool:
         """Cancel a process by its ID."""
