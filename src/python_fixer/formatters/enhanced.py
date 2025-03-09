@@ -148,18 +148,9 @@ class EnhancedFormatter(variant_loggers.Formatter):
             Layout(name="stack", size=5),
         )
 
-        layout["message"].update(
-            Panel(entry["message"], title="Message", border_style="red")
+        self._warning_layout(
+            layout, entry, "red", "bold red"
         )
-
-        # Context table
-        context_table = Table(show_header=True, header_style="bold red")
-        context_table.add_column("Key")
-        context_table.add_column("Value")
-        for k, v in entry["context"].items():
-            context_table.add_row(str(k), str(v))
-        layout["context"].update(Panel(context_table, title="Context"))
-
         # Stack trace
         if "stack_trace" in entry["context"]:
             layout["stack"].update(
@@ -181,18 +172,21 @@ class EnhancedFormatter(variant_loggers.Formatter):
             Layout(name="context", size=3),
         )
 
-        layout["message"].update(
-            Panel(entry["message"], title="Message", border_style="yellow")
+        self._warning_layout(
+            layout, entry, "yellow", "bold yellow"
         )
+        return layout
 
-        context_table = Table(show_header=True, header_style="bold yellow")
+    def _warning_layout(self, layout, entry, border_style, header_style):
+        layout["message"].update(
+            Panel(entry["message"], title="Message", border_style=border_style)
+        )
+        context_table = Table(show_header=True, header_style=header_style)
         context_table.add_column("Key")
         context_table.add_column("Value")
         for k, v in entry["context"].items():
             context_table.add_row(str(k), str(v))
         layout["context"].update(Panel(context_table, title="Context"))
-
-        return layout
 
     def _create_info_layout(self, entry: Dict[str, Any]) -> Layout:
         """Create rich layout for info entries."""

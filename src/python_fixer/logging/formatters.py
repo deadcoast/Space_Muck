@@ -57,6 +57,9 @@ class DetailedJSONFormatter(logging.Formatter):
     """
     Enhanced JSON formatter with comprehensive metadata and context.
     """
+    def __init__(self, fmt: Optional[str] = None, **kwargs: Dict[str, Any]):
+        super().__init__(fmt=fmt)
+        self.additional_fields: Dict[str, Any] = kwargs
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as detailed JSON"""
@@ -103,6 +106,9 @@ class FileOperationFormatter(logging.Formatter):
     """
     Specialized formatter for logging file operations with detailed stats.
     """
+    def __init__(self, fmt: Optional[str] = None, include_stats: bool = True):
+        super().__init__(fmt=fmt)
+        self.include_stats = include_stats
 
     def format(self, record: logging.LogRecord) -> str:
         """Format file operations with statistics"""
@@ -140,11 +146,9 @@ class StructuredFormatter:
     """
     Factory class for creating appropriate formatters based on output type.
     """
-
     @staticmethod
-    def create(format_type: str = "json", **kwargs) -> logging.Formatter:
-        """
-        Create a formatter of the specified type.
+    def create(format_type: str = "json", **kwargs: Dict[str, Any]) -> logging.Formatter:
+        """Create a formatter of the specified type.
 
         Args:
             format_type: One of 'json', 'color', 'file', or 'detailed'
@@ -153,15 +157,14 @@ class StructuredFormatter:
         Returns:
             Appropriate formatter instance
         """
-        formatters = {
-            "json": DetailedJSONFormatter,
-            "color": ColorFormatter,
-            "file": FileOperationFormatter,
-            "detailed": DetailedJSONFormatter,
-        }
-
-        formatter_class = formatters.get(format_type, DetailedJSONFormatter)
-        return formatter_class(**kwargs)
+        if format_type == "json":
+            return DetailedJSONFormatter(**kwargs)
+        elif format_type == "color":
+            return ColorFormatter(**kwargs)
+        elif format_type == "file":
+            return FileOperationFormatter(**kwargs)
+        else:
+            return logging.Formatter(**kwargs)
 
 
 # Example usage:
