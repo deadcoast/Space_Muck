@@ -109,7 +109,7 @@ async def analyze_project():
                 module=__name__,
             ).to_dict()
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/fix")
@@ -149,7 +149,7 @@ async def fix_project(mode: str = "interactive"):
                 module=__name__,
             ).to_dict()
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/logs")

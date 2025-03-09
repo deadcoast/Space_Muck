@@ -13,19 +13,14 @@ from __future__ import annotations
 
 import ast
 import contextlib
+import importlib.util
 import inspect
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set, Tuple, TypeVar, Union
 
-import libcst as cst
 import networkx as nx
-import numpy as np
-import rustworkx as rx
-import sympy
-import torch
-import torch.nn.functional as F
 import typeguard
 from pydantic import BaseModel, Field
 from pygments import highlight
@@ -34,10 +29,119 @@ from pygments.lexers import PythonLexer
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.tree import Tree
-from scipy.spatial.distance import cosine
-from sklearn.cluster import DBSCAN
-from sklearn.feature_extraction.text import TfidfVectorizer
 from typing_extensions import Protocol, runtime_checkable
+
+# Optional dependency configuration
+OPTIONAL_DEPENDENCIES = {
+    'libcst': {
+        'module': 'libcst',
+        'import_as': 'libcst',
+        'required_for': ['AST parsing', 'code transformation'],
+    },
+    'numpy': {
+        'module': 'numpy',
+        'import_as': 'np',
+        'required_for': ['numerical computations'],
+    },
+    'rustworkx': {
+        'module': 'rustworkx',
+        'import_as': 'rx',
+        'required_for': ['graph operations'],
+    },
+    'sympy': {
+        'module': 'sympy',
+        'import_as': 'sympy',
+        'required_for': ['symbolic mathematics'],
+    },
+    'torch': {
+        'module': 'torch',
+        'import_as': 'torch',
+        'submodules': [('torch.nn.functional', 'F')],
+        'required_for': ['type inference', 'model predictions'],
+    },
+    'scipy': {
+        'module': 'scipy.spatial.distance',
+        'imports': ['cosine'],
+        'required_for': ['similarity calculations'],
+    },
+    'sklearn': {
+        'module': 'sklearn',
+        'imports': [
+            ('sklearn.cluster', ['DBSCAN']),
+            ('sklearn.feature_extraction.text', ['TfidfVectorizer']),
+        ],
+        'required_for': ['clustering', 'text vectorization'],
+    },
+}
+
+# Initialize console before dependency checks
+console = Console()
+
+# Check and import optional dependencies
+DEPENDENCY_STATUS = {}
+IMPORTED_MODULES = {}
+
+# Type checking imports
+if TYPE_CHECKING:
+    import libcst as cst
+    import numpy as np
+    import rustworkx as rx
+    import sympy
+    import torch
+    import torch.nn.functional as F
+    from scipy.spatial.distance import cosine
+    from sklearn.cluster import DBSCAN
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Runtime dependency management
+for dep_name, dep_info in OPTIONAL_DEPENDENCIES.items():
+    # Check availability
+    is_available = importlib.util.find_spec(dep_info['module'].split('.')[0]) is not None
+    DEPENDENCY_STATUS[dep_name] = is_available
+    
+    if is_available:
+        try:
+            # Import main module if specified
+            if 'import_as' in dep_info:
+                module = __import__(dep_info['module'], fromlist=['*'])
+                IMPORTED_MODULES[dep_info['import_as']] = module
+                globals()[dep_info['import_as']] = module
+            
+            # Import submodules if specified
+            if 'submodules' in dep_info:
+                for submodule, alias in dep_info['submodules']:
+                    sub_mod = __import__(submodule, fromlist=['*'])
+                    IMPORTED_MODULES[alias] = sub_mod
+                    globals()[alias] = sub_mod
+            
+            # Import specific items if specified
+            if 'imports' in dep_info:
+                for imp in dep_info['imports']:
+                    if isinstance(imp, tuple):
+                        module, items = imp
+                        mod = __import__(module, fromlist=items)
+                        for item in items:
+                            IMPORTED_MODULES[item] = getattr(mod, item)
+                            globals()[item] = getattr(mod, item)
+                    else:
+                        module = dep_info['module']
+                        mod = __import__(module, fromlist=[imp])
+                        IMPORTED_MODULES[imp] = getattr(mod, imp)
+                        globals()[imp] = getattr(mod, imp)
+        except ImportError as e:
+            DEPENDENCY_STATUS[dep_name] = False
+            console.debug(f"Failed to import {dep_name}: {e}")
+    else:
+        # Initialize empty placeholders for unavailable modules
+        if 'import_as' in dep_info:
+            globals()[dep_info['import_as']] = None
+        if 'submodules' in dep_info:
+            for _, alias in dep_info['submodules']:
+                globals()[alias] = None
+        if 'imports' in dep_info:
+            for imp in dep_info['imports']:
+                name = imp[1][0] if isinstance(imp, tuple) else imp
+                globals()[name] = None
 
 console = Console()
 
@@ -515,10 +619,11 @@ class CodeHighlighter:
 class SyntaxTreeVisualizer:
     """
     Uses `rich` to provide tree visualization for Python syntax elements.
+    Requires the `rich` package for tree visualization.
     """
 
     @staticmethod
-    def visualize_ast(node: ast.AST, name: str = "AST Tree") -> Tree:
+    def visualize_ast(node: ast.AST, name: str = "AST Tree") -> Optional[Tree]:
         """
         Builds a tree visualization of the AST.
 
@@ -527,65 +632,149 @@ class SyntaxTreeVisualizer:
             name: The tree root name.
 
         Returns:
-            A `rich.tree.Tree` object representing the AST.
+            A `rich.tree.Tree` object representing the AST, or None if visualization fails.
+
+        Raises:
+            TypeError: If node is not an AST node.
         """
-        tree = Tree(name)
-        SyntaxTreeVisualizer._build_ast_tree(tree, node)
-        return tree
+        if not isinstance(node, ast.AST):
+            raise TypeError(f"Expected ast.AST, got {type(node).__name__}")
+
+        try:
+            tree = Tree(name)
+            SyntaxTreeVisualizer._build_ast_tree(tree, node)
+            return tree
+        except Exception as e:
+            console.warning(f"Failed to visualize AST: {e}")
+            return None
 
     @staticmethod
-    def _build_ast_tree(tree: Tree, node: ast.AST):
+    def _build_ast_tree(tree: Tree, node: ast.AST) -> None:
         """
         Recursively builds the AST as a tree structure.
 
         Args:
             tree: The current `Tree` object being populated.
             node: The AST node being inspected.
+
+        Note:
+            Handles AST nodes, lists of nodes, and primitive values.
+            Skips None values and empty lists for cleaner visualization.
         """
-        for field, value in ast.iter_fields(node):
-            if isinstance(value, ast.AST):
-                subtree = tree.add(f"{field}: {type(value).__name__}")
-                SyntaxTreeVisualizer._build_ast_tree(subtree, value)
-            elif isinstance(value, list):
-                subtree = tree.add(f"{field}: list")
-                for item in value:
-                    if isinstance(item, ast.AST):
-                        item_tree = subtree.add(f"{type(item).__name__}")
-                        SyntaxTreeVisualizer._build_ast_tree(item_tree, item)
-            else:
-                tree.add(f"{field}: {value}")
+        if not isinstance(node, ast.AST):
+            console.warning(f"Invalid node type: {type(node).__name__}")
+            return
+
+        try:
+            for field_name, value in ast.iter_fields(node):
+                # Skip None values and empty lists
+                if value is None or (isinstance(value, list) and not value):
+                    continue
+
+                if isinstance(value, ast.AST):
+                    subtree = tree.add(f"{field_name}: {type(value).__name__}")
+                    SyntaxTreeVisualizer._build_ast_tree(subtree, value)
+                elif isinstance(value, list):
+                    subtree = tree.add(f"{field_name}: list[{len(value)}]")
+                    for item in value:
+                        if isinstance(item, ast.AST):
+                            item_tree = subtree.add(f"{type(item).__name__}")
+                            SyntaxTreeVisualizer._build_ast_tree(item_tree, item)
+                        elif item is not None:
+                            subtree.add(str(item))
+                else:
+                    # Safely convert value to string, truncate if too long
+                    str_value = str(value)
+                    if len(str_value) > 100:
+                        str_value = f"{str_value[:97]}..."
+                    tree.add(f"{field_name}: {str_value}")
+        except Exception as e:
+            console.warning(f"Error building AST tree: {e}")
 
     @staticmethod
-    def render_code_tree(code: str):
+    def render_code_tree(code: str) -> None:
         """
         Parses Python code and renders the syntax tree using `rich`.
 
         Args:
             code: Input Python code as a string.
+
+        Note:
+            Handles syntax errors and invalid input gracefully.
+            Skips visualization if AST parsing fails.
         """
+        if not code or not code.strip():
+            console.warning("Empty code string provided")
+            return
+
         try:
             parsed_ast = ast.parse(code)
-            tree = SyntaxTreeVisualizer.visualize_ast(parsed_ast)
-            console.print(tree)
+            if tree := SyntaxTreeVisualizer.visualize_ast(parsed_ast):
+                console.print(tree)
+            else:
+                console.warning("Failed to generate AST visualization")
         except SyntaxError as e:
-            console.print(f"[red]Syntax Error:[/] {e}")
+            console.print(f"[red]Syntax Error:[/] {str(e)}")
+            # Show the problematic line if available
+            if text := getattr(e, 'text', None):
+                console.print(f"[yellow]Line {e.lineno}:[/] {text.rstrip()}")
+                if e.offset:
+                    console.print(f"{' ' * (e.offset + 14)}[red]^[/]")
+        except Exception as e:
+            console.print(f"[red]Error parsing code:[/] {str(e)}")
 
 
 class RichSyntaxHighlighter:
     """
     Uses `rich.syntax.Syntax` to display colorful syntax-highlighted code in the console.
+    Requires the `rich` package for syntax highlighting.
     """
 
     @staticmethod
-    def display_code(code: str):
+    def display_code(code: str, theme: str = "monokai", show_line_numbers: bool = True) -> None:
         """
         Displays syntax-highlighted Python code in the console.
 
         Args:
             code: The Python code as a string.
+            theme: The syntax highlighting theme to use (default: monokai).
+            show_line_numbers: Whether to display line numbers (default: True).
+
+        Note:
+            Handles empty input and syntax errors gracefully.
+            Supports various rich themes for syntax highlighting.
         """
-        syntax = Syntax(code, "python", theme="monokai", line_numbers=True)
-        console.print(syntax)
+        if not code or not code.strip():
+            console.warning("Empty code string provided")
+            return
+
+        try:
+            # Validate Python syntax before highlighting
+            ast.parse(code)
+            
+            # Create syntax object with error handling
+            try:
+                syntax = Syntax(
+                    code,
+                    lexer="python",
+                    theme=theme,
+                    line_numbers=show_line_numbers,
+                    word_wrap=True
+                )
+                console.print(syntax)
+            except Exception as e:
+                console.warning(f"Error highlighting code: {e}")
+                # Fallback to plain text if highlighting fails
+                console.print(code)
+        except SyntaxError as e:
+            console.print(f"[red]Syntax Error:[/] {str(e)}")
+            # Show the problematic line if available
+            if text := getattr(e, 'text', None):
+                console.print(f"[yellow]Line {e.lineno}:[/] {text.rstrip()}")
+                if e.offset:
+                    console.print(f"{' ' * (e.offset + 14)}[red]^[/]")
+        except Exception as e:
+            console.print(f"[red]Error parsing code:[/] {str(e)}")
 
 
 class SignatureVisitor(cst.CSTVisitor):
@@ -601,22 +790,64 @@ class SignatureVisitor(cst.CSTVisitor):
         file_path: The path of the file being analyzed.
         type_inference_model: Machine learning model for type inference (optional).
         signatures: A list to store `CodeSignature` objects based on discovered elements.
+
+    Requirements:
+        - libcst: For AST traversal and code analysis
+        - torch (optional): For type inference model support
     """
 
     def __init__(
-        self, file_path: Path, type_inference_model: Optional[torch.nn.Module] = None
-    ):
-        super().__init__()
-        """
-        Initialize the visitor.
+        self, 
+        file_path: Path, 
+        type_inference_model: Optional[torch.nn.Module] = None,
+        enable_type_inference: bool = True
+    ) -> None:
+        """Initialize the SignatureVisitor.
 
         Args:
-            file_path: Path of the file being analyzed.
-            type_inference_model: A pre-trained ML model for type inference (optional).
+            file_path: Path to the file being analyzed.
+            type_inference_model: Optional ML model for type inference.
+            enable_type_inference: Whether to use type inference (default: True).
+
+        Raises:
+            ImportError: If required dependencies are not available.
         """
+        if not DEPENDENCY_STATUS.get('libcst'):
+            raise ImportError(
+                "libcst is required for SignatureVisitor. "
+                "Please install it with: pip install libcst"
+            )
+
+        super().__init__()
         self.file_path = file_path
-        self.type_inference_model = type_inference_model
         self.signatures: List[CodeSignature] = []
+        self.current_class: Optional[str] = None
+        self.type_inference_enabled = enable_type_inference
+
+        # Initialize type inference model
+        self.type_inference_model = None
+        
+        # Check if type inference is requested
+        if not enable_type_inference:
+            return
+            
+        # Check for torch dependency
+        if not DEPENDENCY_STATUS.get('torch'):
+            console.warning(
+                "Type inference requested but torch not available. "
+                "Install torch for ML-based type inference support."
+            )
+            return
+            
+        # Initialize model if available
+        try:
+            self.type_inference_model = type_inference_model
+            if type_inference_model:
+                console.debug("Type inference model initialized successfully")
+            else:
+                console.debug("No type inference model provided")
+        except Exception as e:
+            console.warning(f"Failed to initialize type inference model: {e}")
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
         """
@@ -624,37 +855,81 @@ class SignatureVisitor(cst.CSTVisitor):
 
         Args:
             node: A `libcst.FunctionDef` object representing a function definition.
+
+        Note:
+            Handles errors gracefully and logs warnings for invalid nodes.
+            Uses type inference if enabled and no explicit type hints are present.
         """
-        name = node.name.value
-        docstring = self._get_docstring(node)
-        parameters = self._extract_parameters(node.params)
-        return_type = self._infer_type(node.returns)
-        type_info = TypeInfo(type_hint=return_type, inferred_type=None, confidence=1.0)
+        try:
+            # Extract basic function information
+            name = node.name.value
+            if not name:
+                console.warning("Found function definition with empty name")
+                return
 
-        components = [
-            SignatureComponent(
-                name=param_name,
-                type_info=TypeInfo(
-                    type_hint=param_type,
-                    inferred_type=(
-                        None if param_type else self._infer_type_from_model(param_name)
-                    ),
-                    confidence=0.9 if param_type else 0.7,
-                ),
-                is_optional=is_optional,
+            # Get docstring and return type
+            docstring = self._get_docstring(node)
+            return_type = self._infer_type(node.returns)
+            
+            # Create return type info
+            inferred_return_type = None
+            if not return_type and self.type_inference_enabled:
+                inferred_return_type = self._infer_type_from_model(f"return_{name}")
+
+            type_info = TypeInfo(
+                type_hint=return_type,
+                inferred_type=inferred_return_type,
+                confidence=1.0 if return_type else 0.7
             )
-            for param_name, param_type, is_optional in parameters
-        ]
 
-        code_signature = CodeSignature(
-            name=name,
-            module_path=self.file_path,
-            components=components,
-            return_type=type_info,
-            docstring=docstring,
-        )
+            # Extract and process parameters
+            try:
+                parameters = self._extract_parameters(node.params)
+            except Exception as e:
+                console.warning(f"Error extracting parameters from {name}: {e}")
+                parameters = []
 
-        self.signatures.append(code_signature)
+            # Create components with proper error handling
+            components: List[SignatureComponent] = []
+            for param_name, param_type, is_optional in parameters:
+                if not param_name:
+                    console.warning(f"Skipping parameter with empty name in {name}")
+                    continue
+
+                # Infer type if needed and enabled
+                inferred_type = None
+                if not param_type and self.type_inference_enabled:
+                    inferred_type = self._infer_type_from_model(param_name)
+
+                try:
+                    component = SignatureComponent(
+                        name=param_name,
+                        type_info=TypeInfo(
+                            type_hint=param_type,
+                            inferred_type=inferred_type,
+                            confidence=0.9 if param_type else 0.7,
+                        ),
+                        is_optional=is_optional,
+                    )
+                    components.append(component)
+                except Exception as e:
+                    console.warning(f"Error creating component for {param_name}: {e}")
+
+            # Create and validate signature
+            try:
+                code_signature = CodeSignature(
+                    name=name,
+                    module_path=self.file_path,
+                    components=components,
+                    return_type=type_info,
+                    docstring=docstring,
+                )
+                self.signatures.append(code_signature)
+            except Exception as e:
+                console.warning(f"Error creating signature for {name}: {e}")
+
+        except Exception as e:
+            console.warning(f"Error processing function definition: {e}")
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         """
@@ -662,21 +937,69 @@ class SignatureVisitor(cst.CSTVisitor):
 
         Args:
             node: A `libcst.ClassDef` object representing a class definition.
+
+        Note:
+            Handles class inheritance and method signatures.
+            Provides graceful error handling for invalid class definitions.
         """
-        class_name = node.name.value
-        docstring = self._get_docstring(node)
+        try:
+            # Extract basic class information
+            class_name = node.name.value
+            if not class_name:
+                console.warning("Found class definition with empty name")
+                return
 
-        # Add as a minimal `CodeSignature`, further processing could include methods.
-        code_signature = CodeSignature(
-            name=class_name,
-            module_path=self.file_path,
-            components=[],  # Placeholder: could extract methods or attributes signatures here.
-            docstring=docstring,
-        )
+            # Get docstring and base classes
+            docstring = self._get_docstring(node)
+            base_classes: List[str] = []
+            
+            # Extract base classes with error handling
+            try:
+                for base in node.bases:
+                    if isinstance(base.value, cst.Name):
+                        base_classes.append(base.value.value)
+                    elif isinstance(base.value, cst.Attribute):
+                        # Handle qualified names (e.g., module.class)
+                        base_classes.append(cst.Module([]).code_for_node(base.value))
+            except Exception as e:
+                console.warning(f"Error extracting base classes for {class_name}: {e}")
 
-        self.signatures.append(code_signature)
+            # Store current class name for method context
+            prev_class = self.current_class
+            self.current_class = class_name
 
-    def _extract_parameters(self, params: cst.Parameters) -> List[tuple]:
+            try:
+                # Create class signature
+                code_signature = CodeSignature(
+                    name=class_name,
+                    module_path=self.file_path,
+                    components=[],  # Methods will be added during traversal
+                    docstring=docstring,
+                    dependencies=set(base_classes) if base_classes else set()
+                )
+                self.signatures.append(code_signature)
+
+                # Visit class body to process methods
+                if node.body.body:
+                    for statement in node.body.body:
+                        if isinstance(statement, cst.FunctionDef):
+                            try:
+                                self.visit_FunctionDef(statement)
+                            except Exception as e:
+                                console.warning(
+                                    f"Error processing method {statement.name.value} "
+                                    f"in class {class_name}: {e}"
+                                )
+            finally:
+                # Restore previous class context
+                self.current_class = prev_class
+
+        except Exception as e:
+            console.warning(f"Error processing class definition: {e}")
+
+    def _extract_parameters(
+        self, params: cst.Parameters
+    ) -> List[Tuple[str, Optional[str], bool]]:
         """
         Extract parameter details from a function definition.
 
@@ -684,18 +1007,354 @@ class SignatureVisitor(cst.CSTVisitor):
             params: The parameters node from a function definition.
 
         Returns:
-            A list of tuples containing parameter name, type annotation (if present),
-            and whether it is optional.
+            A list of tuples containing:
+                - Parameter name (str)
+                - Type annotation if present (Optional[str])
+                - Whether parameter is optional (bool)
+
+        Note:
+            Handles special cases like *args, **kwargs, and positional-only parameters.
+            Skips invalid parameters and logs warnings.
         """
-        extracted_params = []
-        for param in params.params:
-            param_name = param.name.value
-            param_type = self._infer_type(param.annotation)
-            is_optional = (
-                param.default is not None  # If a default value exists, it is optional.
-            )
-            extracted_params.append((param_name, param_type, is_optional))
-        return extracted_params
+        extracted_params: List[Tuple[str, Optional[str], bool]] = []
+
+        try:
+            # Process positional-only parameters
+            if params.posonly_params:
+                for param in params.posonly_params:
+                    try:
+                        self._process_parameter(param, extracted_params)
+                    except Exception as e:
+                        console.warning(f"Error processing positional-only parameter: {e}")
+
+            # Process regular parameters
+            for param in params.params:
+                try:
+                    self._process_parameter(param, extracted_params)
+                except Exception as e:
+                    console.warning(f"Error processing parameter: {e}")
+
+            # Process *args parameter
+            if params.star_arg:
+                try:
+                    self._process_parameter(params.star_arg, extracted_params)
+                except Exception as e:
+                    console.warning(f"Error processing *args parameter: {e}")
+
+            # Process **kwargs parameter
+            if params.kwonly_params:
+                for param in params.kwonly_params:
+                    try:
+                        self._process_parameter(param, extracted_params)
+                    except Exception as e:
+                        console.warning(f"Error processing keyword-only parameter: {e}")
+
+            return extracted_params
+
+        except Exception as e:
+            console.warning(f"Error extracting parameters: {e}")
+            return []
+
+    def _process_type_parameters(
+        self,
+        base_type: str,
+        slice_nodes: Sequence[cst.SubscriptElement]
+    ) -> Optional[str]:
+        """
+        Process type parameters from subscription nodes.
+
+        Args:
+            base_type: Base type string (e.g., 'List' for List[int])
+            slice_nodes: Sequence of subscription elements
+
+        Returns:
+            Complete type string if valid, None otherwise
+
+        Note:
+            - Handles simple and complex type parameters
+            - Validates parameter nodes
+            - Constructs proper type string format
+        """
+        try:
+            # Extract type parameters
+            type_params = []
+            for slice_item in slice_nodes:
+                # Validate and process slice item
+                if not (param_value := self._validate_slice_item(slice_item)):
+                    continue
+
+                # Process parameter value
+                if param_str := self._process_param_value(param_value):
+                    type_params.append(param_str)
+
+            # Construct final type string
+            return self._construct_type_string(base_type, type_params)
+
+        except Exception as e:
+            console.warning(f"Error processing type parameters: {e}")
+            return None
+
+    def _process_complex_type(self, node: cst.Subscript) -> Optional[str]:
+        """
+        Process a complex type annotation node.
+
+        Args:
+            node: Subscript node containing the complex type
+
+        Returns:
+            Complete type string if valid, None otherwise
+
+        Note:
+            - Handles generic types (List[T], Dict[K, V])
+            - Validates base type and parameters
+            - Provides comprehensive error handling
+        """
+        try:
+            # Get base type
+            if not (base_type := self._get_base_type(node.value)):
+                return None
+
+            # Get and process type parameters
+            if not (type_str := self._process_type_parameters(base_type, node.slice)):
+                return None
+
+            return type_str
+
+        except Exception as e:
+            console.warning(f"Failed to process complex type annotation: {e}")
+            return None
+
+    def _validate_annotation_node(
+        self,
+        annotation: Any
+    ) -> Optional[Union[cst.Name, cst.Subscript, cst.Attribute]]:
+        """
+        Validate an annotation node and extract its type information.
+
+        Args:
+            annotation: The annotation object to validate
+
+        Returns:
+            Valid annotation node if present, None otherwise
+
+        Note:
+            - Validates annotation object
+            - Checks for supported node types
+            - Provides error handling
+        """
+        try:
+            # Check for annotation attribute
+            if not hasattr(annotation, 'annotation'):
+                console.warning(
+                    f"Invalid annotation object: {type(annotation).__name__}"
+                )
+                return None
+
+            # Get and validate node type
+            node = annotation.annotation
+            if not isinstance(node, (cst.Name, cst.Subscript, cst.Attribute)):
+                console.debug(
+                    f"Unsupported annotation type: {type(node).__name__}"
+                )
+                return None
+
+            return node
+
+        except Exception as e:
+            console.warning(f"Error validating annotation node: {e}")
+            return None
+
+    def _validate_type_name(self, node: cst.Name) -> Optional[str]:
+        """
+        Validate and extract a simple type name.
+
+        Args:
+            node: Name node containing the type
+
+        Returns:
+            Type name if valid, None otherwise
+
+        Note:
+            - Validates type name
+            - Handles empty values
+            - Provides error handling
+        """
+        try:
+            type_value = node.value
+            if not type_value:
+                console.warning("Empty type annotation value")
+                return None
+
+            return type_value
+
+        except Exception as e:
+            console.warning(f"Error validating type name: {e}")
+            return None
+
+    def _construct_type_string(self, base_type: str, type_params: List[str]) -> str:
+        """
+        Construct a complete type string from base type and parameters.
+
+        Args:
+            base_type: Base type name (e.g., 'List')
+            type_params: List of type parameter strings
+
+        Returns:
+            Complete type string (e.g., 'List[int]' or 'Dict[str, int]')
+
+        Note:
+            - Handles empty parameter lists
+            - Formats complex types correctly
+            - Maintains proper spacing
+        """
+        return f"{base_type}[{', '.join(type_params)}]" if type_params else base_type
+
+    def _validate_slice_item(self, slice_item: Any) -> Optional[cst.Name | cst.Attribute]:
+        """
+        Validate a slice item and extract its parameter value.
+
+        Args:
+            slice_item: Slice item to validate
+
+        Returns:
+            Parameter value if valid, None otherwise
+
+        Note:
+            - Validates slice item type
+            - Extracts parameter value
+            - Provides error handling
+        """
+        try:
+            # Validate slice item type
+            if not isinstance(slice_item, cst.SubscriptElement):
+                console.warning(
+                    f"Invalid slice item type: {type(slice_item).__name__}"
+                )
+                return None
+
+            return slice_item.slice.value
+
+        except Exception as e:
+            console.warning(f"Error validating slice item: {e}")
+            return None
+
+    def _process_param_value(self, param_value: Union[cst.Name, cst.Attribute]) -> Optional[str]:
+        """
+        Process a parameter value node to extract its string representation.
+
+        Args:
+            param_value: Parameter value node to process
+
+        Returns:
+            String representation if valid, None otherwise
+
+        Note:
+            - Handles simple names and attributes
+            - Validates node types
+            - Provides error handling
+        """
+        try:
+            # Validate parameter type
+            if not isinstance(param_value, (cst.Name, cst.Attribute)):
+                console.warning(
+                    f"Unsupported parameter type: {type(param_value).__name__}"
+                )
+                return None
+
+            # Convert to string representation
+            param_str = cst.Module([]).code_for_node(param_value)
+            if not param_str:
+                console.warning("Empty parameter string")
+                return None
+
+            return param_str
+
+        except Exception as e:
+            console.warning(f"Error processing parameter value: {e}")
+            return None
+
+    def _get_qualified_name(self, node: cst.Attribute) -> Optional[str]:
+        """
+        Get qualified name from an attribute node.
+
+        Args:
+            node: Attribute node to process
+
+        Returns:
+            Qualified name if valid, None otherwise
+        """
+        try:
+            return cst.Module([]).code_for_node(node)
+        except Exception as e:
+            console.warning(f"Failed to process qualified type name: {e}")
+            return None
+
+    def _get_base_type(self, node: Union[cst.Name, cst.Attribute]) -> Optional[str]:
+        """
+        Extract base type from a type annotation node.
+
+        Args:
+            node: The node containing the base type information
+
+        Returns:
+            Base type string if valid, None otherwise
+
+        Note:
+            - Handles simple names (str, int)
+            - Handles qualified names (typing.List)
+            - Validates node types
+        """
+        try:
+            if isinstance(node, cst.Name):
+                return node.value
+            elif isinstance(node, cst.Attribute):
+                return cst.Module([]).code_for_node(node)
+            else:
+                console.warning(f"Unsupported base type: {type(node).__name__}")
+                return None
+        except Exception as e:
+            console.warning(f"Error extracting base type: {e}")
+            return None
+
+    def _process_parameter(
+        self, param: Union[cst.Param, cst.ParamStar], params_list: List[Tuple[str, Optional[str], bool]]
+    ) -> None:
+        """
+        Process a single parameter and add it to the parameters list.
+
+        Args:
+            param: The parameter node to process.
+            params_list: List to append the processed parameter to.
+
+        Note:
+            Handles error cases and parameter validation.
+            Logs warnings for invalid parameters.
+        """
+        if not isinstance(param, (cst.Param, cst.ParamStar)):
+            console.warning(f"Invalid parameter type: {type(param).__name__}")
+            return
+
+        try:
+            # Get parameter name
+            param_name = param.name.value if isinstance(param, cst.Param) else "*args"
+            if not param_name:
+                console.warning("Empty parameter name")
+                return
+
+            # Get type annotation
+            param_type = None
+            if isinstance(param, cst.Param) and param.annotation:
+                param_type = self._infer_type(param.annotation)
+
+            # Check if parameter is optional (has default value)
+            is_optional = False
+            if isinstance(param, cst.Param):
+                is_optional = param.default is not None
+
+            params_list.append((param_name, param_type, is_optional))
+
+        except Exception as e:
+            console.warning(f"Error processing parameter {getattr(param, 'name', '<unknown>')}: {e}")
 
     def _infer_type(self, annotation: Optional[cst.Annotation]) -> Optional[str]:
         """
@@ -706,15 +1365,73 @@ class SignatureVisitor(cst.CSTVisitor):
 
         Returns:
             The inferred type as a string, or None if no type is specified.
+
+        Note:
+            Handles various type hint formats:
+            - Simple types (int, str)
+            - Complex types (List[int], Dict[str, int])
+            - Qualified names (typing.List)
+            - Union types (Union[str, int])
+            - Optional types (Optional[str])
+            - Custom types (MyClass)
+            Returns None if annotation is invalid or missing.
         """
-        if annotation:
-            if isinstance(annotation.annotation, cst.Name):
-                # Handles simple type names like `int`, `str`, etc.
-                return annotation.annotation.value
-            elif isinstance(annotation.annotation, cst.Subscript):
-                # Handles complex types like `List[int]` or `Dict[str, int]`
-                return cst.Module([]).code_for_node(annotation.annotation)
+        if not annotation:
+            return None
+
+        try:
+            # Validate and get annotation node
+            if not (node := self._validate_annotation_node(annotation)):
+                return None
+
+            # Process simple type names (int, str, etc.)
+            if isinstance(node, cst.Name) and (type_value := self._validate_type_name(node)):
+                return type_value
+
+            # Process complex types (List[int], Dict[str, int], etc.)
+            elif isinstance(node, cst.Subscript) and (type_str := self._process_complex_type(node)):
+                return type_str
+
+            # Process qualified names (typing.List, etc.)
+            elif isinstance(node, cst.Attribute) and (qualified_name := self._get_qualified_name(node)):
+                return qualified_name
+
+        except Exception as e:
+            console.warning(f"Error processing type annotation: {e}")
+            return None
+
         return None
+
+    def _validate_model_inputs(self, name: str) -> Optional[str]:
+        """
+        Validate inputs for the type inference model.
+
+        Args:
+            name: Variable name to validate
+
+        Returns:
+            Validated and stripped name if valid, None otherwise
+        """
+        # Check dependencies and initialization
+        if not DEPENDENCY_STATUS.get('torch'):
+            console.debug("PyTorch not available for type inference")
+            return None
+
+        if not self.type_inference_model:
+            console.debug("Type inference model not initialized")
+            return None
+
+        # Validate input name
+        if not isinstance(name, str):
+            console.warning(f"Invalid input type for name: {type(name).__name__}")
+            return None
+
+        name = name.strip()
+        if not name:
+            console.debug("Empty variable name provided for type inference")
+            return None
+
+        return name
 
     def _infer_type_from_model(self, name: str) -> Optional[str]:
         """
@@ -725,56 +1442,737 @@ class SignatureVisitor(cst.CSTVisitor):
 
         Returns:
             The inferred type as a string, or None if no model is specified or no prediction is possible.
+
+        Note:
+            - Requires PyTorch to be installed and model to be initialized
+            - Uses a character-level tokenization approach
+            - Handles various error cases gracefully
+            - Applies confidence thresholds for predictions
         """
-        if self.type_inference_model:
-            # Example tokenized input processing (requires actual implementation details).
-            # Here we assume `name` is tokenized appropriately for the model.
-            tokenized_input = torch.tensor(
-                [ord(char) for char in name.lower()]
-            ).unsqueeze(
-                0
-            )  # Mock encoding
-            prediction = self.type_inference_model(tokenized_input)
-            type_index = torch.argmax(prediction, dim=1).item()
-            return f"InferredType{type_index}"  # Simplified: Replace with actual type mapping.
-        return None
+        # Validate inputs
+        if not (validated_name := self._validate_model_inputs(name)):
+            return None
+
+        try:
+            # Process input through model pipeline
+            if not (predicted_type := self._process_input_through_model(validated_name)):
+                return None
+
+            # Log successful prediction
+            console.debug(
+                f"Inferred type '{predicted_type}' for variable '{validated_name}'"
+            )
+            return predicted_type
+
+        except Exception as e:
+            console.warning(f"Unexpected error in type inference: {e}")
+            return None
+
+    def _process_input_through_model(self, name: str) -> Optional[str]:
+        """
+        Process input through the complete model pipeline.
+
+        Args:
+            name: Variable name to process
+
+        Returns:
+            Predicted type if successful, None otherwise
+
+        Note:
+            - Handles tokenization
+            - Gets model prediction
+            - Processes prediction with confidence check
+        """
+        try:
+            # Tokenize input
+            if not (tokenized_input := self._tokenize_input(name)):
+                return None
+
+            # Get model prediction
+            if not (prediction := self._get_model_prediction(
+                tokenized_input,
+                len(self.COMMON_TYPES),
+                name
+            )):
+                return None
+
+            # Process prediction
+            return self._process_type_prediction(
+                prediction=prediction,
+                name=name,
+                type_mapping=self.COMMON_TYPES
+            )
+
+        except Exception as e:
+            console.warning(f"Error in model pipeline for '{name}': {e}")
+            return None
+
+    def _get_model_prediction(
+        self,
+        tokenized_input: torch.Tensor,
+        num_types: int,
+        name: str
+    ) -> Optional[torch.Tensor]:
+        """
+        Get prediction from the type inference model.
+
+        Args:
+            tokenized_input: Tokenized input tensor
+            num_types: Expected number of type classes
+            name: Variable name for error reporting
+
+        Returns:
+            Model prediction tensor if successful, None otherwise
+
+        Note:
+            - Disables gradient computation
+            - Validates output shape
+            - Handles various error cases
+        """
+        try:
+            # Run model inference
+            if not (prediction := self._run_model_inference(tokenized_input, name)):
+                return None
+
+            # Validate prediction shape
+            if not self._validate_prediction_shape(prediction, num_types):
+                return None
+
+            return prediction
+
+        except Exception as e:
+            console.warning(f"Unexpected error during model inference: {e}")
+            return None
+
+    def _run_model_inference(self, tokenized_input: torch.Tensor, name: str) -> Optional[torch.Tensor]:
+        """
+        Run inference using the type inference model.
+
+        Args:
+            tokenized_input: Tokenized input tensor
+            name: Variable name for error reporting
+
+        Returns:
+            Model prediction if successful, None otherwise
+
+        Note:
+            - Disables gradient computation
+            - Handles model-specific errors
+            - Provides detailed error messages
+        """
+        try:
+            with torch.no_grad():  # Disable gradient computation
+                return self.type_inference_model(tokenized_input)
+
+        except RuntimeError as e:
+            console.warning(f"Model inference failed for '{name}': {e}")
+            return None
+        except Exception as e:
+            console.warning(f"Unexpected error during model inference: {e}")
+            return None
+
+    def _validate_prediction_shape(
+        self,
+        prediction: torch.Tensor,
+        expected_num_types: int
+    ) -> bool:
+        """
+        Validate the shape of a model prediction tensor.
+
+        Args:
+            prediction: Model prediction tensor
+            expected_num_types: Expected number of type classes
+
+        Returns:
+            True if shape is valid, False otherwise
+
+        Note:
+            - Checks tensor dimensions
+            - Validates output size
+            - Provides detailed error messages
+        """
+        try:
+            # Check tensor dimensions
+            if prediction.dim() != 2:
+                console.warning(
+                    f"Invalid prediction dimensions: {prediction.dim()}, expected 2"
+                )
+                return False
+
+            # Validate number of type classes
+            if prediction.size(1) != expected_num_types:
+                console.warning(
+                    f"Invalid number of type classes: {prediction.size(1)}, "
+                    f"expected {expected_num_types}"
+                )
+                return False
+
+            return True
+
+        except Exception as e:
+            console.warning(f"Error validating prediction shape: {e}")
+            return False
+
+    def _tokenize_input(self, name: str) -> Optional[torch.Tensor]:
+        """
+        Tokenize a variable name for input to the type inference model.
+
+        Args:
+            name: Variable name to tokenize
+
+        Returns:
+            Tokenized input tensor if successful, None otherwise
+
+        Note:
+            - Uses character-level tokenization
+            - Limits vocabulary size to 1000 characters
+            - Moves tensor to correct device
+            - Adds batch dimension
+        """
+        try:
+            # Get tokens and create tensor
+            return tensor if (tokens := self._get_char_tokens(name)) and (tensor := self._create_token_tensor(tokens)) else None
+        except Exception as e:
+            console.warning(f"Tokenization failed for '{name}': {e}")
+            return None
+
+    def _get_char_tokens(self, name: str) -> Optional[List[int]]:
+        """
+        Convert input string to character-level tokens.
+
+        Args:
+            name: Input string to tokenize
+
+        Returns:
+            List of token indices if successful, None otherwise
+
+        Note:
+            - Converts to lowercase
+            - Limits token values
+            - Validates output
+        """
+        try:
+            # Convert to character tokens
+            return tokens if (tokens := [min(ord(char), 999) for char in name.lower()]) else None
+
+        except Exception as e:
+            console.warning(f"Character tokenization failed: {e}")
+            return None
+
+    def _create_token_tensor(self, tokens: List[int]) -> Optional[torch.Tensor]:
+        """
+        Create tensor from token indices.
+
+        Args:
+            tokens: List of token indices
+
+        Returns:
+            Tensor on correct device if successful, None otherwise
+
+        Note:
+            - Sets correct dtype
+            - Moves to model device
+            - Adds batch dimension
+        """
+        try:
+            # Create tensor and move to device
+            return torch.tensor(
+                tokens,
+                dtype=torch.long,
+                device=next(self.type_inference_model.parameters()).device
+            ).unsqueeze(0)
+
+        except Exception as e:
+            console.warning(f"Error creating token tensor: {e}")
+            return None
+
+    def _process_type_prediction(
+        self,
+        prediction: torch.Tensor,
+        name: str,
+        type_mapping: List[str],
+        confidence_threshold: float = 0.5
+    ) -> Optional[str]:
+        """
+        Process model prediction to get inferred type with confidence check.
+
+        Args:
+            prediction: Raw model prediction tensor from the type inference model
+            name: Variable name being predicted
+            type_mapping: List of possible type names
+            confidence_threshold: Minimum confidence threshold for predictions (default: 0.5)
+
+        Returns:
+            Inferred type string if confidence threshold met, None otherwise
+
+        Note:
+            - Applies softmax to get probability distribution
+            - Uses argmax to get most likely type
+            - Checks confidence threshold
+            - Handles edge cases and numerical stability
+        """
+        try:
+            # Validate inputs
+            if not self._validate_prediction_inputs(prediction, name, type_mapping):
+                return None
+
+            # Get prediction probabilities
+            if not (prob_info := self._compute_probabilities(prediction)):
+                return None
+            confidence, type_index = prob_info
+
+            # Check confidence threshold
+            if not self._check_confidence_threshold(confidence, name, confidence_threshold):
+                return None
+
+            # Get and validate inferred type
+            if not (inferred_type := self._get_inferred_type(type_index, type_mapping)):
+                return None
+
+            # Log successful prediction
+            console.debug(
+                f"Inferred type '{inferred_type}' for variable '{name}' "
+                f"(confidence: {confidence:.2f})"
+            )
+            return inferred_type
+
+        except Exception as e:
+            console.warning(f"Error processing type prediction: {e}")
+            return None
+
+    def _validate_prediction_inputs(
+        self,
+        prediction: torch.Tensor,
+        name: str,
+        type_mapping: List[str]
+    ) -> bool:
+        """
+        Validate inputs for type prediction processing.
+
+        Args:
+            prediction: Model prediction tensor
+            name: Variable name
+            type_mapping: Type mapping list
+
+        Returns:
+            True if inputs are valid, False otherwise
+
+        Note:
+            - Validates tensor type
+            - Checks variable name
+            - Validates type mapping
+        """
+        try:
+            if not isinstance(prediction, torch.Tensor):
+                console.warning(f"Invalid prediction type: {type(prediction).__name__}")
+                return False
+
+            if not isinstance(name, str) or not name.strip():
+                console.warning("Invalid or empty variable name")
+                return False
+
+            if not isinstance(type_mapping, list) or not type_mapping:
+                console.warning("Invalid or empty type mapping")
+                return False
+
+            return True
+
+        except Exception as e:
+            console.warning(f"Error validating prediction inputs: {e}")
+            return False
+
+    def _compute_probabilities(
+        self,
+        prediction: torch.Tensor
+    ) -> Optional[Tuple[float, int]]:
+        """
+        Compute probabilities from model prediction.
+
+        Args:
+            prediction: Model prediction tensor
+
+        Returns:
+            Tuple of (confidence, type_index) if successful, None otherwise
+
+        Note:
+            - Moves tensor to CPU
+            - Applies softmax
+            - Handles numerical stability
+        """
+        try:
+            # Move prediction to CPU for numpy operations
+            logits = prediction.cpu()
+            # Apply softmax with numerical stability
+            probabilities = torch.nn.functional.softmax(logits, dim=1)
+            confidence, type_index = torch.max(probabilities, dim=1)
+            return confidence.item(), type_index.item()
+
+        except Exception as e:
+            console.warning(f"Error computing probabilities: {e}")
+            return None
+
+    def _check_confidence_threshold(
+        self,
+        confidence: float,
+        name: str,
+        threshold: float
+    ) -> bool:
+        """
+        Check if prediction confidence meets threshold.
+
+        Args:
+            confidence: Prediction confidence
+            name: Variable name for logging
+            threshold: Confidence threshold
+
+        Returns:
+            True if confidence meets threshold, False otherwise
+
+        Note:
+            - Validates confidence value
+            - Provides debug logging
+        """
+        if confidence < threshold:
+            console.debug(
+                f"Low confidence ({confidence:.2f}) for variable '{name}' "
+                f"(threshold: {threshold})"
+            )
+            return False
+        return True
+
+    def _get_inferred_type(
+        self,
+        type_index: int,
+        type_mapping: List[str]
+    ) -> Optional[str]:
+        """
+        Get inferred type from type mapping.
+
+        Args:
+            type_index: Index into type mapping
+            type_mapping: List of possible types
+
+        Returns:
+            Inferred type string if valid, None otherwise
+
+        Note:
+            - Validates index range
+            - Checks type string
+            - Provides error messages
+        """
+        try:
+            # Validate type index
+            if not 0 <= type_index < len(type_mapping):
+                console.warning(
+                    f"Invalid type index {type_index} "
+                    f"(max allowed: {len(type_mapping) - 1})"
+                )
+                return None
+
+            # Get and validate inferred type
+            inferred_type = type_mapping[type_index]
+            if not isinstance(inferred_type, str):
+                console.warning(
+                    f"Invalid type mapping entry: {type(inferred_type).__name__}"
+                )
+                return None
+
+            return inferred_type
+
+        except Exception as e:
+            console.warning(f"Error getting inferred type: {e}")
+            return None
 
     def _get_docstring(
         self, node: Union[cst.FunctionDef, cst.ClassDef]
     ) -> Optional[str]:
         """
-        Retrieves the docstring for a function or class definition.
+        Retrieves and processes the docstring for a function or class definition.
 
         Args:
             node: The node representing the function or class.
 
         Returns:
-            The docstring as a string, or None if no docstring is present.
+            The processed docstring as a string, or None if no docstring is present.
+
+        Note:
+            Handles both single and multi-line docstrings.
+            Preserves docstring formatting while removing unnecessary whitespace.
+            Returns None for invalid or empty docstrings.
         """
-        if node.body and isinstance(node.body, cst.IndentedBlock):
-            # Get the first statement in the body
-            first_element = node.body.body[0]
-            if isinstance(first_element, cst.SimpleStatementLine):
-                # Check if the first statement is an expression
-                expr = first_element.body[0]
-                if isinstance(expr, cst.Expr) and isinstance(
-                    expr.value, cst.SimpleString
-                ):
-                    # Extract and return the docstring value
-                    return expr.value.value.strip("\"'")  # Strip quotes from the string
-        return None
+        try:
+            # Validate node and get body
+            if not (body := self._validate_docstring_node(node)):
+                return None
+
+            # Extract docstring from body
+            if not (docstring := self._extract_docstring_from_body(body)):
+                return None
+
+            # Process and clean docstring
+            return cleaned if (cleaned := self._clean_docstring(docstring)) else None
+        except Exception as e:
+            console.warning(f"Error processing docstring: {e}")
+            return None
+
+    def _validate_docstring_node(
+        self,
+        node: Union[cst.FunctionDef, cst.ClassDef]
+    ) -> Optional[cst.IndentedBlock]:
+        """
+        Validate a node for docstring extraction.
+
+        Args:
+            node: Node to validate
+
+        Returns:
+            Node body if valid, None otherwise
+
+        Note:
+            - Validates node type
+            - Checks body presence
+            - Verifies indentation
+        """
+        try:
+            # Validate input
+            if not node or not isinstance(node, (cst.FunctionDef, cst.ClassDef)):
+                console.warning(f"Invalid node type for docstring: {type(node).__name__}")
+                return None
+
+            # Check for body and proper indentation
+            if not node.body or not isinstance(node.body, cst.IndentedBlock):
+                return None
+
+            return node.body
+
+        except Exception as e:
+            console.warning(f"Error validating docstring node: {e}")
+            return None
+
+    def _extract_docstring_from_body(
+        self,
+        body: cst.IndentedBlock
+    ) -> Optional[str]:
+        """
+        Extract docstring from node body.
+
+        Args:
+            body: Node body to process
+
+        Returns:
+            Raw docstring if found, None otherwise
+
+        Note:
+            - Validates statement structure
+            - Extracts string content
+            - Handles evaluation errors
+        """
+        try:
+            # Get first statement and validate structure
+            if not body.body or not (expr := self._get_docstring_expr(body.body[0])):
+                return None
+
+            # Extract raw docstring
+            if not (raw := self._extract_raw_docstring(expr)):
+                return None
+
+            # Format docstring
+            return self._format_docstring(raw)
+
+        except Exception as e:
+            console.warning(f"Error extracting docstring: {e}")
+            return None
+
+    def _get_docstring_expr(
+        self,
+        stmt: cst.SimpleStatementLine
+    ) -> Optional[Union[cst.SimpleString, cst.ConcatenatedString]]:
+        """
+        Get docstring expression from statement.
+
+        Args:
+            stmt: Statement to process
+
+        Returns:
+            Docstring expression if valid, None otherwise
+
+        Note:
+            - Validates statement type
+            - Checks expression type
+            - Handles different string types
+        """
+        try:
+            # Validate statement type and structure
+            if not isinstance(stmt, cst.SimpleStatementLine) or not stmt.body:
+                return None
+
+            # Get and validate expression
+            expr = stmt.body[0]
+            return expr.value if isinstance(expr, cst.Expr) and isinstance(
+                expr.value, (cst.SimpleString, cst.ConcatenatedString)
+            ) else None
+
+        except Exception as e:
+            console.warning(f"Error getting docstring expression: {e}")
+            return None
+
+    def _extract_raw_docstring(
+        self,
+        expr: Union[cst.SimpleString, cst.ConcatenatedString]
+    ) -> Optional[str]:
+        """
+        Extract raw docstring from expression.
+
+        Args:
+            expr: Expression containing docstring
+
+        Returns:
+            Raw docstring if valid, None otherwise
+
+        Note:
+            - Handles simple strings
+            - Handles concatenated strings
+            - Validates output
+        """
+        try:
+            if isinstance(expr, cst.SimpleString):
+                raw = expr.value
+            else:  # ConcatenatedString
+                raw = "".join(
+                    part.value for part in expr.parts
+                    if isinstance(part, cst.SimpleString)
+                )
+
+            return raw or None
+
+        except Exception as e:
+            console.warning(f"Error extracting raw docstring: {e}")
+            return None
+
+    def _format_docstring(self, raw: str) -> str:
+        """
+        Format and clean a raw docstring.
+
+        Args:
+            raw: Raw docstring to format
+
+        Returns:
+            Formatted docstring
+
+        Note:
+            - Removes quotes
+            - Normalizes line endings
+            - Handles indentation
+            - Preserves structure
+        """
+        try:
+            # Remove quotes and normalize line endings
+            docstring = raw.strip('"\'\'"').replace('\r\n', '\n')
+            lines = docstring.split('\n')
+
+            # Handle multi-line docstrings
+            if len(lines) > 1:
+                # Process subsequent lines
+                if min_indent := self._find_min_indent(lines[1:]):
+                    lines[1:] = [
+                        line[min_indent:] if line.strip() else ''
+                        for line in lines[1:]
+                    ]
+
+            # Join and normalize
+            return '\n'.join(line.rstrip() for line in lines).strip()
+
+        except Exception as e:
+            console.warning(f"Error formatting docstring: {e}")
+            return raw
+
+    def _find_min_indent(self, lines: List[str]) -> int:
+        """
+        Find minimum indentation in a list of lines.
+
+        Args:
+            lines: Lines to process
+
+        Returns:
+            Minimum indentation level
+
+        Note:
+            - Skips empty lines
+            - Handles mixed indentation
+            - Returns 0 if no valid indent found
+        """
+        try:
+            min_indent = float('inf')
+            for line in lines:
+                if stripped := line.lstrip():
+                    indent = len(line) - len(stripped)
+                    min_indent = min(min_indent, indent)
+
+            return min(min_indent, float('inf')) if min_indent < float('inf') else 0
+
+        except Exception as e:
+            console.warning(f"Error finding minimum indentation: {e}")
+            return 0
+
+        except Exception as e:
+            console.warning(f"Error extracting docstring: {e}")
+            return None
 
 
 class SignatureAnalyzer:
     """Advanced signature analyzer with ML-enhanced type inference"""
 
+    # Common Python types for type inference
+    COMMON_TYPES = [
+        # Built-in types
+        'str', 'int', 'float', 'bool',
+        # Container types
+        'list', 'dict', 'tuple', 'set',
+        # Special types
+        'datetime', 'Path', 'Optional', 'Any', 'None',
+        # Additional types can be added here
+    ]
+
     def __init__(self, root_path: Path):
+        """
+        Initialize the SignatureAnalyzer.
+
+        Args:
+            root_path: Root path of the project to analyze
+
+        Raises:
+            ImportError: If required dependencies are not available
+        """
+        # Validate root path
+        if not isinstance(root_path, Path):
+            raise TypeError(f"Expected Path object, got {type(root_path).__name__}")
+        if not root_path.exists():
+            raise FileNotFoundError(f"Root path does not exist: {root_path}")
+
+        # Check required dependencies
+        if not DEPENDENCY_STATUS.get('libcst'):
+            raise ImportError(
+                "libcst is required for SignatureAnalyzer. "
+                "Please install it with: pip install libcst"
+            )
+
+        # Initialize instance variables
         self.root = root_path
         self.signatures: Dict[str, CodeSignature] = {}
         self.dependency_graph = nx.DiGraph()
-        self.type_inference_model = self._initialize_type_inference()
         self.validation_errors: Dict[str, List[str]] = {}
         self.incompatible_pairs: List[Tuple[str, str]] = []
+
+        # Initialize type inference model if available
+        self.type_inference_model = None
+        if DEPENDENCY_STATUS.get('torch'):
+            try:
+                self.type_inference_model = self._initialize_type_inference()
+            except Exception as e:
+                console.warning(
+                    f"Failed to initialize type inference model: {e}. "
+                    "Type inference will be disabled."
+                )
 
     def validate_all_signatures(self) -> bool:
         """Validate all signatures in the project"""
@@ -879,19 +2277,40 @@ class SignatureAnalyzer:
             console.print(f"[red]Error analyzing {file_path}: {str(e)}")
 
     def _build_dependency_graph(self):
-        """Build comprehensive dependency graph using rustworkx"""
-        graph = rx.PyDiGraph()
-        node_map = {name: graph.add_node(name) for name, sig in self.signatures.items()}
+        """Build comprehensive dependency graph using rustworkx if available, otherwise networkx"""
+        if DEPENDENCY_STATUS.get('rustworkx'):
+            try:
+                graph = rx.PyDiGraph()
+                node_map = {name: graph.add_node(name) for name, sig in self.signatures.items()}
+                # Add edges with weights based on similarity
+                for name1, sig1 in self.signatures.items():
+                    for name2, sig2 in self.signatures.items():
+                        if name1 != name2:
+                            similarity = sig1.similarity_score(sig2)
+                            if similarity > 0.5:
+                                graph.add_edge(node_map[name1], node_map[name2], similarity)
+
+                # Convert to networkx for additional algorithms
+                self.dependency_graph = nx.DiGraph(graph.edge_list())
+            except Exception as e:
+                console.warning(f"Error using rustworkx, falling back to networkx: {e}")
+                self._build_dependency_graph_networkx()
+        else:
+            self._build_dependency_graph_networkx()
+
+    def _build_dependency_graph_networkx(self):
+        """Build dependency graph using only networkx"""
+        graph = nx.DiGraph()
+        for name in self.signatures:
+            graph.add_node(name)
         # Add edges with weights based on similarity
         for name1, sig1 in self.signatures.items():
             for name2, sig2 in self.signatures.items():
                 if name1 != name2:
                     similarity = sig1.similarity_score(sig2)
                     if similarity > 0.5:
-                        graph.add_edge(node_map[name1], node_map[name2], similarity)
-
-        # Convert to networkx for additional algorithms
-        self.dependency_graph = nx.DiGraph(graph.edge_list())
+                        graph.add_edge(name1, name2, weight=similarity)
+        self.dependency_graph = graph
 
     def _calculate_metrics(self):
         """Calculate advanced metrics for all signatures"""
@@ -1072,56 +2491,83 @@ class SignatureAnalyzer:
             return 0.0
 
     def _cluster_signatures(self) -> Dict[str, List[str]]:
-        """Cluster similar signatures using DBSCAN"""
-        # Create feature vectors for signatures
-        features = []
-        sig_names = []
-
-        for name, sig in self.signatures.items():
-            feature_vector = [
-                sig.metrics.complexity,
-                sig.metrics.cohesion,
-                sig.metrics.coupling,
-                sig.metrics.maintainability,
-                sig.metrics.type_safety,
-                len(sig.components) / 10,
-                len(sig.dependencies) / 5,
-            ]
-            features.append(feature_vector)
-            sig_names.append(name)
-
-        if not features:
+        """Cluster similar signatures using DBSCAN if sklearn and numpy are available"""
+        if not DEPENDENCY_STATUS.get('sklearn') or not DEPENDENCY_STATUS.get('numpy'):
+            console.warning("sklearn and numpy required for signature clustering")
             return {}
 
-        # Cluster using DBSCAN
-        clustering = DBSCAN(eps=0.3, min_samples=2)
-        labels = clustering.fit_predict(features)
+        try:
+            # Create feature vectors for signatures
+            features = []
+            sig_names = []
 
-        # Group signatures by cluster
-        clusters = defaultdict(list)
-        for name, label in zip(sig_names, labels):
-            clusters[f"cluster_{label}"].append(name)
+            for name, sig in self.signatures.items():
+                # Create feature vector from signature metrics
+                feature_vector = [
+                    sig.metrics.complexity,
+                    sig.metrics.cohesion,
+                    sig.metrics.coupling,
+                    sig.metrics.maintainability,
+                    sig.metrics.type_safety,
+                    len(sig.components) / 10,
+                    len(sig.dependencies) / 5,
+                ]
+                features.append(feature_vector)
+                sig_names.append(name)
 
-        return dict(clusters)
+            if not features:
+                return {}
 
-    def _initialize_type_inference(self) -> torch.nn.Module:
-        """Initialize neural type inference model"""
+            # Convert to numpy array for DBSCAN
+            features_array = np.array(features)
 
-        class TypeInferenceModel(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.embedding = torch.nn.Embedding(
-                    1000, 64
-                )  # Vocabulary size, embedding dim
-                self.lstm = torch.nn.LSTM(64, 128, batch_first=True)
-                self.fc = torch.nn.Linear(128, 50)  # 50 common Python types
+            # Cluster using DBSCAN with error handling
+            try:
+                clustering = DBSCAN(eps=0.3, min_samples=2)
+                labels = clustering.fit_predict(features_array)
+            except Exception as e:
+                console.warning(f"DBSCAN clustering failed: {e}")
+                return {}
 
-            def forward(self, x):
-                x = self.embedding(x)
-                lstm_out, _ = self.lstm(x)
-                return F.softmax(self.fc(lstm_out[:, -1]), dim=1)
+            # Group signatures by cluster
+            clusters = defaultdict(list)
+            for name, label in zip(sig_names, labels):
+                clusters[f"cluster_{label}"].append(name)
 
-        return TypeInferenceModel()
+            return dict(clusters)
+        except Exception as e:
+            console.warning(f"Error during signature clustering: {e}")
+            return {}
+
+    def _initialize_type_inference(self) -> Optional[torch.nn.Module]:
+        """Initialize neural type inference model if torch is available"""
+        if not DEPENDENCY_STATUS.get('torch'):
+            console.warning("PyTorch is required for type inference model. Running without ML-based type inference.")
+            return None
+
+        try:
+            class TypeInferenceModel(torch.nn.Module):
+                def __init__(self):
+                    super().__init__()
+                    self.embedding = torch.nn.Embedding(
+                        1000, 64
+                    )  # Vocabulary size, embedding dim
+                    self.lstm = torch.nn.LSTM(64, 128, batch_first=True)
+                    self.fc = torch.nn.Linear(128, 50)  # 50 common Python types
+
+                def forward(self, x: torch.Tensor) -> torch.Tensor:
+                    try:
+                        x = self.embedding(x)
+                        lstm_out, _ = self.lstm(x)
+                        return F.softmax(self.fc(lstm_out[:, -1]), dim=1)
+                    except Exception as e:
+                        console.warning(f"Error in type inference model forward pass: {e}")
+                        return torch.zeros(x.size(0), 50)  # Return zero probabilities as fallback
+
+            return TypeInferenceModel()
+        except Exception as e:
+            console.warning(f"Failed to initialize type inference model: {e}")
+            return None
 
     def _generate_project_metrics(self) -> Dict[str, float]:
         """Generate comprehensive project-wide metrics"""
@@ -1146,22 +2592,15 @@ class SignatureAnalyzer:
             [s for s in self.signatures.values() if s.validate()]
         )
 
-        # Average all accumulated metrics
-        result = {
+        return {
             k: v / n_sigs
             for k, v in metrics.items()
             if k not in {"compatibility_score", "total_incompatible_pairs"}
+        } | {
+            "compatibility_score": metrics["compatibility_score"],
+            "total_incompatible_pairs": metrics["total_incompatible_pairs"],
+            "total_signatures": float(n_sigs),
         }
-        # Add non-averaged metrics
-        result.update(
-            {
-                "compatibility_score": metrics["compatibility_score"],
-                "total_incompatible_pairs": metrics["total_incompatible_pairs"],
-                "total_signatures": float(n_sigs),
-            }
-        )
-
-        return result
 
     def _generate_visualizations(self) -> Dict[str, str]:
         """Generate visualization outputs"""

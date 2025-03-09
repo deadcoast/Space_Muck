@@ -1,12 +1,11 @@
 import json
-import os
 import sys
 import threading
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 
 # Base logging levels
@@ -45,6 +44,9 @@ class LogContext:
     extra: Dict[str, Any]
     process_id: int
     thread_id: int
+    thread_name: str = threading.current_thread().name
+    log_path: Optional[Path] = None
+    context_id: str = str(uuid.uuid4())
 
 
 class LogRecord:
@@ -60,6 +62,8 @@ class LogRecord:
         line: int = 0,
         extra: Optional[Dict[str, Any]] = None,
         web_visible: bool = True,
+        log_path: Optional[Path] = None,
+        context_id: str = str(uuid.uuid4()),
     ):
         self.level = level
         self.message = message
@@ -68,6 +72,13 @@ class LogRecord:
         self.function = function
         self.line = line
         self.extra = extra or {}
+        # Merge context data if available
+        if hasattr(self, '_context_stack') and self._context_stack:
+            context = self._context_stack[-1]
+            self.extra.update(context.extra)
+        self.log_path = log_path
+        self.context_id = context_id
+        self.thread_name = threading.current_thread().name
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert log record to dictionary format."""
@@ -80,6 +91,9 @@ class LogRecord:
             "line": self.line,
             "extra": self.extra,
             "web_visible": getattr(self, "web_visible", True),
+            "thread_name": self.thread_name,
+            "log_path": str(self.log_path) if self.log_path else None,
+            "context_id": self.context_id,
         }
 
 
@@ -191,6 +205,33 @@ class Logger:
         self.name = name
         self.level = INFO
         self.handlers: List[Handler] = []
+        self._context_stack: List[LogContext] = []
+
+    @asynccontextmanager
+    async def context(self, **kwargs) -> LogContext:
+        """Create an async logging context with additional metadata.
+
+        Args:
+            **kwargs: Additional context information to include in logs
+
+        Example:
+            async with logger.context(task_id='123'):
+                logger.info('Processing task')
+        """
+        context = LogContext(
+            timestamp=datetime.now(),
+            module=self.name,
+            function='',
+            line=0,
+            extra=kwargs,
+            process_id=0,
+            thread_id=0
+        )
+        self._context_stack.append(context)
+        try:
+            yield context
+        finally:
+            self._context_stack.pop()
 
     def setLevel(self, level: int):
         """Set the logging level for this logger."""
@@ -199,6 +240,10 @@ class Logger:
     def addHandler(self, handler: Handler):
         """Add a handler to this logger."""
         self.handlers.append(handler)
+
+    def _get_current_context(self) -> Optional[LogContext]:
+        """Get the current logging context if available."""
+        return self._context_stack[-1] if self._context_stack else None
 
     def removeHandler(self, handler: Handler):
         """Remove a handler from this logger."""
