@@ -110,14 +110,14 @@ class ProjectMapParser:
                             "dependencies": self._parse_dependencies,
                         }.get(section)
                     ):
-                        parser(match.group(1).strip())
+                        parser(match[1].strip())
                     else:
                         self.logger.warning(
                             f"Section '{section}' not found or invalid in map content"
                         )
                 except Exception as e:
                     self.logger.error(f"Error parsing section '{section}': {str(e)}")
-                    raise ValueError(f"Failed to parse section '{section}': {str(e)}")
+                    raise ValueError(f"Failed to parse section '{section}': {str(e)}") from e
         except Exception as e:
             self.logger.error(f"Failed to parse project map: {str(e)}")
             raise

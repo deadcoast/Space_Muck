@@ -12,7 +12,8 @@ Features:
 
 import ast
 import contextlib
-import logging
+import importlib.util
+import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -24,37 +25,111 @@ from typing import Dict, List, Optional, Set
 from rich.console import Console
 from rich.table import Table
 
-# Optional dependencies - these will be imported lazily
-import matplotlib.pyplot as plt
-import sympy
-import toml
-import libcst as cst
-import mypy.api as mypy
-from radon import complexity as radon_cc
-from rope.base import project as rope_project
+from typing import TYPE_CHECKING, List, Optional, Dict, Any, Tuple
 
-# Initialize optional dependencies
-OPTIONAL_DEPS = {
-    "libcst": cst,
-    "matplotlib": plt,
-    "mypy": mypy,
-    "networkx": None,  # Will be imported on demand
-    "numpy": None,  # Will be imported on demand
-    "sympy": sympy,
-    "toml": toml,
-    "radon": radon_cc,
-    "rope": rope_project,
-}
+# Optional dependencies
+from python_fixer.core.types import OPTIONAL_DEPS, Any
 
-# Try to import numpy for type hints
-try:
+# Type hints for optional dependencies
+if TYPE_CHECKING:
     import numpy
     import numpy.typing as npt
-
-    OPTIONAL_DEPS["numpy"] = numpy
     NDArray = npt.NDArray[numpy.float64]
-except ImportError:
-    NDArray = None  # Type will be Any
+else:
+    NDArray = Any  # type: ignore
+
+# Lazy imports to avoid circular dependencies
+_logging = None
+if importlib.util.find_spec("logging") is not None:
+    import logging as _logging
+
+# Import optional dependencies with detailed error messages
+def _import_optional_dependency(name: str, import_path: str, features: str) -> Any:
+    """Import an optional dependency with detailed error handling.
+
+    Args:
+        name: Name of the dependency
+        import_path: Import path to use
+        features: Description of features that require this dependency
+
+    Returns:
+        The imported module or None if not available
+    """
+    try:
+        if importlib.util.find_spec(import_path) is not None:
+            module = __import__(import_path, fromlist=["*"])
+            OPTIONAL_DEPS[name] = module
+            return module
+        print(f"\033[93m⚠ {name} not available - {features} will be disabled\033[0m")
+        print(f"  To enable these features, install {name} with: pip install {name}")
+    except ImportError as e:
+        print(f"\033[93m⚠ Failed to import {name} - {features} will be disabled\033[0m")
+        print(f"  Error: {e}")
+        print(f"  To enable these features, install {name} with: pip install {name}")
+    return None
+
+# Import libcst for code parsing
+_libcst = _import_optional_dependency(
+    "libcst",
+    "libcst",
+    "advanced code parsing and transformation"
+)
+
+# Import matplotlib for visualization
+_matplotlib = _import_optional_dependency(
+    "matplotlib",
+    "matplotlib.pyplot",
+    "dependency graph visualization"
+)
+
+# Import mypy for type checking
+_mypy = _import_optional_dependency(
+    "mypy",
+    "mypy.api",
+    "static type checking"
+)
+
+# Import networkx for graph analysis
+_networkx = _import_optional_dependency(
+    "networkx",
+    "networkx",
+    "dependency graph analysis"
+)
+
+# Import numpy for numerical computations
+_numpy = _import_optional_dependency(
+    "numpy",
+    "numpy",
+    "advanced metrics and analysis"
+)
+
+# Import radon for complexity analysis
+_radon = _import_optional_dependency(
+    "radon",
+    "radon.complexity",
+    "code complexity analysis"
+)
+
+# Import rope for refactoring
+_rope = _import_optional_dependency(
+    "rope",
+    "rope.base.project",
+    "code refactoring"
+)
+
+# Import sympy for symbolic computation
+_sympy = _import_optional_dependency(
+    "sympy",
+    "sympy",
+    "advanced type inference"
+)
+
+# Import toml for configuration
+_toml = _import_optional_dependency(
+    "toml",
+    "toml",
+    "configuration file parsing"
+)
 
 # Advanced console for rich output
 console = Console()
@@ -131,54 +206,196 @@ class ASTImportVisitor(ast.NodeVisitor):
             self.imports.add(node.module)
 
 
-class CodebaseOptimizer:
+class ProjectAnalyzer:
     """Unified system for Python codebase analysis and optimization."""
 
     def __init__(
-        self, root_path: Path, config_path: Optional[Path] = None, backup: bool = True
+        self, root_path: str, config: Optional[Dict[str, Any]] = None, backup: bool = True
     ):
-        # Initialize paths and configuration
-        self.root = root_path.resolve()
-        self.backup = backup
-        self.config = self._load_config(config_path) if config_path else {}
+        """Initialize the ProjectAnalyzer.
 
-        # Initialize core components
-        self.modules: Dict[str, CodeModule] = {}
-        self.metrics = ProjectMetrics()
+        Args:
+            root_path: Path to the project root directory
+            config: Optional configuration dictionary
+            backup: Whether to create backups before modifying files
 
-        # Initialize graphs if networkx is available
-        self.dependency_graph = None
+        Raises:
+            ValueError: If root_path is invalid or inaccessible
+            KeyError: If required config values are missing or invalid
+            RuntimeError: If critical dependencies are missing
+            Exception: For other initialization errors
+        """
+        self.logger = _logging.getLogger(__name__) if _logging else None
+
         try:
-            import networkx
+            # Validate and initialize paths
+            if not root_path:
+                raise ValueError("root_path cannot be empty")
 
-            OPTIONAL_DEPS["networkx"] = networkx
-            self.dependency_graph = networkx.DiGraph()
-        except ImportError:
-            console.print(
-                "[yellow]networkx not available - some features will be disabled"
-            )
+            self.root = Path(root_path).resolve()
+            if not self.root.exists():
+                raise ValueError(f"Project path does not exist: {self.root}")
+            if not self.root.is_dir():
+                raise ValueError(f"Project path is not a directory: {self.root}")
+            if not any(self.root.glob("**/*.py")):
+                raise ValueError(f"No Python files found in project: {self.root}")
+
+            # Check write permissions if backup is enabled
+            self.backup = backup
+            if self.backup and not os.access(self.root, os.W_OK):
+                raise ValueError(f"No write permission in project directory: {self.root}")
+
+            # Initialize and validate configuration
+            self.config = self._validate_config(config or {})
+            if self.logger:
+                self.logger.info(
+                    "Initializing ProjectAnalyzer",
+                    extra={
+                        "root_path": str(self.root),
+                        "backup_enabled": self.backup,
+                        "config": self.config,
+                    },
+                )
+
+            # Initialize core components
+            self.modules: Dict[str, CodeModule] = {}
+            self.metrics = ProjectMetrics()
+
+            # Initialize optional components with detailed logging
+            self._initialize_optional_components()
+
+            # Initialize optimization components
+            self.fix_strategies = self._initialize_fix_strategies()
+            self.module_clusters = None
+            self.optimal_order = None
+
+            # Set up performance settings
+            self._configure_performance_settings()
+
+            if self.logger:
+                self.logger.info(
+                    "ProjectAnalyzer initialization complete",
+                    extra={
+                        "available_features": list(OPTIONAL_DEPS.keys()),
+                        "max_workers": self.max_workers,
+                        "caching_enabled": self.enable_caching,
+                    },
+                )
+
+        except KeyboardInterrupt:
+            if self.logger:
+                self.logger.warning("Initialization interrupted by user")
+            print("\n\033[93m⚠ Initialization interrupted by user\033[0m")
+            raise
+        except ValueError as e:
+            if self.logger:
+                self.logger.error(f"Validation error during initialization: {e}")
+            print(f"\n\033[91m✗ {str(e)}\033[0m")
+            raise
+        except Exception as e:
+            if self.logger:
+                self.logger.error("Unexpected error during initialization", exc_info=e)
+            print(f"\n\033[91m✗ Initialization failed: {e}\033[0m")
+            raise
+
+    def _validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and normalize configuration.
+
+        Args:
+            config: Raw configuration dictionary
+
+        Returns:
+            Validated configuration with defaults applied
+
+        Raises:
+            KeyError: If required config values are missing or invalid
+        """
+        validated = config.copy()
+
+        # Validate max_workers
+        max_workers = validated.get("max_workers", 4)
+        if not isinstance(max_workers, int) or max_workers < 1:
+            raise KeyError(f"Invalid max_workers value: {max_workers}. Must be a positive integer.")
+        validated["max_workers"] = max_workers
+
+        # Validate enable_caching
+        enable_caching = validated.get("enable_caching", True)
+        if not isinstance(enable_caching, bool):
+            raise KeyError(f"Invalid enable_caching value: {enable_caching}. Must be a boolean.")
+        validated["enable_caching"] = enable_caching
+
+        # Validate cache_dir
+        cache_dir = validated.get("cache_dir", ".python_fixer_cache")
+        if not isinstance(cache_dir, (str, Path)):
+            raise KeyError(f"Invalid cache_dir value: {cache_dir}. Must be a string or Path.")
+        validated["cache_dir"] = cache_dir
+
+        return validated
+
+    def _initialize_optional_components(self) -> None:
+        """Initialize optional dependencies and components."""
+        # Initialize graphs if networkx is available
+        self.dependency_graph: Optional[Any] = None
+        if "networkx" in OPTIONAL_DEPS:
+            try:
+                self.dependency_graph = OPTIONAL_DEPS["networkx"].DiGraph()
+                if self.logger:
+                    self.logger.info("Initialized networkx dependency graph")
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Failed to initialize networkx: {e}")
+                print("\033[93m⚠ networkx initialization failed - graph features disabled\033[0m")
 
         # Initialize rope project if available
-        self.rope_project = None
-        if OPTIONAL_DEPS["rope"]:
+        self.rope_project: Optional[Any] = None
+        if "rope" in OPTIONAL_DEPS:
             try:
                 self.rope_project = OPTIONAL_DEPS["rope"].Project(str(self.root))
-            except AttributeError:
-                console.print(
-                    "[yellow]rope project initialization failed - some features will be disabled"
-                )
-        else:
-            console.print("[yellow]rope not available - some features will be disabled")
+                if self.logger:
+                    self.logger.info("Initialized rope project")
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Failed to initialize rope: {e}")
+                print("\033[93m⚠ rope initialization failed - some features disabled\033[0m")
 
-        # Initialize optimization components
-        self.fix_strategies = self._initialize_fix_strategies()
-        self.module_clusters = None
-        self.optimal_order = None
+    def _configure_performance_settings(self) -> None:
+        """Configure performance-related settings."""
+        self.max_workers = self.config["max_workers"]
+        self.enable_caching = self.config["enable_caching"]
+        self.cache_dir = Path(self.config["cache_dir"])
 
-        # Performance settings
-        self.max_workers = self.config.get("max_workers", 4)
-        self.enable_caching = self.config.get("enable_caching", True)
-        self.cache_dir = Path(self.config.get("cache_dir", ".python_fixer_cache"))
+        if self.enable_caching:
+            try:
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
+                if self.logger:
+                    self.logger.info(f"Created cache directory: {self.cache_dir}")
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Failed to create cache directory: {e}")
+                print(f"\033[93m⚠ Failed to create cache directory: {e}\033[0m")
+                self.enable_caching = False
+            raise
+
+
+
+    def _initialize_modules(self) -> None:
+        """Initialize module tracking."""
+        for py_file in self.root.rglob("*.py"):
+            module_name = str(py_file.relative_to(self.root)).replace("/", ".")
+            self.modules[module_name] = CodeModule(
+                name=module_name,
+                path=py_file,
+            )
+
+    def _initialize_dependency_graph(self) -> None:
+        """Initialize the dependency graph if networkx is available."""
+        if self.dependency_graph is not None:
+            for module in self.modules.values():
+                self.dependency_graph.add_node(module.name)
+
+    def _initialize_metrics(self) -> None:
+        """Initialize project-wide metrics."""
+        self.metrics.total_modules = len(self.modules)
 
         # Analysis settings
         self.enable_type_checking = self.config.get("enable_type_checking", True)
@@ -195,7 +412,7 @@ class CodebaseOptimizer:
             return self._execute_project_analysis()
         except Exception as e:
             console.print(f"[red]Error during project analysis: {str(e)}")
-            logging.error("Project analysis failed", exc_info=e)
+            _logging.error("Project analysis failed", exc_info=e)
             return ProjectMetrics()
 
     def _execute_project_analysis(self):
@@ -275,85 +492,143 @@ class CodebaseOptimizer:
             f"({valid_annotations}/{total_annotations})"
         )
 
-    def _analyze_file(self, file_path: Path):
-        """Analyze a single Python file using AST or libcst if available"""
+    def _analyze_file(self, file_path: Path) -> None:
+        """Analyze a single Python file using AST or libcst if available.
+
+        This method performs comprehensive analysis of a Python file, including:
+        - Import collection using libcst (preferred) or ast
+        - Complexity metrics calculation using radon
+        - Type checking using mypy
+        - Module dependency tracking
+
+        Args:
+            file_path: Path to the Python file to analyze
+        """
+        if not file_path.exists():
+            if self.logger:
+                self.logger.error(f"File not found: {file_path}")
+            return
+
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 source = f.read()
 
-            # Use libcst if available, otherwise fallback to ast
+            module_name = self._get_module_name(file_path)
+            imports = self._collect_imports(source)
+            metrics = self._calculate_file_metrics(source)
+
+            # Create module node with available metrics
+            node = CodeModule(
+                name=module_name,
+                path=file_path,
+                dependencies=imports,
+                **metrics
+            )
+            self.modules[module_name] = node
+
+            # Perform type checking if enabled
+            if self.enable_type_checking:
+                self._check_types(file_path, node)
+
+            if self.logger:
+                self.logger.debug(
+                    f"Analyzed {module_name}",
+                    extra={
+                        "imports": len(imports),
+                        "metrics": metrics,
+                        "type_errors": len(node.type_errors)
+                    }
+                )
+
+        except Exception as e:
+            if self.logger:
+                self.logger.error(
+                    f"Error analyzing {file_path}",
+                    exc_info=e,
+                    extra={"module": module_name if 'module_name' in locals() else None}
+                )
+            console.print(f"[red]Error analyzing {file_path}: {str(e)}")
+
+    def _collect_imports(self, source: str) -> Set[str]:
+        """Collect imports from source code using libcst or ast.
+
+        Args:
+            source: Python source code to analyze
+
+        Returns:
+            Set of imported module names
+        """
+        try:
+            # Use libcst if available for more accurate parsing
             if OPTIONAL_DEPS["libcst"]:
                 cst = OPTIONAL_DEPS["libcst"]["libcst"]
                 module = cst.parse_module(source)
                 visitor = ImportCollectorVisitor()
                 module.visit(visitor)
-            else:
-                # Fallback to basic AST analysis
-                tree = ast.parse(source)
-                visitor = ASTImportVisitor()
-                visitor.visit(tree)
+                return visitor.imports
 
-            console.print(f"[green]Successfully analyzed {file_path}")
+            # Fallback to basic AST analysis
+            tree = ast.parse(source)
+            visitor = ASTImportVisitor()
+            visitor.visit(tree)
+            return visitor.imports
 
         except Exception as e:
-            console.print(f"[red]Error analyzing {file_path}: {str(e)}")
-            logging.error(f"File analysis failed for {file_path}", exc_info=e)
+            if self.logger:
+                self.logger.warning(
+                    "Import collection failed, using empty set",
+                    exc_info=e
+                )
+            return set()
 
-            # Calculate complexity metrics if radon is available
-            if OPTIONAL_DEPS["radon"]:
-                cc_visit = OPTIONAL_DEPS["radon"]["radon.complexity"].cc_visit
-                mi_visit = OPTIONAL_DEPS["radon"]["radon.metrics"].mi_visit
-                complexity = cc_visit(source)
-                maintainability = mi_visit(source, multi=True)
+    def _calculate_file_metrics(self, source: str) -> Dict[str, float]:
+        """Calculate complexity and maintainability metrics for source code.
 
-                # Create module node with complexity metrics
-                module_name = self._get_module_name(file_path)
-                if OPTIONAL_DEPS["numpy"]:
-                    np = OPTIONAL_DEPS["numpy"]
-                    node = CodeModule(
-                        name=module_name,
-                        path=file_path,
-                        dependencies=visitor.imports,
-                        complexity=float(np.mean([c.complexity for c in complexity])),
-                        maintainability=np.mean(maintainability),
-                        cyclomatic_complexity=sum(c.complexity for c in complexity),
-                    )
-                else:
-                    # Fallback without numpy
-                    complexities = [c.complexity for c in complexity]
-                    node = CodeModule(
-                        name=module_name,
-                        path=file_path,
-                        dependencies=visitor.imports,
-                        complexity=(
-                            sum(complexities) / len(complexities)
-                            if complexities
-                            else 0.0
-                        ),
-                        maintainability=(
-                            sum(maintainability) / len(maintainability)
-                            if maintainability
-                            else 0.0
-                        ),
-                        cyclomatic_complexity=sum(c.complexity for c in complexity),
-                    )
+        Args:
+            source: Python source code to analyze
+
+        Returns:
+            Dictionary of metric names and values
+        """
+        metrics = {
+            "complexity": 0.0,
+            "maintainability": 0.0,
+            "cyclomatic_complexity": 0
+        }
+
+        if not OPTIONAL_DEPS["radon"]:
+            return metrics
+
+        try:
+            cc_visit = OPTIONAL_DEPS["radon"]["radon.complexity"].cc_visit
+            mi_visit = OPTIONAL_DEPS["radon"]["radon.metrics"].mi_visit
+
+            complexity = cc_visit(source)
+            maintainability = mi_visit(source, multi=True)
+            complexities = [c.complexity for c in complexity]
+
+            if OPTIONAL_DEPS["numpy"]:
+                np = OPTIONAL_DEPS["numpy"]
+                metrics.update({
+                    "complexity": float(np.mean(complexities)) if complexities else 0.0,
+                    "maintainability": float(np.mean(maintainability)),
+                    "cyclomatic_complexity": int(sum(complexities))
+                })
             else:
-                # Create basic module node without complexity metrics
-                module_name = self._get_module_name(file_path)
-                node = CodeModule(
-                    name=module_name,
-                    path=file_path,
-                    dependencies=visitor.imports,
+                metrics.update({
+                    "complexity": sum(complexities) / len(complexities) if complexities else 0.0,
+                    "maintainability": sum(maintainability) / len(maintainability) if maintainability else 0.0,
+                    "cyclomatic_complexity": sum(complexities)
+                })
+
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(
+                    "Metrics calculation failed",
+                    exc_info=e
                 )
 
-            self.modules[module_name] = node
-
-            # Type checking if enabled and mypy is available
-            if self.enable_type_checking and OPTIONAL_DEPS["mypy"]:
-                self._check_types(file_path, node)
-
-        except Exception as e:
-            console.print(f"[red]Error analyzing {file_path}: {str(e)}")
+        return metrics
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using networkx"""
@@ -646,7 +921,7 @@ class CodebaseOptimizer:
                 ) and len(subgraph) > 1:
                     # Calculate Laplacian matrix and eigenvalues
                     if (
-                        eigenvals := sympy.Matrix(
+                        eigenvals := OPTIONAL_DEPS["sympy"].Matrix(
                             OPTIONAL_DEPS["networkx"]
                             .laplacian_matrix(subgraph)
                             .todense()
@@ -660,19 +935,121 @@ class CodebaseOptimizer:
                             sorted_eigenvals[1] if len(sorted_eigenvals) > 1 else 0.0
                         )
 
-    def _check_types(self, file_path: Path, node: CodeModule):
-        """Perform type checking and validation"""
-        if OPTIONAL_DEPS["mypy"]:
-            results = OPTIONAL_DEPS["mypy"].run([str(file_path)])
-            if results[0]:  # mypy output
-                if errors := results[0].split("\n"):
-                    node.type_errors = [
-                        error
-                        for error in errors
-                        if error and not error.startswith("Found")
-                    ]
-        else:
-            console.print("[yellow]Skipping type checking - mypy not available")
+    def _get_mypy_options(self, file_path: Path) -> List[str]:
+        """Get mypy configuration options for type checking.
+
+        Args:
+            file_path: Path to the Python file to type check
+
+        Returns:
+            List of mypy command line options
+        """
+        return [
+            "--strict",  # Enable all strict type checking options
+            "--show-error-codes",  # Show error codes in output
+            "--pretty",  # Use prettier output
+            "--show-column-numbers",  # Show column numbers in errors
+            "--check-untyped-defs",  # Check function bodies with no type annotations
+            "--warn-redundant-casts",  # Warn about casting that doesn't change type
+            "--warn-return-any",  # Warn about returning Any from non-Any typed function
+            "--warn-unreachable",  # Warn about unreachable code
+            str(file_path)
+        ]
+
+    def _process_mypy_output(self, output: str) -> Tuple[List[str], int, int]:
+        """Process mypy output and classify errors.
+
+        Args:
+            output: Raw mypy output string
+
+        Returns:
+            Tuple containing (error_lines, error_count, warning_count)
+        """
+        errors = []
+        error_count = 0
+        warning_count = 0
+
+        for line in output.split("\n"):
+            if not line or line.startswith("Found"):
+                continue
+
+            # Classify error type
+            if "error:" in line:
+                error_count += 1
+            elif "warning:" in line:
+                warning_count += 1
+
+            errors.append(line)
+
+        return errors, error_count, warning_count
+
+    def _log_type_check_results(self, node: CodeModule, errors: List[str], error_count: int, warning_count: int) -> None:
+        """Log type checking results and update metrics.
+
+        Args:
+            node: CodeModule instance being checked
+            errors: List of error messages
+            error_count: Number of errors found
+            warning_count: Number of warnings found
+        """
+        if self.logger:
+            self.logger.info(
+                f"Type checking completed for {node.name}",
+                extra={
+                    "error_count": error_count,
+                    "warning_count": warning_count,
+                    "total_issues": len(errors),
+                    "first_error": errors[0] if errors else None
+                }
+            )
+
+        # Update project-wide metrics
+        self.metrics.type_error_count += error_count
+
+    def _check_types(self, file_path: Path, node: CodeModule) -> None:
+        """Perform type checking and validation using mypy.
+
+        This method runs mypy with strict type checking options and collects detailed error information.
+        It handles missing dependencies gracefully and provides comprehensive logging.
+
+        Args:
+            file_path: Path to the Python file to type check
+            node: CodeModule instance to store type checking results
+        """
+        if not OPTIONAL_DEPS["mypy"]:
+            if self.logger:
+                self.logger.debug(
+                    "Skipping type checking - mypy not available",
+                    extra={"module": node.name}
+                )
+            return
+
+        try:
+            # Run mypy with configured options
+            results = OPTIONAL_DEPS["mypy"].run(self._get_mypy_options(file_path))
+
+            # Process mypy output
+            if results[0]:  # mypy output is available
+                errors, error_count, warning_count = self._process_mypy_output(results[0])
+                node.type_errors = errors
+                self._log_type_check_results(node, errors, error_count, warning_count)
+
+        except FileNotFoundError:
+            if self.logger:
+                self.logger.error(
+                    "mypy executable not found in PATH",
+                    extra={"module": node.name}
+                )
+            console.print("[red]Error: mypy not found in PATH. Please install mypy.")
+
+        except Exception as e:
+            if self.logger:
+                self.logger.error(
+                    "Type checking failed",
+                    exc_info=e,
+                    extra={"module": node.name}
+                )
+            console.print(f"[red]Error during type checking of {node.name}: {str(e)}")
 
     def _calculate_complexity_metrics(self):
         """Calculate advanced complexity and maintainability metrics"""
@@ -900,7 +1277,10 @@ class CodebaseOptimizer:
     def _load_config(config_path: Path) -> dict:
         """Load configuration from TOML file"""
         try:
-            return toml.load(config_path)
+            if "toml" not in OPTIONAL_DEPS:
+                console.print("[yellow]Warning: toml not available, using empty config")
+                return {}
+            return OPTIONAL_DEPS["toml"].load(config_path)
         except Exception as e:
             console.print(
                 f"[yellow]Warning: Could not load config from {config_path}: {e}"
@@ -916,11 +1296,142 @@ class CodebaseOptimizer:
         return ".".join(parts[:-1] + [file_path.stem])
 
 
-class ImportCollectorVisitor(cst.CSTVisitor):
+    def initialize_project(self) -> None:
+        """Initialize a new project for analysis.
+
+        This method sets up the necessary project structure and configuration.
+        """
+        try:
+            self._initialize_project_components()
+        except KeyboardInterrupt:
+            print("\nProject initialization interrupted by user")
+            raise
+        except Exception as e:
+            print(f"Error during project initialization: {str(e)}")
+            if _logging:
+                _logging.error("Project initialization failed", exc_info=True)
+            raise
+
+    def _initialize_project_components(self) -> None:
+        """Initialize all project components including cache, modules, and backups."""
+        try:
+            print(f"Initializing project at {self.root}")
+            print(f"Config: {self.config}")
+            print(f"Cache enabled: {self.enable_caching}")
+
+            # Create cache directory if enabled
+            if self.enable_caching:
+                self._create_cache_directory()
+
+            # Initialize core components
+            self._initialize_modules()
+            self._initialize_dependency_graph()
+            self._initialize_metrics()
+
+            # Create backup if enabled
+            if self.backup:
+                self._create_backup_directory()
+
+            print("Project initialization complete")
+
+        except KeyboardInterrupt:
+            print("\nProject component initialization interrupted by user")
+            raise
+        except Exception as e:
+            print(f"Error during project component initialization: {str(e)}")
+            raise
+
+    def _create_cache_directory(self) -> None:
+        """Create a cache directory for the project."""
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Created cache directory at {self.cache_dir}")
+
+    def _create_backup_directory(self) -> None:
+        """Create a backup directory for the project."""
+        backup_dir = self.root / ".python_fixer_backup"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Created backup directory at {backup_dir}")
+
+    def _initialize_fix_strategies(self) -> Dict[str, Any]:
+        """Initialize the available fix strategies.
+
+        Returns:
+            Dictionary mapping strategy names to their implementations.
+        """
+        return {
+            "circular_deps": self._fix_circular_dependencies,
+            "unused_imports": self._fix_unused_imports,
+            "type_hints": self._fix_type_hints,
+            "docstrings": self._fix_docstrings,
+        }
+
+    def _fix_circular_dependencies(self, module: CodeModule) -> bool:
+        """Fix circular dependencies in a module.
+
+        Args:
+            module: Module to fix
+
+        Returns:
+            True if any fixes were applied
+        """
+        # Placeholder for circular dependency fixes
+        return False
+
+    def _fix_unused_imports(self, module: CodeModule) -> bool:
+        """Fix unused imports in a module.
+
+        Args:
+            module: Module to fix
+
+        Returns:
+            True if any fixes were applied
+        """
+        # Placeholder for unused import fixes
+        return False
+
+    def _fix_type_hints(self, module: CodeModule) -> bool:
+        """Fix type hints in a module.
+
+        Args:
+            module: Module to fix
+
+        Returns:
+            True if any fixes were applied
+        """
+        # Placeholder for type hint fixes
+        return False
+
+    def _fix_docstrings(self, module: CodeModule) -> bool:
+        """Fix docstrings in a module.
+
+        Args:
+            module: Module to fix
+
+        Returns:
+            True if any fixes were applied
+        """
+        # Placeholder for docstring fixes
+        return False
+
+    def _setup_logging(self) -> None:
+        """Setup logging configuration for the analyzer."""
+        if _logging is not None:
+            _logging.basicConfig(
+                level=_logging.DEBUG if self.config.get("verbose") else _logging.INFO,
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                handlers=[
+                    _logging.StreamHandler(),
+                    _logging.FileHandler("python_fixer.log"),
+                ],
+            )
+
+
+class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else object):
     """Visitor to collect imports using libcst"""
 
     def __init__(self):
-        super().__init__()
+        if _libcst is not None:
+            super().__init__()
         self.imports: Set[str] = set()
         self.type_errors: List[str] = []
         self.type_checking_enabled = False
@@ -928,12 +1439,13 @@ class ImportCollectorVisitor(cst.CSTVisitor):
         self.type_checking_warnings = []
         self.type_checking_ignored = []
 
-    def visit_Import(self, node: cst.Import):
-        for name in node.names:
-            self.imports.add(name.name.value)
+    def visit_Import(self, node: '_libcst.Import') -> None:
+        if OPTIONAL_DEPS["libcst"] is not None:
+            for name in node.names:
+                self.imports.add(name.name.value)
 
-    def visit_ImportFrom(self, node: cst.ImportFrom):
-        if node.module:
+    def visit_ImportFrom(self, node: '_libcst.ImportFrom') -> None:
+        if OPTIONAL_DEPS["libcst"] is not None and node.module:
             self.imports.add(node.module.value)
 
 
