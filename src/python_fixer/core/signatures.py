@@ -1004,8 +1004,6 @@ class SignatureVisitor:
                 super().__init__()
                 self.parent = parent
                 self.current_class = None
-            def __init__(self, parent):
-                self.parent = parent
                 
             def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
                 # Extract function signature info using ast
@@ -1066,7 +1064,8 @@ class SignatureVisitor:
                 # Create signature with class context if inside a class
                 module_path = self.parent.file_path
                 if self.current_class:
-                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}")
+                    # Ensure consistent module path format for class methods
+                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}.py")
                 
                 sig = CodeSignature(
                     name=name,
@@ -1076,23 +1075,38 @@ class SignatureVisitor:
                     docstring=ast.get_docstring(node)
                 )
                 self.parent.signatures.append(sig)
-                    
-                # Get return type
-                return_type = None
-                if node.returns:
-                    return_type = TypeInfo(type_hint=ast.unparse(node.returns), inferred_type=None, confidence=0.0)
-                    
-                # Create signature
-                sig = CodeSignature(
-                    name=name,
-                    module_path=self.parent.file_path,
-                    components=components,
-                    return_type=return_type,
-                    docstring=ast.get_docstring(node)
-                )
-                self.parent.signatures.append(sig)
-                
-        return ASTVisitor(self)
+
+            def visit_ClassDef(self, node: ast.ClassDef) -> None:
+                # Store current class name for method context
+                prev_class = self.current_class
+                self.current_class = node.name
+
+                try:
+                    # Create class signature
+                    sig = CodeSignature(
+                        name=node.name,
+                        module_path=self.parent.file_path,
+                        components=[],  # Methods will be added during traversal
+                        docstring=ast.get_docstring(node),
+                        dependencies=set(base.id for base in node.bases if isinstance(base, ast.Name))
+                    )
+                    self.parent.signatures.append(sig)
+
+                    # Visit class body to process methods
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef):
+                            try:
+                                self.visit(item)
+                            except Exception as e:
+                                console.warning(
+                                    f"Error processing method {item.name} "
+                                    f"in class {node.name}: {e}"
+                                )
+                finally:
+                    # Restore previous class context
+                    self.current_class = prev_class
+
+        return ASTVisitor()
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
         """
@@ -1162,9 +1176,15 @@ class SignatureVisitor:
 
             # Create and validate signature
             try:
+                # Create signature with class context if inside a class
+                module_path = self.file_path
+                if self.current_class:
+                    # Ensure consistent module path format for class methods
+                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}.py")
+                
                 code_signature = CodeSignature(
                     name=name,
-                    module_path=self.file_path,
+                    module_path=module_path,
                     components=components,
                     return_type=type_info,
                     docstring=docstring,

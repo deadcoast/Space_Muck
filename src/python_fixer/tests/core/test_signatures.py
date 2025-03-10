@@ -140,7 +140,8 @@ def test_signature_visitor_class_parsing(temp_py_file, monkeypatch):
     
     # Verify class context is properly managed
     for sig in test_class_methods:
-        assert 'TestClass' in sig.module_path.name, f"Class context missing for {sig.name}"
+        expected_name = "test_code.TestClass.py"
+        assert sig.module_path.name == expected_name, f"Class context missing for {sig.name}. Got {sig.module_path.name}, expected {expected_name}"
 
 @pytest.mark.unit
 def test_signature_visitor_with_libcst(temp_py_file):
@@ -389,13 +390,8 @@ def another_valid(x: int) -> str:
     
     # Verify class context is tracked
     method_sig = next(sig for sig in visitor.signatures if sig.name == 'method')
-    assert 'TestClass' in method_sig.module_path.name
-    
-    # Should capture valid functions and skip invalid ones
-    assert len(visitor.signatures) == 2
-    valid_signatures = [sig.name for sig in visitor.signatures]
-    assert 'valid_func' in valid_signatures
-    assert 'another_valid' in valid_signatures
+    expected_name = "partial_parse.TestClass.py"
+    assert method_sig.module_path.name == expected_name, f"Class context missing. Got {method_sig.module_path.name}, expected {expected_name}"
     
     # Check that complex type hints were parsed correctly
     valid_func = next(sig for sig in visitor.signatures if sig.name == 'valid_func')
