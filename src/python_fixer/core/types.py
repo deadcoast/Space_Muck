@@ -24,6 +24,17 @@ def import_optional_dep(name: str) -> Optional[Any]:
             return importlib.import_module(name)
     return None
 
+def check_dependency_available(name: str) -> bool:
+    """Check if a dependency is available without importing it.
+    
+    Args:
+        name: Name of the dependency to check
+        
+    Returns:
+        True if the dependency is available, False otherwise
+    """
+    return importlib.util.find_spec(name) is not None
+
 # Initialize optional dependencies
 OPTIONAL_DEPS.update({
     "libcst": import_optional_dep("libcst"),
@@ -186,8 +197,9 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
                     # Handle type mismatches
                     if value_annotations[param_name] != expected_type:
                         type_str = _get_type_str(expected_type)
+                        value_type_str = _get_type_str(value_annotations[param_name])
                         incorrect_types.append(
-                            f"{name}.{param_name} (expected {type_str}, got {value_annotations[param_name]})"
+                            f"{name}.{param_name} (expected {type_str}, got {value_type_str})"
                         )
                 
                 # Check return type
@@ -200,8 +212,9 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
                     # Handle return type mismatch
                     if value_annotations['return'] != expected_return:
                         type_str = _get_type_str(expected_return)
+                        value_return_str = _get_type_str(value_annotations['return'])
                         incorrect_types.append(
-                            f"{name} return (expected {type_str}, got {value_annotations['return']})"
+                            f"{name} return (expected {type_str}, got {value_return_str})"
                         )
             
             # Build error messages
@@ -240,9 +253,10 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
                 
                 if value_annotations[param_name] != expected_type:
                     type_str = _get_type_str(expected_type)
+                    value_type_str = _get_type_str(value_annotations[param_name])
                     return TypeCheckResult(
                         is_valid=False,
-                        errors=[f"Type mismatch in {name}.{param_name}: expected {type_str}, got {value_annotations[param_name]}"]
+                        errors=[f"Type mismatch in {name}.{param_name}: expected {type_str}, got {value_type_str}"]
                     )
             
             # Check return type
@@ -255,9 +269,10 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
                     )
                 elif value_annotations['return'] != expected_return:
                     type_str = _get_type_str(expected_return)
+                    value_return_str = _get_type_str(value_annotations['return'])
                     return TypeCheckResult(
                         is_valid=False,
-                        errors=[f"Return type mismatch in {name}: expected {type_str}, got {value_annotations['return']}"]
+                        errors=[f"Return type mismatch in {name}: expected {type_str}, got {value_return_str}"]
                     )
         
         # All checks passed
@@ -277,8 +292,111 @@ class ImportInfo:
         imported_names: List of names being imported (e.g., ['join', 'dirname'])
         is_relative: Whether this is a relative import (starts with dots)
         level: Number of dots in relative import (0 for absolute imports)
+        is_valid: Whether the import is valid (can be resolved)
+        error_message: Error message if the import is invalid
     """
     module: Optional[str]
     imported_names: List[str] = field(default_factory=list)
     is_relative: bool = False
     level: int = 0
+    is_valid: bool = True
+    error_message: Optional[str] = None
+    
+    def validate(self, package_path: Optional[str] = None) -> bool:
+        """Validate that this import can be resolved.
+        
+        Args:
+            package_path: Optional package path for resolving relative imports
+            
+        Returns:
+            True if the import is valid, False otherwise
+        """
+        if not self.module and not self.imported_names:
+            self.is_valid = False
+            self.error_message = "Import has no module or imported names"
+            return False
+            
+        try:
+            if self.is_relative:
+                if not package_path:
+                    self.is_valid = False
+                    self.error_message = "Cannot resolve relative import without package path"
+                    return False
+                    
+                # Calculate the parent package for relative imports
+                parts = package_path.split('.')
+                if self.level > len(parts):
+                    self.is_valid = False
+                    self.error_message = f"Relative import level {self.level} exceeds package depth {len(parts)}"
+                    return False
+                    
+                if self.level == len(parts):
+                    parent_pkg = ""
+                else:
+                    parent_pkg = '.'.join(parts[:-self.level])
+                    
+                # Construct the full module name
+                if self.module:
+                    if parent_pkg:
+                        full_module = f"{parent_pkg}.{self.module}"
+                    else:
+                        full_module = self.module
+                else:
+                    full_module = parent_pkg
+                    
+                # Check if the module exists
+                if not check_dependency_available(full_module):
+                    self.is_valid = False
+                    self.error_message = f"Cannot resolve relative import: {full_module}"
+                    return False
+            else:
+                # For absolute imports, just check if the module exists
+                if self.module and not check_dependency_available(self.module):
+                    self.is_valid = False
+                    self.error_message = f"Cannot resolve absolute import: {self.module}"
+                    return False
+                    
+            self.is_valid = True
+            self.error_message = None
+            return True
+        except Exception as e:
+            self.is_valid = False
+            self.error_message = f"Error validating import: {str(e)}"
+            return False
+            
+    def get_full_import_path(self, package_path: Optional[str] = None) -> Optional[str]:
+        """Get the full import path for this import.
+        
+        Args:
+            package_path: Optional package path for resolving relative imports
+            
+        Returns:
+            Full import path or None if it cannot be resolved
+        """
+        if not self.validate(package_path):
+            return None
+            
+        if self.is_relative:
+            if not package_path:
+                return None
+                
+            # Calculate the parent package for relative imports
+            parts = package_path.split('.')
+            if self.level > len(parts):
+                return None
+                
+            if self.level == len(parts):
+                parent_pkg = ""
+            else:
+                parent_pkg = '.'.join(parts[:-self.level])
+                
+            # Construct the full module name
+            if self.module:
+                if parent_pkg:
+                    return f"{parent_pkg}.{self.module}"
+                else:
+                    return self.module
+            else:
+                return parent_pkg
+        else:
+            return self.module
