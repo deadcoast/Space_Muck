@@ -406,6 +406,16 @@ class SignatureComponent(
                     self.__dict__['__annotations__'] = {self.name: type_obj}
                 except (NameError, SyntaxError):
                     self.__dict__['__annotations__'] = {self.name: Any}
+        
+        # Handle default values
+        if (self.default_value is not None and isinstance(self.default_value, str) and 
+            not (self.default_value.startswith('"') and self.default_value.endswith('"'))):
+            if self.default_value.startswith("'") and self.default_value.endswith("'"):
+                # Convert single quotes to double quotes
+                self.default_value = f'"{self.default_value[1:-1]}"'
+            elif self.type_info and self.type_info.type_hint == 'str':
+                # Add quotes for string literals if type hint is str
+                self.default_value = f'"{self.default_value}"'
 
     def get_signature(self) -> CodeSignature:
         """Get a minimal signature for this component"""
@@ -826,6 +836,13 @@ class SignatureVisitor:
         type_inference_model: Optional[Any] = None,
         enable_type_inference: bool = True
     ) -> None:
+        # Validate file path
+        if not isinstance(file_path, Path):
+            raise TypeError(f"Expected Path object, got {type(file_path).__name__}")
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        if not file_path.is_file():
+            raise ValueError(f"Path exists but is not a file: {file_path}")
         """Initialize the SignatureVisitor.
 
         Args:
@@ -836,6 +853,7 @@ class SignatureVisitor:
         self.file_path = file_path
         self.signatures: List[CodeSignature] = []
         self.current_class: Optional[str] = None
+        self.enable_type_inference = enable_type_inference
         
         # Initialize type inference
         self.type_inference_model = None
@@ -858,10 +876,56 @@ class SignatureVisitor:
         else:
             self._visitor = self._create_ast_visitor()
             
+    def analyze(self) -> None:
+        """Analyze the file and collect signatures."""
+        if not self.file_path.exists():
+            raise FileNotFoundError(f"File not found: {self.file_path}")
+            
+        try:
+            source = self.file_path.read_text()
+            
+            if isinstance(self._visitor, ast.NodeVisitor):
+                tree = ast.parse(source)
+                self._visitor.visit(tree)
+            else:
+                tree = cst.parse_module(source)
+                tree.visit(self._visitor)
+        except (OSError, SyntaxError) as e:
+            console.warning(f"Error analyzing file {self.file_path}: {e}")
+            raise
+            
+    def _process_annotation(self, node: cst.BaseExpression) -> Optional[str]:
+        """Process a type annotation node to get its string representation."""
+        if isinstance(node, cst.Name):
+            return node.value
+        elif isinstance(node, cst.Attribute):
+            return cst.Module([]).code_for_node(node)
+        elif isinstance(node, cst.Subscript):
+            # Handle complex types like List[int], Dict[str, int], etc.
+            if isinstance(node.value, (cst.Name, cst.Attribute)):
+                return self._extracted_from__process_annotation_10(node)
+        return None
+
+    # TODO Rename this here and in `_process_annotation`
+    def _extracted_from__process_annotation_10(self, node):
+        base_type = self._process_annotation(node.value)
+        if not base_type:
+            return None
+
+        # Process type parameters
+        params = []
+        for param in node.slice:
+            if isinstance(param.slice.value, (cst.Name, cst.Attribute, cst.Subscript)):
+                if param_type := self._process_annotation(param.slice.value):
+                    params.append(param_type)
+
+        return f"{base_type}[{', '.join(params)}]" if params else base_type
+
     def _create_cst_visitor(self) -> Any:
         """Create a libcst-based visitor if available."""
+        parent = self
         class CSTVisitor(cst.CSTVisitor):
-            def __init__(self, parent):
+            def __init__(self):
                 super().__init__()
                 self.parent = parent
                 
@@ -874,17 +938,51 @@ class SignatureVisitor:
                 for param in node.params.params:
                     param_name = param.name.value
                     type_hint = None
+                    default_value = None
+                    
+                    # Get type hint if available
                     if param.annotation:
-                        type_hint = param.annotation.annotation.value
+                        type_hint = self.parent._process_annotation(param.annotation.annotation)
+                    
+                    # Handle default value if present
+                    if param.default:
+                        try:
+                            default_value = cst.Module([]).code_for_node(param.default)
+                            # Handle string literals
+                            if default_value.startswith("'") and default_value.endswith("'"):
+                                default_value = f'"{default_value[1:-1]}"'
+                            elif type_hint == 'str' and not (default_value.startswith('"') and default_value.endswith('"')):
+                                default_value = f'"{default_value}"'
+                        except Exception as e:
+                            console.warning(f"Failed to get default value for {param_name}: {e}")
+                    
+                    # Handle type inference if needed
+                    inferred_type = None
+                    confidence = 0.0
+                    if not type_hint and self.parent.type_inference_model and self.parent.enable_type_inference:
+                        try:
+                            inferred_type = self.parent.type_inference_model.predict(param_name)
+                            confidence = 0.5  # Mock confidence value
+                        except Exception as e:
+                            console.warning(f"Type inference failed for parameter {param_name}: {e}")
+                            inferred_type = None
+                            confidence = 0.0
+                    
                     components.append(SignatureComponent(
                         name=param_name,
-                        type_info=TypeInfo(type_hint=type_hint)
+                        type_info=TypeInfo(
+                            type_hint=type_hint,
+                            inferred_type=inferred_type,
+                            confidence=confidence
+                        ),
+                        default_value=default_value
                     ))
                     
                 # Get return type
                 return_type = None
                 if node.returns:
-                    return_type = TypeInfo(type_hint=node.returns.annotation.value)
+                    type_hint = self.parent._process_annotation(node.returns.annotation)
+                    return_type = TypeInfo(type_hint=type_hint, inferred_type=None, confidence=0.0)
                     
                 # Create signature
                 sig = CodeSignature(
@@ -896,11 +994,16 @@ class SignatureVisitor:
                 )
                 self.parent.signatures.append(sig)
                 
-        return CSTVisitor(self)
+        return CSTVisitor()
         
     def _create_ast_visitor(self) -> Any:
         """Create an ast-based visitor as fallback."""
+        parent = self
         class ASTVisitor(ast.NodeVisitor):
+            def __init__(self):
+                super().__init__()
+                self.parent = parent
+                self.current_class = None
             def __init__(self, parent):
                 self.parent = parent
                 
@@ -909,21 +1012,75 @@ class SignatureVisitor:
                 name = node.name
                 components = []
                 
-                # Get parameters
-                for arg in node.args.args:
+                # Get parameters and their defaults
+                defaults = [None] * (len(node.args.args) - len(node.args.defaults)) + node.args.defaults
+                for arg, default in zip(node.args.args, defaults):
                     param_name = arg.arg
                     type_hint = None
+                    default_value = None
+                    
+                    # Get type hint if available
                     if arg.annotation:
                         type_hint = ast.unparse(arg.annotation)
+                    
+                    # Handle default value if present
+                    if default is not None:
+                        try:
+                            default_value = ast.unparse(default)
+                            # Handle string literals
+                            if default_value.startswith("'") and default_value.endswith("'"):
+                                default_value = f'"{default_value[1:-1]}"'
+                            elif type_hint == 'str' and not (default_value.startswith('"') and default_value.endswith('"')):
+                                default_value = f'"{default_value}"'
+                        except Exception as e:
+                            console.warning(f"Failed to unparse default value for {param_name}: {e}")
+                    
+                    # Handle type inference if needed
+                    inferred_type = None
+                    confidence = 0.0
+                    if not type_hint and self.parent.type_inference_model and self.parent.enable_type_inference:
+                        try:
+                            inferred_type = self.parent.type_inference_model.predict(param_name)
+                            confidence = 0.5  # Mock confidence value
+                        except Exception as e:
+                            console.warning(f"Type inference failed for parameter {param_name}: {e}")
+                            inferred_type = None
+                            confidence = 0.0
+                    
                     components.append(SignatureComponent(
                         name=param_name,
-                        type_info=TypeInfo(type_hint=type_hint)
+                        type_info=TypeInfo(
+                            type_hint=type_hint,
+                            inferred_type=inferred_type,
+                            confidence=confidence
+                        ),
+                        default_value=default_value
                     ))
+                
+                # Get return type
+                return_type = None
+                if hasattr(node, 'returns') and node.returns:
+                    type_hint = ast.unparse(node.returns)
+                    return_type = TypeInfo(type_hint=type_hint, inferred_type=None, confidence=0.0)
+                
+                # Create signature with class context if inside a class
+                module_path = self.parent.file_path
+                if self.current_class:
+                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}")
+                
+                sig = CodeSignature(
+                    name=name,
+                    module_path=module_path,
+                    components=components,
+                    return_type=return_type,
+                    docstring=ast.get_docstring(node)
+                )
+                self.parent.signatures.append(sig)
                     
                 # Get return type
                 return_type = None
                 if node.returns:
-                    return_type = TypeInfo(type_hint=ast.unparse(node.returns))
+                    return_type = TypeInfo(type_hint=ast.unparse(node.returns), inferred_type=None, confidence=0.0)
                     
                 # Create signature
                 sig = CodeSignature(

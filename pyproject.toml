@@ -89,11 +89,15 @@ addopts = """
     --doctest-modules
     --cov=python_fixer
     --cov-report=term-missing
-    --cov-report=html
+    --cov-report=html:htmlcov
+    --cov-report=xml:coverage.xml
     --strict-markers
     --strict-config
     -p no:warnings
     --cache-clear
+    --durations=10
+    --durations-min=1.0
+    --maxfail=10
 """
 required_plugins = [
     "pytest-cov>=6.0.0",
@@ -122,14 +126,17 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "dependency: marks tests that require optional dependencies",
-    "ml: marks tests that use machine learning models"
+    "ml: marks tests that use machine learning models",
+    "libcst: marks tests that require libcst",
+    "torch: marks tests that require torch",
+    "visitor: marks tests for SignatureVisitor",
+    "type_inference: marks tests for type inference system",
+    "import_resolution: marks tests for import resolution",
+    "performance: marks performance and benchmark tests"
 ]
 empty_parameter_set_mark = "fail_at_collect"
 xfail_strict = true
 pythonpath = ["src"]
-env_files = [
-    ".env"
-]
 
 [tool.setuptools.package-data]
 python_fixer = ["py.typed"]

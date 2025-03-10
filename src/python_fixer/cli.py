@@ -85,10 +85,35 @@ def validate_port(port: int) -> None:
         )
 
 
+def verify_imports() -> None:
+    """Verify that all required modules are available.
+    
+    Raises:
+        ImportError: If any required module is not available
+    """
+    required_modules = [
+        'python_fixer.core.analyzer',
+        'python_fixer.core.signals',
+        'python_fixer.logging.structured'
+    ]
+    
+    for module in required_modules:
+        if not importlib.util.find_spec(module):
+            raise ImportError(f"Required module not found: {module}")
+
+def print_import_paths() -> None:
+    """Print the current Python import paths."""
+    print("\n\033[96mPython Import Paths:\033[0m")
+    for path in sys.path:
+        if os.path.exists(path):
+            print(f"  ✓ {path}")
+        else:
+            print(f"  ✗ {path} (not found)")
+    print()
+
 def parse_args():
-    print("Command line arguments:", sys.argv)
-    print("Current working directory:", os.getcwd())
-    print("Creating argument parser...")
+    verify_imports()
+    print_import_paths()
     parser = argparse.ArgumentParser(
         description="Fix Python import and class structure issues in your project",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -344,10 +369,24 @@ def setup_args_and_logging():
 
     Returns:
         Tuple[argparse.Namespace, StructuredLogger]: Parsed arguments and logger
+        
+    Raises:
+        ImportError: If required modules are not available
+        ValidationError: If argument validation fails
     """
     print("Setting up arguments and logging...")
     try:
+        # Verify imports first
+        verify_imports()
+        
+        # Show import paths for debugging
+        if '--verbose' in sys.argv:
+            print_import_paths()
+            
         return _extracted_from_setup_args_and_logging_9()
+    except ImportError as e:
+        print(f"\033[91mError: Required module not available - {str(e)}\033[0m")
+        raise
     except Exception as e:
         print(f"Error in setup: {str(e)}")
         raise

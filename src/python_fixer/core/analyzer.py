@@ -25,6 +25,9 @@ from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Any
 from rich.console import Console
 from rich.table import Table
 
+# Local imports
+from python_fixer.core.types import ImportInfo
+
 # Optional dependencies
 from python_fixer.core.types import OPTIONAL_DEPS
 
@@ -198,10 +201,127 @@ class ASTImportVisitor(ast.NodeVisitor):
     def visit_Import(self, node: ast.Import):
         for name in node.names:
             self.imports.add(name.name)
+            if name.asname:
+                self.imports.add(name.asname)
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
-        if node.module:
-            self.imports.add(node.module)
+        module_prefix = '.' * node.level if node.level else ''
+        module_name = node.module or ''
+        if module_name:
+            module_name = module_prefix + module_name
+        for name in node.names:
+            if name.name == '*':
+                if module_name:
+                    self.imports.add(f"{module_name}.*")
+                else:
+                    self.imports.add('*')
+            else:
+                if module_name:
+                    self.imports.add(f"{module_name}.{name.name}")
+                else:
+                    self.imports.add(name.name)
+                if name.asname:
+                    self.imports.add(name.asname)
+
+
+class ImportAnalyzer:
+    """Analyzes Python file imports using AST or libcst.
+    
+    This class provides functionality to analyze imports in Python files,
+    supporting both relative and absolute imports. It can use either the
+    built-in ast module or libcst (if available) for more accurate parsing.
+    
+    Attributes:
+        file_path: Path to the Python file to analyze
+        _source: Cached source code of the file
+        _imports: Set of collected import statements
+    """
+    
+    def __init__(self, file_path: Path) -> None:
+        """Initialize the ImportAnalyzer.
+        
+        Args:
+            file_path: Path to the Python file to analyze
+            
+        Raises:
+            FileNotFoundError: If file_path does not exist
+            ValueError: If file_path is not a Python file
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        if file_path.suffix != '.py':
+            raise ValueError(f"Not a Python file: {file_path}")
+            
+        self.file_path = file_path
+        self._source = None
+        self._imports = set()
+    
+    def _read_source(self) -> str:
+        """Read and cache the source code.
+        
+        Returns:
+            Source code of the Python file
+        """
+        if self._source is None:
+            self._source = self.file_path.read_text()
+        return self._source
+    
+    def analyze_imports(self) -> List[ImportInfo]:
+        """Analyze imports in the Python file.
+        
+        This method parses the file and collects all import statements,
+        including their type (relative/absolute) and imported names.
+        
+        Returns:
+            List of ImportInfo objects containing import details
+            
+        Raises:
+            SyntaxError: If the Python file contains invalid syntax
+        """
+        source = self._read_source()
+        imports = []
+
+        try:
+            if _libcst is not None:
+                # Use libcst for more accurate parsing if available
+                tree = _libcst.parse_module(source)
+                visitor = ImportCollectorVisitor()
+                tree.visit(visitor)
+            else:
+                # Fallback to ast for basic parsing
+                tree = ast.parse(source)
+                visitor = ASTImportVisitor()
+                visitor.visit(tree)
+            self._imports = visitor.imports
+            # Process collected imports into ImportInfo objects
+            for imp in self._imports:
+                if '.' in imp:
+                    module, name = imp.rsplit('.', 1)
+                    is_relative = module.startswith('.')
+                    if is_relative:
+                        # Count leading dots for relative import level
+                        level = len(module) - len(module.lstrip('.'))
+                        module = module[level:] or None
+                    imports.append(ImportInfo(
+                        module=module,
+                        imported_names=[name],
+                        is_relative=is_relative,
+                        level=level if is_relative else 0
+                    ))
+                else:
+                    imports.append(ImportInfo(
+                        module=imp,
+                        imported_names=[],
+                        is_relative=False,
+                        level=0
+                    ))
+
+            return imports
+
+        except SyntaxError as e:
+            if _logging:
+                _logging.error(f"Syntax error in {self.file_path}: {e}")
+            raise
 
 
 class ProjectAnalyzer:
@@ -1648,37 +1768,183 @@ class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else obje
         if OPTIONAL_DEPS["libcst"] is not None:
             for name in node.names:
                 self.imports.add(name.name.value)
+                if name.asname:
+                    self.imports.add(name.asname.name.value)
 
     def visit_ImportFrom(self, node: '_libcst.ImportFrom') -> None:
-        if OPTIONAL_DEPS["libcst"] is not None and node.module:
-            self.imports.add(node.module.value)
+        if OPTIONAL_DEPS["libcst"] is None:
+            return
+        module_prefix = '.' * len(node.relative) if node.relative else ''
+        module_name = node.module.value if node.module else ''
+        if module_name:
+            module_name = module_prefix + module_name
+        for name in node.names:
+            if isinstance(name.name, _libcst.Star):
+                if module_name:
+                    self.imports.add(f"{module_name}.*")
+                else:
+                    self.imports.add('*')
+            else:
+                if module_name:
+                    self.imports.add(f"{module_name}.{name.name.value}")
+                else:
+                    self.imports.add(name.name.value)
+                if name.asname:
+                    self.imports.add(name.asname.name.value)
 
 
 class TypeAnnotationVisitor(ast.NodeVisitor):
-    """Visitor to analyze type annotations in the AST."""
+    """Visitor to analyze type annotations in the AST.
+    
+    This visitor tracks and validates Python type annotations, including:
+    - Variable annotations (PEP 526)
+    - Function annotations (PEP 484)
+    - Complex types like List[str], Union[int, str], etc.
+    - Forward references ('Type', Type)
+    - Optional types (Optional[Type], Type | None)
+    - TypeVar and Protocol types
+    
+    Attributes:
+        total_annotations: Total number of type annotations found
+        valid_annotations: Number of valid type annotations
+        type_errors: List of type validation errors
+        type_coverage: Percentage of valid type annotations
+    """
 
     def __init__(self):
         super().__init__()
         self.total_annotations = 0
         self.valid_annotations = 0
+        self.type_errors: List[str] = []
+        
+    @property
+    def type_coverage(self) -> float:
+        """Calculate type coverage percentage."""
+        if not self.total_annotations:
+            return 0.0
+        return self.valid_annotations / self.total_annotations * 100
+        
+    def _validate_annotation(self, node: ast.AST, context: str = '') -> bool:
+        """Validate a type annotation node.
+        
+        Args:
+            node: AST node representing the type annotation
+            context: Context string for error messages
+            
+        Returns:
+            True if annotation is valid, False otherwise
+        """
+        try:
+            if isinstance(node, ast.Name):
+                # Simple types (str, int, None, etc.)
+                return True
+            elif isinstance(node, ast.Constant):
+                # String literals are valid (forward references)
+                if isinstance(node.value, str):
+                    return True
+                # Numeric literals are invalid type annotations
+                if isinstance(node.value, (int, float)):
+                    self.type_errors.append(f"Invalid type annotation: numeric literal in {context}")
+                    return False
+                return True
+            elif isinstance(node, ast.Attribute):
+                # Qualified names (typing.List, module.Type)
+                return True
+            elif isinstance(node, ast.Subscript):
+                # Generic types (List[str], Dict[str, int], etc.)
+                if isinstance(node.value, (ast.Name, ast.Attribute)):
+                    # Validate type arguments
+                    if hasattr(node, 'slice') and isinstance(node.slice, ast.Tuple):
+                        return all(self._validate_annotation(elt) for elt in node.slice.elts)
+                    return self._validate_annotation(node.slice)
+                return False
+            elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+                # Union types using | (PEP 604)
+                return self._validate_annotation(node.left) and self._validate_annotation(node.right)
+            elif isinstance(node, str):
+                # Forward references
+                return True
+            elif isinstance(node, (ast.List, ast.Tuple)):
+                # Invalid: using list/tuple literals as type
+                return False
+            else:
+                return False
+        except Exception as e:
+            self.type_errors.append(f"Error validating type annotation in {context}: {str(e)}")
+            return False
 
-    def visit_AnnAssign(self, node):
-        """Handles variable annotations."""
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        """Handle variable annotations (PEP 526)."""
+        # Skip TypeVar assignments
+        if isinstance(node.target, ast.Name) and node.target.id == 'T':
+            return
+            
         self.total_annotations += 1
-        if isinstance(node.annotation, ast.Name):
+        context = f"variable annotation '{ast.unparse(node.target)}'"
+        if self._validate_annotation(node.annotation, context):
             self.valid_annotations += 1
+            
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Handle class definitions to visit methods and attributes."""
+        # Skip TypeVar assignments and Protocol class definitions
+        if any(base.id == 'Protocol' for base in node.bases if isinstance(base, ast.Name)):
+            return
+        
+        # Visit class body
+        for item in node.body:
+            self.visit(item)
 
-    def visit_FunctionDef(self, node):
-        """Handles function argument and return type annotations."""
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Handle function annotations (PEP 484)."""
+        # Skip Protocol class method definitions with ellipsis body
+        if len(node.body) == 1 and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Ellipsis):
+            if node.returns:
+                self._FunctionDef(node)
+            return
+
         # Check return type annotation
         if node.returns:
-            self.total_annotations += 1
-            if isinstance(node.returns, ast.Name):
-                self.valid_annotations += 1
-
+            self._FunctionDef(node)
         # Check argument type annotations
         for arg in node.args.args:
             if arg.annotation:
                 self.total_annotations += 1
-                if isinstance(arg.annotation, ast.Name):
+                context = f"parameter '{arg.arg}' in function '{node.name}'"
+                if self._validate_annotation(arg.annotation, context):
                     self.valid_annotations += 1
+
+        # Check kwonly arguments
+        for arg in node.args.kwonlyargs:
+            if arg.annotation:
+                self.total_annotations += 1
+                context = f"keyword-only parameter '{arg.arg}' in function '{node.name}'"
+                if self._validate_annotation(arg.annotation, context):
+                    self.valid_annotations += 1
+
+        # Check varargs and kwargs
+        if node.args.vararg and node.args.vararg.annotation:
+            self.total_annotations += 1
+            context = f"*args parameter in function '{node.name}'"
+            if self._validate_annotation(node.args.vararg.annotation, context):
+                self.valid_annotations += 1
+
+        if node.args.kwarg and node.args.kwarg.annotation:
+            self.total_annotations += 1
+            context = f"**kwargs parameter in function '{node.name}'"
+            if self._validate_annotation(node.args.kwarg.annotation, context):
+                self.valid_annotations += 1
+
+        # Visit function body to handle nested classes/functions
+        if (
+            len(node.body) != 1
+            or not isinstance(node.body[0], ast.Expr)
+            or not isinstance(node.body[0].value, ast.Ellipsis)
+        ):
+            for item in node.body:
+                self.visit(item)
+
+    def _FunctionDef(self, node):
+        self.total_annotations += 1
+        context = f"return type of function '{node.name}'"
+        if self._validate_annotation(node.returns, context):
+            self.valid_annotations += 1
