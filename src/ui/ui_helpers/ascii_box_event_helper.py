@@ -7,13 +7,13 @@ maintain backward compatibility with existing code.
 """
 
 import logging
-from typing import Optional, Dict, Any, Callable, List, Tuple, Union
+from typing import Optional, Any, Callable, List, Tuple  # Removed Dict, Union as they're unused
 import uuid
 
 # Import UI components with fallback for backward compatibility
 try:
     from ui.ui_element.ascii_box import ASCIIBox
-    from ui.ui_base.event_system import UIEventType, UIEventData, UIEventSystem
+    from ui.ui_base.event_system import UIEventType, UIEventData  # Removed UIEventSystem as it's unused
     from ui.ui_base.component_registry import ComponentRegistry
     from ui.ui_helpers.event_integration import register_with_events, unregister_from_events
 except ImportError as e:
@@ -43,22 +43,21 @@ def register_ascii_box(
     try:
         # Generate component ID if not provided
         box_id = component_id or f"ascii_box_{uuid.uuid4().hex[:8]}"
-        
+
         # Set component ID on the box
         box.component_id = box_id
-        
+
         # Register with component registry and event system if requested
         if register_events:
             try:
-                final_id = register_with_events(box, box_id)
-                return final_id
+                return register_with_events(box, box_id)
             except (ImportError, AttributeError) as e:
                 logging.debug(f"Event system not available for registration: {e}")
                 return box_id
-        
+
         # Otherwise just return the ID
         return box_id
-        
+
     except Exception as e:
         logging.error(f"Error registering ASCIIBox: {e}")
         return component_id or f"ascii_box_{uuid.uuid4().hex[:8]}"
@@ -135,18 +134,15 @@ def add_hover_handlers(
         True if handlers were added successfully, False otherwise
     """
     try:
-        success = True
-        
         # Register enter handler if provided
         if enter_handler:
             box.register_event_handler(UIEventType.MOUSE_ENTER, enter_handler)
-        
+
         # Register leave handler if provided
         if leave_handler:
             box.register_event_handler(UIEventType.MOUSE_LEAVE, leave_handler)
-            
-        return success
-        
+
+        return True
     except Exception as e:
         logging.error(f"Error adding hover handlers: {e}")
         return False
@@ -256,13 +252,9 @@ def get_box_by_id(component_id: str) -> Optional[ASCIIBox]:
         # Try to get component from registry
         registry = ComponentRegistry.get_instance()
         component = registry.get_component(component_id)
-        
+
         # Check if component is an ASCIIBox
-        if isinstance(component, ASCIIBox):
-            return component
-            
-        return None
-        
+        return component if isinstance(component, ASCIIBox) else None
     except (ImportError, AttributeError):
         # Registry not available
         logging.debug("Component registry not available")

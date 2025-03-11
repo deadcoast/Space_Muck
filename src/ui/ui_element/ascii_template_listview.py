@@ -1,17 +1,11 @@
-import logging
-from typing import Tuple, List, Dict, Optional, Any, Callable, TypeVar, cast
+from typing import Tuple, List, Dict, Optional, Any, TypeVar
 import pygame
-import time
-import math
-import random
-import itertools
 
-from ui.draw_utils import draw_text, draw_panel
-from ui.ascii_base import UIStyle, UIElement
+from ui.draw_utils import draw_text
+from ui.ascii_base import UIStyle
 from ui.ui_element.ascii_button import ASCIIButton
 from ui.ui_element.ascii_panel import ASCIIPanel
-from ui.ui_element.ascii_table import ASCIITable
-from config import COLOR_TEXT, COLOR_BG
+from config import COLOR_TEXT
 
 # Type definitions for better type checking
 T = TypeVar("T")

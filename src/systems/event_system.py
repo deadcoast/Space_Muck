@@ -231,22 +231,26 @@ class EventBus:
                     except Exception as e:
                         logging.error(f"Error in event handler for '{event_type}': {e}")
         finally:
-            # Clear dispatching flag
-            self.is_dispatching = False
+            self._extracted_from_dispatch_30()
 
-            # Process any pending subscription changes
-            for subscription in self.pending_subscriptions:
-                self.subscriptions.append(subscription)
-            self.pending_subscriptions.clear()
+    # TODO Rename this here and in `dispatch`
+    def _extracted_from_dispatch_30(self):
+        # Clear dispatching flag
+        self.is_dispatching = False
 
-            # Sort by priority (descending)
-            if self.subscriptions:
-                self.subscriptions.sort(key=lambda s: s.priority, reverse=True)
+        # Process any pending subscription changes
+        for subscription in self.pending_subscriptions:
+            self.subscriptions.append(subscription)
+        self.pending_subscriptions.clear()
 
-            # Process any pending unsubscriptions
-            for sub_id in self.pending_unsubscriptions:
-                self.unsubscribe(sub_id)
-            self.pending_unsubscriptions.clear()
+        # Sort by priority (descending)
+        if self.subscriptions:
+            self.subscriptions.sort(key=lambda s: s.priority, reverse=True)
+
+        # Process any pending unsubscriptions
+        for sub_id in self.pending_unsubscriptions:
+            self.unsubscribe(sub_id)
+        self.pending_unsubscriptions.clear()
 
     def clear_all_subscriptions(self) -> None:
         """Remove all subscriptions from this event bus."""

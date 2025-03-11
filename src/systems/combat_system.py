@@ -298,17 +298,7 @@ class CombatSystem:
             Dict with attack results
         """
         if not self.combat_active or not self.current_enemy:
-            print_combat_header()
-            print_combat_error("No Active Combat Session", [
-                "Cannot execute attack without an active combat",
-                "No enemy ship detected in range"
-            ])
-            print_combat_suggestions([
-                "Use 'scan' to locate enemy ships",
-                "Use 'start_combat' to initiate combat"
-            ], self.player.get_combat_stats())
-            return {"success": False, "reason": "No active combat"}
-
+            return self._extracted_from_player_flee_9()
         # Player attacks enemy
         attack_result = self.player.attack(self.current_enemy)
 
@@ -359,17 +349,7 @@ class CombatSystem:
             Dict with attack results
         """
         if not self.combat_active or not self.current_enemy:
-            print_combat_header()
-            print_combat_error("No Active Combat Session", [
-                "Cannot execute attack without an active combat",
-                "No enemy ship detected in range"
-            ])
-            print_combat_suggestions([
-                "Use 'scan' to locate enemy ships",
-                "Use 'start_combat' to initiate combat"
-            ], self.player.get_combat_stats())
-            return {"success": False, "reason": "No active combat"}
-
+            return self._extracted_from_player_flee_9()
         # Enemy attacks player
         attack_result = self.current_enemy.attack(self.player)
 
@@ -417,17 +397,7 @@ class CombatSystem:
             Dict with turn results
         """
         if not self.combat_active or not self.current_enemy:
-            print_combat_header()
-            print_combat_error("No Active Combat Session", [
-                "Cannot execute attack without an active combat",
-                "No enemy ship detected in range"
-            ])
-            print_combat_suggestions([
-                "Use 'scan' to locate enemy ships",
-                "Use 'start_combat' to initiate combat"
-            ], self.player.get_combat_stats())
-            return {"success": False, "reason": "No active combat"}
-
+            return self._extracted_from_player_flee_9()
         self.turn_count += 1
         print_combat_header()
         print_combat_success(f"COMBAT TURN {self.turn_count}", [
@@ -534,17 +504,7 @@ class CombatSystem:
             Dict with flee results
         """
         if not self.combat_active or not self.current_enemy:
-            print_combat_header()
-            print_combat_error("No Active Combat Session", [
-                "Cannot execute attack without an active combat",
-                "No enemy ship detected in range"
-            ])
-            print_combat_suggestions([
-                "Use 'scan' to locate enemy ships",
-                "Use 'start_combat' to initiate combat"
-            ], self.player.get_combat_stats())
-            return {"success": False, "reason": "No active combat"}
-
+            return self._extracted_from_player_flee_9()
         # Store current enemy reference to avoid it becoming None during the method execution
         enemy = self.current_enemy
 
@@ -569,6 +529,25 @@ class CombatSystem:
             "enemy_stats": enemy.get_stats(),
             "player_stats": self.player.get_combat_stats(),
         }
+
+    # TODO Rename this here and in `player_attack`, `enemy_attack`, `execute_combat_turn` and `player_flee`
+    def _extracted_from_player_flee_9(self):
+        print_combat_header()
+        print_combat_error(
+            "No Active Combat Session",
+            [
+                "Cannot execute attack without an active combat",
+                "No enemy ship detected in range",
+            ],
+        )
+        print_combat_suggestions(
+            [
+                "Use 'scan' to locate enemy ships",
+                "Use 'start_combat' to initiate combat",
+            ],
+            self.player.get_combat_stats(),
+        )
+        return {"success": False, "reason": "No active combat"}
 
     def _handle_successful_flee(self, enemy):
         # Successful flee

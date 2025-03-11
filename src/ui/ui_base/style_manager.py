@@ -1,6 +1,5 @@
 import logging
-from typing import Dict, Tuple, Any, Optional
-import pygame
+from typing import Dict, Tuple, Any
 
 from ui.ui_base.ascii_base import UIStyle, COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
@@ -145,16 +144,13 @@ class StyleManager:
         try:
             if style in self.style_colors and color_type in self.style_colors[style]:
                 return self.style_colors[style][color_type]
-            else:
                 # Fallback to default colors
-                if color_type == "text":
-                    return COLOR_TEXT
-                elif color_type == "highlight":
-                    return COLOR_HIGHLIGHT
-                elif color_type == "background":
-                    return COLOR_BG
-                else:
-                    return COLOR_TEXT
+            if color_type == "background":
+                return COLOR_BG
+            elif color_type == "highlight":
+                return COLOR_HIGHLIGHT
+            else:
+                return COLOR_TEXT
         except Exception as e:
             logging.error(f"Error getting color: {e}")
             return COLOR_TEXT

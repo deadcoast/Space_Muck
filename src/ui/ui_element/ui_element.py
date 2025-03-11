@@ -5,7 +5,7 @@ import curses
 import math
 import logging
 import pygame
-from enum import Enum, auto
+# Removed unused imports: from enum import Enum, auto
 from typing import List, Dict, Optional, Any, Tuple
 from ui.ui_element.ui_style import UIStyle
 from ui.ui_element.animation_style import AnimationStyle
@@ -103,172 +103,188 @@ class UIElement:
         try:
             # Create a standardized pattern structure for all styles
             self.animation["pattern"] = []
-
-            if self.style == UIStyle.QUANTUM:
-                # Quantum wave interference pattern with particles
-                num_particles = max(3, int(self.width * self.height * 0.05))
-                self.animation["pattern"] = [
-                    {
-                        "pos": (
-                            random.uniform(0, self.width),
-                            random.uniform(0, self.height),
-                        ),
-                        "angle": random.uniform(0, 2 * math.pi),
-                        "speed": random.uniform(0.1, 0.3),
-                        "char": random.choice([".", "*", "o", "O"]),
-                    }
-                    for _ in range(num_particles)
-                ]
-                # Add wave properties
-                self.animation["wave_frequency"] = 0.5
-                self.animation["phase"] = 0.0
-
-            elif self.style == UIStyle.SYMBIOTIC:
-                # Organic cellular automaton pattern
-                # Create growing cells at various positions
-                num_cells = max(2, int(self.width * self.height * 0.03))
-                self.animation["pattern"] = [
-                    {
-                        "pos": (
-                            random.uniform(1, self.width - 2),
-                            random.uniform(1, self.height - 2),
-                        ),
-                        "size": 0.0,  # Will grow during animation
-                        "max_size": random.uniform(1.0, 2.5),
-                        "growth_rate": random.uniform(0.5, 1.5),
-                        "char": random.choice(["o", "O", "*", "#"]),
-                    }
-                    for _ in range(num_cells)
-                ]
-                self.animation["growth_rate"] = 0.2
-                self.animation["mutation_chance"] = 0.05
-                self.animation["phase"] = 0.0
-
-            elif self.style == UIStyle.ASTEROID:
-                # Asteroid/mineral growth pattern
-                # Create fractal-like growth points
-                start_points = [
-                    (
-                        random.randint(1, self.width - 2),
-                        random.randint(1, self.height - 2),
-                    )
-                    for _ in range(max(1, min(3, self.width // 5)))
-                ]
-
-                growth_points = []
-                for x, y in start_points:
-                    growth_points.append(
-                        {
-                            "pos": (x, y),
-                            "char": "#",
-                            "growth_stage": 1.0,
-                            "is_seed": True,
-                        }
-                    )
-
-                    # Add branching points
-                    for _ in range(random.randint(3, 8)):
-                        dx = random.randint(-2, 2)
-                        dy = random.randint(-2, 2)
-                        new_x = max(0, min(self.width - 1, x + dx))
-                        new_y = max(0, min(self.height - 1, y + dy))
-                        growth_points.append(
-                            {
-                                "pos": (new_x, new_y),
-                                "char": random.choice(["*", ".", "+"]),
-                                "growth_stage": 0.0,
-                                "is_seed": False,
-                            }
-                        )
-
-                self.animation["pattern"] = growth_points
-                self.animation["phase"] = 0.0
-
-            elif self.style == UIStyle.MECHANICAL:
-                # Mechanical grid-like pattern
-                # Create a grid of points that will light up sequentially
-                # Create a grid pattern where either x or y is even
-                grid_points = [
-                    (x, y)
-                    for x in range(1, self.width - 1)
-                    for y in range(1, self.height - 1)
-                    if x % 2 == 0 or y % 2 == 0
-                ]
-
-                # Randomize the order for sequential activation
-                random.shuffle(grid_points)
-
-                self.animation["pattern"] = [
-                    {
-                        "pos": pos,
-                        "activation_time": i / len(grid_points),  # Staggered activation
-                        "char": random.choice([".", ":", "+", "=", "-", "|", "#"]),
-                        "active": False,
-                    }
-                    for i, pos in enumerate(grid_points)
-                ]
-                self.animation["phase"] = 0.0
-
-            elif self.style == UIStyle.FLEET:
-                # Fleet style - ordered, military pattern
-                # Create ordered rows of characters
-                pattern = []
-
-                # Create horizontal scan lines
-                for y in range(1, self.height - 1):
-                    if y % 2 == 0:
-                        for x in range(1, self.width - 1):
-                            delay = x / self.width  # Left to right
-                            pattern.append(
-                                {
-                                    "pos": (x, y),
-                                    "activation_time": delay,
-                                    "char": "-",
-                                    "active": False,
-                                }
-                            )
-                    else:
-                        for x in range(self.width - 2, 0, -1):
-                            delay = (self.width - x) / self.width  # Right to left
-                            pattern.append(
-                                {
-                                    "pos": (x, y),
-                                    "activation_time": delay,
-                                    "char": "-",
-                                    "active": False,
-                                }
-                            )
-
-                self.animation["pattern"] = pattern
-                self.animation["phase"] = 0.0
-
-            else:  # Default cellular pattern
-                # Simple cellular automaton pattern
-                # Create initial cells with 20% chance at each position
-                cells = [
-                    {
-                        "pos": (x, y),
-                        "alive": True,
-                        "char": "*",
-                        "age": 0,
-                        "energy": random.uniform(0.5, 1.0),  # Initial energy level
-                    }
-                    for y in range(self.height)
-                    for x in range(self.width)
-                    if random.random() < 0.2  # 20% chance of initial cell
-                ]
-
-                self.animation["pattern"] = cells
-                self.animation["phase"] = 0.0
-                self.animation["style_data"] = {}
-
+            self.animation["phase"] = 0.0
+            
+            # Initialize pattern based on style
+            style_initializers = {
+                UIStyle.QUANTUM: self._init_quantum_pattern,
+                UIStyle.SYMBIOTIC: self._init_symbiotic_pattern,
+                UIStyle.ASTEROID: self._init_asteroid_pattern,
+                UIStyle.MECHANICAL: self._init_mechanical_pattern,
+                UIStyle.FLEET: self._init_fleet_pattern
+            }
+            
+            # Call the appropriate initializer or default
+            initializer = style_initializers.get(self.style, self._init_default_pattern)
+            initializer()
+            
         except Exception as e:
             logging.error(f"Error initializing animation pattern: {e}")
             # Fallback to simple random pattern
-            self.animation["cells"] = [
-                [random.random() < 0.5 for _ in range(self.width)]
-                for _ in range(self.height)
-            ]
+            self._init_fallback_pattern()
+    
+    def _init_quantum_pattern(self) -> None:
+        """Initialize quantum wave interference pattern with particles."""
+        num_particles = max(3, int(self.width * self.height * 0.05))
+        self.animation["pattern"] = [
+            {
+                "pos": (random.uniform(0, self.width), random.uniform(0, self.height)),
+                "angle": random.uniform(0, 2 * math.pi),
+                "speed": random.uniform(0.1, 0.3),
+                "char": random.choice([".", "*", "o", "O"]),
+            }
+            for _ in range(num_particles)
+        ]
+        # Add wave properties
+        self.animation["wave_frequency"] = 0.5
+    
+    def _init_symbiotic_pattern(self) -> None:
+        """Initialize organic cellular automaton pattern."""
+        num_cells = max(2, int(self.width * self.height * 0.03))
+        self.animation["pattern"] = [
+            {
+                "pos": (random.uniform(1, self.width - 2), random.uniform(1, self.height - 2)),
+                "size": 0.0,  # Will grow during animation
+                "max_size": random.uniform(1.0, 2.5),
+                "growth_rate": random.uniform(0.5, 1.5),
+                "char": random.choice(["o", "O", "*", "#"]),
+            }
+            for _ in range(num_cells)
+        ]
+        self.animation["growth_rate"] = 0.2
+        self.animation["mutation_chance"] = 0.05
+    
+    def _init_asteroid_pattern(self) -> None:
+        """Initialize asteroid/mineral growth pattern."""
+        # Create fractal-like growth points
+        start_points = [
+            (random.randint(1, self.width - 2), random.randint(1, self.height - 2))
+            for _ in range(max(1, min(3, self.width // 5)))
+        ]
+
+        growth_points = []
+        for x, y in start_points:
+            # Add seed point
+            growth_points.append({
+                "pos": (x, y),
+                "char": "#",
+                "growth_stage": 1.0,
+                "is_seed": True,
+            })
+            
+            # Add branching points
+            self._add_branching_points(growth_points, x, y)
+
+        self.animation["pattern"] = growth_points
+    
+    def _add_branching_points(self, growth_points: List[Dict], x: int, y: int) -> None:
+        """Add branching points to the asteroid pattern.
+        
+        Args:
+            growth_points: List to add the branching points to
+            x: X coordinate of the seed point
+            y: Y coordinate of the seed point
+        """
+        for _ in range(random.randint(3, 8)):
+            dx = random.randint(-2, 2)
+            dy = random.randint(-2, 2)
+            new_x = max(0, min(self.width - 1, x + dx))
+            new_y = max(0, min(self.height - 1, y + dy))
+            growth_points.append({
+                "pos": (new_x, new_y),
+                "char": random.choice(["*", ".", "+"]),
+                "growth_stage": 0.0,
+                "is_seed": False,
+            })
+    
+    def _init_mechanical_pattern(self) -> None:
+        """Initialize mechanical grid-like pattern."""
+        # Create a grid pattern where either x or y is even
+        grid_points = [
+            (x, y)
+            for x in range(1, self.width - 1)
+            for y in range(1, self.height - 1)
+            if x % 2 == 0 or y % 2 == 0
+        ]
+
+        # Randomize the order for sequential activation
+        random.shuffle(grid_points)
+
+        self.animation["pattern"] = [
+            {
+                "pos": pos,
+                "activation_time": i / len(grid_points),  # Staggered activation
+                "char": random.choice([".", ":", "+", "=", "-", "|", "#"]),
+                "active": False,
+            }
+            for i, pos in enumerate(grid_points)
+        ]
+    
+    def _init_fleet_pattern(self) -> None:
+        """Initialize fleet style - ordered, military pattern."""
+        pattern = []
+
+        # Create horizontal scan lines
+        for y in range(1, self.height - 1):
+            if y % 2 == 0:
+                self._add_scan_line(pattern, y, left_to_right=True)
+            else:
+                self._add_scan_line(pattern, y, left_to_right=False)
+
+        self.animation["pattern"] = pattern
+    
+    def _add_scan_line(self, pattern: List[Dict], y: int, left_to_right: bool = True) -> None:
+        """Add a horizontal scan line to the fleet pattern.
+        
+        Args:
+            pattern: List to add the scan line to
+            y: Y coordinate of the scan line
+            left_to_right: Direction of the scan line
+        """
+        if left_to_right:
+            for x in range(1, self.width - 1):
+                delay = x / self.width
+                pattern.append({
+                    "pos": (x, y),
+                    "activation_time": delay,
+                    "char": "-",
+                    "active": False,
+                })
+        else:
+            for x in range(self.width - 2, 0, -1):
+                delay = (self.width - x) / self.width
+                pattern.append({
+                    "pos": (x, y),
+                    "activation_time": delay,
+                    "char": "-",
+                    "active": False,
+                })
+    
+    def _init_default_pattern(self) -> None:
+        """Initialize default cellular pattern."""
+        # Simple cellular automaton pattern with 20% chance at each position
+        cells = [
+            {
+                "pos": (x, y),
+                "alive": True,
+                "char": "*",
+                "age": 0,
+                "energy": random.uniform(0.5, 1.0),  # Initial energy level
+            }
+            for y in range(self.height)
+            for x in range(self.width)
+            if random.random() < 0.2  # 20% chance of initial cell
+        ]
+
+        self.animation["pattern"] = cells
+        self.animation["style_data"] = {}
+    
+    def _init_fallback_pattern(self) -> None:
+        """Initialize fallback pattern when an error occurs."""
+        self.animation["cells"] = [
+            [random.random() < 0.5 for _ in range(self.width)]
+            for _ in range(self.height)
+        ]
 
     def update_animation(self, dt: Optional[float] = None) -> None:
         """Update animation state based on elapsed time
