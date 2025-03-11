@@ -1,12 +1,6 @@
 import contextlib
-import time
-import random
 import curses
-import math
-import logging
-import pygame
-from enum import Enum, auto
-from typing import List, Dict, Optional, Any, Tuple
+from typing import Dict
 from ui.ui_element.ui_style import UIStyle
 from ui.ui_element.ui_element import UIElement
 

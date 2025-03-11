@@ -99,9 +99,8 @@ class Game:
         # Run validation rules for the new state
         new_state_config = GAME_CONFIG["states"][new_state]
         for rule in new_state_config["validation_rules"]:
-            if rule in self._validation_handlers:
-                if not self._validation_handlers[rule]():
-                    raise StateValidationError(f"Validation failed: {rule}")
+            if rule in self._validation_handlers and not self._validation_handlers[rule]():
+                raise StateValidationError(f"Validation failed: {rule}")
 
         return True
 
@@ -139,42 +138,51 @@ class Game:
         try:
             # Validate the transition
             if self._validate_state_transition(new_state):
-                # Execute exit actions for current state
-                self._execute_state_actions(self._state, "exit")
-                
-                # Update state
-                old_state = self._state
-                self._state = new_state
-                
-                # Execute entry actions for new state
-                self._execute_state_actions(new_state, "entry")
-                
-                # Update transition record
-                duration = time.time() - start_time
-                transition.duration = duration
-                transition.success = True
-                
-                # Trim history if needed
-                if len(self._state_history) >= GAME_CONFIG["state_history_limit"]:
-                    self._state_history.pop(0)
-                
-                # Add to history
-                self._state_history.append(transition)
-                
-                # Log transition
-                self._logger.info(
-                    f"State transition: {old_state} -> {new_state} ({duration:.3f}s)"
-                )
+                self._extracted_from_change_state_16(new_state, start_time, transition)
         except GameStateError as e:
-            transition.error = str(e)
-            self._logger.error(f"State transition failed: {e}")
-            self._state_valid = False
-            raise
+            self._extracted_from_change_state_42(
+                e, transition, 'State transition failed: '
+            )
         except Exception as e:
-            transition.error = str(e)
-            self._logger.error(f"Unexpected error in state transition: {e}")
-            self._state_valid = False
-            raise
+            self._extracted_from_change_state_42(
+                e, transition, 'Unexpected error in state transition: '
+            )
+
+    # TODO Rename this here and in `change_state`
+    def _extracted_from_change_state_16(self, new_state, start_time, transition):
+        # Execute exit actions for current state
+        self._execute_state_actions(self._state, "exit")
+
+        # Update state
+        old_state = self._state
+        self._state = new_state
+
+        # Execute entry actions for new state
+        self._execute_state_actions(new_state, "entry")
+
+        # Update transition record
+        duration = time.time() - start_time
+        transition.duration = duration
+        transition.success = True
+
+        # Trim history if needed
+        if len(self._state_history) >= GAME_CONFIG["state_history_limit"]:
+            self._state_history.pop(0)
+
+        # Add to history
+        self._state_history.append(transition)
+
+        # Log transition
+        self._logger.info(
+            f"State transition: {old_state} -> {new_state} ({duration:.3f}s)"
+        )
+
+    # TODO Rename this here and in `change_state`
+    def _extracted_from_change_state_42(self, e, transition, arg2):
+        transition.error = str(e)
+        self._logger.error(f"{arg2}{e}")
+        self._state_valid = False
+        raise
 
     @property
     def state(self) -> str:

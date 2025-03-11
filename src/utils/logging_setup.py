@@ -295,6 +295,18 @@ def log_performance_end(tag: str, start_time: float) -> float:
     return duration
 
 
+def log_performance_metric(metric_name: str, value: float) -> None:
+    """
+    Log a performance metric with a specific value.
+    
+    Args:
+        metric_name: Name of the metric to log
+        value: Value of the metric (typically in milliseconds)
+    """
+    if logging.getLogger("space_muck").level <= logging.DEBUG:
+        logging.debug(f"Performance metric '{metric_name}': {value:.2f}")
+
+
 def log_memory_usage(tag: str = "Memory check") -> Optional[float]:
     """
     Log current memory usage.
