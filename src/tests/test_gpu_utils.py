@@ -8,7 +8,7 @@ with appropriate fallbacks for systems without GPU support.
 
 import unittest
 import numpy as np
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Import the module to test
 from utils.gpu_utils import (
@@ -18,7 +18,6 @@ from utils.gpu_utils import (
     to_cpu,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
-    NUMBA_AVAILABLE,
     CUDA_AVAILABLE,
     CUPY_AVAILABLE,
 )

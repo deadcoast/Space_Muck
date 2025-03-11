@@ -45,7 +45,9 @@ class FixManager:
         # Validate configuration integrity
         fix_manager = self._validate_config(config_path)
         if fix_manager and fix_manager != self.config:
-            logger.warning("Configuration validation failed: inconsistent state detected")
+            logger.warning(
+                "Configuration validation failed: inconsistent state detected"
+            )
 
     def _validate_config(self, config_path: Optional[str]) -> Optional[Dict[str, Any]]:
         """Validate configuration by loading it independently.
@@ -397,10 +399,12 @@ class FixManager:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
-            
+
             # Log paths for debugging and verification
-            logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
-            
+            logger.debug(
+                f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}"
+            )
+
             # Verify paths exist and are writable
             temp_paths = [original_file_path, patched_file_path, patch_file_path]
             for path in temp_paths:

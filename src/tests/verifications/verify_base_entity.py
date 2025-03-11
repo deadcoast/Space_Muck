@@ -4,11 +4,13 @@ Verification script for BaseEntity class.
 
 import sys
 import os
-import logging
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Import the entities - moved to top of file to avoid E402 error
+from entities.base_entity import BaseEntity
 
 # Mock modules before importing entities
 sys.modules["perlin_noise"] = MagicMock()
@@ -29,8 +31,7 @@ sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
 sys.modules["src.config"].COLOR_PLAYER = (0, 255, 255)
 
-# Now import the entities
-from entities.base_entity import BaseEntity
+# BaseEntity already imported at the top of the file
 
 
 # Create mock for MinerEntity and Player

@@ -117,7 +117,9 @@ class ProjectMapParser:
                         )
                 except Exception as e:
                     self.logger.error(f"Error parsing section '{section}': {str(e)}")
-                    raise ValueError(f"Failed to parse section '{section}': {str(e)}") from e
+                    raise ValueError(
+                        f"Failed to parse section '{section}': {str(e)}"
+                    ) from e
         except Exception as e:
             self.logger.error(f"Failed to parse project map: {str(e)}")
             raise

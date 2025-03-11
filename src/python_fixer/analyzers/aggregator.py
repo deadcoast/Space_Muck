@@ -25,6 +25,7 @@ log_correlator = None
 if VARIANT_LOGGERS_AVAILABLE:
     with suppress(ImportError):
         from variant_loggers import LogCorrelator, LogRecord
+
         log_correlator = LogCorrelator()
 
 
@@ -246,6 +247,7 @@ class ProjectAnalyzer:
         """
         self.logger.info(f"Fixing project at {self.project_path} (mode: {mode})")
         return {"status": "success"}
+
 
 # --- Logging Functions with Decorator ---
 

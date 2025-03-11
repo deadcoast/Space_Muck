@@ -112,7 +112,9 @@ class HeaderMapParser:
             naming=info["naming"],
         )
 
-    def update_header(self, content: str, updates: Dict[str, Union[str, List[str]]]) -> Tuple[str, bool]:
+    def update_header(
+        self, content: str, updates: Dict[str, Union[str, List[str]]]
+    ) -> Tuple[str, bool]:
         """Update existing header with new information.
 
         Args:
@@ -178,7 +180,9 @@ class HeaderMapParser:
             "naming": "",
         }
 
-    def extract_module_info(self, module_path: Path) -> Dict[str, Union[str, List[str], Optional[str]]]:
+    def extract_module_info(
+        self, module_path: Path
+    ) -> Dict[str, Union[str, List[str], Optional[str]]]:
         """Extract complete module information including docstrings.
 
         Args:

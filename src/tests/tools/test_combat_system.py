@@ -3,7 +3,6 @@ Tests for the combat system module.
 """
 
 import unittest
-import random
 
 from entities.player import Player
 from entities.enemy_ship import EnemyShip
@@ -292,9 +291,9 @@ class TestCombatSystem(unittest.TestCase):
 
         # Store initial values for verification
         initial_player_shield = self.player.current_shield
-        initial_player_hull = self.player.current_hull
+        # Removed unused variable: initial_player_hull
         initial_enemy_shield = enemy.current_shield
-        initial_enemy_hull = enemy.current_hull
+        # Removed unused variable: initial_enemy_hull
 
         # Execute combat turn
         result = self.combat_system.execute_combat_turn()

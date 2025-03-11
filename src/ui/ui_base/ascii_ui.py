@@ -35,7 +35,7 @@ class ASCIIBox(UIElement):
         self.content_lines = []
         self.scroll_offset = 0
         self.max_scroll = 0
-        
+
         # Parse content into lines if provided
         if content:
             self.set_content(content)
@@ -51,7 +51,7 @@ class ASCIIBox(UIElement):
 
             # Split content into lines and handle word wrapping
             self.content_lines = []
-            for line in content.split('\n'):
+            for line in content.split("\n"):
                 # Account for box borders (width - 2)
                 max_line_width = self.width - 2
 
@@ -109,19 +109,19 @@ class ASCIIBox(UIElement):
         """
         # Draw base UI element (border and background)
         super().draw(surface, font)
-        
+
         if not self.visible:
             return
-            
+
         try:
             # Draw content if available
             if self.content_lines:
                 self._draw_content(surface, font)
-                
+
             # Draw scroll indicators if needed
             if self.max_scroll > 0:
                 self._draw_scroll_indicators(surface, font)
-                
+
         except Exception as e:
             logging.error(f"Error drawing ASCII box: {e}")
 
@@ -137,18 +137,22 @@ class ASCIIBox(UIElement):
             content_start_x = self.x + 1
             content_start_y = self.y + 1
             visible_lines = min(self.height - 2, len(self.content_lines))
-            
+
             # Draw visible lines with scroll offset
             for i in range(visible_lines):
                 line_index = i + self.scroll_offset
                 if 0 <= line_index < len(self.content_lines):
                     line = self.content_lines[line_index]
-                    self._draw_text(surface, font, content_start_x, content_start_y + i, line)
-                    
+                    self._draw_text(
+                        surface, font, content_start_x, content_start_y + i, line
+                    )
+
         except Exception as e:
             logging.error(f"Error drawing content: {e}")
 
-    def _draw_scroll_indicators(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+    def _draw_scroll_indicators(
+        self, surface: pygame.Surface, font: pygame.font.Font
+    ) -> None:
         """Draw scroll indicators if content is scrollable.
 
         Args:
@@ -159,11 +163,17 @@ class ASCIIBox(UIElement):
             # Draw up indicator if scrolled down
             if self.scroll_offset > 0:
                 self._draw_char(surface, font, self.x + self.width - 1, self.y + 1, "▲")
-                
+
             # Draw down indicator if can scroll further
             if self.scroll_offset < self.max_scroll:
-                self._draw_char(surface, font, self.x + self.width - 1, self.y + self.height - 2, "▼")
-                
+                self._draw_char(
+                    surface,
+                    font,
+                    self.x + self.width - 1,
+                    self.y + self.height - 2,
+                    "▼",
+                )
+
         except Exception as e:
             logging.error(f"Error drawing scroll indicators: {e}")
 
@@ -196,10 +206,10 @@ class ASCIIBox(UIElement):
             elif key == pygame.K_END:
                 self.scroll_offset = self.max_scroll
                 return "scroll_end"
-                
+
         except Exception as e:
             logging.error(f"Error handling input: {e}")
-            
+
         return None
 
 
@@ -239,14 +249,16 @@ class ASCIIPanel(UIElement):
             # Adjust child coordinates to be relative to panel
             child.x += self.x
             child.y += self.y
-            
+
             # Ensure child fits within panel bounds
-            if (child.x + child.width > self.x + self.width or
-                child.y + child.height > self.y + self.height):
+            if (
+                child.x + child.width > self.x + self.width
+                or child.y + child.height > self.y + self.height
+            ):
                 logging.warning("Child element exceeds panel bounds")
-                
+
             self.children.append(child)
-            
+
         except Exception as e:
             logging.error(f"Error adding child: {e}")
 
@@ -262,16 +274,16 @@ class ASCIIPanel(UIElement):
         try:
             if child in self.children:
                 self.children.remove(child)
-                
+
                 # Update active child index if needed
                 if self.active_child_index >= len(self.children):
                     self.active_child_index = len(self.children) - 1
-                    
+
                 return True
-                
+
         except Exception as e:
             logging.error(f"Error removing child: {e}")
-            
+
         return False
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
@@ -283,15 +295,15 @@ class ASCIIPanel(UIElement):
         """
         # Draw base UI element (border and background)
         super().draw(surface, font)
-        
+
         if not self.visible:
             return
-            
+
         try:
             # Draw children
             for child in self.children:
                 child.draw(surface, font)
-                
+
         except Exception as e:
             logging.error(f"Error drawing ASCII panel: {e}")
 
@@ -307,18 +319,20 @@ class ASCIIPanel(UIElement):
         try:
             # If there's an active child, pass input to it first
             if 0 <= self.active_child_index < len(self.children):
-                if result := self.children[self.active_child_index].handle_input(
-                    key
-                ):
+                if result := self.children[self.active_child_index].handle_input(key):
                     return result
 
             if key == pygame.K_TAB:
                 if self.children:
-                    self.active_child_index = (self.active_child_index + 1) % len(self.children)
+                    self.active_child_index = (self.active_child_index + 1) % len(
+                        self.children
+                    )
                     return "next_child"
 
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT and self.children:
-                    self.active_child_index = (self.active_child_index - 1) % len(self.children)
+                    self.active_child_index = (self.active_child_index - 1) % len(
+                        self.children
+                    )
                     return "prev_child"
 
         except Exception as e:
@@ -356,16 +370,16 @@ class ASCIIButton(UIElement):
         self.callback = callback
         self.pressed = False
         self.focused = False
-        
+
         # Center text if it's shorter than the button width
         self.centered_text = text
         if len(text) < width - 2:
             padding = (width - 2 - len(text)) // 2
             self.centered_text = " " * padding + text + " " * padding
-            
+
             # Ensure text doesn't exceed button width
             if len(self.centered_text) > width - 2:
-                self.centered_text = self.centered_text[:width - 2]
+                self.centered_text = self.centered_text[: width - 2]
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Draw the button.
@@ -381,12 +395,11 @@ class ASCIIButton(UIElement):
             return
 
         try:
-            self._extracted_from_draw_16(surface, font)
+            self._render_button_text(surface, font)
         except Exception as e:
             logging.error(f"Error drawing ASCII button: {e}")
 
-    # TODO Rename this here and in `draw`
-    def _extracted_from_draw_16(self, surface, font):
+    def _render_button_text(self, surface, font):
         # Determine text color based on button state
         text_color = COLOR_TEXT
         if self.pressed:
@@ -394,7 +407,11 @@ class ASCIIButton(UIElement):
         elif self.focused or self.hover:
             # Slightly brighter than normal
             r, g, b = COLOR_TEXT
-            text_color = (min(255, int(r * 1.2)), min(255, int(g * 1.2)), min(255, int(b * 1.2)))
+            text_color = (
+                min(255, int(r * 1.2)),
+                min(255, int(g * 1.2)),
+                min(255, int(b * 1.2)),
+            )
 
         # Draw button text
         text_x = self.x + 1
@@ -405,7 +422,9 @@ class ASCIIButton(UIElement):
         if self.focused:
             self._draw_focus_indicator(surface, font)
 
-    def _draw_focus_indicator(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+    def _draw_focus_indicator(
+        self, surface: pygame.Surface, font: pygame.font.Font
+    ) -> None:
         """Draw a focus indicator around the button.
 
         Args:
@@ -415,10 +434,21 @@ class ASCIIButton(UIElement):
         try:
             # Draw small indicators at corners
             self._draw_char(surface, font, self.x, self.y, "◆", COLOR_HIGHLIGHT)
-            self._draw_char(surface, font, self.x + self.width - 1, self.y, "◆", COLOR_HIGHLIGHT)
-            self._draw_char(surface, font, self.x, self.y + self.height - 1, "◆", COLOR_HIGHLIGHT)
-            self._draw_char(surface, font, self.x + self.width - 1, self.y + self.height - 1, "◆", COLOR_HIGHLIGHT)
-            
+            self._draw_char(
+                surface, font, self.x + self.width - 1, self.y, "◆", COLOR_HIGHLIGHT
+            )
+            self._draw_char(
+                surface, font, self.x, self.y + self.height - 1, "◆", COLOR_HIGHLIGHT
+            )
+            self._draw_char(
+                surface,
+                font,
+                self.x + self.width - 1,
+                self.y + self.height - 1,
+                "◆",
+                COLOR_HIGHLIGHT,
+            )
+
         except Exception as e:
             logging.error(f"Error drawing focus indicator: {e}")
 
@@ -435,22 +465,24 @@ class ASCIIButton(UIElement):
             # Handle enter/space to activate button
             if key in (pygame.K_RETURN, pygame.K_SPACE):
                 self.pressed = True
-                
+
                 # Call callback if provided
                 if self.callback:
                     self.callback()
-                    
+
                 # Schedule button to be released after a short delay
                 self.pressed = False
-                
+
                 return self.text
-                
+
         except Exception as e:
             logging.error(f"Error handling input: {e}")
-            
+
         return None
 
-    def handle_mouse_event(self, event_type: int, pos: Tuple[int, int]) -> Optional[str]:
+    def handle_mouse_event(
+        self, event_type: int, pos: Tuple[int, int]
+    ) -> Optional[str]:
         """Handle mouse events for the button.
 
         Args:
@@ -462,7 +494,7 @@ class ASCIIButton(UIElement):
         """
         try:
             x, y = pos
-            
+
             # Check if mouse is over button
             if self.contains_point(x, y):
                 if event_type == pygame.MOUSEMOTION:
@@ -471,20 +503,20 @@ class ASCIIButton(UIElement):
                     self.pressed = True
                 elif event_type == pygame.MOUSEBUTTONUP and self.pressed:
                     self.pressed = False
-                    
+
                     # Call callback if provided
                     if self.callback:
                         self.callback()
-                        
+
                     return self.text
             else:
                 self.hover = False
                 if event_type == pygame.MOUSEBUTTONUP:
                     self.pressed = False
-                    
+
         except Exception as e:
             logging.error(f"Error handling mouse event: {e}")
-            
+
         return None
 
 
@@ -564,7 +596,7 @@ class ASCIIProgressBar(UIElement):
                     "partial": ["░", "▒", "▓"],
                     "full": "█",
                 }
-                
+
         except Exception as e:
             logging.error(f"Error getting fill chars: {e}")
             return {
@@ -583,11 +615,11 @@ class ASCIIProgressBar(UIElement):
         try:
             # Clamp progress to valid range
             progress = max(0.0, min(1.0, progress))
-            
+
             if animate:
                 # Set target for animation
                 self.target_progress = progress
-                
+
                 # Start animation if not already active
                 if not self.animation["active"]:
                     self.start_animation(0.5)
@@ -595,7 +627,7 @@ class ASCIIProgressBar(UIElement):
                 # Set progress immediately
                 self.progress = progress
                 self.target_progress = progress
-                
+
         except Exception as e:
             logging.error(f"Error setting progress: {e}")
 
@@ -641,22 +673,24 @@ class ASCIIProgressBar(UIElement):
         """
         # Draw base UI element (border and background)
         super().draw(surface, font)
-        
+
         if not self.visible:
             return
-            
+
         try:
             # Draw progress bar
             self._draw_progress_bar(surface, font)
-            
+
             # Draw percentage text if enabled
             if self.show_percentage:
                 self._draw_percentage(surface, font)
-                
+
         except Exception as e:
             logging.error(f"Error drawing ASCII progress bar: {e}")
 
-    def _draw_progress_bar(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+    def _draw_progress_bar(
+        self, surface: pygame.Surface, font: pygame.font.Font
+    ) -> None:
         """Draw the progress bar fill.
 
         Args:
@@ -668,34 +702,50 @@ class ASCIIProgressBar(UIElement):
             bar_width = self.width - 2  # Account for borders
             bar_x = self.x + 1
             bar_y = self.y + (self.height // 2)
-            
+
             # Calculate filled width
             filled_width = int(bar_width * self.progress)
-            
+
             # Get fill characters
             empty_char = self.fill_chars["empty"]
             full_char = self.fill_chars["full"]
             partial_chars = self.fill_chars["partial"]
-            
+
             # Draw filled portion
             for i in range(filled_width):
-                self._draw_char(surface, font, bar_x + i, bar_y, full_char, self._get_progress_color(i / bar_width))
-                
+                self._draw_char(
+                    surface,
+                    font,
+                    bar_x + i,
+                    bar_y,
+                    full_char,
+                    self._get_progress_color(i / bar_width),
+                )
+
             # Draw partial character at the edge if needed
             if filled_width < bar_width:
                 # Calculate partial fill (0.0 to 1.0)
                 partial = (self.progress * bar_width) - filled_width
-                
+
                 # Choose partial character based on fill amount
-                partial_index = min(len(partial_chars) - 1, int(partial * len(partial_chars)))
+                partial_index = min(
+                    len(partial_chars) - 1, int(partial * len(partial_chars))
+                )
                 partial_char = partial_chars[partial_index]
-                
-                self._draw_char(surface, font, bar_x + filled_width, bar_y, partial_char, self._get_progress_color(filled_width / bar_width))
-                
+
+                self._draw_char(
+                    surface,
+                    font,
+                    bar_x + filled_width,
+                    bar_y,
+                    partial_char,
+                    self._get_progress_color(filled_width / bar_width),
+                )
+
                 # Draw empty portion
                 for i in range(filled_width + 1, bar_width):
                     self._draw_char(surface, font, bar_x + i, bar_y, empty_char)
-                    
+
         except Exception as e:
             logging.error(f"Error drawing progress bar fill: {e}")
 
@@ -710,14 +760,14 @@ class ASCIIProgressBar(UIElement):
             # Format percentage text
             percentage = int(self.progress * 100)
             text = f"{percentage}%"
-            
+
             # Calculate text position (centered)
             text_x = self.x + (self.width // 2) - (len(text) // 2)
             text_y = self.y + self.height - 1
-            
+
             # Draw text
             self._draw_text(surface, font, text_x, text_y, text)
-            
+
         except Exception as e:
             logging.error(f"Error drawing percentage text: {e}")
 
@@ -733,7 +783,7 @@ class ASCIIProgressBar(UIElement):
         try:
             base_color = COLOR_TEXT
             r, g, b = base_color
-            
+
             # Adjust color based on style
             if self.style == UIStyle.SYMBIOTIC:
                 # Symbiotic style: green gradient
@@ -765,7 +815,7 @@ class ASCIIProgressBar(UIElement):
                     min(255, int(g * factor)),
                     min(255, int(b * factor)),
                 )
-                
+
         except Exception as e:
             logging.error(f"Error getting progress color: {e}")
             return COLOR_TEXT

@@ -114,7 +114,7 @@ def apply_cellular_automaton_optimized(
     binary_grid = (grid > 0).astype(np.int8)
 
     if SCIPY_AVAILABLE:
-        return _extracted_from_apply_cellular_automaton_optimized_20(
+        return _apply_convolution_based_cellular_automaton(
             binary_grid, survival_set, birth_set, grid
         )
     # Fallback to standard implementation if scipy is not available
@@ -130,8 +130,7 @@ def apply_cellular_automaton_optimized(
     )
 
 
-# TODO Rename this here and in `apply_cellular_automaton_optimized`
-def _extracted_from_apply_cellular_automaton_optimized_20(
+def _apply_convolution_based_cellular_automaton(
     binary_grid, survival_set, birth_set, grid
 ):
     # Count neighbors using scipy's optimized convolution

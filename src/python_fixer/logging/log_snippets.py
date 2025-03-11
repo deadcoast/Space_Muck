@@ -6,6 +6,7 @@ from logging import LogRecord, getLogger
 
 from python_fixer.logging.correlator import log_correlator
 
+
 # Configure the basic logger
 def basicConfig(
     level: str = "INFO",

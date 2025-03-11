@@ -57,6 +57,7 @@ class DetailedJSONFormatter(logging.Formatter):
     """
     Enhanced JSON formatter with comprehensive metadata and context.
     """
+
     def __init__(self, fmt: Optional[str] = None, **kwargs: Dict[str, Any]):
         super().__init__(fmt=fmt)
         self.additional_fields: Dict[str, Any] = kwargs
@@ -106,6 +107,7 @@ class FileOperationFormatter(logging.Formatter):
     """
     Specialized formatter for logging file operations with detailed stats.
     """
+
     def __init__(self, fmt: Optional[str] = None, include_stats: bool = True):
         super().__init__(fmt=fmt)
         self.include_stats = include_stats
@@ -146,8 +148,11 @@ class StructuredFormatter:
     """
     Factory class for creating appropriate formatters based on output type.
     """
+
     @staticmethod
-    def create(format_type: str = "json", **kwargs: Dict[str, Any]) -> logging.Formatter:
+    def create(
+        format_type: str = "json", **kwargs: Dict[str, Any]
+    ) -> logging.Formatter:
         """Create a formatter of the specified type.
 
         Args:

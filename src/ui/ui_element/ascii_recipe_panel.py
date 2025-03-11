@@ -71,18 +71,17 @@ class ASCIIRecipePanel:
     def _on_start_recipe(self) -> None:
         """Callback for starting the selected recipe."""
         if self.selected_idx is not None and 0 <= self.selected_idx < len(self.recipes):
-            self._extracted_from__on_stop_recipe_4('Starting recipe: ', "start")
+            self._handle_recipe_action("Starting recipe: ", "start")
 
     def _on_stop_recipe(self) -> None:
         """Callback for stopping the current recipe."""
         if self.selected_idx is not None and 0 <= self.selected_idx < len(self.recipes):
-            self._extracted_from__on_stop_recipe_4('Stopping recipe: ', "stop")
+            self._handle_recipe_action("Stopping recipe: ", "stop")
 
-    # TODO Rename this here and in `_on_start_recipe` and `_on_stop_recipe`
-    def _extracted_from__on_stop_recipe_4(self, arg0, arg1):
+    def _handle_recipe_action(self, action_message, action_type):
         recipe = self.recipes[self.selected_idx]
-        print(f"{arg0}{recipe['name']}")
-        self.on_recipe_action(recipe, arg1)
+        print(f"{action_message}{recipe['name']}")
+        self.on_recipe_action(recipe, action_type)
 
     def on_recipe_action(self, recipe: Dict[str, Any], action: str) -> None:
         """Override this method to handle recipe actions.

@@ -390,20 +390,44 @@ class ASCIIChainVisualizer:
         dx = end_x - start_x
         dy = end_y - start_y
         needs_vertical = dy != 0
-        
+
         # Draw the connection lines
-        self._draw_connection_lines(surface, font, start_x, start_y, end_x, end_y, dx, dy, needs_vertical, color)
-        
+        self._draw_connection_lines(
+            surface, font, start_x, start_y, end_x, end_y, dx, dy, needs_vertical, color
+        )
+
         # Draw flow information and animation if provided
         if flow_rate is not None:
-            self._draw_flow_information(surface, font, start_x, start_y, end_x, end_y, dx, dy, 
-                                       needs_vertical, flow_rate, color, source_converter)
-    
-    def _draw_connection_lines(self, surface: pygame.Surface, font: pygame.font.Font, 
-                              start_x: int, start_y: int, end_x: int, end_y: int, 
-                              dx: int, dy: int, needs_vertical: bool, color: Tuple[int, int, int]) -> None:
+            self._draw_flow_information(
+                surface,
+                font,
+                start_x,
+                start_y,
+                end_x,
+                end_y,
+                dx,
+                dy,
+                needs_vertical,
+                flow_rate,
+                color,
+                source_converter,
+            )
+
+    def _draw_connection_lines(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        dx: int,
+        dy: int,
+        needs_vertical: bool,
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw the connection lines between nodes.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -415,17 +439,31 @@ class ASCIIChainVisualizer:
         """
         if needs_vertical:
             mid_y = start_y + dy // 2
-            self._draw_vertical_segments(surface, font, start_x, start_y, end_x, end_y, mid_y, color)
-            self._draw_horizontal_segment(surface, font, start_x, end_x, mid_y, dx, needs_vertical, color)
+            self._draw_vertical_segments(
+                surface, font, start_x, start_y, end_x, end_y, mid_y, color
+            )
+            self._draw_horizontal_segment(
+                surface, font, start_x, end_x, mid_y, dx, needs_vertical, color
+            )
         else:
             # Simple horizontal line for same-row connections
-            self._draw_horizontal_segment(surface, font, start_x, end_x, start_y, dx, needs_vertical, color)
-    
-    def _draw_vertical_segments(self, surface: pygame.Surface, font: pygame.font.Font, 
-                               start_x: int, start_y: int, end_x: int, end_y: int, 
-                               mid_y: int, color: Tuple[int, int, int]) -> None:
+            self._draw_horizontal_segment(
+                surface, font, start_x, end_x, start_y, dx, needs_vertical, color
+            )
+
+    def _draw_vertical_segments(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        mid_y: int,
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw vertical line segments.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -435,7 +473,7 @@ class ASCIIChainVisualizer:
             color: Color to draw with
         """
         v_line = "|"
-        
+
         # Draw first vertical segment
         for y in range(start_y + 1, mid_y):
             draw_text(surface, v_line, start_x, y, size=font.get_height(), color=color)
@@ -443,12 +481,20 @@ class ASCIIChainVisualizer:
         # Draw second vertical segment
         for y in range(mid_y, end_y):
             draw_text(surface, v_line, end_x, y, size=font.get_height(), color=color)
-    
-    def _draw_horizontal_segment(self, surface: pygame.Surface, font: pygame.font.Font, 
-                                start_x: int, end_x: int, y_pos: int, 
-                                dx: int, needs_vertical: bool, color: Tuple[int, int, int]) -> None:
+
+    def _draw_horizontal_segment(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        end_x: int,
+        y_pos: int,
+        dx: int,
+        needs_vertical: bool,
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw horizontal line segment.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -459,7 +505,7 @@ class ASCIIChainVisualizer:
             color: Color to draw with
         """
         h_line = self.chars["flow"] * (abs(dx) - 1)
-        
+
         # Determine line decorations and position based on direction
         if dx > 0:  # Left to right
             prefix = self.chars["corner"] if needs_vertical else ""
@@ -473,14 +519,24 @@ class ASCIIChainVisualizer:
         # Draw the complete horizontal line
         line_text = prefix + h_line + suffix
         draw_text(surface, line_text, x_pos, y_pos, size=font.get_height(), color=color)
-    
-    def _draw_flow_information(self, surface: pygame.Surface, font: pygame.font.Font, 
-                              start_x: int, start_y: int, end_x: int, end_y: int, 
-                              dx: int, dy: int, needs_vertical: bool, 
-                              flow_rate: float, color: Tuple[int, int, int], 
-                              source_converter: Optional[Dict[str, Any]]) -> None:
+
+    def _draw_flow_information(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        dx: int,
+        dy: int,
+        needs_vertical: bool,
+        flow_rate: float,
+        color: Tuple[int, int, int],
+        source_converter: Optional[Dict[str, Any]],
+    ) -> None:
         """Draw flow rate information and animated flow.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -494,39 +550,76 @@ class ASCIIChainVisualizer:
         """
         # Get resource information
         resource_type, resource_char = self._get_resource_info(source_converter)
-        
+
         # Draw flow rate text
-        self._draw_flow_rate_text(surface, font, start_x, start_y, dx, dy, 
-                                 needs_vertical, flow_rate, resource_type, resource_char, color)
-        
+        self._draw_flow_rate_text(
+            surface,
+            font,
+            start_x,
+            start_y,
+            dx,
+            dy,
+            needs_vertical,
+            flow_rate,
+            resource_type,
+            resource_char,
+            color,
+        )
+
         # Update animation state
         self._update_animation_state(flow_rate)
-        
+
         # Draw animated flow
-        self._draw_animated_flow(surface, font, start_x, start_y, end_x, end_y, 
-                                dx, dy, needs_vertical, resource_type, source_converter, color)
-    
-    def _get_resource_info(self, source_converter: Optional[Dict[str, Any]]) -> Tuple[str, str]:
+        self._draw_animated_flow(
+            surface,
+            font,
+            start_x,
+            start_y,
+            end_x,
+            end_y,
+            dx,
+            dy,
+            needs_vertical,
+            resource_type,
+            source_converter,
+            color,
+        )
+
+    def _get_resource_info(
+        self, source_converter: Optional[Dict[str, Any]]
+    ) -> Tuple[str, str]:
         """Get resource type and character.
-        
+
         Args:
             source_converter: Source converter info
-            
+
         Returns:
             Tuple[str, str]: Resource type and its visual character
         """
-        resource_type = source_converter.get("output_type", "") if source_converter else ""
+        resource_type = (
+            source_converter.get("output_type", "") if source_converter else ""
+        )
         resource_char = self.chars["resource_chars"].get(
             resource_type.lower(), self.chars["resource_chars"]["default"]
         )
         return resource_type, resource_char
-    
-    def _draw_flow_rate_text(self, surface: pygame.Surface, font: pygame.font.Font, 
-                            start_x: int, start_y: int, dx: int, dy: int, 
-                            needs_vertical: bool, flow_rate: float, 
-                            resource_type: str, resource_char: str, color: Tuple[int, int, int]) -> None:
+
+    def _draw_flow_rate_text(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        dx: int,
+        dy: int,
+        needs_vertical: bool,
+        flow_rate: float,
+        resource_type: str,
+        resource_char: str,
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw flow rate text with resource information.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -540,7 +633,7 @@ class ASCIIChainVisualizer:
         """
         # Format flow rate with units and resource indicator
         display_str = self._format_flow_rate(flow_rate, resource_char)
-        
+
         # Add resource type name if space allows
         if len(display_str) + len(resource_type) + 2 <= abs(dx):
             display_str = f"{resource_type}: {display_str}"
@@ -552,43 +645,63 @@ class ASCIIChainVisualizer:
 
         # Draw with slightly dimmed color for better readability
         dimmed_color = tuple(max(0, c - 40) for c in color)
-        draw_text(surface, display_str, rate_x, rate_y, size=font.get_height(), color=dimmed_color)
-    
+        draw_text(
+            surface,
+            display_str,
+            rate_x,
+            rate_y,
+            size=font.get_height(),
+            color=dimmed_color,
+        )
+
     def _format_flow_rate(self, flow_rate: float, resource_char: str) -> str:
         """Format flow rate with appropriate units.
-        
+
         Args:
             flow_rate: Flow rate value
             resource_char: Visual character for the resource
-            
+
         Returns:
             str: Formatted flow rate string
         """
         if flow_rate >= 1000:
             return f"{resource_char} {flow_rate/1000:.1f}k/s"
         return f"{resource_char} {flow_rate:.1f}/s"
-    
+
     def _update_animation_state(self, flow_rate: float) -> None:
         """Update animation timing state.
-        
+
         Args:
             flow_rate: Flow rate value
         """
         current_time = time.time()
-        animation_speed = min(flow_rate / 10.0, 3.0) * 8  # Scale speed with flow rate, capped for readability
-        
+        animation_speed = (
+            min(flow_rate / 10.0, 3.0) * 8
+        )  # Scale speed with flow rate, capped for readability
+
         self.animation_offset = (
-            self.animation_offset + (current_time - self.last_animation_time) * animation_speed
+            self.animation_offset
+            + (current_time - self.last_animation_time) * animation_speed
         ) % 1000
         self.last_animation_time = current_time
-    
-    def _draw_animated_flow(self, surface: pygame.Surface, font: pygame.font.Font, 
-                           start_x: int, start_y: int, end_x: int, end_y: int, 
-                           dx: int, dy: int, needs_vertical: bool, 
-                           resource_type: str, source_converter: Optional[Dict[str, Any]], 
-                           color: Tuple[int, int, int]) -> None:
+
+    def _draw_animated_flow(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        dx: int,
+        dy: int,
+        needs_vertical: bool,
+        resource_type: str,
+        source_converter: Optional[Dict[str, Any]],
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw animated flow between nodes.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -601,35 +714,60 @@ class ASCIIChainVisualizer:
             color: Color to draw with
         """
         # Get animation pattern for this resource type
-        pattern, pattern_pos = self._get_animation_pattern(resource_type, source_converter, dx)
-        
+        pattern, pattern_pos = self._get_animation_pattern(
+            resource_type, source_converter, dx
+        )
+
         # Calculate animation parameters
         h_spacing = len(pattern[0]) if isinstance(pattern[0], str) else 3
         offset = int(self.animation_offset * 3)
         anim_char = pattern[pattern_pos]
-        
+
         # Draw vertical animation points if needed
         points = []
         if needs_vertical:
-            points = self._calculate_vertical_animation_points(start_x, start_y, end_x, end_y, offset)
-            
+            points = self._calculate_vertical_animation_points(
+                start_x, start_y, end_x, end_y, offset
+            )
+
         # Draw horizontal animation points
-        self._draw_horizontal_animation(surface, font, start_x, start_y, end_x, end_y, 
-                                      dx, needs_vertical, pattern, pattern_pos, h_spacing, offset, color)
-            
+        self._draw_horizontal_animation(
+            surface,
+            font,
+            start_x,
+            start_y,
+            end_x,
+            end_y,
+            dx,
+            needs_vertical,
+            pattern,
+            pattern_pos,
+            h_spacing,
+            offset,
+            color,
+        )
+
         # Draw vertical animation points
         for point in points:
-            draw_text(surface, anim_char, point[0], point[1], size=font.get_height(), color=color)
-    
-    def _get_animation_pattern(self, resource_type: str, source_converter: Optional[Dict[str, Any]], 
-                              dx: int) -> Tuple[List[str], int]:
+            draw_text(
+                surface,
+                anim_char,
+                point[0],
+                point[1],
+                size=font.get_height(),
+                color=color,
+            )
+
+    def _get_animation_pattern(
+        self, resource_type: str, source_converter: Optional[Dict[str, Any]], dx: int
+    ) -> Tuple[List[str], int]:
         """Get animation pattern for the resource type.
-        
+
         Args:
             resource_type: Type of resource
             source_converter: Source converter info
             dx: X-axis difference for direction
-            
+
         Returns:
             Tuple[List[str], int]: Selected pattern and current position
         """
@@ -657,7 +795,7 @@ class ASCIIChainVisualizer:
         norm_resource_type = (
             source_converter.get("output_type", "").lower() if source_converter else ""
         )
-        
+
         # Get pattern set for this resource type
         pattern_set = anim_patterns.get(norm_resource_type, [self.chars["anim_chars"]])
 
@@ -667,24 +805,25 @@ class ASCIIChainVisualizer:
 
         # Get current animation position
         pattern_pos = int(self.animation_offset * 4) % len(pattern)
-        
+
         return pattern, pattern_pos
-    
-    def _calculate_vertical_animation_points(self, start_x: int, start_y: int, 
-                                           end_x: int, end_y: int, offset: int) -> List[Tuple[int, int]]:
+
+    def _calculate_vertical_animation_points(
+        self, start_x: int, start_y: int, end_x: int, end_y: int, offset: int
+    ) -> List[Tuple[int, int]]:
         """Calculate points for vertical animation.
-        
+
         Args:
             start_x, start_y: Starting coordinates
             end_x, end_y: Ending coordinates
             offset: Animation offset
-            
+
         Returns:
             List[Tuple[int, int]]: List of animation points
         """
         mid_y = start_y + (end_y - start_y) // 2
         v_spacing = 2  # Tighter vertical spacing for better visuals
-        
+
         # Collect points for both vertical segments
         return [
             (x, y)
@@ -695,14 +834,25 @@ class ASCIIChainVisualizer:
             for y in y_range
             if (y + offset) % v_spacing == 0
         ]
-    
-    def _draw_horizontal_animation(self, surface: pygame.Surface, font: pygame.font.Font, 
-                                  start_x: int, start_y: int, end_x: int, end_y: int, 
-                                  dx: int, needs_vertical: bool, 
-                                  pattern: List[str], pattern_pos: int, 
-                                  h_spacing: int, offset: int, color: Tuple[int, int, int]) -> None:
+
+    def _draw_horizontal_animation(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        dx: int,
+        needs_vertical: bool,
+        pattern: List[str],
+        pattern_pos: int,
+        h_spacing: int,
+        offset: int,
+        color: Tuple[int, int, int],
+    ) -> None:
         """Draw horizontal animation points.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -730,7 +880,14 @@ class ASCIIChainVisualizer:
         # Draw each horizontal animation point with cycling pattern
         for idx, point in enumerate(h_points):
             pattern_char = pattern[(pattern_pos + idx) % len(pattern)]
-            draw_text(surface, pattern_char, point[0], point[1], size=font.get_height(), color=color)
+            draw_text(
+                surface,
+                pattern_char,
+                point[0],
+                point[1],
+                size=font.get_height(),
+                color=color,
+            )
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
         """Draw the chain visualization.
@@ -751,27 +908,28 @@ class ASCIIChainVisualizer:
 
         # Calculate layout parameters
         layout_params = self._calculate_layout_parameters(font)
-        
+
         # Update animation state
         dt = self._update_animation_time()
-        
+
         # Position nodes and draw them
         node_positions = self._position_and_draw_nodes(surface, font, layout_params, dt)
-        
+
         # Draw connections between nodes
         self._draw_node_connections(surface, font, node_positions)
 
         return panel_rect
-        
-    def _draw_empty_state(self, surface: pygame.Surface, font: pygame.font.Font, 
-                          panel_rect: pygame.Rect) -> pygame.Rect:
+
+    def _draw_empty_state(
+        self, surface: pygame.Surface, font: pygame.font.Font, panel_rect: pygame.Rect
+    ) -> pygame.Rect:
         """Draw empty state message when no converters are present.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
             panel_rect: The panel rectangle
-            
+
         Returns:
             pygame.Rect: The panel rectangle
         """
@@ -786,13 +944,13 @@ class ASCIIChainVisualizer:
             color=COLOR_TEXT,
         )
         return panel_rect
-    
+
     def _calculate_layout_parameters(self, font: pygame.font.Font) -> dict:
         """Calculate layout parameters for node positioning.
-        
+
         Args:
             font: Font to use for rendering
-            
+
         Returns:
             dict: Dictionary of layout parameters
         """
@@ -805,7 +963,7 @@ class ASCIIChainVisualizer:
         total_width = self.rect.width - (margin * 2)
         node_width = max(len(conv["name"]) for conv in self.converters) + 8
         max_nodes_per_row = max(1, total_width // (node_width + 4))
-        
+
         return {
             "margin": margin,
             "node_spacing": node_spacing,
@@ -813,12 +971,12 @@ class ASCIIChainVisualizer:
             "start_y": start_y,
             "total_width": total_width,
             "node_width": node_width,
-            "max_nodes_per_row": max_nodes_per_row
+            "max_nodes_per_row": max_nodes_per_row,
         }
-    
+
     def _update_animation_time(self) -> float:
         """Update animation time and return time delta.
-        
+
         Returns:
             float: Time delta since last update
         """
@@ -826,17 +984,17 @@ class ASCIIChainVisualizer:
         dt = current_time - self.last_animation_time
         self.last_animation_time = current_time
         return dt
-    
+
     def _update_converter_state(self, conv: dict, idx: int, dt: float) -> None:
         """Update state tracking for a converter.
-        
+
         Args:
             conv: Converter data
             idx: Converter index
             dt: Time delta
         """
         state = self.converter_states.setdefault(idx, {})
-        
+
         # Update uptime if active
         if conv.get("status") == "active":
             state["total_uptime"] = state.get("total_uptime", 0.0) + dt
@@ -844,10 +1002,10 @@ class ASCIIChainVisualizer:
         # Update efficiency history
         if "efficiency" in conv:
             self._update_efficiency_history(conv, idx, state)
-    
+
     def _update_efficiency_history(self, conv: dict, idx: int, state: dict) -> None:
         """Update efficiency history for a converter.
-        
+
         Args:
             conv: Converter data
             idx: Converter index
@@ -855,7 +1013,7 @@ class ASCIIChainVisualizer:
         """
         history = self.efficiency_history.setdefault(idx, [])
         history.append(conv["efficiency"])
-        
+
         # Maintain history size limit
         if len(history) > self.max_history_points:
             history.pop(0)
@@ -864,22 +1022,27 @@ class ASCIIChainVisualizer:
         state["peak_efficiency"] = max(
             state.get("peak_efficiency", 0.0), conv["efficiency"]
         )
-    
-    def _position_and_draw_nodes(self, surface: pygame.Surface, font: pygame.font.Font, 
-                                layout_params: dict, dt: float) -> dict:
+
+    def _position_and_draw_nodes(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        layout_params: dict,
+        dt: float,
+    ) -> dict:
         """Position nodes in a grid layout, update states, and draw them.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
             layout_params: Layout parameters
             dt: Time delta
-            
+
         Returns:
             dict: Dictionary mapping node indices to positions
         """
         node_positions = {}  # idx -> (x, y)
-        
+
         for i, conv in enumerate(self.converters):
             # Calculate position
             row = i // layout_params["max_nodes_per_row"]
@@ -895,16 +1058,18 @@ class ASCIIChainVisualizer:
             # Draw node with appropriate color
             color = self._get_node_color(conv, i)
             self._draw_node(surface, font, x, y, i, conv, color)
-            
+
         return node_positions
-    
-    def _get_connection_color(self, flow_rate: Optional[float], base_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+
+    def _get_connection_color(
+        self, flow_rate: Optional[float], base_color: Tuple[int, int, int]
+    ) -> Tuple[int, int, int]:
         """Get color for connection based on flow rate.
-        
+
         Args:
             flow_rate: Flow rate between nodes
             base_color: Base color to use
-            
+
         Returns:
             Tuple[int, int, int]: Color tuple
         """
@@ -912,13 +1077,14 @@ class ASCIIChainVisualizer:
             animation_speed = self._calculate_animation_speed(flow_rate)
             alpha = min(255, int(128 + (animation_speed * 127)))
             return tuple(min(255, c * alpha // 255) for c in base_color)
-        
+
         return base_color
-    
-    def _draw_node_connections(self, surface: pygame.Surface, font: pygame.font.Font, 
-                              node_positions: dict) -> None:
+
+    def _draw_node_connections(
+        self, surface: pygame.Surface, font: pygame.font.Font, node_positions: dict
+    ) -> None:
         """Draw connections between nodes.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering

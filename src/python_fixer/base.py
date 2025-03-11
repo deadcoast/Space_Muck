@@ -73,7 +73,7 @@ class LogRecord:
         self.line = line
         self.extra = extra or {}
         # Merge context data if available
-        if hasattr(self, '_context_stack') and self._context_stack:
+        if hasattr(self, "_context_stack") and self._context_stack:
             context = self._context_stack[-1]
             self.extra.update(context.extra)
         self.log_path = log_path
@@ -221,11 +221,11 @@ class Logger:
         context = LogContext(
             timestamp=datetime.now(),
             module=self.name,
-            function='',
+            function="",
             line=0,
             extra=kwargs,
             process_id=0,
-            thread_id=0
+            thread_id=0,
         )
         self._context_stack.append(context)
         try:

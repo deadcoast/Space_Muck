@@ -5,22 +5,40 @@ Test module for the Player class.
 import unittest
 import sys
 import os
-from unittest.mock import MagicMock
 import numpy as np
+
+
+# Use a simple mock object instead of importing MagicMock
+class SimpleMock:
+    """A simple mock object to avoid importing MagicMock."""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __getattr__(self, name):
+        return self
+
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Mock the dependencies before importing
-sys.modules["perlin_noise"] = MagicMock()
-sys.modules["sklearn.cluster"] = MagicMock()
-sys.modules["networkx"] = MagicMock()
-sys.modules["pygame"] = MagicMock()
-sys.modules["scipy"] = MagicMock()
-sys.modules["scipy.stats"] = MagicMock()
-sys.modules["scipy.ndimage"] = MagicMock()
+mock = SimpleMock()
+sys.modules["perlin_noise"] = mock
+sys.modules["sklearn.cluster"] = mock
+sys.modules["networkx"] = mock
+sys.modules["pygame"] = mock
+sys.modules["scipy"] = mock
+sys.modules["scipy.stats"] = mock
+sys.modules["scipy.ndimage"] = mock
 
-from entities.player import Player
+# Import after mocking dependencies
+from entities.player import (
+    Player,
+)  # noqa: E402 - Import not at top of file is intentional for mocking
 
 
 class MockField:
@@ -426,11 +444,8 @@ class TestPlayer(unittest.TestCase):
 
     def test_get_reputation_level(self):
         """Test that reputation levels are correctly calculated."""
-        # Import constants from player module
-        # Import player module for reputation testing
-        from entities.player import (
-            Player,
-        )  # Re-import to ensure we have the latest version
+        # No need to re-import Player as we're not using any constants from it
+        # All reputation level logic is already in the self.player instance
 
         # Test all reputation levels
         self.player.reputation["miners_guild"] = -100  # Hostile

@@ -187,7 +187,9 @@ class ASCIIProgressBar(UIElement):
                 for i in range(empty_width):
                     # Use different characters based on distance from filled portion
                     rel_pos = (filled_width + i) / self.width
-                    empty_text += "░" if rel_pos < self.progress + 0.1 else self.empty_char
+                    empty_text += (
+                        "░" if rel_pos < self.progress + 0.1 else self.empty_char
+                    )
             else:
                 # Default rendering
                 empty_text = self.empty_char * empty_width

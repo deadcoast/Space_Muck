@@ -147,7 +147,9 @@ class ASCIIBox(UIElement):
                     combined = wave1 * (1.0 - progress) + wave2 * progress
 
                     # Add some randomness at the edges for quantum uncertainty effect
-                    if (x == 0 or y == 0 or x == self.width - 1 or y == self.height - 1) and random.random() < 0.2:
+                    if (
+                        x == 0 or y == 0 or x == self.width - 1 or y == self.height - 1
+                    ) and random.random() < 0.2:
                         combined = -combined
 
                     self.animation["cells"][y][x] = combined > 0
@@ -164,34 +166,41 @@ class ASCIIBox(UIElement):
         try:
             new_cells = [[False for _ in range(self.width)] for _ in range(self.height)]
             progress = self.animation["progress"]
-            
+
             # Calculate rates based on animation progress
             mutation_rate = self._calculate_mutation_rate(progress)
             border_seed_chance = 0.2 * (1.0 - progress)
-            
+
             # Process each cell in the grid
-            self._process_cell_grid(new_cells, progress, mutation_rate, border_seed_chance)
-            
+            self._process_cell_grid(
+                new_cells, progress, mutation_rate, border_seed_chance
+            )
+
             self.animation["cells"] = new_cells
         except Exception as e:
             logging.error(f"Error updating cellular pattern: {e}")
             # Don't deactivate animation on error, just skip this update
-    
+
     def _calculate_mutation_rate(self, progress: float) -> float:
         """Calculate mutation rate based on animation progress.
-        
+
         Args:
             progress: Current animation progress (0.0 to 1.0)
-            
+
         Returns:
             float: Calculated mutation rate
         """
         return 0.03 * (1.0 - progress) + 0.01 * progress
-    
-    def _process_cell_grid(self, new_cells: List[List[bool]], progress: float, 
-                           mutation_rate: float, border_seed_chance: float) -> None:
+
+    def _process_cell_grid(
+        self,
+        new_cells: List[List[bool]],
+        progress: float,
+        mutation_rate: float,
+        border_seed_chance: float,
+    ) -> None:
         """Process each cell in the grid according to cellular automaton rules.
-        
+
         Args:
             new_cells: Grid to store the next generation state
             progress: Current animation progress (0.0 to 1.0)
@@ -201,26 +210,26 @@ class ASCIIBox(UIElement):
         for y, x in itertools.product(range(self.height), range(self.width)):
             # Count live neighbors
             neighbors = self._count_live_neighbors(x, y)
-            
+
             # Apply rules based on current cell state
             current = self.animation["cells"][y][x]
             new_cells[y][x] = self._apply_cell_rules(current, neighbors, progress)
-            
+
             # Apply random mutations
             if random.random() < mutation_rate:
                 new_cells[y][x] = not new_cells[y][x]
-            
+
             # Seed edges to prevent pattern extinction
             if self._is_border_cell(x, y) and random.random() < border_seed_chance:
                 new_cells[y][x] = True
-    
+
     def _count_live_neighbors(self, x: int, y: int) -> int:
         """Count live neighbors using Conway's Game of Life neighborhood.
-        
+
         Args:
             x: Cell x-coordinate
             y: Cell y-coordinate
-            
+
         Returns:
             int: Number of live neighbors
         """
@@ -231,15 +240,15 @@ class ASCIIBox(UIElement):
             and 0 <= (nx := x + dx) < self.width
             and 0 <= (ny := y + dy) < self.height
         )
-    
+
     def _apply_cell_rules(self, current: bool, neighbors: int, progress: float) -> bool:
         """Apply modified Game of Life rules to determine next cell state.
-        
+
         Args:
             current: Current cell state (alive or dead)
             neighbors: Number of live neighbors
             progress: Current animation progress (0.0 to 1.0)
-            
+
         Returns:
             bool: Next state for the cell
         """
@@ -256,14 +265,14 @@ class ASCIIBox(UIElement):
         else:
             alive = neighbors == 3
         return alive
-    
+
     def _is_border_cell(self, x: int, y: int) -> bool:
         """Check if a cell is on the border of the grid.
-        
+
         Args:
             x: Cell x-coordinate
             y: Cell y-coordinate
-            
+
         Returns:
             bool: True if the cell is on the border
         """
@@ -284,13 +293,11 @@ class ASCIIBox(UIElement):
         self.content.append((x, y, text, props))
 
     def register_event_handler(
-        self, 
-        event_type: UIEventType, 
-        handler: Callable[[UIEventData], None]
+        self, event_type: UIEventType, handler: Callable[[UIEventData], None]
     ) -> None:
         """
         Register an event handler for a specific event type.
-        
+
         Args:
             event_type: Type of event to handle
             handler: Function to call when event occurs
@@ -298,38 +305,38 @@ class ASCIIBox(UIElement):
         try:
             if event_type not in self.event_handlers:
                 self.event_handlers[event_type] = []
-            
+
             if handler not in self.event_handlers[event_type]:
                 self.event_handlers[event_type].append(handler)
-                
+
             # Optional integration with UI event system if available
             try:
                 from ui.ui_base.event_system import UIEventSystem
                 from ui.ui_helpers.event_integration import is_registered_with_events
-                
+
                 # Only register with event system if we have a component_id and it's not already registered
-                if self.component_id and not is_registered_with_events(self.component_id):
+                if self.component_id and not is_registered_with_events(
+                    self.component_id
+                ):
                     event_system = UIEventSystem.get_instance()
                     event_system.subscribe(event_type, self.component_id, handler)
             except (ImportError, AttributeError) as e:
                 # Event system not available, just use local handlers
                 logging.debug(f"Event system not available for integration: {e}")
-                
+
         except Exception as e:
             logging.error(f"Error registering event handler: {e}")
-    
+
     def unregister_event_handler(
-        self, 
-        event_type: UIEventType, 
-        handler: Callable[[UIEventData], None]
+        self, event_type: UIEventType, handler: Callable[[UIEventData], None]
     ) -> bool:
         """
         Unregister an event handler.
-        
+
         Args:
             event_type: Type of event to unregister handler for
             handler: Handler function to remove
-            
+
         Returns:
             True if handler was removed, False otherwise
         """
@@ -337,7 +344,10 @@ class ASCIIBox(UIElement):
             result = False
 
             # Remove from local handlers
-            if event_type in self.event_handlers and handler in self.event_handlers[event_type]:
+            if (
+                event_type in self.event_handlers
+                and handler in self.event_handlers[event_type]
+            ):
                 self.event_handlers[event_type].remove(handler)
                 result = True
 
@@ -358,15 +368,13 @@ class ASCIIBox(UIElement):
         except Exception as e:
             logging.error(f"Error unregistering event handler: {e}")
             return False
-    
+
     def emit_event(
-        self, 
-        event_type: UIEventType, 
-        data: Optional[Dict[str, Any]] = None
+        self, event_type: UIEventType, data: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Emit an event from this component.
-        
+
         Args:
             event_type: Type of event to emit
             data: Optional data to include with the event
@@ -375,20 +383,24 @@ class ASCIIBox(UIElement):
             event_data = data or {}
 
             # Add standard properties to event data
-            event_data.update({
-                "component": self,
-                "position": (self.x, self.y),
-                "size": (self.width, self.height),
-                "style": self.style,
-                "title": self.title,
-                "is_hovered": self.is_hovered,
-                "is_focused": self.is_focused,
-                "is_enabled": self.is_enabled
-            })
+            event_data.update(
+                {
+                    "component": self,
+                    "position": (self.x, self.y),
+                    "size": (self.width, self.height),
+                    "style": self.style,
+                    "title": self.title,
+                    "is_hovered": self.is_hovered,
+                    "is_focused": self.is_focused,
+                    "is_enabled": self.is_enabled,
+                }
+            )
 
             # Call local handlers first
             if event_type in self.event_handlers:
-                event = UIEventData(event_type, self.component_id or "unknown", event_data)
+                event = UIEventData(
+                    event_type, self.component_id or "unknown", event_data
+                )
 
                 for handler in self.event_handlers[event_type]:
                     try:
@@ -408,21 +420,18 @@ class ASCIIBox(UIElement):
                     event_system.emit(event_type, self.component_id, event_data)
         except Exception as e:
             logging.error(f"Error emitting event: {e}")
-    
+
     def handle_mouse_event(
-        self, 
-        event_type: str, 
-        position: Tuple[int, int],
-        char_size: Tuple[int, int]
+        self, event_type: str, position: Tuple[int, int], char_size: Tuple[int, int]
     ) -> bool:
         """
         Handle a mouse event and emit appropriate UI events.
-        
+
         Args:
             event_type: Type of mouse event (e.g., 'click', 'hover')
             position: Mouse position in pixels
             char_size: Size of a character in pixels (width, height)
-            
+
         Returns:
             True if event was handled, False otherwise
         """
@@ -430,15 +439,17 @@ class ASCIIBox(UIElement):
             # Convert pixel position to character position
             char_width, char_height = char_size
             pixel_x, pixel_y = position
-            
+
             # Check if mouse is within component bounds
             is_inside = (
-                self.x * char_width <= pixel_x < (self.x + self.width) * char_width and
-                self.y * char_height <= pixel_y < (self.y + self.height) * char_height
+                self.x * char_width <= pixel_x < (self.x + self.width) * char_width
+                and self.y * char_height
+                <= pixel_y
+                < (self.y + self.height) * char_height
             )
-            
+
             # Handle hover events
-            if event_type == 'hover':
+            if event_type == "hover":
                 if is_inside and not self.is_hovered:
                     self.is_hovered = True
                     self.emit_event(UIEventType.MOUSE_ENTER)
@@ -447,60 +458,60 @@ class ASCIIBox(UIElement):
                     self.is_hovered = False
                     self.emit_event(UIEventType.MOUSE_LEAVE)
                     return True
-            
+
             # Handle click events if component is clickable
             if self.is_clickable and is_inside:
-                if event_type == 'click':
+                if event_type == "click":
                     self.emit_event(UIEventType.MOUSE_CLICK)
                     return True
-                elif event_type == 'press':
+                elif event_type == "press":
                     self.emit_event(UIEventType.MOUSE_PRESS)
                     return True
-                elif event_type == 'release':
+                elif event_type == "release":
                     self.emit_event(UIEventType.MOUSE_RELEASE)
                     return True
-            
+
             return False
-            
+
         except Exception as e:
             logging.error(f"Error handling mouse event: {e}")
             return False
-    
+
     def set_clickable(self, clickable: bool = True) -> None:
         """
         Set whether this component can be clicked.
-        
+
         Args:
             clickable: True if component should be clickable, False otherwise
         """
         self.is_clickable = clickable
-    
+
     def set_enabled(self, enabled: bool = True) -> None:
         """
         Set whether this component is enabled.
-        
+
         Args:
             enabled: True if component should be enabled, False otherwise
         """
         if self.is_enabled != enabled:
             self.is_enabled = enabled
             self.emit_event(UIEventType.ENABLED_CHANGED, {"enabled": enabled})
-    
+
     def set_visible(self, visible: bool = True) -> None:
         """
         Set whether this component is visible.
-        
+
         Args:
             visible: True if component should be visible, False otherwise
         """
         if self.visible != visible:
             self.visible = visible
             self.emit_event(UIEventType.VISIBILITY_CHANGED, {"visible": visible})
-    
+
     def set_position(self, x: int, y: int) -> None:
         """
         Set the position of this component.
-        
+
         Args:
             x: New X coordinate
             y: New Y coordinate
@@ -509,15 +520,15 @@ class ASCIIBox(UIElement):
             old_position = (self.x, self.y)
             self.x = x
             self.y = y
-            self.emit_event(UIEventType.POSITION_CHANGED, {
-                "old_position": old_position,
-                "new_position": (x, y)
-            })
-    
+            self.emit_event(
+                UIEventType.POSITION_CHANGED,
+                {"old_position": old_position, "new_position": (x, y)},
+            )
+
     def set_size(self, width: int, height: int) -> None:
         """
         Set the size of this component.
-        
+
         Args:
             width: New width
             height: New height
@@ -527,12 +538,14 @@ class ASCIIBox(UIElement):
             self.width = width
             self.height = height
             # Resize animation cells
-            self.animation["cells"] = [[False for _ in range(width)] for _ in range(height)]
-            self.emit_event(UIEventType.SIZE_CHANGED, {
-                "old_size": old_size,
-                "new_size": (width, height)
-            })
-    
+            self.animation["cells"] = [
+                [False for _ in range(width)] for _ in range(height)
+            ]
+            self.emit_event(
+                UIEventType.SIZE_CHANGED,
+                {"old_size": old_size, "new_size": (width, height)},
+            )
+
     def draw(
         self,
         surface: pygame.Surface,
@@ -623,7 +636,7 @@ class ASCIIBox(UIElement):
             self._draw_content(
                 box_surf, font, adjusted_base_color, char_width, char_height
             )
-            
+
             # Draw hover/focus indicators if applicable
             if self.is_hovered or self.is_focused:
                 self._draw_interaction_indicators(
@@ -631,14 +644,14 @@ class ASCIIBox(UIElement):
                 )
 
             rect = surface.blit(box_surf, (self.x * char_width, self.y * char_height))
-            
+
             # Emit content changed event after drawing
             if self.component_id:
-                self.emit_event(UIEventType.CONTENT_CHANGED, {
-                    "rect": rect,
-                    "content_count": len(self.content)
-                })
-                
+                self.emit_event(
+                    UIEventType.CONTENT_CHANGED,
+                    {"rect": rect, "content_count": len(self.content)},
+                )
+
             return rect
         except Exception as e:
             logging.error(f"Error drawing ASCII box: {e}")
@@ -952,7 +965,7 @@ class ASCIIBox(UIElement):
                 size=font.get_height(),
                 color=color,
             )
-            
+
     def _draw_interaction_indicators(
         self,
         surface: pygame.Surface,
@@ -972,15 +985,21 @@ class ASCIIBox(UIElement):
                 if self.style == UIStyle.QUANTUM:
                     # Quantum style: pulsing border
                     focus_color = (100, 180, 255)  # Blue-ish
-                    self._draw_pulsing_border(surface, font, focus_color, char_width, char_height)
+                    self._draw_pulsing_border(
+                        surface, font, focus_color, char_width, char_height
+                    )
                 elif self.style == UIStyle.SYMBIOTIC:
                     # Symbiotic style: growing border
                     focus_color = (100, 255, 150)  # Green-ish
-                    self._draw_growing_border(surface, font, focus_color, char_width, char_height)
+                    self._draw_growing_border(
+                        surface, font, focus_color, char_width, char_height
+                    )
                 else:
                     # Default: solid border
                     focus_color = (255, 255, 100)  # Yellow-ish
-                    self._draw_solid_border(surface, font, focus_color, char_width, char_height)
+                    self._draw_solid_border(
+                        surface, font, focus_color, char_width, char_height
+                    )
 
             elif self.is_hovered and self.is_clickable:
                 # Draw hover indicator (lighter than focus)
@@ -993,7 +1012,7 @@ class ASCIIBox(UIElement):
                 self._draw_corners(surface, font, hover_color, char_width, char_height)
         except Exception as e:
             logging.error(f"Error drawing interaction indicators: {e}")
-    
+
     def _draw_pulsing_border(
         self,
         surface: pygame.Surface,
@@ -1006,16 +1025,16 @@ class ASCIIBox(UIElement):
         try:
             # Calculate pulse intensity based on time
             pulse = (math.sin(time.time() * 5) + 1) / 2  # 0 to 1
-            
+
             # Adjust color based on pulse
             r, g, b = color
             pulse_color = (int(r * pulse), int(g * pulse), int(b))
-            
+
             # Draw border with pulse effect
             self._draw_solid_border(surface, font, pulse_color, char_width, char_height)
         except Exception as e:
             logging.error(f"Error drawing pulsing border: {e}")
-    
+
     def _draw_growing_border(
         self,
         surface: pygame.Surface,
@@ -1028,12 +1047,14 @@ class ASCIIBox(UIElement):
         try:
             # Calculate growth factor based on time
             growth = (math.sin(time.time() * 3) + 1) / 2  # 0 to 1
-            
+
             # Draw partial border based on growth
-            self._draw_partial_border(surface, font, color, char_width, char_height, growth)
+            self._draw_partial_border(
+                surface, font, color, char_width, char_height, growth
+            )
         except Exception as e:
             logging.error(f"Error drawing growing border: {e}")
-    
+
     def _draw_solid_border(
         self,
         surface: pygame.Surface,
@@ -1064,7 +1085,7 @@ class ASCIIBox(UIElement):
                     size=font.get_height(),
                     color=color,
                 )
-            
+
             # Draw vertical borders
             for i in range(self.height):
                 # Left border
@@ -1087,7 +1108,7 @@ class ASCIIBox(UIElement):
                 )
         except Exception as e:
             logging.error(f"Error drawing solid border: {e}")
-    
+
     def _draw_partial_border(
         self,
         surface: pygame.Surface,
@@ -1102,9 +1123,9 @@ class ASCIIBox(UIElement):
             # Calculate number of border segments to draw
             total_segments = 2 * (self.width + self.height) - 4  # Total border segments
             segments_to_draw = int(total_segments * completion)
-            
+
             segment_index = 0
-            
+
             # Draw top border (left to right)
             for i in range(self.width):
                 if segment_index >= segments_to_draw:
@@ -1118,7 +1139,7 @@ class ASCIIBox(UIElement):
                     color=color,
                 )
                 segment_index += 1
-            
+
             # Draw right border (top to bottom)
             for i in range(1, self.height):
                 if segment_index >= segments_to_draw:
@@ -1132,7 +1153,7 @@ class ASCIIBox(UIElement):
                     color=color,
                 )
                 segment_index += 1
-            
+
             # Draw bottom border (right to left)
             for i in range(self.width - 2, -1, -1):
                 if segment_index >= segments_to_draw:
@@ -1146,7 +1167,7 @@ class ASCIIBox(UIElement):
                     color=color,
                 )
                 segment_index += 1
-            
+
             # Draw left border (bottom to top)
             for i in range(self.height - 2, 0, -1):
                 if segment_index >= segments_to_draw:
@@ -1162,7 +1183,7 @@ class ASCIIBox(UIElement):
                 segment_index += 1
         except Exception as e:
             logging.error(f"Error drawing partial border: {e}")
-    
+
     def _draw_corners(
         self,
         surface: pygame.Surface,

@@ -81,6 +81,7 @@ def draw_text(
         except Exception as e:
             # Fallback if text wrapping fails
             import logging
+
             logging.warning(f"Text wrapping failed: {e}")
             # Continue with unwrapped text
 
@@ -486,8 +487,13 @@ def draw_minimap(
     # Draw entities if provided
     if entity_grid is not None:
         _draw_entities_on_minimap(
-            minimap, entity_grid, scale_x, scale_y, step_x, step_y,
-            entity_colors=entity_colors
+            minimap,
+            entity_grid,
+            scale_x,
+            scale_y,
+            step_x,
+            step_y,
+            entity_colors=entity_colors,
         )
 
     # Draw player position if provided
@@ -540,7 +546,7 @@ def _draw_entities_on_minimap(
     entity_colors: Optional[Dict[int, Tuple[int, int, int]]] = None,
 ) -> None:
     """Draw entities on the minimap.
-    
+
     Args:
         minimap: Surface to draw on
         entity_grid: 2D array representing entities
@@ -556,7 +562,7 @@ def _draw_entities_on_minimap(
         2: (255, 50, 150),  # Pink
         3: (255, 165, 0),  # Orange
     }
-    
+
     # Use provided colors or defaults
     colors = entity_colors or default_colors
 
@@ -567,11 +573,11 @@ def _draw_entities_on_minimap(
     except Exception:
         # Fallback if numpy operations fail
         unique_entities = [1, 2, 3]  # Default entity IDs
-    
+
     for entity_id in unique_entities:
         # Get color for this entity (default to white if not found)
         color = colors.get(int(entity_id), (255, 255, 255))
-        
+
         for y in range(0, entity_grid.shape[0], step_y):
             for x in range(0, entity_grid.shape[1], step_x):
                 try:

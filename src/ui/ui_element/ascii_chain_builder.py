@@ -14,6 +14,7 @@ ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIChainBuilder:
     """Interface for step-by-step creation of converter chains."""
 
@@ -155,7 +156,11 @@ class ASCIIChainBuilder:
             bool: True if the event was handled
         """
         # Handle keyboard events
-        if event.type == pygame.KEYDOWN and self.selected_idx is not None and self._handle_keydown_event(event):
+        if (
+            event.type == pygame.KEYDOWN
+            and self.selected_idx is not None
+            and self._handle_keydown_event(event)
+        ):
             return True
 
         # Handle button events
@@ -164,62 +169,69 @@ class ASCIIChainBuilder:
 
         # Check save button
         return bool(self.save_button.handle_event(event))
-        
+
     def _handle_keydown_event(self, event: pygame.event.Event) -> bool:
         """Handle keyboard events.
-        
+
         Args:
             event: The pygame event to handle
-            
+
         Returns:
             bool: True if the event was handled
         """
         # Handle navigation keys
         if event.key in (pygame.K_UP, pygame.K_DOWN):
             return self._handle_navigation_key(event.key)
-            
+
         # Handle selection key
         elif event.key == pygame.K_RETURN:
             return self._handle_selection_key()
-            
+
         return False
-        
+
     def _handle_navigation_key(self, key: int) -> bool:
         """Handle up/down navigation keys.
-        
+
         Args:
             key: The key code (pygame.K_UP or pygame.K_DOWN)
-            
+
         Returns:
             bool: True if the event was handled
         """
         if key == pygame.K_UP:
             self.selected_idx = max(0, self.selected_idx - 1)
-            
+
             # Adjust scroll if needed
             if self.mode == "select" and self.selected_idx < self.scroll_offset:
                 self.scroll_offset = self.selected_idx
-                
+
             return True
-            
+
         elif key == pygame.K_DOWN:
             # Get the appropriate list based on mode
-            items = self.available_converters if self.mode == "select" else self.selected_converters
+            items = (
+                self.available_converters
+                if self.mode == "select"
+                else self.selected_converters
+            )
             max_idx = len(items) - 1
-            
+
             self.selected_idx = min(max_idx, self.selected_idx + 1)
-            
+
             # Adjust scroll if needed
-            if self.mode == "select" and self.selected_idx >= self.scroll_offset + self.max_visible_items:
+            if (
+                self.mode == "select"
+                and self.selected_idx >= self.scroll_offset + self.max_visible_items
+            ):
                 self.scroll_offset = self.selected_idx - self.max_visible_items + 1
-                
+
             return True
-            
+
         return False
-        
+
     def _handle_selection_key(self) -> bool:
         """Handle the selection key (Enter/Return).
-        
+
         Returns:
             bool: True if the event was handled
         """
@@ -229,7 +241,7 @@ class ASCIIChainBuilder:
             if converter not in self.selected_converters:
                 self.selected_converters.append(converter)
             return True
-            
+
         # Connection mode
         if self.connecting_from is None:
             self.connecting_from = self.selected_idx
@@ -237,12 +249,12 @@ class ASCIIChainBuilder:
             self._try_connect_converters()
             self.connecting_from = None
         return True
-        
+
     def _try_connect_converters(self) -> None:
         """Try to connect the selected converters."""
         from_conv = self.selected_converters[self.connecting_from]
         to_conv = self.selected_converters[self.selected_idx]
-        
+
         if self._check_compatibility(from_conv, to_conv):
             self.connections.append((self.connecting_from, self.selected_idx))
 

@@ -8,9 +8,8 @@ with event-driven communication. Separates update logic, rendering, and event ha
 into distinct phases for better maintainability and performance monitoring.
 """
 
-import time
 import logging
-from typing import Dict, List, Callable, Any, Optional, Set, TypeVar, Generic
+from typing import Dict, List, Callable, Any, Optional, TypeVar
 
 # Local application imports
 from utils.logging_setup import (

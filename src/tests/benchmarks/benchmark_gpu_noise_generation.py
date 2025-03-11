@@ -10,21 +10,22 @@ import os
 import sys
 import time
 import logging
-import numpy as np
+
+# numpy import removed (unused)
 import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 # Add the parent directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import our modules - moved before logging configuration to fix E402 errors
+from entities.base_generator import BaseGenerator
+from utils.gpu_utils import is_gpu_available, get_available_backends
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-# Import our modules
-from entities.base_generator import BaseGenerator
-from utils.gpu_utils import is_gpu_available, get_available_backends
 
 
 def run_noise_benchmark(

@@ -10,7 +10,7 @@ import time
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 # Import utilities
 from utils.gpu_utils import (

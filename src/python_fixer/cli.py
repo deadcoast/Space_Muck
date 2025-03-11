@@ -87,19 +87,20 @@ def validate_port(port: int) -> None:
 
 def verify_imports() -> None:
     """Verify that all required modules are available.
-    
+
     Raises:
         ImportError: If any required module is not available
     """
     required_modules = [
-        'python_fixer.core.analyzer',
-        'python_fixer.core.signals',
-        'python_fixer.logging.structured'
+        "python_fixer.core.analyzer",
+        "python_fixer.core.signals",
+        "python_fixer.logging.structured",
     ]
-    
+
     for module in required_modules:
         if not importlib.util.find_spec(module):
             raise ImportError(f"Required module not found: {module}")
+
 
 def print_import_paths() -> None:
     """Print the current Python import paths."""
@@ -110,6 +111,7 @@ def print_import_paths() -> None:
         else:
             print(f"  ✗ {path} (not found)")
     print()
+
 
 def parse_args():
     verify_imports()
@@ -369,7 +371,7 @@ def setup_args_and_logging():
 
     Returns:
         Tuple[argparse.Namespace, StructuredLogger]: Parsed arguments and logger
-        
+
     Raises:
         ImportError: If required modules are not available
         ValidationError: If argument validation fails
@@ -378,11 +380,11 @@ def setup_args_and_logging():
     try:
         # Verify imports first
         verify_imports()
-        
+
         # Show import paths for debugging
-        if '--verbose' in sys.argv:
+        if "--verbose" in sys.argv:
             print_import_paths()
-            
+
         return _extracted_from_setup_args_and_logging_9()
     except ImportError as e:
         print(f"\033[91mError: Required module not available - {str(e)}\033[0m")
@@ -502,12 +504,13 @@ def main():
             print("Python path:")
             for p in sys.path:
                 print(f"  {p}")
-            
+
             print("\nAttempting imports...")
             import python_fixer
+
             print("\033[92m✓ Successfully imported python_fixer\033[0m")
             print("python_fixer location:", python_fixer.__file__)
-            
+
             print("\nSetting up arguments and logging...")
             args, logger = setup_args_and_logging()
             print("Arguments and logging setup complete")
@@ -534,7 +537,9 @@ def main():
 
             elif args.command == "analyze":
                 print(f"\033[94mAnalyzing project at {args.project_path}...\033[0m")
-                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                analyzer = ProjectAnalyzer(
+                    args.project_path, config=config, backup=True
+                )
                 results = analyzer.analyze_project()
                 logger.info("Analysis complete", extra={"metrics": results})
                 print_analysis_summary(results)
@@ -543,7 +548,9 @@ def main():
                 print(
                     f"\033[94mFixing imports in {args.project_path} (mode: {args.mode})...\033[0m"
                 )
-                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                analyzer = ProjectAnalyzer(
+                    args.project_path, config=config, backup=True
+                )
                 fixes = analyzer.fix_project(mode=args.mode)
                 logger.info("Fixes complete", extra={"metrics": fixes})
                 print_fixes_summary(fixes)
@@ -554,7 +561,7 @@ def main():
                         "Web dashboard not available. Please install optional dependencies:"
                         "\n  pip install python-fixer[web]"
                     )
-                
+
                 print(f"\033[94mLaunching dashboard for {args.project_path}...\033[0m")
                 print_dashboard_info(args.host, args.port, args.reload)
 
@@ -623,11 +630,15 @@ def initialize_project(args, config):
             try:
                 print(f"  Project path: {args.project_path}")
                 print(f"  Config: {config}")
-                analyzer = ProjectAnalyzer(args.project_path, config=config, backup=True)
+                analyzer = ProjectAnalyzer(
+                    args.project_path, config=config, backup=True
+                )
                 print("\033[92m✓ ProjectAnalyzer instance created successfully\033[0m")
                 logger.info("ProjectAnalyzer instance created successfully")
             except Exception as e:
-                print(f"\033[91m✗ Failed to create ProjectAnalyzer instance: {str(e)}\033[0m")
+                print(
+                    f"\033[91m✗ Failed to create ProjectAnalyzer instance: {str(e)}\033[0m"
+                )
                 logger.error("Failed to create ProjectAnalyzer instance", exc_info=e)
                 raise ProjectError(f"Failed to create analyzer: {str(e)}") from e
 
@@ -647,6 +658,7 @@ def initialize_project(args, config):
             print(f"\033[91m✗ Unexpected error during initialization: {str(e)}\033[0m")
             logger.error("Unexpected error during initialization", exc_info=e)
             raise ProjectError(f"Failed to initialize project: {str(e)}") from e
+
 
 if __name__ == "__main__":
     sys.exit(main())

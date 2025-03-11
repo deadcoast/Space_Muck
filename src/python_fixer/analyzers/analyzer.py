@@ -7,11 +7,15 @@ from typing import Dict, Any, Optional
 from ..core.types import OPTIONAL_DEPS
 from ..logging.structured import StructuredLogger
 
+
 class ProjectAnalyzer:
     """Unified system for Python codebase analysis and optimization."""
 
     def __init__(
-        self, root_path: Path, config: Optional[Dict[str, Any]] = None, backup: bool = True
+        self,
+        root_path: Path,
+        config: Optional[Dict[str, Any]] = None,
+        backup: bool = True,
     ):
         """Initialize the project analyzer.
 

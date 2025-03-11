@@ -1,6 +1,7 @@
 """Tests for type hint validation functionality."""
 
 import ast
+
 # These typing imports are used in test code strings that are parsed with ast.parse()
 # The linter may incorrectly mark them as unused since they appear in string literals
 from typing import Dict, List, Optional, Protocol, TypeVar, Union  # noqa: F401
@@ -17,10 +18,10 @@ class TestTypeAnnotationVisitor(TestCase):
 
     def _parse_and_visit(self, code: str) -> TypeAnnotationVisitor:
         """Parse code and visit with TypeAnnotationVisitor.
-        
+
         Args:
             code: Python code to parse
-            
+
         Returns:
             TypeAnnotationVisitor instance after visiting the AST
         """
@@ -28,9 +29,16 @@ class TestTypeAnnotationVisitor(TestCase):
         self.visitor.visit(tree)
         return self.visitor
 
-    def _assert_type_metrics(self, visitor: TypeAnnotationVisitor, total: int, valid: int, coverage: float = 100.0, error_count: int = 0):
+    def _assert_type_metrics(
+        self,
+        visitor: TypeAnnotationVisitor,
+        total: int,
+        valid: int,
+        coverage: float = 100.0,
+        error_count: int = 0,
+    ):
         """Assert type annotation metrics match expected values.
-        
+
         Args:
             visitor: TypeAnnotationVisitor instance
             total: Expected total annotations
@@ -85,7 +93,9 @@ def process(*args: str, **kwargs: int) -> None:
     pass
 """
         visitor = self._parse_and_visit(code)
-        self._assert_type_metrics(visitor, total=6, valid=6)  # name, count, return, args, kwargs, return
+        self._assert_type_metrics(
+            visitor, total=6, valid=6
+        )  # name, count, return, args, kwargs, return
 
     def test_forward_references(self):
         """Test forward reference type annotations."""
@@ -112,7 +122,9 @@ def process(item: T) -> T:
 x: Printable
 """
         visitor = self._parse_and_visit(code)
-        self._assert_type_metrics(visitor, total=3, valid=3)  # print return, process param+return, x
+        self._assert_type_metrics(
+            visitor, total=3, valid=3
+        )  # print return, process param+return, x
 
     def test_invalid_annotations(self):
         """Test invalid type annotations."""
@@ -121,7 +133,9 @@ x: 123 = "invalid"  # Invalid: annotation is a literal
 y: [int] = []  # Invalid: using list literal as type
 """
         visitor = self._parse_and_visit(code)
-        self._assert_type_metrics(visitor, total=2, valid=0, coverage=0.0, error_count=1)
+        self._assert_type_metrics(
+            visitor, total=2, valid=0, coverage=0.0, error_count=1
+        )
 
     def test_missing_annotations(self):
         """Test handling of missing annotations."""

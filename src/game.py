@@ -13,9 +13,11 @@ from datetime import datetime
 
 from config import GAME_CONFIG
 
+
 @dataclass
 class StateTransition:
     """Represents a state transition with timing information."""
+
     from_state: str
     to_state: str
     timestamp: datetime
@@ -23,17 +25,24 @@ class StateTransition:
     success: bool
     error: Optional[str] = None
 
+
 class GameStateError(Exception):
     """Base exception for game state errors."""
+
     pass
+
 
 class InvalidStateTransitionError(GameStateError):
     """Raised when an invalid state transition is attempted."""
+
     pass
+
 
 class StateValidationError(GameStateError):
     """Raised when state validation fails."""
+
     pass
+
 
 class Game:
     """Main game class with enhanced state management."""
@@ -99,7 +108,10 @@ class Game:
         # Run validation rules for the new state
         new_state_config = GAME_CONFIG["states"][new_state]
         for rule in new_state_config["validation_rules"]:
-            if rule in self._validation_handlers and not self._validation_handlers[rule]():
+            if (
+                rule in self._validation_handlers
+                and not self._validation_handlers[rule]()
+            ):
                 raise StateValidationError(f"Validation failed: {rule}")
 
         return True
@@ -108,7 +120,9 @@ class Game:
         """Execute entry or exit actions for a state."""
         state_config = GAME_CONFIG["states"][state]
         actions = state_config.get(f"{action_type}_actions", [])
-        handlers = self._entry_handlers if action_type == "entry" else self._exit_handlers
+        handlers = (
+            self._entry_handlers if action_type == "entry" else self._exit_handlers
+        )
 
         for action in actions:
             if action in handlers:
@@ -132,24 +146,23 @@ class Game:
             to_state=new_state,
             timestamp=datetime.now(),
             duration=0.0,
-            success=False
+            success=False,
         )
 
         try:
             # Validate the transition
             if self._validate_state_transition(new_state):
-                self._extracted_from_change_state_16(new_state, start_time, transition)
+                self._perform_state_transition_and_log(new_state, start_time, transition)
         except GameStateError as e:
-            self._extracted_from_change_state_42(
-                e, transition, 'State transition failed: '
+            self._handle_state_transition_error(
+                e, transition, "State transition failed: "
             )
         except Exception as e:
-            self._extracted_from_change_state_42(
-                e, transition, 'Unexpected error in state transition: '
+            self._handle_state_transition_error(
+                e, transition, "Unexpected error in state transition: "
             )
 
-    # TODO Rename this here and in `change_state`
-    def _extracted_from_change_state_16(self, new_state, start_time, transition):
+    def _perform_state_transition_and_log(self, new_state, start_time, transition):
         # Execute exit actions for current state
         self._execute_state_actions(self._state, "exit")
 
@@ -177,10 +190,9 @@ class Game:
             f"State transition: {old_state} -> {new_state} ({duration:.3f}s)"
         )
 
-    # TODO Rename this here and in `change_state`
-    def _extracted_from_change_state_42(self, e, transition, arg2):
+    def _handle_state_transition_error(self, e, transition, error_prefix):
         transition.error = str(e)
-        self._logger.error(f"{arg2}{e}")
+        self._logger.error(f"{error_prefix}{e}")
         self._state_valid = False
         raise
 
@@ -203,7 +215,7 @@ class Game:
         """Get detailed information about the current state."""
         if self._state not in GAME_CONFIG["states"]:
             return {}
-        
+
         state_config = GAME_CONFIG["states"][self._state]
         return {
             "name": state_config["name"],
@@ -211,5 +223,5 @@ class Game:
             "allowed_transitions": state_config["allowed_transitions"],
             "is_valid": self._state_valid,
             "history_count": len(self._state_history),
-            "last_transition": self._state_history[-1] if self._state_history else None
+            "last_transition": self._state_history[-1] if self._state_history else None,
         }

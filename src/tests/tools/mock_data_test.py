@@ -5,7 +5,7 @@ This module provides functions to generate consistent test data.
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Any
+from typing import Dict
 
 
 def create_mock_field_data(width: int = 100, height: int = 80) -> Dict[str, np.ndarray]:

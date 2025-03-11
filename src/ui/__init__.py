@@ -2,24 +2,27 @@
 # Define the public API for the ui module
 __all__ = [
     # Base components
-    'UIStyle', 'AnimationStyle', 'UIElement',
-    
+    "UIStyle",
+    "AnimationStyle",
+    "UIElement",
     # Specialized components
-    'Menu', 'FleetDisplay', 'AsteroidFieldVisualizer',
-    'SymbioteEvolutionMonitor', 'MiningStatus', 'SpaceMuckMainUI',
-    
+    "Menu",
+    "FleetDisplay",
+    "AsteroidFieldVisualizer",
+    "SymbioteEvolutionMonitor",
+    "MiningStatus",
+    "SpaceMuckMainUI",
     # ASCII UI components
-    'ASCIIBox', 'ASCIIPanel', 'ASCIIButton',
-    'draw_text', 'draw_panel'
+    "ASCIIBox",
+    "ASCIIPanel",
+    "ASCIIButton",
+    "draw_text",
+    "draw_panel",
 ]
 
 # Import specific components instead of using star imports
 # Base components
-from ui.ascii_base import (
-    UIStyle,
-    AnimationStyle,
-    UIElement
-)
+from ui.ascii_base import UIStyle, AnimationStyle, UIElement
 
 # Specialized components from component_modules
 from ui.component_modules import (
@@ -28,14 +31,8 @@ from ui.component_modules import (
     AsteroidFieldVisualizer,
     SymbioteEvolutionMonitor,
     MiningStatus,
-    SpaceMuckMainUI
+    SpaceMuckMainUI,
 )
 
 # ASCII UI components
-from ui.ascii_ui import (
-    ASCIIBox,
-    ASCIIPanel,
-    ASCIIButton,
-    draw_text,
-    draw_panel
-)
+from ui.ascii_ui import ASCIIBox, ASCIIPanel, ASCIIButton, draw_text, draw_panel

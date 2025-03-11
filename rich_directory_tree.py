@@ -26,7 +26,6 @@ from pathlib import Path
 try:
     from rich.tree import Tree
     from rich.console import Console
-    from rich import print as rprint
 except ImportError:
     print("This script requires the Rich library. Installing it now...")
     import subprocess
@@ -34,7 +33,6 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
     from rich.tree import Tree
     from rich.console import Console
-    from rich import print as rprint
 
 # Default patterns to ignore
 DEFAULT_IGNORE = [

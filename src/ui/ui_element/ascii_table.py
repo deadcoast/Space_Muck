@@ -432,10 +432,10 @@ class ASCIITable:
 
         # Calculate how many rows can be displayed
         self.visible_rows = (max_y - y) // row_height
-        
+
         # Determine visible row range
         visible_count = min(self.visible_rows, len(self.data) - self.scroll_offset)
-        
+
         # Draw each visible row
         for i in range(visible_count):
             row_idx = i + self.scroll_offset
@@ -449,12 +449,21 @@ class ASCIITable:
             # Draw row components
             self._draw_row_highlight(surface, font, x, row_y, row_height, row_idx)
             self._draw_row_cells(surface, font, x, row_y, row)
-            self._draw_row_separator(surface, font, x, row_y, row_height, i, row_idx, visible_count)
-    
-    def _draw_row_highlight(self, surface: pygame.Surface, font: pygame.font.Font, 
-                           x: int, row_y: int, row_height: int, row_idx: int) -> None:
+            self._draw_row_separator(
+                surface, font, x, row_y, row_height, i, row_idx, visible_count
+            )
+
+    def _draw_row_highlight(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        row_y: int,
+        row_height: int,
+        row_idx: int,
+    ) -> None:
         """Draw highlight for selected row.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -465,7 +474,7 @@ class ASCIITable:
         """
         if row_idx != self.selected_row:
             return
-            
+
         # Create highlight rectangle
         highlight_rect = pygame.Rect(
             x - 5,
@@ -494,10 +503,10 @@ class ASCIITable:
             size=font.get_height(),
             color=(255, 255, 100),
         )
-    
+
     def _get_highlight_color(self) -> Tuple[int, int, int, int]:
         """Get the highlight color based on current style.
-        
+
         Returns:
             Tuple[int, int, int, int]: RGBA color value
         """
@@ -507,11 +516,17 @@ class ASCIITable:
             return (30, 100, 30, 150)  # Semi-transparent green
         else:
             return (60, 60, 60, 150)  # Semi-transparent gray
-    
-    def _draw_row_cells(self, surface: pygame.Surface, font: pygame.font.Font, 
-                       x: int, row_y: int, row: List[Any]) -> None:
+
+    def _draw_row_cells(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        row_y: int,
+        row: List[Any],
+    ) -> None:
         """Draw cells for a row.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -520,7 +535,7 @@ class ASCIITable:
             row: Row data to display
         """
         current_x = x
-        
+
         for j, cell in enumerate(row):
             if j >= len(self.column_widths):
                 break
@@ -539,26 +554,34 @@ class ASCIITable:
             )
 
             current_x += width + 5  # Add spacing between columns
-    
+
     def _format_cell_text(self, cell_text: str, width: int) -> str:
         """Format cell text, truncating if necessary.
-        
+
         Args:
             cell_text: Text to format
             width: Available width for the text
-            
+
         Returns:
             str: Formatted text
         """
         if len(cell_text) > width - 2:
             return f"{cell_text[:width - 5]}..."
         return cell_text
-    
-    def _draw_row_separator(self, surface: pygame.Surface, font: pygame.font.Font, 
-                           x: int, row_y: int, row_height: int, 
-                           row_index: int, data_index: int, visible_count: int) -> None:
+
+    def _draw_row_separator(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        row_y: int,
+        row_height: int,
+        row_index: int,
+        data_index: int,
+        visible_count: int,
+    ) -> None:
         """Draw separator between rows.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -572,7 +595,7 @@ class ASCIITable:
         # Only draw separator if not the last visible row and not the last data row
         if row_index >= visible_count - 1 or data_index >= len(self.data) - 1:
             return
-            
+
         separator_y = row_y + row_height - 1
         separator_char = self.chars["row_sep"]
         separator_text = separator_char * (self.rect.width - 20)  # Leave margin
@@ -689,9 +712,17 @@ class ASCIITable:
 
         return panel_rect
 
-    def draw_ascii_table(self, x: int, y: int, headers: List[str], rows: List[List[str]], 
-                       col_widths: Optional[List[int]] = None, font: Optional[pygame.font.Font] = None, 
-                       color: Tuple[int, int, int] = COLOR_TEXT, border_style: str = "single") -> pygame.Rect:
+    def draw_ascii_table(
+        self,
+        x: int,
+        y: int,
+        headers: List[str],
+        rows: List[List[str]],
+        col_widths: Optional[List[int]] = None,
+        font: Optional[pygame.font.Font] = None,
+        color: Tuple[int, int, int] = COLOR_TEXT,
+        border_style: str = "single",
+    ) -> pygame.Rect:
         """
         Draw an ASCII-styled table.
 
@@ -711,187 +742,222 @@ class ASCIITable:
         # Initialize font and border characters
         font = self._initialize_ascii_table_font(font)
         borders = self._get_border_chars_for_style(border_style)
-        
+
         # Calculate column widths if not provided
         if not col_widths:
             col_widths = self._calculate_ascii_table_col_widths(headers, rows)
-        
+
         # Generate table strings
-        table_strings = self._generate_ascii_table_strings(headers, rows, col_widths, borders)
-        
+        table_strings = self._generate_ascii_table_strings(
+            headers, rows, col_widths, borders
+        )
+
         # Render the table
         return self._render_ascii_table_strings(table_strings, x, y, font, color)
-    
-    def _initialize_ascii_table_font(self, font: Optional[pygame.font.Font]) -> pygame.font.Font:
+
+    def _initialize_ascii_table_font(
+        self, font: Optional[pygame.font.Font]
+    ) -> pygame.font.Font:
         """Initialize font for ASCII table drawing.
-        
+
         Args:
             font: Optional font to use
-            
+
         Returns:
             pygame.font.Font: Initialized font
         """
         if font:
             return font
-            
+
         try:
-            return pygame.font.SysFont("Courier New", 16)  # Monospace font works best for ASCII art
+            return pygame.font.SysFont(
+                "Courier New", 16
+            )  # Monospace font works best for ASCII art
         except Exception:
             return pygame.font.Font(None, 16)
-    
+
     def _get_border_chars_for_style(self, border_style: str) -> dict:
         """Get border characters based on style.
-        
+
         Args:
             border_style: Style name ('single', 'double', 'heavy')
-            
+
         Returns:
             dict: Dictionary of border characters
         """
         borders = {
             "single": {
-                "tl": "+", "tr": "+", "bl": "+", "br": "+",
-                "h": "-", "v": "|", "lc": "+", "rc": "+", "tc": "+", "bc": "+",
+                "tl": "+",
+                "tr": "+",
+                "bl": "+",
+                "br": "+",
+                "h": "-",
+                "v": "|",
+                "lc": "+",
+                "rc": "+",
+                "tc": "+",
+                "bc": "+",
             },
             "double": {
-                "tl": "╔", "tr": "╗", "bl": "╚", "br": "╝",
-                "h": "═", "v": "║", "lc": "╠", "rc": "╣", "tc": "╦", "bc": "╩",
+                "tl": "╔",
+                "tr": "╗",
+                "bl": "╚",
+                "br": "╝",
+                "h": "═",
+                "v": "║",
+                "lc": "╠",
+                "rc": "╣",
+                "tc": "╦",
+                "bc": "╩",
             },
             "heavy": {
-                "tl": "┏", "tr": "┓", "bl": "┗", "br": "┛",
-                "h": "━", "v": "┃", "lc": "┣", "rc": "┫", "tc": "┳", "bc": "┻",
+                "tl": "┏",
+                "tr": "┓",
+                "bl": "┗",
+                "br": "┛",
+                "h": "━",
+                "v": "┃",
+                "lc": "┣",
+                "rc": "┫",
+                "tc": "┳",
+                "bc": "┻",
             },
         }
-        
+
         return borders.get(border_style, borders["single"])
-    
-    def _calculate_ascii_table_col_widths(self, headers: List[str], rows: List[List[str]]) -> List[int]:
+
+    def _calculate_ascii_table_col_widths(
+        self, headers: List[str], rows: List[List[str]]
+    ) -> List[int]:
         """Calculate optimal column widths based on content.
-        
+
         Args:
             headers: Column headers
             rows: Table data rows
-            
+
         Returns:
             List[int]: List of column widths
         """
         col_widths = []
-        
+
         for i in range(len(headers)):
             # Start with header width
             col_width = len(headers[i])
-            
+
             # Check all rows for maximum content width
             for row in rows:
                 if i < len(row):
                     col_width = max(col_width, len(row[i]))
-                    
+
             # Add padding
             col_widths.append(col_width + 2)
-            
+
         return col_widths
-    
+
     def _generate_top_border(self, col_widths: List[int], b: dict) -> str:
         """Generate the top border of the table.
-        
+
         Args:
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             str: Top border string
         """
         top_border = b["tl"]
-        
+
         for i, width in enumerate(col_widths):
             top_border += b["h"] * width
             top_border += b["tc"] if i < len(col_widths) - 1 else b["tr"]
-            
+
         return top_border
-    
-    def _generate_header_row(self, headers: List[str], col_widths: List[int], b: dict) -> str:
+
+    def _generate_header_row(
+        self, headers: List[str], col_widths: List[int], b: dict
+    ) -> str:
         """Generate the header row of the table.
-        
+
         Args:
             headers: Column headers
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             str: Header row string
         """
         header_row = b["v"]
-        
+
         for i, header in enumerate(headers):
             header_row += header.ljust(col_widths[i]) + b["v"]
-            
+
         return header_row
-    
+
     def _generate_separator(self, col_widths: List[int], b: dict) -> str:
         """Generate the separator between header and data rows.
-        
+
         Args:
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             str: Separator string
         """
         separator = b["lc"]
-        
+
         for i, width in enumerate(col_widths):
             separator += b["h"] * width
             separator += b["rc"] if i < len(col_widths) - 1 else b["rc"]
-            
+
         return separator
-    
+
     def _generate_data_row(self, row: List[str], col_widths: List[int], b: dict) -> str:
         """Generate a data row string.
-        
+
         Args:
             row: Row data
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             str: Data row string
         """
         data_row = b["v"]
-        
+
         for i in range(len(col_widths)):
             cell = row[i] if i < len(row) else ""
             data_row += cell.ljust(col_widths[i]) + b["v"]
-            
+
         return data_row
-    
+
     def _generate_bottom_border(self, col_widths: List[int], b: dict) -> str:
         """Generate the bottom border of the table.
-        
+
         Args:
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             str: Bottom border string
         """
         bottom_border = b["bl"]
-        
+
         for i, width in enumerate(col_widths):
             bottom_border += b["h"] * width
             bottom_border += b["bc"] if i < len(col_widths) - 1 else b["br"]
-            
+
         return bottom_border
-    
-    def _generate_ascii_table_strings(self, headers: List[str], rows: List[List[str]], 
-                                     col_widths: List[int], b: dict) -> List[str]:
+
+    def _generate_ascii_table_strings(
+        self, headers: List[str], rows: List[List[str]], col_widths: List[int], b: dict
+    ) -> List[str]:
         """Generate all strings needed to render the ASCII table.
-        
+
         Args:
             headers: Column headers
             rows: Table data rows
             col_widths: List of column widths
             b: Border characters dictionary
-            
+
         Returns:
             List[str]: List of table strings to render
         """
@@ -899,27 +965,35 @@ class ASCIITable:
         table_strings = [
             self._generate_top_border(col_widths, b),
             self._generate_header_row(headers, col_widths, b),
-            self._generate_separator(col_widths, b)
+            self._generate_separator(col_widths, b),
         ]
-        
+
         # Add data rows
-        table_strings.extend([self._generate_data_row(row, col_widths, b) for row in rows])
-        
+        table_strings.extend(
+            [self._generate_data_row(row, col_widths, b) for row in rows]
+        )
+
         # Add bottom border
         table_strings.append(self._generate_bottom_border(col_widths, b))
-        
+
         return table_strings
-    
-    def _render_ascii_table_strings(self, table_strings: List[str], x: int, y: int, 
-                                  font: pygame.font.Font, color: Tuple[int, int, int]) -> pygame.Rect:
+
+    def _render_ascii_table_strings(
+        self,
+        table_strings: List[str],
+        x: int,
+        y: int,
+        font: pygame.font.Font,
+        color: Tuple[int, int, int],
+    ) -> pygame.Rect:
         """Render all table strings to the surface.
-        
+
         Args:
             table_strings: List of strings to render
             x, y: Position coordinates
             font: Font to use for rendering
             color: Text color
-            
+
         Returns:
             pygame.Rect: Bounding rectangle of the table
         """
@@ -937,5 +1011,5 @@ class ASCIITable:
             )
 
             table_rect = table_rect.union(line_rect) if table_rect else line_rect
-            
+
         return table_rect or pygame.Rect(x, y, 0, 0)
