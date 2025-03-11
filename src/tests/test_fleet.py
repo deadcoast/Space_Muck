@@ -6,7 +6,8 @@ Unit tests for the Fleet class.
 import unittest
 import sys
 import os
-from unittest.mock import patch, MagicMock
+
+# Removed unused mock imports
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

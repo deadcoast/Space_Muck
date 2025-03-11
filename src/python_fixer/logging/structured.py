@@ -46,9 +46,7 @@ class JSONFormatter(logging.Formatter):
 class StructuredLogger:
     """Enhanced logger with structured output and convenience methods"""
 
-    def __init__(
-        self, name: str, log_file: Optional[Path] = None, level: str = "INFO"
-    ):
+    def __init__(self, name: str, log_file: Optional[Path] = None, level: str = "INFO"):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, level.upper()))
 

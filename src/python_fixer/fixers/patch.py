@@ -70,10 +70,12 @@ class PatchHandler:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
-            
+
             # Log paths and verify writability
-            patch.logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
-            
+            patch.logger.debug(
+                f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}"
+            )
+
             # Ensure all paths are writable
             temp_paths = [original_file_path, patched_file_path, patch_file_path]
             for path in temp_paths:
@@ -282,7 +284,7 @@ if __name__ == "__main__":
 
         # Analyze project and validate results
         analysis_result = analyzer.analyze_project()
-        if not analysis_result or not analysis_result.get('issues'):
+        if not analysis_result or not analysis_result.get("issues"):
             console.warning("No issues found in project analysis")
             return
 

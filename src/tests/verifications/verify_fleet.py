@@ -4,14 +4,14 @@ Verification script for Fleet class.
 
 import sys
 import os
-import logging
-from unittest.mock import patch, MagicMock
-
-from entities.base_entity import BaseEntity
-from entities.fleet import Fleet
+from unittest.mock import MagicMock
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Import entities after adding src to path
+from entities.base_entity import BaseEntity
+from entities.fleet import Fleet
 
 # Mock modules before importing entities
 sys.modules["perlin_noise"] = MagicMock()

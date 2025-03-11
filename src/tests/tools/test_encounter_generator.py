@@ -3,11 +3,13 @@ Tests for the encounter generator module.
 """
 
 import unittest
-from unittest.mock import patch
+
+# No mocking needed in this test
 import random
 
 from entities.player import Player
-from entities.enemy_ship import EnemyShip
+
+# EnemyShip is created by the EncounterGenerator, no need to import it directly
 from systems.combat_system import CombatSystem
 from systems.encounter_generator import EncounterGenerator
 
@@ -127,30 +129,40 @@ class TestEncounterGenerator(unittest.TestCase):
             # Restore original value
             self.encounter_generator.encounter_chance_base = original_chance
 
-    def test_generate_combat_encounter(self):
-        """Test combat encounter generation."""
-        # Save original player state to restore later
+    def _setup_combat_test(self):
+        """Set up the combat test environment."""
         original_in_combat = self.player.in_combat
         self.player.in_combat = False
+        return original_in_combat
+
+    def _verify_combat_encounter(self, result):
+        """Verify the combat encounter results."""
+        self.assertTrue(result["encounter"])
+        self.assertIn("message", result)
+        self.assertIn("enemy", result)
+        self.assertTrue(result["combat_started"])
+
+        # Verify combat was started
+        self.assertTrue(self.player.in_combat)
+        self.assertIsNotNone(self.player.current_enemy)
+
+    def _cleanup_combat_test(self, original_in_combat):
+        """Clean up after the combat test."""
+        self.player.in_combat = original_in_combat
+        self.combat_system.end_combat()
+
+    def test_generate_combat_encounter(self):
+        """Test combat encounter generation."""
+        original_in_combat = self._setup_combat_test()
 
         try:
-            # Generate combat encounter
             result = self.encounter_generator._generate_combat_encounter()
 
             # Verify combat encounter
-            self.assertTrue(result["encounter"])
+            self._verify_combat_encounter(result)
             self.assertEqual(result["type"], "combat")
-            self.assertIn("message", result)
-            self.assertIn("enemy", result)
-            self.assertTrue(result["combat_started"])
-
-            # Verify combat was started
-            self.assertTrue(self.player.in_combat)
-            self.assertIsNotNone(self.player.current_enemy)
         finally:
-            # Restore original player state
-            self.player.in_combat = original_in_combat
-            self.combat_system.end_combat()
+            self._cleanup_combat_test(original_in_combat)
 
     def test_generate_quest_encounter_no_quest(self):
         """Test quest encounter generation with no active quest."""
@@ -174,19 +186,15 @@ class TestEncounterGenerator(unittest.TestCase):
         }
 
         # Save original player state to restore later
-        original_in_combat = self.player.in_combat
-        self.player.in_combat = False
+        original_in_combat = self._setup_combat_test()
 
         try:
             # Generate quest encounter
             result = self.encounter_generator.generate_quest_encounter("combat")
 
             # Verify quest encounter
-            self.assertTrue(result["encounter"])
+            self._verify_combat_encounter(result)
             self.assertEqual(result["type"], "quest_combat")
-            self.assertIn("message", result)
-            self.assertIn("enemy", result)
-            self.assertTrue(result["combat_started"])
             self.assertTrue(result["quest_related"])
 
             # Verify combat was started with the right type of enemy

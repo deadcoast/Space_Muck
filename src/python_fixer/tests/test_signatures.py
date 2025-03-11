@@ -9,7 +9,7 @@ from python_fixer.core.signatures import (
     TypeInfo,
     SignatureMetrics,
     SignatureComponent,
-    CodeSignature
+    CodeSignature,
 )
 
 
@@ -22,7 +22,7 @@ class TestTypeInfo(unittest.TestCase):
             inferred_type="str",
             confidence=0.9,
             source_locations={"test.py:10"},
-            constraints=["len(value) > 0"]
+            constraints=["len(value) > 0"],
         )
 
     def test_validation_success(self):
@@ -39,11 +39,7 @@ class TestTypeInfo(unittest.TestCase):
 
     def test_validation_no_type_info(self):
         """Test validation with no type information."""
-        type_info = TypeInfo(
-            type_hint=None,
-            inferred_type=None,
-            confidence=0.0
-        )
+        type_info = TypeInfo(type_hint=None, inferred_type=None, confidence=0.0)
         self.assertFalse(type_info.validate())
         errors = type_info.get_validation_errors()
         self.assertTrue(any("Missing type information" in err for err in errors))
@@ -66,7 +62,7 @@ class TestSignatureMetrics(unittest.TestCase):
             validation_score=0.95,
             validation_coverage=0.85,
             compatibility_score=1.0,
-            error_rate=0.1
+            error_rate=0.1,
         )
 
     def test_metrics_bounds(self):
@@ -80,7 +76,7 @@ class TestSignatureMetrics(unittest.TestCase):
         self.assertAlmostEqual(
             1.0 - self.metrics.error_rate,
             self.metrics.validation_coverage,
-            msg="Validation coverage should be complement of error rate"
+            msg="Validation coverage should be complement of error rate",
         )
 
 
@@ -88,17 +84,13 @@ class TestSignatureComponent(unittest.TestCase):
     """Test cases for SignatureComponent class."""
 
     def setUp(self):
-        self.type_info = TypeInfo(
-            type_hint="str",
-            inferred_type="str",
-            confidence=0.9
-        )
+        self.type_info = TypeInfo(type_hint="str", inferred_type="str", confidence=0.9)
         self.component = SignatureComponent(
             name="test_param",
             type_info=self.type_info,
             default_value=None,
             is_optional=False,
-            constraints=["len(value) > 0"]
+            constraints=["len(value) > 0"],
         )
 
     def test_get_signature(self):
@@ -123,7 +115,7 @@ class TestSignatureComponent(unittest.TestCase):
             name="test_param",
             type_info=TypeInfo(type_hint="str", inferred_type="str", confidence=0.8),
             default_value=None,
-            is_optional=False
+            is_optional=False,
         )
         self.assertTrue(self.component.is_compatible_with(other_component))
 
@@ -136,14 +128,14 @@ class TestCodeSignature(unittest.TestCase):
             name="test_param",
             type_info=TypeInfo(type_hint="str", inferred_type="str", confidence=0.9),
             default_value=None,
-            is_optional=False
+            is_optional=False,
         )
         self.signature = CodeSignature(
             name="test_function",
             module_path=Path("test.py"),
             components=[self.component],
             return_type=TypeInfo(type_hint="int", inferred_type="int", confidence=0.9),
-            docstring="Test function docstring"
+            docstring="Test function docstring",
         )
 
     def test_get_type_info(self):
@@ -164,7 +156,7 @@ class TestCodeSignature(unittest.TestCase):
             module_path=Path("test.py"),
             components=[self.component],
             return_type=TypeInfo(type_hint="int", inferred_type="int", confidence=0.8),
-            docstring="Another test function"
+            docstring="Another test function",
         )
         self.assertTrue(self.signature.is_compatible_with(other_signature))
 
@@ -175,7 +167,7 @@ class TestCodeSignature(unittest.TestCase):
             module_path=Path("test.py"),
             components=[self.component],
             return_type=TypeInfo(type_hint="int", inferred_type="int", confidence=0.8),
-            docstring="Test function docstring"
+            docstring="Test function docstring",
         )
         similarity = self.signature.similarity_score(other_signature)
         self.assertGreaterEqual(similarity, 0.9)  # High similarity expected

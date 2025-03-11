@@ -18,7 +18,18 @@ import inspect
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set, Tuple, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import networkx as nx
 import typeguard
@@ -39,44 +50,44 @@ except ImportError:
 
 # Optional dependency configuration
 OPTIONAL_DEPENDENCIES = {
-    'libcst': {
-        'module': 'libcst',
-        'import_as': 'cst',
-        'required_for': ['AST parsing', 'code transformation'],
+    "libcst": {
+        "module": "libcst",
+        "import_as": "cst",
+        "required_for": ["AST parsing", "code transformation"],
     },
-    'numpy': {
-        'module': 'numpy',
-        'import_as': 'np',
-        'required_for': ['numerical computations'],
+    "numpy": {
+        "module": "numpy",
+        "import_as": "np",
+        "required_for": ["numerical computations"],
     },
-    'rustworkx': {
-        'module': 'rustworkx',
-        'import_as': 'rx',
-        'required_for': ['graph operations'],
+    "rustworkx": {
+        "module": "rustworkx",
+        "import_as": "rx",
+        "required_for": ["graph operations"],
     },
-    'sympy': {
-        'module': 'sympy',
-        'import_as': 'sympy',
-        'required_for': ['symbolic mathematics'],
+    "sympy": {
+        "module": "sympy",
+        "import_as": "sympy",
+        "required_for": ["symbolic mathematics"],
     },
-    'torch': {
-        'module': 'torch',
-        'import_as': 'torch',
-        'submodules': [('torch.nn.functional', 'F')],
-        'required_for': ['type inference', 'model predictions'],
+    "torch": {
+        "module": "torch",
+        "import_as": "torch",
+        "submodules": [("torch.nn.functional", "F")],
+        "required_for": ["type inference", "model predictions"],
     },
-    'scipy': {
-        'module': 'scipy.spatial.distance',
-        'imports': ['cosine'],
-        'required_for': ['similarity calculations'],
+    "scipy": {
+        "module": "scipy.spatial.distance",
+        "imports": ["cosine"],
+        "required_for": ["similarity calculations"],
     },
-    'sklearn': {
-        'module': 'sklearn',
-        'imports': [
-            ('sklearn.cluster', ['DBSCAN']),
-            ('sklearn.feature_extraction.text', ['TfidfVectorizer']),
+    "sklearn": {
+        "module": "sklearn",
+        "imports": [
+            ("sklearn.cluster", ["DBSCAN"]),
+            ("sklearn.feature_extraction.text", ["TfidfVectorizer"]),
         ],
-        'required_for': ['clustering', 'text vectorization'],
+        "required_for": ["clustering", "text vectorization"],
     },
 }
 
@@ -102,27 +113,29 @@ if TYPE_CHECKING:
 # Runtime dependency management
 for dep_name, dep_info in OPTIONAL_DEPENDENCIES.items():
     # Check availability
-    is_available = importlib.util.find_spec(dep_info['module'].split('.')[0]) is not None
+    is_available = (
+        importlib.util.find_spec(dep_info["module"].split(".")[0]) is not None
+    )
     DEPENDENCY_STATUS[dep_name] = is_available
-    
+
     if is_available:
         try:
             # Import main module if specified
-            if 'import_as' in dep_info:
-                module = __import__(dep_info['module'], fromlist=['*'])
-                IMPORTED_MODULES[dep_info['import_as']] = module
-                globals()[dep_info['import_as']] = module
-            
+            if "import_as" in dep_info:
+                module = __import__(dep_info["module"], fromlist=["*"])
+                IMPORTED_MODULES[dep_info["import_as"]] = module
+                globals()[dep_info["import_as"]] = module
+
             # Import submodules if specified
-            if 'submodules' in dep_info:
-                for submodule, alias in dep_info['submodules']:
-                    sub_mod = __import__(submodule, fromlist=['*'])
+            if "submodules" in dep_info:
+                for submodule, alias in dep_info["submodules"]:
+                    sub_mod = __import__(submodule, fromlist=["*"])
                     IMPORTED_MODULES[alias] = sub_mod
                     globals()[alias] = sub_mod
-            
+
             # Import specific items if specified
-            if 'imports' in dep_info:
-                for imp in dep_info['imports']:
+            if "imports" in dep_info:
+                for imp in dep_info["imports"]:
                     if isinstance(imp, tuple):
                         module, items = imp
                         mod = __import__(module, fromlist=items)
@@ -130,7 +143,7 @@ for dep_name, dep_info in OPTIONAL_DEPENDENCIES.items():
                             IMPORTED_MODULES[item] = getattr(mod, item)
                             globals()[item] = getattr(mod, item)
                     else:
-                        module = dep_info['module']
+                        module = dep_info["module"]
                         mod = __import__(module, fromlist=[imp])
                         IMPORTED_MODULES[imp] = getattr(mod, imp)
                         globals()[imp] = getattr(mod, imp)
@@ -139,13 +152,13 @@ for dep_name, dep_info in OPTIONAL_DEPENDENCIES.items():
             console.debug(f"Failed to import {dep_name}: {e}")
     else:
         # Initialize empty placeholders for unavailable modules
-        if 'import_as' in dep_info:
-            globals()[dep_info['import_as']] = None
-        if 'submodules' in dep_info:
-            for _, alias in dep_info['submodules']:
+        if "import_as" in dep_info:
+            globals()[dep_info["import_as"]] = None
+        if "submodules" in dep_info:
+            for _, alias in dep_info["submodules"]:
                 globals()[alias] = None
-        if 'imports' in dep_info:
-            for imp in dep_info['imports']:
+        if "imports" in dep_info:
+            for imp in dep_info["imports"]:
                 name = imp[1][0] if isinstance(imp, tuple) else imp
                 globals()[name] = None
 
@@ -403,17 +416,22 @@ class SignatureComponent(
             if self.type_info.type_hint:
                 try:
                     type_obj = eval(self.type_info.type_hint)
-                    self.__dict__['__annotations__'] = {self.name: type_obj}
+                    self.__dict__["__annotations__"] = {self.name: type_obj}
                 except (NameError, SyntaxError):
-                    self.__dict__['__annotations__'] = {self.name: Any}
-        
+                    self.__dict__["__annotations__"] = {self.name: Any}
+
         # Handle default values
-        if (self.default_value is not None and isinstance(self.default_value, str) and 
-            not (self.default_value.startswith('"') and self.default_value.endswith('"'))):
+        if (
+            self.default_value is not None
+            and isinstance(self.default_value, str)
+            and not (
+                self.default_value.startswith('"') and self.default_value.endswith('"')
+            )
+        ):
             if self.default_value.startswith("'") and self.default_value.endswith("'"):
                 # Convert single quotes to double quotes
                 self.default_value = f'"{self.default_value[1:-1]}"'
-            elif self.type_info and self.type_info.type_hint == 'str':
+            elif self.type_info and self.type_info.type_hint == "str":
                 # Add quotes for string literals if type hint is str
                 self.default_value = f'"{self.default_value}"'
 
@@ -750,7 +768,7 @@ class SyntaxTreeVisualizer:
         except SyntaxError as e:
             console.print(f"[red]Syntax Error:[/] {str(e)}")
             # Show the problematic line if available
-            if text := getattr(e, 'text', None):
+            if text := getattr(e, "text", None):
                 console.print(f"[yellow]Line {e.lineno}:[/] {text.rstrip()}")
                 if e.offset:
                     console.print(f"{' ' * (e.offset + 14)}[red]^[/]")
@@ -765,7 +783,9 @@ class RichSyntaxHighlighter:
     """
 
     @staticmethod
-    def display_code(code: str, theme: str = "monokai", show_line_numbers: bool = True) -> None:
+    def display_code(
+        code: str, theme: str = "monokai", show_line_numbers: bool = True
+    ) -> None:
         """
         Displays syntax-highlighted Python code in the console.
 
@@ -785,7 +805,7 @@ class RichSyntaxHighlighter:
         try:
             # Validate Python syntax before highlighting
             ast.parse(code)
-            
+
             # Create syntax object with error handling
             try:
                 syntax = Syntax(
@@ -793,7 +813,7 @@ class RichSyntaxHighlighter:
                     lexer="python",
                     theme=theme,
                     line_numbers=show_line_numbers,
-                    word_wrap=True
+                    word_wrap=True,
                 )
                 console.print(syntax)
             except Exception as e:
@@ -803,7 +823,7 @@ class RichSyntaxHighlighter:
         except SyntaxError as e:
             console.print(f"[red]Syntax Error:[/] {str(e)}")
             # Show the problematic line if available
-            if text := getattr(e, 'text', None):
+            if text := getattr(e, "text", None):
                 console.print(f"[yellow]Line {e.lineno}:[/] {text.rstrip()}")
                 if e.offset:
                     console.print(f"{' ' * (e.offset + 14)}[red]^[/]")
@@ -831,10 +851,10 @@ class SignatureVisitor:
     """
 
     def __init__(
-        self, 
-        file_path: Path, 
+        self,
+        file_path: Path,
         type_inference_model: Optional[Any] = None,
-        enable_type_inference: bool = True
+        enable_type_inference: bool = True,
     ) -> None:
         # Validate file path
         if not isinstance(file_path, Path):
@@ -854,11 +874,11 @@ class SignatureVisitor:
         self.signatures: List[CodeSignature] = []
         self.current_class: Optional[str] = None
         self.enable_type_inference = enable_type_inference
-        
+
         # Initialize type inference
         self.type_inference_model = None
         if enable_type_inference and type_inference_model is not None:
-            if not DEPENDENCY_STATUS.get('torch'):
+            if not DEPENDENCY_STATUS.get("torch"):
                 console.warning(
                     "Type inference requested but torch not available. "
                     "Install torch for ML-based type inference support."
@@ -869,21 +889,21 @@ class SignatureVisitor:
                     console.debug("Type inference model initialized successfully")
                 except Exception as e:
                     console.warning(f"Failed to initialize type inference model: {e}")
-        
+
         # Initialize base class based on available dependencies
         if cst is not None:
             self._visitor = self._create_cst_visitor()
         else:
             self._visitor = self._create_ast_visitor()
-            
+
     def analyze(self) -> None:
         """Analyze the file and collect signatures."""
         if not self.file_path.exists():
             raise FileNotFoundError(f"File not found: {self.file_path}")
-            
+
         try:
             source = self.file_path.read_text()
-            
+
             if isinstance(self._visitor, ast.NodeVisitor):
                 tree = ast.parse(source)
                 self._visitor.visit(tree)
@@ -893,7 +913,7 @@ class SignatureVisitor:
         except (OSError, SyntaxError) as e:
             console.warning(f"Error analyzing file {self.file_path}: {e}")
             raise
-            
+
     def _process_annotation(self, node: cst.BaseExpression) -> Optional[str]:
         """Process a type annotation node to get its string representation."""
         if isinstance(node, cst.Name):
@@ -924,82 +944,103 @@ class SignatureVisitor:
     def _create_cst_visitor(self) -> Any:
         """Create a libcst-based visitor if available."""
         parent = self
+
         class CSTVisitor(cst.CSTVisitor):
             def __init__(self):
                 super().__init__()
                 self.parent = parent
-                
+
             def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
                 # Extract function signature info using libcst
                 name = node.name.value
                 components = []
-                
+
                 # Get parameters
                 for param in node.params.params:
                     param_name = param.name.value
                     type_hint = None
                     default_value = None
-                    
+
                     # Get type hint if available
                     if param.annotation:
-                        type_hint = self.parent._process_annotation(param.annotation.annotation)
-                    
+                        type_hint = self.parent._process_annotation(
+                            param.annotation.annotation
+                        )
+
                     # Handle default value if present
                     if param.default:
                         try:
                             default_value = cst.Module([]).code_for_node(param.default)
                             # Handle string literals
-                            if default_value.startswith("'") and default_value.endswith("'"):
+                            if default_value.startswith("'") and default_value.endswith(
+                                "'"
+                            ):
                                 default_value = f'"{default_value[1:-1]}"'
-                            elif type_hint == 'str' and not (default_value.startswith('"') and default_value.endswith('"')):
+                            elif type_hint == "str" and not (
+                                default_value.startswith('"')
+                                and default_value.endswith('"')
+                            ):
                                 default_value = f'"{default_value}"'
                         except Exception as e:
-                            console.warning(f"Failed to get default value for {param_name}: {e}")
-                    
+                            console.warning(
+                                f"Failed to get default value for {param_name}: {e}"
+                            )
+
                     # Handle type inference if needed
                     inferred_type = None
                     confidence = 0.0
-                    if not type_hint and self.parent.type_inference_model and self.parent.enable_type_inference:
+                    if (
+                        not type_hint
+                        and self.parent.type_inference_model
+                        and self.parent.enable_type_inference
+                    ):
                         try:
-                            inferred_type = self.parent.type_inference_model.predict(param_name)
+                            inferred_type = self.parent.type_inference_model.predict(
+                                param_name
+                            )
                             confidence = 0.5  # Mock confidence value
                         except Exception as e:
-                            console.warning(f"Type inference failed for parameter {param_name}: {e}")
+                            console.warning(
+                                f"Type inference failed for parameter {param_name}: {e}"
+                            )
                             inferred_type = None
                             confidence = 0.0
-                    
-                    components.append(SignatureComponent(
-                        name=param_name,
-                        type_info=TypeInfo(
-                            type_hint=type_hint,
-                            inferred_type=inferred_type,
-                            confidence=confidence
-                        ),
-                        default_value=default_value
-                    ))
-                    
+
+                    components.append(
+                        SignatureComponent(
+                            name=param_name,
+                            type_info=TypeInfo(
+                                type_hint=type_hint,
+                                inferred_type=inferred_type,
+                                confidence=confidence,
+                            ),
+                            default_value=default_value,
+                        )
+                    )
+
                 # Get return type
                 return_type = None
                 if node.returns:
                     type_hint = self.parent._process_annotation(node.returns.annotation)
-                    return_type = TypeInfo(type_hint=type_hint, inferred_type=None, confidence=0.0)
-                    
+                    return_type = TypeInfo(
+                        type_hint=type_hint, inferred_type=None, confidence=0.0
+                    )
+
                 # Create signature
                 sig = CodeSignature(
                     name=name,
                     module_path=self.parent.file_path,
                     components=components,
                     return_type=return_type,
-                    docstring=node.get_docstring()
+                    docstring=node.get_docstring(),
                 )
                 self.parent.signatures.append(sig)
-                
+
         return CSTVisitor()
-        
+
     def _create_ast_visitor(self) -> Any:
         """Create an ast-based visitor as fallback."""
         parent = self
-
 
         class ASTVisitor(ast.NodeVisitor):
             def __init__(self):
@@ -1013,7 +1054,9 @@ class SignatureVisitor:
                 components = []
 
                 # Get parameters and their defaults
-                defaults = [None] * (len(node.args.args) - len(node.args.defaults)) + node.args.defaults
+                defaults = [None] * (
+                    len(node.args.args) - len(node.args.defaults)
+                ) + node.args.defaults
                 for arg, default in zip(node.args.args, defaults):
                     param_name = arg.arg
                     type_hint = None
@@ -1028,53 +1071,74 @@ class SignatureVisitor:
                         try:
                             default_value = ast.unparse(default)
                             # Handle string literals
-                            if default_value.startswith("'") and default_value.endswith("'"):
+                            if default_value.startswith("'") and default_value.endswith(
+                                "'"
+                            ):
                                 default_value = f'"{default_value[1:-1]}"'
-                            elif type_hint == 'str' and not (default_value.startswith('"') and default_value.endswith('"')):
+                            elif type_hint == "str" and not (
+                                default_value.startswith('"')
+                                and default_value.endswith('"')
+                            ):
                                 default_value = f'"{default_value}"'
                         except Exception as e:
-                            console.warning(f"Failed to unparse default value for {param_name}: {e}")
+                            console.warning(
+                                f"Failed to unparse default value for {param_name}: {e}"
+                            )
 
                     # Handle type inference if needed
                     inferred_type = None
                     confidence = 0.0
-                    if not type_hint and self.parent.type_inference_model and self.parent.enable_type_inference:
+                    if (
+                        not type_hint
+                        and self.parent.type_inference_model
+                        and self.parent.enable_type_inference
+                    ):
                         try:
-                            inferred_type = self.parent.type_inference_model.predict(param_name)
+                            inferred_type = self.parent.type_inference_model.predict(
+                                param_name
+                            )
                             confidence = 0.5  # Mock confidence value
                         except Exception as e:
-                            console.warning(f"Type inference failed for parameter {param_name}: {e}")
+                            console.warning(
+                                f"Type inference failed for parameter {param_name}: {e}"
+                            )
                             inferred_type = None
                             confidence = 0.0
 
-                    components.append(SignatureComponent(
-                        name=param_name,
-                        type_info=TypeInfo(
-                            type_hint=type_hint,
-                            inferred_type=inferred_type,
-                            confidence=confidence
-                        ),
-                        default_value=default_value
-                    ))
+                    components.append(
+                        SignatureComponent(
+                            name=param_name,
+                            type_info=TypeInfo(
+                                type_hint=type_hint,
+                                inferred_type=inferred_type,
+                                confidence=confidence,
+                            ),
+                            default_value=default_value,
+                        )
+                    )
 
                 # Get return type
                 return_type = None
-                if hasattr(node, 'returns') and node.returns:
+                if hasattr(node, "returns") and node.returns:
                     type_hint = ast.unparse(node.returns)
-                    return_type = TypeInfo(type_hint=type_hint, inferred_type=None, confidence=0.0)
+                    return_type = TypeInfo(
+                        type_hint=type_hint, inferred_type=None, confidence=0.0
+                    )
 
                 # Create signature with class context if inside a class
                 module_path = self.parent.file_path
                 if self.current_class:
                     # Ensure consistent module path format for class methods
-                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}.py")
+                    module_path = module_path.with_name(
+                        f"{module_path.stem}.{self.current_class}.py"
+                    )
 
                 sig = CodeSignature(
                     name=name,
                     module_path=module_path,
                     components=components,
                     return_type=return_type,
-                    docstring=ast.get_docstring(node)
+                    docstring=ast.get_docstring(node),
                 )
                 self.parent.signatures.append(sig)
 
@@ -1091,9 +1155,7 @@ class SignatureVisitor:
                         components=[],
                         docstring=ast.get_docstring(node),
                         dependencies={
-                            base.id
-                            for base in node.bases
-                            if isinstance(base, ast.Name)
+                            base.id for base in node.bases if isinstance(base, ast.Name)
                         },
                     )
                     self.parent.signatures.append(sig)
@@ -1111,7 +1173,6 @@ class SignatureVisitor:
                 finally:
                     # Restore previous class context
                     self.current_class = prev_class
-
 
         return ASTVisitor()
 
@@ -1136,7 +1197,7 @@ class SignatureVisitor:
             # Get docstring and return type
             docstring = self._get_docstring(node)
             return_type = self._infer_type(node.returns)
-            
+
             # Create return type info
             inferred_return_type = None
             if not return_type and self.type_inference_model is not None:
@@ -1145,7 +1206,7 @@ class SignatureVisitor:
             type_info = TypeInfo(
                 type_hint=return_type,
                 inferred_type=inferred_return_type,
-                confidence=1.0 if return_type else 0.7
+                confidence=1.0 if return_type else 0.7,
             )
 
             # Extract and process parameters
@@ -1187,8 +1248,10 @@ class SignatureVisitor:
                 module_path = self.file_path
                 if self.current_class:
                     # Ensure consistent module path format for class methods
-                    module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}.py")
-                
+                    module_path = module_path.with_name(
+                        f"{module_path.stem}.{self.current_class}.py"
+                    )
+
                 code_signature = CodeSignature(
                     name=name,
                     module_path=module_path,
@@ -1224,7 +1287,7 @@ class SignatureVisitor:
             # Get docstring and base classes
             docstring = self._get_docstring(node)
             base_classes: List[str] = []
-            
+
             # Extract base classes with error handling
             try:
                 for base in node.bases:
@@ -1247,7 +1310,7 @@ class SignatureVisitor:
                     module_path=self.file_path,
                     components=[],  # Methods will be added during traversal
                     docstring=docstring,
-                    dependencies=set(base_classes) if base_classes else set()
+                    dependencies=set(base_classes) if base_classes else set(),
                 )
                 self.signatures.append(code_signature)
 
@@ -1297,7 +1360,9 @@ class SignatureVisitor:
                     try:
                         self._process_parameter(param, extracted_params)
                     except Exception as e:
-                        console.warning(f"Error processing positional-only parameter: {e}")
+                        console.warning(
+                            f"Error processing positional-only parameter: {e}"
+                        )
 
             # Process regular parameters
             for param in params.params:
@@ -1328,9 +1393,7 @@ class SignatureVisitor:
             return []
 
     def _process_type_parameters(
-        self,
-        base_type: str,
-        slice_nodes: Sequence[cst.SubscriptElement]
+        self, base_type: str, slice_nodes: Sequence[cst.SubscriptElement]
     ) -> Optional[str]:
         """
         Process type parameters from subscription nodes.
@@ -1397,8 +1460,7 @@ class SignatureVisitor:
             return None
 
     def _validate_annotation_node(
-        self,
-        annotation: Any
+        self, annotation: Any
     ) -> Optional[Union[cst.Name, cst.Subscript, cst.Attribute]]:
         """
         Validate an annotation node and extract its type information.
@@ -1416,7 +1478,7 @@ class SignatureVisitor:
         """
         try:
             # Check for annotation attribute
-            if not hasattr(annotation, 'annotation'):
+            if not hasattr(annotation, "annotation"):
                 console.warning(
                     f"Invalid annotation object: {type(annotation).__name__}"
                 )
@@ -1425,9 +1487,7 @@ class SignatureVisitor:
             # Get and validate node type
             node = annotation.annotation
             if not isinstance(node, (cst.Name, cst.Subscript, cst.Attribute)):
-                console.debug(
-                    f"Unsupported annotation type: {type(node).__name__}"
-                )
+                console.debug(f"Unsupported annotation type: {type(node).__name__}")
                 return None
 
             return node
@@ -1481,7 +1541,9 @@ class SignatureVisitor:
         """
         return f"{base_type}[{', '.join(type_params)}]" if type_params else base_type
 
-    def _validate_slice_item(self, slice_item: Any) -> Optional[cst.Name | cst.Attribute]:
+    def _validate_slice_item(
+        self, slice_item: Any
+    ) -> Optional[cst.Name | cst.Attribute]:
         """
         Validate a slice item and extract its parameter value.
 
@@ -1499,9 +1561,7 @@ class SignatureVisitor:
         try:
             # Validate slice item type
             if not isinstance(slice_item, cst.SubscriptElement):
-                console.warning(
-                    f"Invalid slice item type: {type(slice_item).__name__}"
-                )
+                console.warning(f"Invalid slice item type: {type(slice_item).__name__}")
                 return None
 
             return slice_item.slice.value
@@ -1510,7 +1570,9 @@ class SignatureVisitor:
             console.warning(f"Error validating slice item: {e}")
             return None
 
-    def _process_param_value(self, param_value: Union[cst.Name, cst.Attribute]) -> Optional[str]:
+    def _process_param_value(
+        self, param_value: Union[cst.Name, cst.Attribute]
+    ) -> Optional[str]:
         """
         Process a parameter value node to extract its string representation.
 
@@ -1589,7 +1651,9 @@ class SignatureVisitor:
             return None
 
     def _process_parameter(
-        self, param: Union[cst.Param, cst.ParamStar], params_list: List[Tuple[str, Optional[str], bool]]
+        self,
+        param: Union[cst.Param, cst.ParamStar],
+        params_list: List[Tuple[str, Optional[str], bool]],
     ) -> None:
         """
         Process a single parameter and add it to the parameters list.
@@ -1626,7 +1690,9 @@ class SignatureVisitor:
             params_list.append((param_name, param_type, is_optional))
 
         except Exception as e:
-            console.warning(f"Error processing parameter {getattr(param, 'name', '<unknown>')}: {e}")
+            console.warning(
+                f"Error processing parameter {getattr(param, 'name', '<unknown>')}: {e}"
+            )
 
     def _infer_type(self, annotation: Optional[cst.Annotation]) -> Optional[str]:
         """
@@ -1657,15 +1723,21 @@ class SignatureVisitor:
                 return None
 
             # Process simple type names (int, str, etc.)
-            if isinstance(node, cst.Name) and (type_value := self._validate_type_name(node)):
+            if isinstance(node, cst.Name) and (
+                type_value := self._validate_type_name(node)
+            ):
                 return type_value
 
             # Process complex types (List[int], Dict[str, int], etc.)
-            elif isinstance(node, cst.Subscript) and (type_str := self._process_complex_type(node)):
+            elif isinstance(node, cst.Subscript) and (
+                type_str := self._process_complex_type(node)
+            ):
                 return type_str
 
             # Process qualified names (typing.List, etc.)
-            elif isinstance(node, cst.Attribute) and (qualified_name := self._get_qualified_name(node)):
+            elif isinstance(node, cst.Attribute) and (
+                qualified_name := self._get_qualified_name(node)
+            ):
                 return qualified_name
 
         except Exception as e:
@@ -1723,7 +1795,9 @@ class SignatureVisitor:
 
         try:
             # Process input through model pipeline
-            if not (predicted_type := self._process_input_through_model(validated_name)):
+            if not (
+                predicted_type := self._process_input_through_model(validated_name)
+            ):
                 return None
 
             # Log successful prediction
@@ -1757,18 +1831,16 @@ class SignatureVisitor:
                 return None
 
             # Get model prediction
-            if not (prediction := self._get_model_prediction(
-                tokenized_input,
-                len(self.COMMON_TYPES),
-                name
-            )):
+            if not (
+                prediction := self._get_model_prediction(
+                    tokenized_input, len(self.COMMON_TYPES), name
+                )
+            ):
                 return None
 
             # Process prediction
             return self._process_type_prediction(
-                prediction=prediction,
-                name=name,
-                type_mapping=self.COMMON_TYPES
+                prediction=prediction, name=name, type_mapping=self.COMMON_TYPES
             )
 
         except Exception as e:
@@ -1776,10 +1848,7 @@ class SignatureVisitor:
             return None
 
     def _get_model_prediction(
-        self,
-        tokenized_input: torch.Tensor,
-        num_types: int,
-        name: str
+        self, tokenized_input: torch.Tensor, num_types: int, name: str
     ) -> Optional[torch.Tensor]:
         """
         Get prediction from the type inference model.
@@ -1801,14 +1870,16 @@ class SignatureVisitor:
         prediction = self._run_model_inference(tokenized_input, name)
         if prediction is None:
             return None
-            
+
         # Validate prediction shape
         if not self._validate_prediction_shape(prediction, num_types):
             return None
-            
+
         return prediction
 
-    def _run_model_inference(self, tokenized_input: torch.Tensor, name: str) -> Optional[torch.Tensor]:
+    def _run_model_inference(
+        self, tokenized_input: torch.Tensor, name: str
+    ) -> Optional[torch.Tensor]:
         """
         Run inference using the type inference model.
 
@@ -1824,10 +1895,10 @@ class SignatureVisitor:
             - Handles model-specific errors
             - Provides detailed error messages
         """
-        if not DEPENDENCY_STATUS.get('torch'):
+        if not DEPENDENCY_STATUS.get("torch"):
             console.warning("PyTorch not available for model inference")
             return None
-            
+
         try:
             # Run model inference with gradient computation disabled
             with torch.no_grad():
@@ -1840,9 +1911,7 @@ class SignatureVisitor:
             return None
 
     def _validate_prediction_shape(
-        self,
-        prediction: torch.Tensor,
-        expected_num_types: int
+        self, prediction: torch.Tensor, expected_num_types: int
     ) -> bool:
         """
         Validate the shape of a model prediction tensor.
@@ -1899,7 +1968,12 @@ class SignatureVisitor:
         """
         try:
             # Get tokens and create tensor
-            return tensor if (tokens := self._get_char_tokens(name)) and (tensor := self._create_token_tensor(tokens)) else None
+            return (
+                tensor
+                if (tokens := self._get_char_tokens(name))
+                and (tensor := self._create_token_tensor(tokens))
+                else None
+            )
         except Exception as e:
             console.warning(f"Tokenization failed for '{name}': {e}")
             return None
@@ -1921,7 +1995,11 @@ class SignatureVisitor:
         """
         try:
             # Convert to character tokens
-            return tokens if (tokens := [min(ord(char), 999) for char in name.lower()]) else None
+            return (
+                tokens
+                if (tokens := [min(ord(char), 999) for char in name.lower()])
+                else None
+            )
 
         except Exception as e:
             console.warning(f"Character tokenization failed: {e}")
@@ -1947,7 +2025,7 @@ class SignatureVisitor:
             return torch.tensor(
                 tokens,
                 dtype=torch.long,
-                device=next(self.type_inference_model.parameters()).device
+                device=next(self.type_inference_model.parameters()).device,
             ).unsqueeze(0)
 
         except Exception as e:
@@ -1959,7 +2037,7 @@ class SignatureVisitor:
         prediction: torch.Tensor,
         name: str,
         type_mapping: List[str],
-        confidence_threshold: float = 0.5
+        confidence_threshold: float = 0.5,
     ) -> Optional[str]:
         """
         Process model prediction to get inferred type with confidence check.
@@ -1990,7 +2068,9 @@ class SignatureVisitor:
             confidence, type_index = prob_info
 
             # Check confidence threshold
-            if not self._check_confidence_threshold(confidence, name, confidence_threshold):
+            if not self._check_confidence_threshold(
+                confidence, name, confidence_threshold
+            ):
                 return None
 
             # Get and validate inferred type
@@ -2009,10 +2089,7 @@ class SignatureVisitor:
             return None
 
     def _validate_prediction_inputs(
-        self,
-        prediction: torch.Tensor,
-        name: str,
-        type_mapping: List[str]
+        self, prediction: torch.Tensor, name: str, type_mapping: List[str]
     ) -> bool:
         """
         Validate inputs for type prediction processing.
@@ -2050,8 +2127,7 @@ class SignatureVisitor:
             return False
 
     def _compute_probabilities(
-        self,
-        prediction: torch.Tensor
+        self, prediction: torch.Tensor
     ) -> Optional[Tuple[float, int]]:
         """
         Compute probabilities from model prediction.
@@ -2080,10 +2156,7 @@ class SignatureVisitor:
             return None
 
     def _check_confidence_threshold(
-        self,
-        confidence: float,
-        name: str,
-        threshold: float
+        self, confidence: float, name: str, threshold: float
     ) -> bool:
         """
         Check if prediction confidence meets threshold.
@@ -2109,9 +2182,7 @@ class SignatureVisitor:
         return True
 
     def _get_inferred_type(
-        self,
-        type_index: int,
-        type_mapping: List[str]
+        self, type_index: int, type_mapping: List[str]
     ) -> Optional[str]:
         """
         Get inferred type from type mapping.
@@ -2184,8 +2255,7 @@ class SignatureVisitor:
             return None
 
     def _validate_docstring_node(
-        self,
-        node: Union[cst.FunctionDef, cst.ClassDef]
+        self, node: Union[cst.FunctionDef, cst.ClassDef]
     ) -> Optional[cst.IndentedBlock]:
         """
         Validate a node for docstring extraction.
@@ -2204,7 +2274,9 @@ class SignatureVisitor:
         try:
             # Validate input
             if not node or not isinstance(node, (cst.FunctionDef, cst.ClassDef)):
-                console.warning(f"Invalid node type for docstring: {type(node).__name__}")
+                console.warning(
+                    f"Invalid node type for docstring: {type(node).__name__}"
+                )
                 return None
 
             # Check for body and proper indentation
@@ -2217,10 +2289,7 @@ class SignatureVisitor:
             console.warning(f"Error validating docstring node: {e}")
             return None
 
-    def _extract_docstring_from_body(
-        self,
-        body: cst.IndentedBlock
-    ) -> Optional[str]:
+    def _extract_docstring_from_body(self, body: cst.IndentedBlock) -> Optional[str]:
         """
         Extract docstring from node body.
 
@@ -2252,8 +2321,7 @@ class SignatureVisitor:
             return None
 
     def _get_docstring_expr(
-        self,
-        stmt: cst.SimpleStatementLine
+        self, stmt: cst.SimpleStatementLine
     ) -> Optional[Union[cst.SimpleString, cst.ConcatenatedString]]:
         """
         Get docstring expression from statement.
@@ -2276,17 +2344,19 @@ class SignatureVisitor:
 
             # Get and validate expression
             expr = stmt.body[0]
-            return expr.value if isinstance(expr, cst.Expr) and isinstance(
-                expr.value, (cst.SimpleString, cst.ConcatenatedString)
-            ) else None
+            return (
+                expr.value
+                if isinstance(expr, cst.Expr)
+                and isinstance(expr.value, (cst.SimpleString, cst.ConcatenatedString))
+                else None
+            )
 
         except Exception as e:
             console.warning(f"Error getting docstring expression: {e}")
             return None
 
     def _extract_raw_docstring(
-        self,
-        expr: Union[cst.SimpleString, cst.ConcatenatedString]
+        self, expr: Union[cst.SimpleString, cst.ConcatenatedString]
     ) -> Optional[str]:
         """
         Extract raw docstring from expression.
@@ -2307,7 +2377,8 @@ class SignatureVisitor:
                 raw = expr.value
             else:  # ConcatenatedString
                 raw = "".join(
-                    part.value for part in expr.parts
+                    part.value
+                    for part in expr.parts
                     if isinstance(part, cst.SimpleString)
                 )
 
@@ -2335,20 +2406,19 @@ class SignatureVisitor:
         """
         try:
             # Remove quotes and normalize line endings
-            docstring = raw.strip('"\'\'"').replace('\r\n', '\n')
-            lines = docstring.split('\n')
+            docstring = raw.strip("\"''\"").replace("\r\n", "\n")
+            lines = docstring.split("\n")
 
             # Handle multi-line docstrings
             if len(lines) > 1:
                 # Process subsequent lines
                 if min_indent := self._find_min_indent(lines[1:]):
                     lines[1:] = [
-                        line[min_indent:] if line.strip() else ''
-                        for line in lines[1:]
+                        line[min_indent:] if line.strip() else "" for line in lines[1:]
                     ]
 
             # Join and normalize
-            return '\n'.join(line.rstrip() for line in lines).strip()
+            return "\n".join(line.rstrip() for line in lines).strip()
 
         except Exception as e:
             console.warning(f"Error formatting docstring: {e}")
@@ -2370,13 +2440,13 @@ class SignatureVisitor:
             - Returns 0 if no valid indent found
         """
         try:
-            min_indent = float('inf')
+            min_indent = float("inf")
             for line in lines:
                 if stripped := line.lstrip():
                     indent = len(line) - len(stripped)
                     min_indent = min(min_indent, indent)
 
-            return min(min_indent, float('inf')) if min_indent < float('inf') else 0
+            return min(min_indent, float("inf")) if min_indent < float("inf") else 0
 
         except Exception as e:
             console.warning(f"Error finding minimum indentation: {e}")
@@ -2393,11 +2463,21 @@ class SignatureAnalyzer:
     # Common Python types for type inference
     COMMON_TYPES = [
         # Built-in types
-        'str', 'int', 'float', 'bool',
+        "str",
+        "int",
+        "float",
+        "bool",
         # Container types
-        'list', 'dict', 'tuple', 'set',
+        "list",
+        "dict",
+        "tuple",
+        "set",
         # Special types
-        'datetime', 'Path', 'Optional', 'Any', 'None',
+        "datetime",
+        "Path",
+        "Optional",
+        "Any",
+        "None",
         # Additional types can be added here
     ]
 
@@ -2418,7 +2498,7 @@ class SignatureAnalyzer:
             raise FileNotFoundError(f"Root path does not exist: {root_path}")
 
         # Check required dependencies
-        if not DEPENDENCY_STATUS.get('libcst'):
+        if not DEPENDENCY_STATUS.get("libcst"):
             raise ImportError(
                 "libcst is required for SignatureAnalyzer. "
                 "Please install it with: pip install libcst"
@@ -2433,7 +2513,7 @@ class SignatureAnalyzer:
 
         # Initialize type inference model if available
         self.type_inference_model = None
-        if DEPENDENCY_STATUS.get('torch'):
+        if DEPENDENCY_STATUS.get("torch"):
             try:
                 self.type_inference_model = self._initialize_type_inference()
             except Exception as e:
@@ -2546,17 +2626,21 @@ class SignatureAnalyzer:
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using rustworkx if available, otherwise networkx"""
-        if DEPENDENCY_STATUS.get('rustworkx'):
+        if DEPENDENCY_STATUS.get("rustworkx"):
             try:
                 graph = rx.PyDiGraph()
-                node_map = {name: graph.add_node(name) for name, sig in self.signatures.items()}
+                node_map = {
+                    name: graph.add_node(name) for name, sig in self.signatures.items()
+                }
                 # Add edges with weights based on similarity
                 for name1, sig1 in self.signatures.items():
                     for name2, sig2 in self.signatures.items():
                         if name1 != name2:
                             similarity = sig1.similarity_score(sig2)
                             if similarity > 0.5:
-                                graph.add_edge(node_map[name1], node_map[name2], similarity)
+                                graph.add_edge(
+                                    node_map[name1], node_map[name2], similarity
+                                )
 
                 # Convert to networkx for additional algorithms
                 self.dependency_graph = nx.DiGraph(graph.edge_list())
@@ -2760,7 +2844,7 @@ class SignatureAnalyzer:
 
     def _cluster_signatures(self) -> Dict[str, List[str]]:
         """Cluster similar signatures using DBSCAN if sklearn and numpy are available"""
-        if not DEPENDENCY_STATUS.get('sklearn') or not DEPENDENCY_STATUS.get('numpy'):
+        if not DEPENDENCY_STATUS.get("sklearn") or not DEPENDENCY_STATUS.get("numpy"):
             console.warning("sklearn and numpy required for signature clustering")
             return {}
 
@@ -2809,11 +2893,14 @@ class SignatureAnalyzer:
 
     def _initialize_type_inference(self) -> Optional[torch.nn.Module]:
         """Initialize neural type inference model if torch is available"""
-        if not DEPENDENCY_STATUS.get('torch'):
-            console.warning("PyTorch is required for type inference model. Running without ML-based type inference.")
+        if not DEPENDENCY_STATUS.get("torch"):
+            console.warning(
+                "PyTorch is required for type inference model. Running without ML-based type inference."
+            )
             return None
 
         try:
+
             class TypeInferenceModel(torch.nn.Module):
                 def __init__(self):
                     super().__init__()
@@ -2829,8 +2916,12 @@ class SignatureAnalyzer:
                         lstm_out, _ = self.lstm(x)
                         return F.softmax(self.fc(lstm_out[:, -1]), dim=1)
                     except Exception as e:
-                        console.warning(f"Error in type inference model forward pass: {e}")
-                        return torch.zeros(x.size(0), 50)  # Return zero probabilities as fallback
+                        console.warning(
+                            f"Error in type inference model forward pass: {e}"
+                        )
+                        return torch.zeros(
+                            x.size(0), 50
+                        )  # Return zero probabilities as fallback
 
             return TypeInferenceModel()
         except Exception as e:

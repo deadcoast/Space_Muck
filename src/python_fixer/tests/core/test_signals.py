@@ -47,6 +47,7 @@ class TestSignalManager(unittest.TestCase):
 
     def test_register_handler(self):
         """Test registering a handler function."""
+
         def handler():
             pass
 
@@ -56,6 +57,7 @@ class TestSignalManager(unittest.TestCase):
 
     def test_register_handler_duplicate(self):
         """Test that registering the same handler twice only adds it once."""
+
         def handler():
             pass
 
@@ -65,6 +67,7 @@ class TestSignalManager(unittest.TestCase):
 
     def test_unregister_handler(self):
         """Test unregistering a handler function."""
+
         def handler():
             pass
 
@@ -75,6 +78,7 @@ class TestSignalManager(unittest.TestCase):
 
     def test_unregister_nonexistent_handler(self):
         """Test unregistering a handler that was never registered."""
+
         def handler():
             pass
 
@@ -83,7 +87,7 @@ class TestSignalManager(unittest.TestCase):
         # Should not log anything for nonexistent handler
         self.signal_manager.logger.debug.assert_not_called()
 
-    @patch('signal.signal')
+    @patch("signal.signal")
     def test_register_signal(self, mock_signal):
         """Test registering a signal."""
         sig = signal.SIGINT
@@ -92,7 +96,7 @@ class TestSignalManager(unittest.TestCase):
         self.assertIn(sig, self.signal_manager._active_signals)
         self.signal_manager.logger.debug.assert_called_once()
 
-    @patch('signal.signal')
+    @patch("signal.signal")
     def test_register_signal_duplicate(self, mock_signal):
         """Test that registering the same signal twice only registers it once."""
         sig = signal.SIGINT
@@ -101,7 +105,7 @@ class TestSignalManager(unittest.TestCase):
         self.signal_manager.register_signal(sig)
         mock_signal.assert_not_called()
 
-    @patch('signal.signal')
+    @patch("signal.signal")
     def test_unregister_signal(self, mock_signal):
         """Test unregistering a signal."""
         sig = signal.SIGINT
@@ -112,14 +116,14 @@ class TestSignalManager(unittest.TestCase):
         self.assertNotIn(sig, self.signal_manager._active_signals)
         self.assertNotIn(sig, self.signal_manager._original_handlers)
 
-    @patch('signal.signal')
+    @patch("signal.signal")
     def test_unregister_nonexistent_signal(self, mock_signal):
         """Test unregistering a signal that was never registered."""
         sig = signal.SIGINT
         self.signal_manager.unregister_signal(sig)
         mock_signal.assert_not_called()
 
-    @patch('sys.exit')
+    @patch("sys.exit")
     def test_handle_signal(self, mock_exit):
         """Test the signal handler function."""
         # Register handlers
@@ -134,11 +138,11 @@ class TestSignalManager(unittest.TestCase):
         # Verify handlers were called in LIFO order
         handler2.assert_called_once()
         handler1.assert_called_once()
-        
+
         # Verify exit was called with the right code
         mock_exit.assert_called_once_with(130)
 
-    @patch('sys.exit')
+    @patch("sys.exit")
     def test_handle_signal_with_error(self, mock_exit):
         """Test the signal handler function when a handler raises an exception."""
         # Register handlers
@@ -153,22 +157,22 @@ class TestSignalManager(unittest.TestCase):
         # Verify both handlers were called despite the error
         handler2.assert_called_once()
         handler1.assert_called_once()
-        
+
         # Verify error was logged
         self.signal_manager.logger.error.assert_called_once()
-        
+
         # Verify exit was called with the right code
         mock_exit.assert_called_once_with(130)
 
     def test_context_manager_with_handler(self):
         """Test the context manager with a cleanup handler."""
         handler = MagicMock()
-        
-        with patch('signal.signal') as mock_signal:
+
+        with patch("signal.signal") as mock_signal:
             with self.signal_manager.handler(handler):
                 self.assertIn(handler, self.signal_manager._handlers)
                 mock_signal.assert_called()
-            
+
             # After context, handler should be removed
             self.assertNotIn(handler, self.signal_manager._handlers)
 
@@ -176,22 +180,22 @@ class TestSignalManager(unittest.TestCase):
         """Test the context manager with custom signals."""
         handler = MagicMock()
         signals = [signal.SIGINT, signal.SIGTERM]
-        
-        with patch('signal.signal') as mock_signal:
+
+        with patch("signal.signal") as mock_signal:
             with self.signal_manager.handler(handler, signals=signals):
                 self.assertIn(handler, self.signal_manager._handlers)
                 # Should be called twice, once for each signal
                 self.assertEqual(mock_signal.call_count, 2)
-            
+
             # After context, handler should be removed
             self.assertNotIn(handler, self.signal_manager._handlers)
 
     def test_context_manager_without_handler(self):
         """Test the context manager without a cleanup handler."""
-        with patch('signal.signal') as mock_signal:
+        with patch("signal.signal") as mock_signal:
             with self.signal_manager.handler():
                 mock_signal.assert_called()
-            
+
             # After context, signal handlers should still be active
             # but will be cleaned up in tearDown
 
@@ -201,11 +205,11 @@ class TestSignalManager(unittest.TestCase):
         handler = MagicMock()
         self.signal_manager.register_handler(handler)
         self.signal_manager.register_signal(signal.SIGINT)
-        
+
         # Reset the manager
-        with patch('signal.signal') as mock_signal:
+        with patch("signal.signal") as mock_signal:
             self.signal_manager.reset()
-            
+
             # Verify everything was cleared
             self.assertEqual(self.signal_manager._handlers, [])
             self.assertEqual(self.signal_manager._active_signals, set())

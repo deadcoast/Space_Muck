@@ -15,6 +15,7 @@ ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIButton(UIElement):
     """Interactive button with ASCII styling.
 

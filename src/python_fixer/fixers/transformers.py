@@ -84,7 +84,9 @@ class CircularDependencyTransformer(BaseTransformer):
         for cycle in cycles:
             if success := self._resolve_cycle(analyzer, cycle):
                 variant_loggers.info(f"Resolved cycle: {' -> '.join(cycle)}")
-                variant_loggers.debug(f"Successfully applied transformations for cycle: {success}")
+                variant_loggers.debug(
+                    f"Successfully applied transformations for cycle: {success}"
+                )
             else:
                 variant_loggers.warning(
                     f"Could not resolve cycle: {' -> '.join(cycle)}"
@@ -98,7 +100,7 @@ class CircularDependencyTransformer(BaseTransformer):
         visited = set()
         stack = []  # Track current DFS path for cycle detection
         cycles = []
-        
+
         # Log initial state
         variant_loggers.debug(f"Starting cycle detection with {len(graph)} nodes")
         variant_loggers.debug(f"Initial stack state: {stack}")
@@ -107,23 +109,29 @@ class CircularDependencyTransformer(BaseTransformer):
             visited.add(node)
             path.append(node)
             stack.append(node)  # Track current node in DFS stack
-            variant_loggers.debug(f"DFS: Visiting node {node}, stack depth: {len(stack)}")
-            
+            variant_loggers.debug(
+                f"DFS: Visiting node {node}, stack depth: {len(stack)}"
+            )
+
             for neighbor in graph.get(node, []):
                 if neighbor not in visited:
                     dfs(neighbor, path.copy())
                 elif neighbor in stack:  # Use stack instead of path for cycle detection
                     # Found a cycle
-                    variant_loggers.debug(f"DFS: Found cycle at node {neighbor}, stack: {stack}")
+                    variant_loggers.debug(
+                        f"DFS: Found cycle at node {neighbor}, stack: {stack}"
+                    )
                     cycle_start_index = stack.index(neighbor)
                     cycle = stack[cycle_start_index:]
                     if cycle not in cycles:
                         variant_loggers.debug(f"DFS: Adding new cycle: {cycle}")
                         cycles.append(cycle)
-            
+
             # Remove the current node from the stack when backtracking
             stack.pop()
-            variant_loggers.debug(f"DFS: Backtracking from {node}, remaining stack: {stack}")
+            variant_loggers.debug(
+                f"DFS: Backtracking from {node}, remaining stack: {stack}"
+            )
 
         for node in graph:
             if node not in visited:

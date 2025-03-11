@@ -17,10 +17,7 @@ from typing import (
     Callable,
     Any,
     Optional,
-    Set,
     TypeVar,
-    Generic,
-    Union,
     Tuple,
 )
 
@@ -231,10 +228,9 @@ class EventBus:
                     except Exception as e:
                         logging.error(f"Error in event handler for '{event_type}': {e}")
         finally:
-            self._extracted_from_dispatch_30()
+            self._process_pending_subscription_changes()
 
-    # TODO Rename this here and in `dispatch`
-    def _extracted_from_dispatch_30(self):
+    def _process_pending_subscription_changes(self):
         # Clear dispatching flag
         self.is_dispatching = False
 

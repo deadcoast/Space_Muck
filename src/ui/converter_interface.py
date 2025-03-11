@@ -329,15 +329,12 @@ class ConverterDetailsView:
             )
 
         # Efficiency with color coding and factors
-        efficiency_color = (
-            (100, 255, 100)
-            if self.converter.base_efficiency >= 0.9
-            else (
-                (255, 255, 100)
-                if self.converter.base_efficiency >= 0.7
-                else (255, 100, 100)
-            )
-        )
+        if self.converter.base_efficiency >= 0.9:
+            efficiency_color = (100, 255, 100)
+        elif self.converter.base_efficiency >= 0.7:
+            efficiency_color = (255, 255, 100)
+        else:
+            efficiency_color = (255, 100, 100)
         self.info_box.add_text(
             1,
             5,
@@ -347,11 +344,12 @@ class ConverterDetailsView:
 
         # Energy status
         energy_ratio = self.converter.current_energy / self.converter.energy_capacity
-        energy_color = (
-            (100, 255, 100)
-            if energy_ratio >= 0.7
-            else (255, 255, 100) if energy_ratio >= 0.3 else (255, 100, 100)
-        )
+        if energy_ratio >= 0.7:
+            energy_color = (100, 255, 100)
+        elif energy_ratio >= 0.3:
+            energy_color = (255, 255, 100)
+        else:
+            energy_color = (255, 100, 100)
         self.info_box.add_text(
             1,
             6,
@@ -917,15 +915,12 @@ class EfficiencyMonitor:
 
             for factor in self.efficiency_factors:
                 # Color code based on factor value
-                factor_color = (
-                    (100, 255, 100)
-                    if factor.value > 0.1  # Green for positive
-                    else (
-                        (255, 100, 100)
-                        if factor.value < -0.1  # Red for negative
-                        else (200, 200, 200)
-                    )  # Gray for minimal impact
-                )
+                if factor.value > 0.1:  # Green for positive
+                    factor_color = (100, 255, 100)
+                elif factor.value < -0.1:  # Red for negative
+                    factor_color = (255, 100, 100)
+                else:  # Gray for minimal impact
+                    factor_color = (200, 200, 200)
 
                 self.suggestions_box.add_text(
                     3,
@@ -952,15 +947,12 @@ class EfficiencyMonitor:
             prefix = ">" if i == self.selected_suggestion_index else " "
 
             # Color code based on potential gain
-            gain_color = (
-                (255, 215, 0)
-                if suggestion.potential_gain > 0.5  # Gold for high impact
-                else (
-                    (100, 255, 100)
-                    if suggestion.potential_gain > 0.2  # Green for medium impact
-                    else (200, 200, 200)
-                )  # Gray for low impact
-            )
+            if suggestion.potential_gain > 0.5:  # Gold for high impact
+                gain_color = (255, 215, 0)
+            elif suggestion.potential_gain > 0.2:  # Green for medium impact
+                gain_color = (100, 255, 100)
+            else:  # Gray for low impact
+                gain_color = (200, 200, 200)
 
             # Format suggestion with truncated description
             self.suggestions_box.add_text(
@@ -1212,14 +1204,13 @@ class ConverterInterface:
 
     def _handle_process_started(self, event: EventData) -> None:
         """Handle process start events."""
-        self._extracted_from__handle_process_completed_3(event)
+        self._update_converter_metrics_from_event(event)
 
     def _handle_process_completed(self, event: EventData) -> None:
         """Handle process completion events."""
-        self._extracted_from__handle_process_completed_3(event)
+        self._update_converter_metrics_from_event(event)
 
-    # TODO Rename this here and in `_handle_process_started` and `_handle_process_completed`
-    def _extracted_from__handle_process_completed_3(self, event):
+    def _update_converter_metrics_from_event(self, event):
         converter_id = event.data.get("converter_id")
         process_id = event.data.get("process_id")
         if converter_id and process_id:

@@ -6,22 +6,22 @@ from ui.ui_base.ascii_base import UIStyle, COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
 class StyleManager:
     """Centralized manager for UI style handling.
-    
+
     This class provides a single source of truth for style-specific rendering logic,
     including colors, characters, and animation parameters. All UI components should
     use this manager to ensure consistent style application.
     """
-    
+
     # Singleton instance
     _instance = None
-    
+
     @classmethod
-    def get_instance(cls) -> 'StyleManager':
+    def get_instance(cls) -> "StyleManager":
         """Get the singleton instance of StyleManager."""
         if cls._instance is None:
             cls._instance = StyleManager()
         return cls._instance
-    
+
     def __init__(self):
         """Initialize the StyleManager."""
         # Define style-specific colors
@@ -57,7 +57,7 @@ class StyleManager:
                 "background": (20, 20, 30),  # Dark gray
             },
         }
-        
+
         # Define style-specific border characters
         self.border_chars = {
             UIStyle.SYMBIOTIC: {
@@ -101,7 +101,7 @@ class StyleManager:
                 "vertical": "│",
             },
         }
-        
+
         # Define style-specific fill characters
         self.fill_chars = {
             UIStyle.SYMBIOTIC: {
@@ -130,14 +130,16 @@ class StyleManager:
                 "full": "●",
             },
         }
-    
-    def get_color(self, style: UIStyle, color_type: str = "text") -> Tuple[int, int, int]:
+
+    def get_color(
+        self, style: UIStyle, color_type: str = "text"
+    ) -> Tuple[int, int, int]:
         """Get color for the specified style and color type.
-        
+
         Args:
             style: UI style to get color for
             color_type: Type of color to get (text, highlight, border, background)
-            
+
         Returns:
             RGB color tuple
         """
@@ -154,13 +156,13 @@ class StyleManager:
         except Exception as e:
             logging.error(f"Error getting color: {e}")
             return COLOR_TEXT
-    
+
     def get_border_chars(self, style: UIStyle) -> Dict[str, str]:
         """Get border characters for the specified style.
-        
+
         Args:
             style: UI style to get border characters for
-            
+
         Returns:
             Dictionary of border characters
         """
@@ -187,13 +189,13 @@ class StyleManager:
                 "horizontal": "-",
                 "vertical": "|",
             }
-    
+
     def get_fill_chars(self, style: UIStyle) -> Dict[str, Any]:
         """Get fill characters for the specified style.
-        
+
         Args:
             style: UI style to get fill characters for
-            
+
         Returns:
             Dictionary of fill characters
         """
@@ -214,21 +216,23 @@ class StyleManager:
                 "partial": ["░", "▒", "▓"],
                 "full": "█",
             }
-    
-    def get_progress_color(self, style: UIStyle, position: float) -> Tuple[int, int, int]:
+
+    def get_progress_color(
+        self, style: UIStyle, position: float
+    ) -> Tuple[int, int, int]:
         """Get color for progress bar based on position and style.
-        
+
         Args:
             style: UI style to get color for
             position: Position along the progress bar (0.0 to 1.0)
-            
+
         Returns:
             RGB color tuple
         """
         try:
             base_color = self.get_color(style, "text")
             r, g, b = base_color
-            
+
             # Adjust color based on style
             if style == UIStyle.SYMBIOTIC:
                 # Symbiotic style: green gradient

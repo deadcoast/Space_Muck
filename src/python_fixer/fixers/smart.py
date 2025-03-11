@@ -370,20 +370,22 @@ class FixManager:
             original_file_path = os.path.join(temp_dir, "original.txt")
             patched_file_path = os.path.join(temp_dir, "original_patched.txt")
             patch_file_path = os.path.join(temp_dir, "temp.patch")
-            
+
             # Log paths and verify writability
-            logger.debug(f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}")
-            
+            logger.debug(
+                f"Using temporary files:\n  Original: {original_file_path}\n  Patched: {patched_file_path}\n  Patch: {patch_file_path}"
+            )
+
             # Verify paths exist and are writable
             temp_paths = [original_file_path, patched_file_path, patch_file_path]
             for path in temp_paths:
                 if not os.access(os.path.dirname(path), os.W_OK):
                     logger.error(f"Directory for {path} is not writable")
                     return None
-                    
+
             # Create patched file to verify patch can be applied
             try:
-                with open(patched_file_path, 'w') as f:
+                with open(patched_file_path, "w") as f:
                     f.write(content)
                 logger.debug(f"Created patched file at {patched_file_path}")
             except Exception as e:
@@ -933,7 +935,7 @@ class Analyzer:
 
         # Initialize FixManager with configuration
         fix_manager = SmartFixManager(config_path=config_path)
-        
+
         # Apply initial configuration
         if fix_manager.config:
             logger.info("Applying initial configuration settings")

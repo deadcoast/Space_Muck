@@ -11,24 +11,27 @@ from utils.value_generator_gpu import (
     generate_value_distribution_gpu,
     add_value_clusters_gpu,
 )
-from utils.gpu_utils import (
-    is_gpu_available,
-    get_available_backends,
-)
+from utils.gpu_utils import is_gpu_available
 
 # Check if GPU backends are available
 try:
-    import numba
-    from numba import cuda
+    import importlib.util
 
-    CUDA_AVAILABLE = cuda.is_available()
+    spec = importlib.util.find_spec("numba")
+    if spec is not None:
+        from numba import cuda
+
+        CUDA_AVAILABLE = cuda.is_available()
+    else:
+        CUDA_AVAILABLE = False
 except ImportError:
     CUDA_AVAILABLE = False
 
 try:
-    import cupy as cp
+    import importlib.util
 
-    CUPY_AVAILABLE = True
+    spec = importlib.util.find_spec("cupy")
+    CUPY_AVAILABLE = spec is not None
 except ImportError:
     CUPY_AVAILABLE = False
 

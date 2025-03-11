@@ -38,6 +38,7 @@ MATHEMATICS_AVAILABLE = False  # Used for consistency with the rest of the code
 # Try importing optional dependencies
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -45,6 +46,7 @@ except ImportError:
 
 try:
     import perlin_noise
+
     PERLIN_NOISE_AVAILABLE = True
 except ImportError:
     PERLIN_NOISE_AVAILABLE = False
@@ -53,6 +55,7 @@ except ImportError:
 # Try importing scipy (optional dependency for advanced statistical processing)
 try:
     import scipy
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -61,6 +64,7 @@ except ImportError:
 # Try importing scikit-image (optional dependency for image processing)
 try:
     import skimage
+
     SKIMAGE_AVAILABLE = True
 except ImportError:
     SKIMAGE_AVAILABLE = False

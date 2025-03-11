@@ -10,14 +10,13 @@ import time
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple, Optional
+from typing import List, Optional
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to benchmark
 from entities.base_generator import BaseGenerator
-from utils.noise_generator import NoiseGenerator
 
 # Configure logging
 logging.basicConfig(

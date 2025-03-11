@@ -98,10 +98,10 @@ class ProceduralGenerator(BaseGenerator):
     def generate_field(self, density: float = 0.3) -> np.ndarray:
         """Generate an asteroid field with the given density.
         This is the main interface method expected by AsteroidField.
-        
+
         Args:
             density (float): The desired density of asteroids in the field
-            
+
         Returns:
             np.ndarray: The generated asteroid field grid
         """

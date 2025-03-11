@@ -148,9 +148,7 @@ class EnhancedFormatter(variant_loggers.Formatter):
             Layout(name="stack", size=5),
         )
 
-        self._warning_layout(
-            layout, entry, "red", "bold red"
-        )
+        self._warning_layout(layout, entry, "red", "bold red")
         # Stack trace
         if "stack_trace" in entry["context"]:
             layout["stack"].update(
@@ -172,9 +170,7 @@ class EnhancedFormatter(variant_loggers.Formatter):
             Layout(name="context", size=3),
         )
 
-        self._warning_layout(
-            layout, entry, "yellow", "bold yellow"
-        )
+        self._warning_layout(layout, entry, "yellow", "bold yellow")
         return layout
 
     def _warning_layout(self, layout, entry, border_style, header_style):

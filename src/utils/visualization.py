@@ -109,7 +109,7 @@ class GeneratorVisualizer:
 
         # Save if requested
         if save:
-            self._extracted_from_compare_grids_43(filename, "Saved visualization to ")
+            self._save_visualization_to_file(filename, "Saved visualization to ")
         # Show if requested
         if show:
             plt.show()
@@ -174,18 +174,17 @@ class GeneratorVisualizer:
 
         # Save if requested
         if save:
-            self._extracted_from_compare_grids_43(filename, "Saved comparison to ")
+            self._save_visualization_to_file(filename, "Saved comparison to ")
         # Show if requested
         if show:
             plt.show()
 
         return fig
 
-    # TODO Rename this here and in `visualize_grid` and `compare_grids`
-    def _extracted_from_compare_grids_43(self, filename, arg1):
+    def _save_visualization_to_file(self, filename, message_prefix):
         save_path = os.path.join(self.output_dir, filename)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        logging.info(f"{arg1}{save_path}")
+        logging.info(f"{message_prefix}{save_path}")
 
     def visualize_evolution(
         self,
@@ -285,15 +284,14 @@ class GeneratorVisualizer:
             return False
 
         try:
-            return self._extracted_from_export_grid_as_image_26(
+            return self._process_and_save_grid_as_image(
                 normalize, grid, colormap, filename
             )
         except Exception as e:
             logging.error(f"Failed to export grid: {str(e)}")
             return False
 
-    # TODO Rename this here and in `export_grid_as_image`
-    def _extracted_from_export_grid_as_image_26(
+    def _process_and_save_grid_as_image(
         self, normalize, grid, colormap, filename
     ):
         # Normalize grid values if requested

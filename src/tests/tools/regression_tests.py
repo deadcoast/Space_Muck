@@ -9,12 +9,11 @@ import os
 import sys
 import unittest
 import numpy as np
-from unittest.mock import MagicMock, patch
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from config import *
+# No need to import from config as no config variables are used
 from generators import AsteroidField
 from entities.player import Player
 from entities.miner_entity import MinerEntity

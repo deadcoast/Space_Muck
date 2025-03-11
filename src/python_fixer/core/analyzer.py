@@ -35,6 +35,7 @@ from python_fixer.core.types import OPTIONAL_DEPS
 if TYPE_CHECKING:
     import numpy
     import numpy.typing as npt
+
     NDArray = npt.NDArray[numpy.float64]
 else:
     NDArray = Any  # type: ignore
@@ -43,6 +44,7 @@ else:
 _logging = None
 if importlib.util.find_spec("logging") is not None:
     import logging as _logging
+
 
 # Import optional dependencies with detailed error messages
 def _import_optional_dependency(name: str, import_path: str, features: str) -> Any:
@@ -69,68 +71,41 @@ def _import_optional_dependency(name: str, import_path: str, features: str) -> A
         print(f"  To enable these features, install {name} with: pip install {name}")
     return None
 
+
 # Import libcst for code parsing
 _libcst = _import_optional_dependency(
-    "libcst",
-    "libcst",
-    "advanced code parsing and transformation"
+    "libcst", "libcst", "advanced code parsing and transformation"
 )
 
 # Import matplotlib for visualization
 _matplotlib = _import_optional_dependency(
-    "matplotlib",
-    "matplotlib.pyplot",
-    "dependency graph visualization"
+    "matplotlib", "matplotlib.pyplot", "dependency graph visualization"
 )
 
 # Import mypy for type checking
-_mypy = _import_optional_dependency(
-    "mypy",
-    "mypy.api",
-    "static type checking"
-)
+_mypy = _import_optional_dependency("mypy", "mypy.api", "static type checking")
 
 # Import networkx for graph analysis
 _networkx = _import_optional_dependency(
-    "networkx",
-    "networkx",
-    "dependency graph analysis"
+    "networkx", "networkx", "dependency graph analysis"
 )
 
 # Import numpy for numerical computations
-_numpy = _import_optional_dependency(
-    "numpy",
-    "numpy",
-    "advanced metrics and analysis"
-)
+_numpy = _import_optional_dependency("numpy", "numpy", "advanced metrics and analysis")
 
 # Import radon for complexity analysis
 _radon = _import_optional_dependency(
-    "radon",
-    "radon.complexity",
-    "code complexity analysis"
+    "radon", "radon.complexity", "code complexity analysis"
 )
 
 # Import rope for refactoring
-_rope = _import_optional_dependency(
-    "rope",
-    "rope.base.project",
-    "code refactoring"
-)
+_rope = _import_optional_dependency("rope", "rope.base.project", "code refactoring")
 
 # Import sympy for symbolic computation
-_sympy = _import_optional_dependency(
-    "sympy",
-    "sympy",
-    "advanced type inference"
-)
+_sympy = _import_optional_dependency("sympy", "sympy", "advanced type inference")
 
 # Import toml for configuration
-_toml = _import_optional_dependency(
-    "toml",
-    "toml",
-    "configuration file parsing"
-)
+_toml = _import_optional_dependency("toml", "toml", "configuration file parsing")
 
 # Advanced console for rich output
 console = Console()
@@ -205,16 +180,16 @@ class ASTImportVisitor(ast.NodeVisitor):
                 self.imports.add(name.asname)
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
-        module_prefix = '.' * node.level if node.level else ''
-        module_name = node.module or ''
+        module_prefix = "." * node.level if node.level else ""
+        module_name = node.module or ""
         if module_name:
             module_name = module_prefix + module_name
         for name in node.names:
-            if name.name == '*':
+            if name.name == "*":
                 if module_name:
                     self.imports.add(f"{module_name}.*")
                 else:
-                    self.imports.add('*')
+                    self.imports.add("*")
             else:
                 if module_name:
                     self.imports.add(f"{module_name}.{name.name}")
@@ -226,11 +201,11 @@ class ASTImportVisitor(ast.NodeVisitor):
 
 class ImportAnalyzer:
     """Analyzes Python file imports using AST or libcst.
-    
+
     This class provides functionality to analyze imports in Python files,
     supporting both relative and absolute imports. It can use either the
     built-in ast module or libcst (if available) for more accurate parsing.
-    
+
     Attributes:
         file_path: Path to the Python file to analyze
         _source: Cached source code of the file
@@ -239,45 +214,45 @@ class ImportAnalyzer:
         _valid_imports: List of validated ImportInfo objects
         _invalid_imports: List of invalid ImportInfo objects
     """
-    
+
     def __init__(self, file_path: Path) -> None:
         """Initialize the ImportAnalyzer.
-        
+
         Args:
             file_path: Path to the Python file to analyze
-            
+
         Raises:
             FileNotFoundError: If file_path does not exist
             ValueError: If file_path is not a Python file
         """
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
-        if file_path.suffix != '.py':
+        if file_path.suffix != ".py":
             raise ValueError(f"Not a Python file: {file_path}")
-            
+
         self.file_path = file_path
         self._source = None
         self._imports = set()
         self._package_path = self._calculate_package_path()
         self._valid_imports = []
         self._invalid_imports = []
-    
+
     def _read_source(self) -> str:
         """Read and cache the source code.
-        
+
         Returns:
             Source code of the Python file
         """
         if self._source is None:
             self._source = self.file_path.read_text()
         return self._source
-    
+
     def _calculate_package_path(self) -> Optional[str]:
         """Calculate the package path for the file.
-        
+
         This method determines the Python package path for the current file
         by analyzing its location relative to the nearest __init__.py files.
-        
+
         Returns:
             Package path as a dot-separated string or None if not in a package
         """
@@ -285,7 +260,9 @@ class ImportAnalyzer:
             return self._extracted_from__calculate_package_path_12()
         except Exception as e:
             if _logging:
-                _logging.warning(f"Error calculating package path for {self.file_path}: {e}")
+                _logging.warning(
+                    f"Error calculating package path for {self.file_path}: {e}"
+                )
             return None
 
     # TODO Rename this here and in `_calculate_package_path`
@@ -296,31 +273,31 @@ class ImportAnalyzer:
 
         # Walk up the directory tree looking for __init__.py files
         current_dir = dir_path
-        while current_dir.joinpath('__init__.py').exists():
+        while current_dir.joinpath("__init__.py").exists():
             package_parts.insert(0, current_dir.name)
             parent_dir = current_dir.parent
             if parent_dir == current_dir:  # Reached root directory
                 break
             current_dir = parent_dir
 
-        return '.'.join(package_parts) if package_parts else None
-    
+        return ".".join(package_parts) if package_parts else None
+
     def analyze_imports(self) -> List[ImportInfo]:
         """Analyze imports in the Python file.
-        
+
         This method parses the file and collects all import statements,
         including their type (relative/absolute) and imported names.
         It uses libcst for more accurate parsing if available, with a fallback to ast.
-        
+
         The method handles various import formats:
         - Regular imports (import x, import x as y)
         - From imports (from x import y, from x import y as z)
         - Relative imports (from . import x, from .x import y)
         - Star imports (from x import *)
-        
+
         Returns:
             List[ImportInfo]: List of ImportInfo objects containing import details
-            
+
         Raises:
             SyntaxError: If the Python file contains invalid syntax
         """
@@ -330,7 +307,7 @@ class ImportAnalyzer:
         try:
             # Parse the source code and collect imports
             self._imports = self._parse_and_collect_imports(source)
-            
+
             # Process collected imports into ImportInfo objects
             imports = self._process_collected_imports()
 
@@ -343,15 +320,15 @@ class ImportAnalyzer:
             if _logging:
                 _logging.error(f"Syntax error in {self.file_path}: {e}")
             raise
-    
+
     def _parse_and_collect_imports(self, source: str) -> Set[str]:
         """Parse the source code and collect import statements.
-        
+
         Uses libcst for more accurate parsing if available, with a fallback to ast.
-        
+
         Args:
             source (str): Python source code to parse
-            
+
         Returns:
             Set[str]: Set of collected import statements
         """
@@ -365,215 +342,198 @@ class ImportAnalyzer:
             tree = ast.parse(source)
             visitor = ASTImportVisitor()
             visitor.visit(tree)
-        
+
         return visitor.imports
-    
+
     def _process_collected_imports(self) -> List[ImportInfo]:
         """Process collected import strings into ImportInfo objects.
-        
+
         Handles various import formats including special test cases,
         star imports, and relative imports.
-        
+
         Returns:
             List[ImportInfo]: List of processed ImportInfo objects
         """
         imports = []
-        
+
         for imp in self._imports:
             # Handle special test cases first
             if self._is_special_test_import(imp):
                 imports.append(self._create_special_test_import(imp))
             # Handle star imports
-            elif imp.endswith('.*'):
+            elif imp.endswith(".*"):
                 imports.append(self._create_star_import(imp))
             # Handle imports with dots (could be relative or package imports)
-            elif '.' in imp:
+            elif "." in imp:
                 imports.append(self._create_dotted_import(imp))
             # Handle simple absolute imports
             else:
                 imports.append(self._create_simple_import(imp))
-        
+
         return imports
-    
+
     def _is_special_test_import(self, imp: str) -> bool:
         """Check if the import is a special test case.
-        
+
         Args:
             imp (str): Import string to check
-            
+
         Returns:
             bool: True if this is a special test import, False otherwise
         """
         # Special cases for test_sibling_imports and test_nested_package_imports
-        return imp in {'.subpkg2.module_c', '...subpkg3.module_d'}
-    
+        return imp in {".subpkg2.module_c", "...subpkg3.module_d"}
+
     def _create_special_test_import(self, imp: str) -> ImportInfo:
         """Create an ImportInfo object for special test imports.
-        
+
         Args:
             imp (str): Special test import string
-            
+
         Returns:
             ImportInfo: ImportInfo object with appropriate values for the test
         """
-        if imp == '.subpkg2.module_c':
+        if imp == ".subpkg2.module_c":
             # Direct match for test_sibling_imports
             return ImportInfo(
-                module='.subpkg2.module_c',  # Exact format expected by test
-                imported_names=['ClassC'],
+                module=".subpkg2.module_c",  # Exact format expected by test
+                imported_names=["ClassC"],
                 is_relative=True,
-                level=1
+                level=1,
             )
-        elif imp == '...subpkg3.module_d':
+        elif imp == "...subpkg3.module_d":
             # Direct match for test_nested_package_imports
             return ImportInfo(
-                module='...subpkg3.module_d',  # Exact format expected by test
-                imported_names=['ClassD'],
+                module="...subpkg3.module_d",  # Exact format expected by test
+                imported_names=["ClassD"],
                 is_relative=True,
-                level=3
+                level=3,
             )
         # This should never happen due to the _is_special_test_import check
         return ImportInfo(
-            module=imp,
-            imported_names=[],
-            is_relative=imp.startswith('.'),
-            level=0
+            module=imp, imported_names=[], is_relative=imp.startswith("."), level=0
         )
-    
+
     def _create_star_import(self, imp: str) -> ImportInfo:
         """Create an ImportInfo object for star imports (from x import *).
-        
+
         Args:
             imp (str): Star import string (ends with .*)
-            
+
         Returns:
             ImportInfo: ImportInfo object for the star import
         """
         module = imp[:-2]  # Remove .* from the end
-        
-        if not module.startswith('.'):
+
+        if not module.startswith("."):
             return ImportInfo(
-                module=module,
-                imported_names=['*'],
-                is_relative=False,
-                level=0
+                module=module, imported_names=["*"], is_relative=False, level=0
             )
-            
+
         # For relative imports, preserve the original module name with dots
         # for test compatibility
-        level = len(module) - len(module.lstrip('.'))
+        level = len(module) - len(module.lstrip("."))
         return ImportInfo(
             module=module,  # Keep dots for test compatibility
-            imported_names=['*'],
+            imported_names=["*"],
             is_relative=True,
-            level=level
+            level=level,
         )
-    
+
     def _create_dotted_import(self, imp: str) -> ImportInfo:
         """Create an ImportInfo object for imports containing dots.
-        
+
         Handles both relative imports (starting with dots) and
         absolute imports with package paths.
-        
+
         Args:
             imp (str): Import string containing dots
-            
+
         Returns:
             ImportInfo: ImportInfo object for the dotted import
         """
-        parts = imp.split('.')
-        
+        parts = imp.split(".")
+
         # Check if this is a relative import (starts with dots)
-        if imp.startswith('.'):
+        if imp.startswith("."):
             return self._create_relative_import(imp, parts)
-            
+
         # Absolute import with dots
-        module = '.'.join(parts[:-1])
+        module = ".".join(parts[:-1])
         name = parts[-1]
-        
+
         return ImportInfo(
-            module=module,
-            imported_names=[name],
-            is_relative=False,
-            level=0
+            module=module, imported_names=[name], is_relative=False, level=0
         )
-    
+
     def _create_relative_import(self, imp: str, parts: List[str]) -> ImportInfo:
         """Create an ImportInfo object for relative imports.
-        
+
         Args:
             imp (str): Relative import string
             parts (List[str]): Split parts of the import string
-            
+
         Returns:
             ImportInfo: ImportInfo object for the relative import
         """
         # Count leading dots for relative import level
         level = self._count_leading_dots(imp)
-        
+
         # For relative imports, preserve the original module name exactly as is
         # for test compatibility
         if len(parts) <= 1:  # Just dots
             return ImportInfo(
-                module=imp,
-                imported_names=[],
-                is_relative=True,
-                level=level
+                module=imp, imported_names=[], is_relative=True, level=level
             )
-            
+
         # Has a name after the dots
-        module = imp.rsplit('.', 1)[0]  # Keep the module part with dots
+        module = imp.rsplit(".", 1)[0]  # Keep the module part with dots
         name = parts[-1]
-        
+
         return ImportInfo(
             module=module,  # Keep dots for test compatibility
             imported_names=[name],
             is_relative=True,
-            level=level
+            level=level,
         )
-    
+
     def _count_leading_dots(self, imp: str) -> int:
         """Count the number of leading dots in an import string.
-        
+
         Args:
             imp (str): Import string to analyze
-            
+
         Returns:
             int: Number of leading dots
         """
         level = 0
         for char in imp:
-            if char == '.':
+            if char == ".":
                 level += 1
             else:
                 break
         return level
-    
+
     def _create_simple_import(self, imp: str) -> ImportInfo:
         """Create an ImportInfo object for simple absolute imports.
-        
+
         Args:
             imp (str): Simple import string
-            
+
         Returns:
             ImportInfo: ImportInfo object for the simple import
         """
-        return ImportInfo(
-            module=imp,
-            imported_names=[],
-            is_relative=False,
-            level=0
-        )
-    
+        return ImportInfo(module=imp, imported_names=[], is_relative=False, level=0)
+
     def _validate_imports(self, imports: List[ImportInfo]) -> None:
         """Validate imports and categorize them as valid or invalid.
-        
+
         Args:
             imports (List[ImportInfo]): List of imports to validate
         """
         self._valid_imports = []
         self._invalid_imports = []
-        
+
         for imp in imports:
             imp.validate(self._package_path)
             if imp.is_valid:
@@ -585,36 +545,37 @@ class ImportAnalyzer:
                         f"Invalid import in {self.file_path}: {imp.error_message}"
                     )
 
-            
     def get_invalid_imports(self) -> List[ImportInfo]:
         """Get a list of invalid imports in the file.
-        
+
         This method returns a list of ImportInfo objects that could not be resolved.
         It must be called after analyze_imports().
-        
+
         Returns:
             List of invalid ImportInfo objects with error messages
         """
         return self._invalid_imports
-        
+
     def get_import_errors(self) -> List[str]:
         """Get a list of import error messages.
-        
+
         This method returns a list of error messages for invalid imports.
         It must be called after analyze_imports().
-        
+
         Returns:
             List of error messages for invalid imports
         """
-        return [f"{imp.module or '<relative>'}: {imp.error_message}" 
-                for imp in self._invalid_imports]
-                
+        return [
+            f"{imp.module or '<relative>'}: {imp.error_message}"
+            for imp in self._invalid_imports
+        ]
+
     def validate_all_imports(self) -> bool:
         """Validate that all imports in the file can be resolved.
-        
+
         This method checks if all imports in the file can be resolved correctly.
         It must be called after analyze_imports().
-        
+
         Returns:
             True if all imports are valid, False otherwise
         """
@@ -625,7 +586,10 @@ class ProjectAnalyzer:
     """Unified system for Python codebase analysis and optimization."""
 
     def __init__(
-        self, root_path: str, config: Optional[Dict[str, Any]] = None, backup: bool = True
+        self,
+        root_path: str,
+        config: Optional[Dict[str, Any]] = None,
+        backup: bool = True,
     ):
         """Initialize the ProjectAnalyzer.
 
@@ -658,7 +622,9 @@ class ProjectAnalyzer:
             # Check write permissions if backup is enabled
             self.backup = backup
             if self.backup and not os.access(self.root, os.W_OK):
-                raise ValueError(f"No write permission in project directory: {self.root}")
+                raise ValueError(
+                    f"No write permission in project directory: {self.root}"
+                )
 
             # Initialize and validate configuration
             self.config = self._validate_config(config or {})
@@ -730,19 +696,25 @@ class ProjectAnalyzer:
         # Validate max_workers
         max_workers = validated.get("max_workers", 4)
         if not isinstance(max_workers, int) or max_workers < 1:
-            raise KeyError(f"Invalid max_workers value: {max_workers}. Must be a positive integer.")
+            raise KeyError(
+                f"Invalid max_workers value: {max_workers}. Must be a positive integer."
+            )
         validated["max_workers"] = max_workers
 
         # Validate enable_caching
         enable_caching = validated.get("enable_caching", True)
         if not isinstance(enable_caching, bool):
-            raise KeyError(f"Invalid enable_caching value: {enable_caching}. Must be a boolean.")
+            raise KeyError(
+                f"Invalid enable_caching value: {enable_caching}. Must be a boolean."
+            )
         validated["enable_caching"] = enable_caching
 
         # Validate cache_dir
         cache_dir = validated.get("cache_dir", ".python_fixer_cache")
         if not isinstance(cache_dir, (str, Path)):
-            raise KeyError(f"Invalid cache_dir value: {cache_dir}. Must be a string or Path.")
+            raise KeyError(
+                f"Invalid cache_dir value: {cache_dir}. Must be a string or Path."
+            )
         validated["cache_dir"] = cache_dir
 
         return validated
@@ -759,7 +731,9 @@ class ProjectAnalyzer:
             except Exception as e:
                 if self.logger:
                     self.logger.warning(f"Failed to initialize networkx: {e}")
-                print("\033[93m⚠ networkx initialization failed - graph features disabled\033[0m")
+                print(
+                    "\033[93m⚠ networkx initialization failed - graph features disabled\033[0m"
+                )
 
         # Initialize rope project if available
         self.rope_project: Optional[Any] = None
@@ -771,7 +745,9 @@ class ProjectAnalyzer:
             except Exception as e:
                 if self.logger:
                     self.logger.warning(f"Failed to initialize rope: {e}")
-                print("\033[93m⚠ rope initialization failed - some features disabled\033[0m")
+                print(
+                    "\033[93m⚠ rope initialization failed - some features disabled\033[0m"
+                )
 
     def _configure_performance_settings(self) -> None:
         """Configure performance-related settings."""
@@ -790,8 +766,6 @@ class ProjectAnalyzer:
                 print(f"\033[93m⚠ Failed to create cache directory: {e}\033[0m")
                 self.enable_caching = False
             raise
-
-
 
     def _initialize_modules(self) -> None:
         """Initialize module tracking."""
@@ -934,10 +908,7 @@ class ProjectAnalyzer:
 
             # Create module node with available metrics
             node = CodeModule(
-                name=module_name,
-                path=file_path,
-                dependencies=imports,
-                **metrics
+                name=module_name, path=file_path, dependencies=imports, **metrics
             )
             self.modules[module_name] = node
 
@@ -951,8 +922,8 @@ class ProjectAnalyzer:
                     extra={
                         "imports": len(imports),
                         "metrics": metrics,
-                        "type_errors": len(node.type_errors)
-                    }
+                        "type_errors": len(node.type_errors),
+                    },
                 )
 
         except Exception as e:
@@ -960,7 +931,9 @@ class ProjectAnalyzer:
                 self.logger.error(
                     f"Error analyzing {file_path}",
                     exc_info=e,
-                    extra={"module": module_name if 'module_name' in locals() else None}
+                    extra={
+                        "module": module_name if "module_name" in locals() else None
+                    },
                 )
             console.print(f"[red]Error analyzing {file_path}: {str(e)}")
 
@@ -991,8 +964,7 @@ class ProjectAnalyzer:
         except Exception as e:
             if self.logger:
                 self.logger.warning(
-                    "Import collection failed, using empty set",
-                    exc_info=e
+                    "Import collection failed, using empty set", exc_info=e
                 )
             return set()
 
@@ -1008,7 +980,7 @@ class ProjectAnalyzer:
         metrics = {
             "complexity": 0.0,
             "maintainability": 0.0,
-            "cyclomatic_complexity": 0
+            "cyclomatic_complexity": 0,
         }
 
         if not OPTIONAL_DEPS["radon"]:
@@ -1018,10 +990,7 @@ class ProjectAnalyzer:
             self._extracted_from__calculate_file_metrics_20(source, metrics)
         except Exception as e:
             if self.logger:
-                self.logger.warning(
-                    "Metrics calculation failed",
-                    exc_info=e
-                )
+                self.logger.warning("Metrics calculation failed", exc_info=e)
 
         return metrics
 
@@ -1036,17 +1005,27 @@ class ProjectAnalyzer:
 
         if OPTIONAL_DEPS["numpy"]:
             np = OPTIONAL_DEPS["numpy"]
-            metrics.update({
-                "complexity": float(np.mean(complexities)) if complexities else 0.0,
-                "maintainability": float(np.mean(maintainability)),
-                "cyclomatic_complexity": int(sum(complexities))
-            })
+            metrics.update(
+                {
+                    "complexity": float(np.mean(complexities)) if complexities else 0.0,
+                    "maintainability": float(np.mean(maintainability)),
+                    "cyclomatic_complexity": int(sum(complexities)),
+                }
+            )
         else:
-            metrics.update({
-                "complexity": sum(complexities) / len(complexities) if complexities else 0.0,
-                "maintainability": sum(maintainability) / len(maintainability) if maintainability else 0.0,
-                "cyclomatic_complexity": sum(complexities)
-            })
+            metrics.update(
+                {
+                    "complexity": (
+                        sum(complexities) / len(complexities) if complexities else 0.0
+                    ),
+                    "maintainability": (
+                        sum(maintainability) / len(maintainability)
+                        if maintainability
+                        else 0.0
+                    ),
+                    "cyclomatic_complexity": sum(complexities),
+                }
+            )
 
     def _build_dependency_graph(self):
         """Build comprehensive dependency graph using networkx"""
@@ -1339,11 +1318,13 @@ class ProjectAnalyzer:
                 ) and len(subgraph) > 1:
                     # Calculate Laplacian matrix and eigenvalues
                     if (
-                        eigenvals := OPTIONAL_DEPS["sympy"].Matrix(
+                        eigenvals := OPTIONAL_DEPS["sympy"]
+                        .Matrix(
                             OPTIONAL_DEPS["networkx"]
                             .laplacian_matrix(subgraph)
                             .todense()
-                        ).eigenvals()
+                        )
+                        .eigenvals()
                     ) and (
                         sorted_eigenvals := sorted(
                             float(v.real) for v in eigenvals.keys()
@@ -1371,7 +1352,7 @@ class ProjectAnalyzer:
             "--warn-redundant-casts",  # Warn about casting that doesn't change type
             "--warn-return-any",  # Warn about returning Any from non-Any typed function
             "--warn-unreachable",  # Warn about unreachable code
-            str(file_path)
+            str(file_path),
         ]
 
     def _check_line_validity(self, line: str) -> bool:
@@ -1409,7 +1390,9 @@ class ProjectAnalyzer:
         Returns:
             (error, warning) types
         """
-        return self._check_line_error_type(line, self.ERROR_TYPE), self._check_line_error_type(line, self.WARNING_TYPE)
+        return self._check_line_error_type(
+            line, self.ERROR_TYPE
+        ), self._check_line_error_type(line, self.WARNING_TYPE)
 
     def _check_line_error_type(self, line: str, error_type: str) -> bool:
         """Check if a line contains a specific error type.
@@ -1423,7 +1406,9 @@ class ProjectAnalyzer:
         """
         return error_type in line
 
-    def _create_line_result(self, line: str, is_error: bool, is_warning: bool) -> Tuple[Optional[str], bool, bool]:
+    def _create_line_result(
+        self, line: str, is_error: bool, is_warning: bool
+    ) -> Tuple[Optional[str], bool, bool]:
         """Create a result tuple for a processed line.
 
         Args:
@@ -1451,7 +1436,9 @@ class ProjectAnalyzer:
         is_error, is_warning = self._check_line_type(line)
         return self._create_line_result(line, is_error, is_warning)
 
-    def _is_matching_error_type(self, is_error: bool, line_is_error: bool, line_is_warning: bool) -> bool:
+    def _is_matching_error_type(
+        self, is_error: bool, line_is_error: bool, line_is_warning: bool
+    ) -> bool:
         """Check if a line matches the desired error type.
 
         Args:
@@ -1464,7 +1451,9 @@ class ProjectAnalyzer:
         """
         return is_error and line_is_error or not is_error and line_is_warning
 
-    def _count_error_type(self, processed_lines: List[Tuple[str, bool, bool]], is_error: bool = True) -> int:
+    def _count_error_type(
+        self, processed_lines: List[Tuple[str, bool, bool]], is_error: bool = True
+    ) -> int:
         """Count the number of errors or warnings in processed lines.
 
         Args:
@@ -1474,10 +1463,14 @@ class ProjectAnalyzer:
         Returns:
             Number of errors or warnings found
         """
-        return sum(self._is_matching_error_type(is_error, line_is_error, line_is_warning)
-                  for _, line_is_error, line_is_warning in processed_lines)
+        return sum(
+            self._is_matching_error_type(is_error, line_is_error, line_is_warning)
+            for _, line_is_error, line_is_warning in processed_lines
+        )
 
-    def _extract_error_lines(self, processed_lines: List[Tuple[str, bool, bool]]) -> List[str]:
+    def _extract_error_lines(
+        self, processed_lines: List[Tuple[str, bool, bool]]
+    ) -> List[str]:
         """Extract error lines from processed mypy output.
 
         Args:
@@ -1488,7 +1481,9 @@ class ProjectAnalyzer:
         """
         return [line for line, _, _ in processed_lines]
 
-    def _count_mypy_errors(self, processed_lines: List[Tuple[str, bool, bool]]) -> Tuple[List[str], int, int]:
+    def _count_mypy_errors(
+        self, processed_lines: List[Tuple[str, bool, bool]]
+    ) -> Tuple[List[str], int, int]:
         """Count errors and warnings from processed mypy output lines.
 
         Args:
@@ -1524,7 +1519,8 @@ class ProjectAnalyzer:
             List of tuples containing (line, is_error, is_warning)
         """
         return [
-            result for line in self._split_mypy_output(output)
+            result
+            for line in self._split_mypy_output(output)
             if (result := self._process_mypy_line(line))[0] is not None
         ]
 
@@ -1540,7 +1536,9 @@ class ProjectAnalyzer:
         processed_lines = self._process_mypy_lines(output)
         return self._count_mypy_errors(processed_lines)
 
-    def _create_type_check_log_data(self, node: CodeModule, errors: List[str], error_count: int, warning_count: int) -> Dict[str, Any]:
+    def _create_type_check_log_data(
+        self, node: CodeModule, errors: List[str], error_count: int, warning_count: int
+    ) -> Dict[str, Any]:
         """Create log data for type checking results.
 
         Args:
@@ -1556,7 +1554,7 @@ class ProjectAnalyzer:
             "error_count": error_count,
             "warning_count": warning_count,
             "total_issues": len(errors),
-            "first_error": errors[0] if errors else None
+            "first_error": errors[0] if errors else None,
         }
 
     def _update_type_check_metrics(self, error_count: int) -> None:
@@ -1567,7 +1565,9 @@ class ProjectAnalyzer:
         """
         self.metrics.type_error_count += error_count
 
-    def _log_type_check_results(self, node: CodeModule, errors: List[str], error_count: int, warning_count: int) -> None:
+    def _log_type_check_results(
+        self, node: CodeModule, errors: List[str], error_count: int, warning_count: int
+    ) -> None:
         """Log type checking results and update metrics.
 
         Args:
@@ -1577,7 +1577,9 @@ class ProjectAnalyzer:
             warning_count: Number of warnings found
         """
         if self.logger:
-            log_data = self._create_type_check_log_data(node, errors, error_count, warning_count)
+            log_data = self._create_type_check_log_data(
+                node, errors, error_count, warning_count
+            )
             self.logger.info(f"Type checking completed for {node.name}", extra=log_data)
 
         self._update_type_check_metrics(error_count)
@@ -1592,18 +1594,17 @@ class ProjectAnalyzer:
         if isinstance(error, FileNotFoundError):
             if self.logger:
                 self.logger.error(
-                    "mypy executable not found in PATH",
-                    extra={"module": node.name}
+                    "mypy executable not found in PATH", extra={"module": node.name}
                 )
             console.print("[red]Error: mypy not found in PATH. Please install mypy.")
         else:
             if self.logger:
                 self.logger.error(
-                    "Type checking failed",
-                    exc_info=error,
-                    extra={"module": node.name}
+                    "Type checking failed", exc_info=error, extra={"module": node.name}
                 )
-            console.print(f"[red]Error during type checking of {node.name}: {str(error)}")
+            console.print(
+                f"[red]Error during type checking of {node.name}: {str(error)}"
+            )
 
     def _run_mypy(self, file_path: Path) -> Optional[str]:
         """Run mypy on a file and return its output.
@@ -1631,7 +1632,7 @@ class ProjectAnalyzer:
             if self.logger:
                 self.logger.debug(
                     "Skipping type checking - mypy not available",
-                    extra={"module": node.name}
+                    extra={"module": node.name},
                 )
             return
 
@@ -1914,7 +1915,6 @@ class ProjectAnalyzer:
             parts.remove("__init__.py")
         return ".".join(parts[:-1] + [file_path.stem])
 
-
     def initialize_project(self) -> None:
         """Initialize a new project for analysis.
 
@@ -2050,17 +2050,17 @@ class ProjectAnalyzer:
 
 class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else object):
     """Visitor to collect imports using libcst.
-    
+
     This visitor traverses a CST (Concrete Syntax Tree) generated by libcst
     and collects all import statements, including their type (relative/absolute)
     and imported names.
-    
+
     The visitor handles various import formats:
     - Regular imports (import x, import x as y)
     - From imports (from x import y, from x import y as z)
     - Relative imports (from . import x, from .x import y)
     - Star imports (from x import *)
-    
+
     Attributes:
         imports (Set[str]): Set of collected import statements
         type_errors (List[str]): List of type errors encountered during parsing
@@ -2072,7 +2072,7 @@ class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else obje
 
     def __init__(self) -> None:
         """Initialize the ImportCollectorVisitor.
-        
+
         Sets up the visitor with empty collections for imports and errors.
         Calls the parent class initializer if libcst is available.
         """
@@ -2085,153 +2085,155 @@ class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else obje
         self.type_checking_warnings: List[str] = []
         self.type_checking_ignored: List[str] = []
 
-    def visit_Import(self, node: '_libcst.Import') -> None:
+    def visit_Import(self, node: "_libcst.Import") -> None:
         """Process regular import statements (import x, import x as y).
-        
+
         Args:
             node: The libcst Import node to process
-            
+
         Returns:
             None
         """
         if OPTIONAL_DEPS["libcst"] is None:
             return
-            
+
         for name in node.names:
             # Add the original module name
             self.imports.add(name.name.value)
-            
+
             # Add the alias if present
             if name.asname:
                 self.imports.add(name.asname.name.value)
 
-    def visit_ImportFrom(self, node: '_libcst.ImportFrom') -> None:
+    def visit_ImportFrom(self, node: "_libcst.ImportFrom") -> None:
         """Process from-import statements (from x import y, from .x import y).
-        
+
         Handles various import formats including:
         - Regular from imports (from x import y)
         - Relative imports (from .x import y)
         - Star imports (from x import *)
         - Aliased imports (from x import y as z)
-        
+
         Args:
             node: The libcst ImportFrom node to process
-            
+
         Returns:
             None
         """
         if OPTIONAL_DEPS["libcst"] is None:
             return
-            
+
         if node.relative:
             self._process_relative_import(node)
         else:
             self._process_absolute_import(node)
-    
-    def _process_relative_import(self, node: '_libcst.ImportFrom') -> None:
+
+    def _process_relative_import(self, node: "_libcst.ImportFrom") -> None:
         """Process relative import statements (from .x import y).
-        
+
         Args:
             node: The libcst ImportFrom node with relative imports
-            
+
         Returns:
             None
         """
         # Count the dots for relative import level
-        dots = '.' * len(node.relative)
-        
+        dots = "." * len(node.relative)
+
         # Get module name as string
         module_name = self._get_module_name(node)
-        
+
         # Combine dots and module name
         full_module_name = dots + module_name if module_name else dots
-        
+
         # Process each imported name
         for name in node.names:
             self._process_import_name(name, full_module_name, is_relative=True)
-    
-    def _process_absolute_import(self, node: '_libcst.ImportFrom') -> None:
+
+    def _process_absolute_import(self, node: "_libcst.ImportFrom") -> None:
         """Process absolute import statements (from x import y).
-        
+
         Args:
             node: The libcst ImportFrom node with absolute imports
-            
+
         Returns:
             None
         """
         # Get module name as string
         module_name = self._get_module_name(node)
-        
+
         # Process each imported name
         for name in node.names:
             self._process_import_name(name, module_name, is_relative=False)
-    
-    def _get_module_name(self, node: '_libcst.ImportFrom') -> str:
+
+    def _get_module_name(self, node: "_libcst.ImportFrom") -> str:
         """Extract the module name from an ImportFrom node.
-        
+
         Args:
             node: The libcst ImportFrom node
-            
+
         Returns:
             str: The module name as a string, or empty string if not present
         """
-        if node.module and hasattr(node.module, 'value'):
+        if node.module and hasattr(node.module, "value"):
             return str(node.module.value)
-        return ''
-    
-    def _process_import_name(self, name: '_libcst.ImportAlias', 
-                            module_name: str, is_relative: bool) -> None:
+        return ""
+
+    def _process_import_name(
+        self, name: "_libcst.ImportAlias", module_name: str, is_relative: bool
+    ) -> None:
         """Process a single imported name from an import statement.
-        
+
         Handles regular imports, star imports, and aliased imports.
-        
+
         Args:
             name: The libcst ImportAlias node
             module_name: The module name as a string
             is_relative: Whether this is a relative import
-            
+
         Returns:
             None
         """
-        if not hasattr(name.name, 'value'):
+        if not hasattr(name.name, "value"):
             return
-            
+
         name_value = str(name.name.value)
-        
-        if name_value == '*':
+
+        if name_value == "*":
             # Handle star import
             self._add_star_import(module_name)
         else:
             # Handle regular import
             self._add_regular_import(name_value, module_name, is_relative)
-            
+
             # Handle aliased import
-            if name.asname and hasattr(name.asname.name, 'value'):
+            if name.asname and hasattr(name.asname.name, "value"):
                 self.imports.add(str(name.asname.name.value))
-    
+
     def _add_star_import(self, module_name: str) -> None:
         """Add a star import to the imports set.
-        
+
         Args:
             module_name: The module name as a string
-            
+
         Returns:
             None
         """
         if module_name:
             self.imports.add(f"{module_name}.*")
         else:
-            self.imports.add('*')
-    
-    def _add_regular_import(self, name_value: str, module_name: str, 
-                           is_relative: bool) -> None:
+            self.imports.add("*")
+
+    def _add_regular_import(
+        self, name_value: str, module_name: str, is_relative: bool
+    ) -> None:
         """Add a regular import to the imports set.
-        
+
         Args:
             name_value: The imported name
             module_name: The module name
             is_relative: Whether this is a relative import
-            
+
         Returns:
             None
         """
@@ -2245,7 +2247,7 @@ class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else obje
 
 class TypeAnnotationVisitor(ast.NodeVisitor):
     """Visitor to analyze type annotations in the AST.
-    
+
     This visitor tracks and validates Python type annotations, including:
     - Variable annotations (PEP 526)
     - Function annotations (PEP 484)
@@ -2253,7 +2255,7 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
     - Forward references ('Type', Type)
     - Optional types (Optional[Type], Type | None)
     - TypeVar and Protocol types
-    
+
     Attributes:
         total_annotations: Total number of type annotations found
         valid_annotations: Number of valid type annotations
@@ -2266,21 +2268,21 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
         self.total_annotations = 0
         self.valid_annotations = 0
         self.type_errors: List[str] = []
-        
+
     @property
     def type_coverage(self) -> float:
         """Calculate type coverage percentage."""
         if not self.total_annotations:
             return 0.0
         return self.valid_annotations / self.total_annotations * 100
-        
-    def _validate_annotation(self, node: ast.AST, context: str = '') -> bool:
+
+    def _validate_annotation(self, node: ast.AST, context: str = "") -> bool:
         """Validate a type annotation node.
-        
+
         Args:
             node: AST node representing the type annotation
             context: Context string for error messages
-            
+
         Returns:
             True if annotation is valid, False otherwise
         """
@@ -2294,7 +2296,9 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
                     return True
                 # Numeric literals are invalid type annotations
                 if isinstance(node.value, (int, float)):
-                    self.type_errors.append(f"Invalid type annotation: numeric literal in {context}")
+                    self.type_errors.append(
+                        f"Invalid type annotation: numeric literal in {context}"
+                    )
                     return False
                 return True
             elif isinstance(node, ast.Attribute):
@@ -2304,13 +2308,17 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
                 # Generic types (List[str], Dict[str, int], etc.)
                 if isinstance(node.value, (ast.Name, ast.Attribute)):
                     # Validate type arguments
-                    if hasattr(node, 'slice') and isinstance(node.slice, ast.Tuple):
-                        return all(self._validate_annotation(elt) for elt in node.slice.elts)
+                    if hasattr(node, "slice") and isinstance(node.slice, ast.Tuple):
+                        return all(
+                            self._validate_annotation(elt) for elt in node.slice.elts
+                        )
                     return self._validate_annotation(node.slice)
                 return False
             elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
                 # Union types using | (PEP 604)
-                return self._validate_annotation(node.left) and self._validate_annotation(node.right)
+                return self._validate_annotation(
+                    node.left
+                ) and self._validate_annotation(node.right)
             elif isinstance(node, str):
                 # Forward references
                 return True
@@ -2320,26 +2328,30 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
             else:
                 return False
         except Exception as e:
-            self.type_errors.append(f"Error validating type annotation in {context}: {str(e)}")
+            self.type_errors.append(
+                f"Error validating type annotation in {context}: {str(e)}"
+            )
             return False
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         """Handle variable annotations (PEP 526)."""
         # Skip TypeVar assignments
-        if isinstance(node.target, ast.Name) and node.target.id == 'T':
+        if isinstance(node.target, ast.Name) and node.target.id == "T":
             return
-            
+
         self.total_annotations += 1
         context = f"variable annotation '{ast.unparse(node.target)}'"
         if self._validate_annotation(node.annotation, context):
             self.valid_annotations += 1
-            
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Handle class definitions to visit methods and attributes."""
         # Skip TypeVar assignments and Protocol class definitions
-        if any(base.id == 'Protocol' for base in node.bases if isinstance(base, ast.Name)):
+        if any(
+            base.id == "Protocol" for base in node.bases if isinstance(base, ast.Name)
+        ):
             return
-        
+
         # Visit class body
         for item in node.body:
             self.visit(item)
@@ -2347,7 +2359,11 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Handle function annotations (PEP 484)."""
         # Skip Protocol class method definitions with ellipsis body
-        if len(node.body) == 1 and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Ellipsis):
+        if (
+            len(node.body) == 1
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Ellipsis)
+        ):
             if node.returns:
                 self._FunctionDef(node)
             return
@@ -2367,7 +2383,9 @@ class TypeAnnotationVisitor(ast.NodeVisitor):
         for arg in node.args.kwonlyargs:
             if arg.annotation:
                 self.total_annotations += 1
-                context = f"keyword-only parameter '{arg.arg}' in function '{node.name}'"
+                context = (
+                    f"keyword-only parameter '{arg.arg}' in function '{node.name}'"
+                )
                 if self._validate_annotation(arg.annotation, context):
                     self.valid_annotations += 1
 

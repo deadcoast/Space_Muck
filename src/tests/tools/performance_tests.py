@@ -10,12 +10,13 @@ import sys
 import time
 import unittest
 import numpy as np
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from config import *
+# Import specific items from config instead of using star imports
+from config import NotificationManager, Shop
 from generators import AsteroidField, AsteroidGenerator
 from entities.player import Player
 from entities.miner_entity import MinerEntity

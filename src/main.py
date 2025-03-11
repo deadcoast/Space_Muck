@@ -209,22 +209,21 @@ class Game:
             self.shop: Shop = Shop()
             self.notifier: NotificationManager = NotificationManager()
             self.renderer: AsteroidFieldRenderer = AsteroidFieldRenderer()
-            
+
             # Initialize new ASCII UI components
             from ui.game_screen import ASCIIGameScreen
             from ui.minimap_panel import ASCIIMinimapPanel
-            
+
             self.game_screen = ASCIIGameScreen(
-                pygame.Rect(10, 10, WINDOW_WIDTH - 20, WINDOW_HEIGHT - 20),
-                "SPACE MUCK"
+                pygame.Rect(10, 10, WINDOW_WIDTH - 20, WINDOW_HEIGHT - 20), "SPACE MUCK"
             )
-            
+
             # Initialize minimap panel in the bottom right corner
             minimap_rect = pygame.Rect(
                 WINDOW_WIDTH - MINIMAP_SIZE - MINIMAP_PADDING,
                 WINDOW_HEIGHT - MINIMAP_SIZE - MINIMAP_PADDING,
                 MINIMAP_SIZE,
-                MINIMAP_SIZE
+                MINIMAP_SIZE,
             )
             self.minimap_panel = ASCIIMinimapPanel(minimap_rect, "NAVIGATION")
 
@@ -254,22 +253,6 @@ class Game:
 
     # This method has been removed to fix the redefinition lint warning
     # The implementation at line ~480 is now the canonical version
-    
-    # TODO: Remove this helper method once all references are updated
-    def _extracted_from_change_state_13(self, new_state):
-        # Validate the transition
-        self._validate_state_transition(new_state)
-
-        # Record the transition
-        old_state = self.state
-        self.previous_state = old_state
-        self.state = new_state
-
-        # Update history and metrics
-        self._record_state_transition(old_state, new_state)
-        self.state_metrics["transitions"] += 1
-
-        logging.info(f"State transition: {old_state} -> {new_state}")
 
     def _validate_state_transition(self, new_state: str) -> None:
         """Validate if a state transition is allowed.
@@ -309,11 +292,7 @@ class Game:
         # Update average time in state
         if old_state:
             if last_transition := next(
-                (
-                    t
-                    for t in reversed(self.state_history[:-1])
-                    if t["to"] == old_state
-                ),
+                (t for t in reversed(self.state_history[:-1]) if t["to"] == old_state),
                 None,
             ):
                 time_in_state = timestamp - last_transition["timestamp"]
@@ -475,14 +454,13 @@ class Game:
         """
         try:
             if self._validate_state_transition(new_state):
-                self._extracted_from_change_state_12(new_state)
+                self._perform_state_transition(new_state)
         except GameStateError as e:
             logging.error(f"State transition failed: {e}")
             self._state_valid = False
             raise
 
-    # TODO Rename this here and in `change_state`
-    def _extracted_from_change_state_12(self, new_state):
+    def _perform_state_transition(self, new_state):
         self._record_state_transition(new_state)
         self.previous_state = self.state
         self.state = new_state
@@ -565,7 +543,7 @@ class Game:
         self.show_race_details: bool = False
         self.cursor_over_ui: bool = False
         self.display_controls_help: bool = False
-        
+
         # Initialize UI component states
         self.ui_components_initialized: bool = False
         self.ui_needs_update: bool = True
@@ -940,12 +918,16 @@ class Game:
                 event, self.player, self.field
             ):
                 continue
-                
+
             # Let ASCII UI components handle events
-            if hasattr(self, 'game_screen') and self.game_screen.handle_event(event):
+            if hasattr(self, "game_screen") and self.game_screen.handle_event(event):
                 continue
-                    
-            if hasattr(self, 'minimap_panel') and self.show_minimap and self.minimap_panel.handle_event(event):
+
+            if (
+                hasattr(self, "minimap_panel")
+                and self.show_minimap
+                and self.minimap_panel.handle_event(event)
+            ):
                 continue
 
             # Basic window events
@@ -972,13 +954,13 @@ class Game:
 
             # Log all game statistics
             self._log_game_statistics()
-            
+
             # Log performance metrics if available
             self._log_performance_metrics()
 
             # Save player data and clean up resources
             try:
-                self._extracted_from_quit_game_64()
+                self._display_farewell_and_cleanup()
                 # Close any open resources or connections
                 # (Adding placeholder for future implementation)
             except Exception as cleanup_error:
@@ -991,7 +973,7 @@ class Game:
         except Exception as e:
             log_exception("Error during game exit", e)
             return False  # Still exit even if there's an error
-            
+
     def _log_game_statistics(self) -> None:
         """Log complete game statistics before quitting."""
         logging.info("===== COMPLETE GAME STATISTICS =====")
@@ -1015,29 +997,29 @@ class Game:
         for stat_name, stat_value in sorted(self.stats.items()):
             if stat_name not in basic_stat_names:
                 logging.info(f"  {stat_name}: {stat_value}")
-                
+
     def _log_performance_metrics(self) -> None:
         """Log detailed performance metrics if available."""
         if not hasattr(self, "performance_metrics") or not self.performance_metrics:
             return
-            
+
         logging.info("\n--- Performance Metrics Summary ---")
         for metric_name, values in self.performance_metrics.items():
             if not values:
                 continue
-                
+
             # Calculate statistics
             avg = sum(values) / len(values)
             max_val = max(values)
             min_val = min(values)
-            
+
             # Calculate standard deviation
             std_dev = (
                 (sum((x - avg) ** 2 for x in values) / len(values)) ** 0.5
                 if len(values) > 1
                 else 0
             )
-            
+
             # Calculate 95th percentile
             p95 = (
                 sorted(values)[int(len(values) * 0.95)]
@@ -1054,8 +1036,7 @@ class Game:
                 f"    std_dev={std_dev:.3f}ms, p95={p95:.3f}ms, samples={len(values)}"
             )
 
-    # TODO Rename this here and in `quit_game`
-    def _extracted_from_quit_game_64(self):
+    def _display_farewell_and_cleanup(self):
         # Display a farewell message to the player
         play_time_min = self.game_time / 60
 
@@ -1158,7 +1139,7 @@ class Game:
 
     def handle_play_state_keys(self, key: int) -> None:
         """Handle keys specific to play state with validation.
-        
+
         Args:
             key: The pygame key code that was pressed
         """
@@ -1181,7 +1162,7 @@ class Game:
                 pygame.K_u: self._handle_auto_upgrade_toggle,
                 pygame.K_p: self._handle_add_ship,
             }
-            
+
             # Handle zoom keys separately since they use multiple key mappings
             if key in [pygame.K_PLUS, pygame.K_EQUALS]:
                 self._handle_zoom_in()
@@ -1190,7 +1171,7 @@ class Game:
             # Handle other mapped keys
             elif key in key_handlers:
                 key_handlers[key]()
-                
+
         except GameStateError as e:
             logging.warning(f"Invalid play state action: {e}")
             self.notifier.add_notification(
@@ -1198,59 +1179,59 @@ class Game:
             )
         except Exception as e:
             log_exception("Error handling play state key", e)
-            
+
     def _handle_shop_key(self) -> None:
         """Open the shop state."""
         self.change_state(GAME_CONFIG["states"]["shop"])
-        
+
     def _handle_minimap_toggle(self) -> None:
         """Toggle minimap visibility."""
         self.show_minimap = not self.show_minimap
         logging.info(f"Minimap {'shown' if self.show_minimap else 'hidden'}")
-        
+
     def _handle_grid_toggle(self) -> None:
         """Toggle grid visibility."""
         self.show_grid = not self.show_grid
         logging.info(f"Grid {'shown' if self.show_grid else 'hidden'}")
-        
+
     def _handle_auto_mine_toggle(self) -> None:
         """Toggle auto-mining feature."""
         self.auto_mine = not self.auto_mine
         status = "enabled" if self.auto_mine else "disabled"
         self.notifier.add(f"Auto-mining {status}", category="mining")
         logging.info(f"Auto-mining {status}")
-        
+
     def _handle_mine_action(self) -> None:
         """Perform mining action."""
         self.mine()
-        
+
     def _handle_field_regeneration(self) -> None:
         """Regenerate the asteroid field."""
         self.regenerate_field()
         logging.info("Field regenerated")
-        
+
     def _handle_symbiote_feeding(self) -> None:
         """Feed symbiotes."""
         self.feed_symbiotes()
         logging.info("Symbiotes fed")
-        
+
     def _handle_auto_upgrade_toggle(self) -> None:
         """Toggle auto-upgrade feature."""
         self.auto_upgrade = not self.auto_upgrade
         status = "enabled" if self.auto_upgrade else "disabled"
         self.notifier.add(f"Auto-upgrade {status}", category="upgrade")
         logging.info(f"Auto-upgrade {status}")
-        
+
     def _handle_zoom_in(self) -> None:
         """Increase zoom level."""
         self.zoom_level = min(2.0, self.zoom_level + 0.1)
         logging.debug(f"Zoom level increased to {self.zoom_level:.1f}")
-        
+
     def _handle_zoom_out(self) -> None:
         """Decrease zoom level."""
         self.zoom_level = max(0.5, self.zoom_level - 0.1)
         logging.debug(f"Zoom level decreased to {self.zoom_level:.1f}")
-        
+
     def _handle_add_ship(self) -> None:
         """Add a ship to the player's fleet."""
         if self.player.add_ship():
@@ -1483,11 +1464,11 @@ class Game:
 
             # Update UI components (must be done regardless of game state)
             self.notifier.update(self.delta_time)
-            
+
             # Update ASCII UI components animations
-            if hasattr(self, 'game_screen'):
+            if hasattr(self, "game_screen"):
                 self.game_screen.update_animations(self.delta_time)
-            if hasattr(self, 'minimap_panel') and self.show_minimap:
+            if hasattr(self, "minimap_panel") and self.show_minimap:
                 self.minimap_panel.update_animations(self.delta_time)
 
             # Clear tooltip if not updated this frame
@@ -1603,7 +1584,7 @@ class Game:
 
             # STAGE 4: Entity Lifecycle and Simulation
             try:
-                self._extracted_from_update_play_state_96(update_context)
+                self._update_entity_lifecycle(update_context)
             except Exception as stage4_error:
                 log_exception(
                     "Error in Entity Lifecycle processing (Stage 4)", stage4_error
@@ -1683,8 +1664,7 @@ class Game:
                 f"Game system error: {str(e)}", category="error", importance=3
             )
 
-    # TODO Rename this here and in `update_play_state`
-    def _extracted_from_update_play_state_96(self, update_context):
+    def _update_entity_lifecycle(self, update_context):
         # Update symbiote races, evolutions, and discoveries
         entity_start = log_performance_start("Entity lifecycle processing")
         self.check_race_evolutions()
@@ -2457,38 +2437,40 @@ class Game:
                 self._process_defeat(combat_info)
             elif outcome == "escape":
                 self._process_escape(combat_info)
-            
+
             # Update comprehensive combat statistics
             self._update_combat_statistics(combat_info)
-            
+
             # Performance tracking for specific combat types
             log_performance_metric(
                 f"combat_processing_{outcome}", time.time() - combat_processing_start
             )
-            
+
             # Log combat result
             logging.info(
                 f"Combat result: {outcome} with {len(combat_result.get('log', []))} actions"
             )
-            
+
             log_performance_end("Combat result processing", combat_processing_start)
-            
+
         except Exception as e:
             log_exception("Error processing combat result", e)
-            log_performance_end("Combat result processing", combat_processing_start, "error")
+            log_performance_end(
+                "Combat result processing", combat_processing_start, "error"
+            )
             # Attempt recovery
             try:
                 self.player.reset_fleet_state()
                 logging.info("Reset fleet state after error")
             except Exception as recovery_error:
                 log_exception("Failed to recover from fleet error", recovery_error)
-            
+
     def _extract_combat_info(self, combat_result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract relevant information from combat result.
-        
+
         Args:
             combat_result: Raw combat result dictionary
-            
+
         Returns:
             Dictionary with extracted and normalized combat information
         """
@@ -2501,12 +2483,12 @@ class Game:
             "penalties": combat_result.get("penalties", {}),
             "escape_cost": combat_result.get("escape_cost", 0),
             "stats": combat_result.get("stats", {}),
-            "raw_result": combat_result  # Keep original data for reference
+            "raw_result": combat_result,  # Keep original data for reference
         }
-        
+
     def _log_combat_outcome(self, combat_info: Dict[str, Any]) -> None:
         """Log details about the combat outcome.
-        
+
         Args:
             combat_info: Processed combat information
         """
@@ -2514,33 +2496,33 @@ class Game:
             f"Combat outcome: {combat_info['outcome']} against {combat_info['enemy_type']} "
             f"in zone {combat_info['zone']} (difficulty: {combat_info['difficulty']})"
         )
-        
+
     def _process_victory(self, combat_info: Dict[str, Any]) -> None:
         """Process a victorious combat outcome.
-        
+
         Args:
             combat_info: Processed combat information
         """
         # Notify player of victory
         self.notifier.add(
-            f"Victory! {combat_info['enemy_type']} defeated", 
-            category="combat", 
-            importance=2
+            f"Victory! {combat_info['enemy_type']} defeated",
+            category="combat",
+            importance=2,
         )
 
         # Process rewards
         total_reward_value = self._process_combat_rewards(combat_info["rewards"])
-        
+
         # Track reward value by difficulty
         difficulty = combat_info["difficulty"]
         difficulty_key = f"reward_value_diff_{int(difficulty)}"
         self.stats[difficulty_key] = (
             self.stats.get(difficulty_key, 0) + total_reward_value
         )
-        
+
     def _process_defeat(self, combat_info: Dict[str, Any]) -> None:
         """Process a defeat combat outcome.
-        
+
         Args:
             combat_info: Processed combat information
         """
@@ -2552,41 +2534,38 @@ class Game:
         )
 
         # Process penalties
-        self._process_combat_penalties(combat_info["penalties"], combat_info["difficulty"])
-        
+        self._process_combat_penalties(
+            combat_info["penalties"], combat_info["difficulty"]
+        )
+
     def _process_escape(self, combat_info: Dict[str, Any]) -> None:
         """Process an escape combat outcome.
-        
+
         Args:
             combat_info: Processed combat information
         """
         # Notify player of escape
         self.notifier.add(
-            f"Escaped from {combat_info['enemy_type']}", 
-            category="combat", 
-            importance=2
+            f"Escaped from {combat_info['enemy_type']}", category="combat", importance=2
         )
 
         # Process escape costs
         escape_cost = combat_info["escape_cost"]
         if escape_cost > 0:
             self.notifier.add(
-                f"Escape cost: {escape_cost} damage to ships", 
-                category="combat"
+                f"Escape cost: {escape_cost} damage to ships", category="combat"
             )
             # Track escape costs
-            self.stats["escape_costs"] = (
-                self.stats.get("escape_costs", 0) + escape_cost
-            )
+            self.stats["escape_costs"] = self.stats.get("escape_costs", 0) + escape_cost
 
         # Track escapes by difficulty
         difficulty = combat_info["difficulty"]
         escape_key = f"escapes_diff_{int(difficulty)}"
         self.stats[escape_key] = self.stats.get(escape_key, 0) + 1
-        
+
     def _update_combat_statistics(self, combat_info: Dict[str, Any]) -> None:
         """Update comprehensive combat statistics.
-        
+
         Args:
             combat_info: Processed combat information
         """
@@ -2602,11 +2581,11 @@ class Game:
 
         elif outcome == "victory":
             self.stats["combats_won"] = self.stats.get("combats_won", 0) + 1
-        self._extracted_from__update_combat_statistics_(
-            combat_info, "zone", 'combats_in_'
+        self._track_combat_by_category(
+            combat_info, "zone", "combats_in_"
         )
-        self._extracted_from__update_combat_statistics_(
-            combat_info, "enemy_type", 'combats_against_'
+        self._track_combat_by_category(
+            combat_info, "enemy_type", "combats_against_"
         )
         if combat_stats := combat_info["stats"]:
             for stat_name, stat_value in combat_stats.items():
@@ -2614,33 +2593,32 @@ class Game:
                     self.stats.get(f"combat_{stat_name}", 0) + stat_value
                 )
 
-    # TODO Rename this here and in `_update_combat_statistics`
-    def _extracted_from__update_combat_statistics_(self, combat_info, arg1, arg2):
-        # Track combat by zone
-        zone = combat_info[arg1]
-        zone_key = f"{arg2}{zone}"
-        self.stats[zone_key] = self.stats.get(zone_key, 0) + 1
-        
+    def _track_combat_by_category(self, combat_info, category_key, stat_prefix):
+        # Track combat by category (zone, enemy_type, etc.)
+        category_value = combat_info[category_key]
+        stat_key = f"{stat_prefix}{category_value}"
+        self.stats[stat_key] = self.stats.get(stat_key, 0) + 1
+
     def _process_combat_rewards(self, rewards: Dict[str, Any]) -> int:
         """Process rewards from combat.
-        
+
         Args:
             rewards: Dictionary of rewards
-            
+
         Returns:
             Total value of rewards processed
         """
         total_reward_value = 0
-        
+
         # Process currency rewards
         if "currency" in rewards:
             currency = rewards["currency"]
             self.player.currency += currency
             total_reward_value += currency
-            
+
             # Notify player
             self.notifier.add(f"Gained {currency} currency", category="combat")
-            
+
             # Update stats
             self.stats["combat_currency_gained"] = (
                 self.stats.get("combat_currency_gained", 0) + currency
@@ -2649,21 +2627,23 @@ class Game:
         # Process item rewards
         if "items" in rewards and rewards["items"]:
             items_count = len(rewards["items"])
-            
+
             # Notify player
             self.notifier.add(f"Acquired {items_count} items", category="combat")
-            
+
             # Update stats
             self.stats["combat_items_gained"] = (
                 self.stats.get("combat_items_gained", 0) + items_count
             )
             # Future: Add items to player inventory
-            
+
         return total_reward_value
-        
-    def _process_combat_penalties(self, penalties: Dict[str, Any], difficulty: int = 1) -> None:
+
+    def _process_combat_penalties(
+        self, penalties: Dict[str, Any], difficulty: int = 1
+    ) -> None:
         """Process penalties from combat defeat.
-        
+
         Args:
             penalties: Dictionary of penalties
             difficulty: Combat difficulty level
@@ -2688,18 +2668,16 @@ class Game:
         # Process ship losses
         if "ships" in penalties:
             ships_lost = penalties["ships"]
-            self.player.fleet_size = max(
-                1, self.player.fleet_size - ships_lost
-            )
+            self.player.fleet_size = max(1, self.player.fleet_size - ships_lost)
 
             # Notify player
             if ships_lost > 0:
-                self.notifier.add(f"Lost {ships_lost} ships in battle", category="combat")
+                self.notifier.add(
+                    f"Lost {ships_lost} ships in battle", category="combat"
+                )
 
             # Update stats
-            self.stats["ships_lost"] = (
-                self.stats.get("ships_lost", 0) + ships_lost
-            )
+            self.stats["ships_lost"] = self.stats.get("ships_lost", 0) + ships_lost
 
         # Track penalty value by difficulty
         difficulty_key = f"penalty_value_diff_{difficulty}"
@@ -2819,16 +2797,16 @@ class Game:
 
         # Get the default font for UI components
         font = pygame.font.Font(None, 24)
-        
+
         # Draw the main game screen UI
         self.game_screen.update(
             player_position=(self.player.x, self.player.y),
             resources=self.player.resources,
             health=self.player.health,
-            energy=self.player.energy
+            energy=self.player.energy,
         )
         self.game_screen.draw(self.screen, font)
-        
+
         # Draw minimap if enabled
         if self.show_minimap:
             # Update minimap data
@@ -2838,7 +2816,7 @@ class Game:
                 entity_grid=self.field.entity_grid,
                 field_offset_x=self.renderer.field_offset_x,
                 field_offset_y=self.renderer.field_offset_y,
-                zoom_level=self.zoom_level
+                zoom_level=self.zoom_level,
             )
             self.minimap_panel.draw(self.screen, font)
 
@@ -3056,10 +3034,10 @@ class Game:
         # The following code appears to be for drawing debug info on screen
         # but contains undefined variables. Commenting out for now.
         # If this functionality is needed, it should be implemented properly.
-        
+
         # Starting y position for debug text
         # y = 50  # Initial y position
-        
+
         # # Player section
         # player_text = [
         #     f"Player Position: ({self.player.x}, {self.player.y})",
@@ -3068,7 +3046,7 @@ class Game:
         # for text in player_text:
         #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
         #     y += 18  # line height
-        
+
         # # Field section
         # y += 10  # Add spacing
         # field_text = [
@@ -3078,7 +3056,7 @@ class Game:
         # for text in field_text:
         #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
         #     y += 18  # line height
-        
+
         # # Game loop section
         # y += 10  # Add spacing
         # game_loop_text = [
@@ -3088,7 +3066,7 @@ class Game:
         # for text in game_loop_text:
         #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
         #     y += 18  # line height
-        
+
         # # Event system section
         # y += 10  # Add spacing
         # event_system_text = [
@@ -3182,7 +3160,7 @@ def run_game_loop(game):
 def main():
     """Main entry point for the game."""
     try:
-        _extracted_from_main_5()
+        _initialize_game_and_run()
     except Exception as e:
         log_exception("Critical error in main function", e)
         raise
@@ -3192,8 +3170,7 @@ def main():
         logging.info("Game shutdown complete")
 
 
-# TODO Rename this here and in `main`
-def _extracted_from_main_5():
+def _initialize_game_and_run():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,

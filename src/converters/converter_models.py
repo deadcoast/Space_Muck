@@ -169,13 +169,19 @@ class Converter:
     ) -> Tuple[float, List[Union[str, float]]]:
         """Calculate the overall efficiency of this converter."""
         base = self.base_efficiency * (0.8 + 0.1 * self.tier.value)  # Tier bonus
-        efficiency = base * quality_modifier * technology_modifier * environmental_modifier
+        efficiency = (
+            base * quality_modifier * technology_modifier * environmental_modifier
+        )
         # Return both efficiency and contributing factors
         factors: List[Union[str, float]] = [
-            "Base Efficiency", base,
-            "Quality Modifier", quality_modifier,
-            "Technology Modifier", technology_modifier,
-            "Environmental Modifier", environmental_modifier
+            "Base Efficiency",
+            base,
+            "Quality Modifier",
+            quality_modifier,
+            "Technology Modifier",
+            technology_modifier,
+            "Environmental Modifier",
+            environmental_modifier,
         ]
         return (efficiency, factors)
 
@@ -207,13 +213,13 @@ class Converter:
         # Check compatibility
         if not self.can_process(recipe):
             return None
-            
+
         # Calculate process metrics
         efficiency, _ = self.get_overall_efficiency(quality_modifier=quality_modifier)
         process_metrics = {
             "efficiency": efficiency,
             "estimated_time": recipe.get_time_with_efficiency(efficiency),
-            "energy_usage": recipe.get_energy_with_efficiency(efficiency)
+            "energy_usage": recipe.get_energy_with_efficiency(efficiency),
         }
 
         # Check input resources

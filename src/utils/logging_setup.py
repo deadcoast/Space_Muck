@@ -150,7 +150,7 @@ def setup_logging(
 
     # Add file handler if requested
     if log_to_file:
-        file_handler = _extracted_from_setup_logging_43(logging, log_level, logger)
+        file_handler = _create_file_handler(logging, log_level, logger)
     # Create in-memory handler for showing logs in-game
     memory_handler = MemoryHandler(capacity=100)
     memory_handler.setLevel(logging.INFO)
@@ -169,8 +169,7 @@ def setup_logging(
     return logger
 
 
-# TODO Rename this here and in `setup_logging`
-def _extracted_from_setup_logging_43(logging, log_level, logger):
+def _create_file_handler(logging, log_level, logger):
     # Create timestamped log filename
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     log_file = f"logs/space_muck_{timestamp}.log"
@@ -224,11 +223,10 @@ def log_exception(e: Exception, critical: bool = True) -> None:
     if logger.level <= logging.DEBUG:
         # Try to get detailed memory info
         with contextlib.suppress(ImportError):
-            _extracted_from_log_exception_(logger)
+            _log_memory_usage_details(logger)
 
 
-# TODO Rename this here and in `log_exception`
-def _extracted_from_log_exception_(logger):
+def _log_memory_usage_details(logger):
     import psutil
 
     process = psutil.Process(os.getpid())
@@ -298,7 +296,7 @@ def log_performance_end(tag: str, start_time: float) -> float:
 def log_performance_metric(metric_name: str, value: float) -> None:
     """
     Log a performance metric with a specific value.
-    
+
     Args:
         metric_name: Name of the metric to log
         value: Value of the metric (typically in milliseconds)

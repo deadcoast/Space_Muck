@@ -74,21 +74,21 @@ class ASCIIUIDemo:
             "quantum": UIStyle.QUANTUM,
             "symbiotic": UIStyle.SYMBIOTIC,
         }
-        
+
         # Create the game screen as the main container
         self.game_screen = ASCIIGameScreen(
             pygame.Rect(0, 0, 1200, 800),
             title="Space Muck Game",
-            style=styles["mechanical"]
+            style=styles["mechanical"],
         )
-        
+
         # Create a minimap panel
         self.minimap = ASCIIMinimapPanel(
             pygame.Rect(900, 50, 250, 250),
             title="Navigation Map",
-            style=styles["symbiotic"]
+            style=styles["symbiotic"],
         )
-        
+
         # Add the minimap to the game screen
         self.game_screen.add_panel(self.minimap)
 

@@ -90,7 +90,13 @@ GAME_CONFIG: Dict[str, Any] = {
         },
         STATE_PLAY: {
             "name": "Playing",
-            "allowed_transitions": [STATE_PAUSE, STATE_SHOP, STATE_MAP, STATE_MENU, STATE_GAMEOVER],
+            "allowed_transitions": [
+                STATE_PAUSE,
+                STATE_SHOP,
+                STATE_MAP,
+                STATE_MENU,
+                STATE_GAMEOVER,
+            ],
             "entry_actions": ["resume_game", "hide_menu"],
             "exit_actions": ["save_game_state"],
             "validation_rules": ["check_player_alive", "check_game_initialized"],

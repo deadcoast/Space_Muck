@@ -18,7 +18,6 @@ Author: Space Muck Team
 """
 
 import os
-import sys
 import glob
 import argparse
 from pathlib import Path
@@ -118,7 +117,7 @@ def tree(
         if depth == 0:
             new_prefix = ""
         else:
-            new_prefix = prefix + "    " if is_last else prefix + "│   "
+            new_prefix = f"{prefix}    " if is_last else f"{prefix}│   "
         # Handle directories recursively
         if entry.is_dir():
             if subtree := tree(

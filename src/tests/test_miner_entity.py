@@ -10,10 +10,13 @@ import random
 import numpy as np
 import logging
 
-# Removed unused import: from contextlib import suppress
-
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Import the class to test
+from entities.miner_entity import MinerEntity
+
+# Removed unused import: from contextlib import suppress
 
 # Global flags for dependency availability
 NUMPY_AVAILABLE = True
@@ -29,54 +32,68 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+# Create logger for this module
+logger = logging.getLogger(__name__)
+
 # Try importing optional dependencies
 try:
-    import pygame
-    PYGAME_AVAILABLE = True
+    import importlib.util
+
+    spec = importlib.util.find_spec("pygame")
+    PYGAME_AVAILABLE = spec is not None
 except ImportError:
     PYGAME_AVAILABLE = False
 
 try:
-    import perlin_noise
-    PERLIN_NOISE_AVAILABLE = True
+    import importlib.util
+
+    spec = importlib.util.find_spec("perlin_noise")
+    PERLIN_NOISE_AVAILABLE = spec is not None
 except ImportError:
     PERLIN_NOISE_AVAILABLE = False
 
 try:
-    import networkx
-    NETWORKX_AVAILABLE = True
+    import importlib.util
+
+    spec = importlib.util.find_spec("networkx")
+    NETWORKX_AVAILABLE = spec is not None
 except ImportError:
     NETWORKX_AVAILABLE = False
     logger.info("networkx not available - graph tests will be skipped")
 
 try:
-    import scipy
-    SCIPY_AVAILABLE = True
+    import importlib.util
+
+    spec = importlib.util.find_spec("scipy")
+    SCIPY_AVAILABLE = spec is not None
 except ImportError:
     SCIPY_AVAILABLE = False
     logger.info("scipy not available - some tests will be skipped")
 
 try:
-    import sklearn
-    SKLEARN_AVAILABLE = True
+    import importlib.util
+
+    spec = importlib.util.find_spec("sklearn")
+    SKLEARN_AVAILABLE = spec is not None
 except ImportError:
     SKLEARN_AVAILABLE = False
     logger.info("sklearn not available - some tests will be skipped")
 
+# Import already done at the top of the file
+
 # Try importing symbiote algorithm
 try:
-    from algorithms import symbiote_algorithm
-    SYMBIOTE_ALGORITHM_AVAILABLE = True
-except ImportError:
-    try:
-        from generators import symbiote_algorithm
-        SYMBIOTE_ALGORITHM_AVAILABLE = True
-    except ImportError:
-        SYMBIOTE_ALGORITHM_AVAILABLE = False
-        logger.info("symbiote_algorithm not available - some tests will be skipped")
+    import importlib.util
 
-# Import the class to test
-from entities.miner_entity import MinerEntity
+    spec = importlib.util.find_spec("algorithms.symbiote_algorithm")
+    if spec is not None:
+        SYMBIOTE_ALGORITHM_AVAILABLE = True
+    else:
+        spec = importlib.util.find_spec("generators.symbiote_algorithm")
+        SYMBIOTE_ALGORITHM_AVAILABLE = spec is not None
+except ImportError:
+    SYMBIOTE_ALGORITHM_AVAILABLE = False
+    logger.info("symbiote_algorithm not available - some tests will be skipped")
 
 # Import AsteroidField for proper test implementation
 try:
@@ -550,25 +567,24 @@ class TestMinerEntity(unittest.TestCase):
         # Reset fed status before testing large minerals
         self.miner.fed_this_turn = False
 
-        self._extracted_from_test_process_minerals_26(
+        self._verify_mineral_processing_results(
             large_minerals,
             "Miner should be fed with large minerals",
             initial_population,
             "Population should increase with large minerals",
         )
 
-    # TODO Rename this here and in `test_process_minerals`
-    def _extracted_from_test_process_minerals_26(
-        self, arg0, arg1, initial_population, arg3
+    def _verify_mineral_processing_results(
+        self, minerals, fed_message, initial_population, population_message
     ):
         # Process minerals
-        self.miner.process_minerals(arg0)
+        self.miner.process_minerals(minerals)
 
         # Verify minerals were processed successfully - check state changes
-        self.assertTrue(self.miner.fed_this_turn, arg1)
+        self.assertTrue(self.miner.fed_this_turn, fed_message)
 
         # Verify population increase due to feeding
-        self.assertGreater(self.miner.population, initial_population, arg3)
+        self.assertGreater(self.miner.population, initial_population, population_message)
 
     def test_apply_mutations(self):
         """Test the apply_mutations method."""
@@ -883,15 +899,14 @@ class TestMinerEntity(unittest.TestCase):
             print(f"Exception with out-of-bounds territory_center: {e}")
 
     def _test_with_population_and_behavior(self, population_value, behavior_type):
-        self._extracted_from__test_with_population_and_behavior_6(
+        self._set_and_verify_population_and_behavior(
             population_value, behavior_type
         )
 
-    # TODO Rename this here and in `test_behavior_management` and `_test_with_population_and_behavior`
-    def _extracted_from__test_with_population_and_behavior_6(self, arg0, arg1):
-        self.miner.population = arg0
-        self.miner.current_behavior = arg1
-        self.assertEqual(self.miner.current_behavior, arg1)
+    def _set_and_verify_population_and_behavior(self, population_value, behavior_type):
+        self.miner.population = population_value
+        self.miner.current_behavior = behavior_type
+        self.assertEqual(self.miner.current_behavior, behavior_type)
 
 
 if __name__ == "__main__":

@@ -3,9 +3,7 @@ Test suite for the trading system functionality.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
 import random
-import math
 
 from systems.trading_system import TradingSystem
 
@@ -254,7 +252,10 @@ class TestTradingSystem(unittest.TestCase):
         self.assertIn(quest["type"], ["trading_delivery", "trading_procurement"])
 
         # Generate a quest for level 3 player (should include market_manipulation)
-        high_level_quest = self.trading_system.generate_trading_quest(3)
+        # Removed unused assignment to high_level_quest
+        self.trading_system.generate_trading_quest(
+            3
+        )  # Just call the method without storing the result
 
         # Generate multiple quests to ensure we get different types
         quest_types = set()
@@ -264,6 +265,16 @@ class TestTradingSystem(unittest.TestCase):
 
         # Should include market_manipulation quests for level 3
         self.assertIn("trading_market_manipulation", quest_types)
+
+    def _setup_quest_test_scenario(self, commodity_quantity, station_name):
+        """Helper method to set up quest test scenarios.
+
+        Args:
+            commodity_quantity: Quantity of common_minerals to set in player inventory
+            station_name: Station to set as player's current station
+        """
+        self.player.inventory["common_minerals"] = commodity_quantity
+        self.player.current_station = station_name
 
     def test_quest_completion(self):
         """Test quest completion logic."""
@@ -280,17 +291,15 @@ class TestTradingSystem(unittest.TestCase):
         }
 
         # Player doesn't have enough inventory
-        self.player.inventory["common_minerals"] = 3
-        self.player.current_station = "station_alpha"
+        self._setup_quest_test_scenario(3, "station_alpha")
         self.assertFalse(self.trading_system.check_quest_completion(quest, self.player))
 
         # Player has enough inventory but at wrong station
-        self.player.inventory["common_minerals"] = 10
-        self.player.current_station = "station_beta"
+        self._setup_quest_test_scenario(10, "station_beta")
         self.assertFalse(self.trading_system.check_quest_completion(quest, self.player))
 
         # Player has enough inventory and at correct station
-        self.player.current_station = "station_alpha"
+        self._setup_quest_test_scenario(10, "station_alpha")
         initial_credits = self.player.credits
         initial_reputation = self.player.faction_reputation["miners_guild"]
 
