@@ -194,6 +194,24 @@ class Game:
             self.shop: Shop = Shop()
             self.notifier: NotificationManager = NotificationManager()
             self.renderer: AsteroidFieldRenderer = AsteroidFieldRenderer()
+            
+            # Initialize new ASCII UI components
+            from ui.game_screen import ASCIIGameScreen
+            from ui.minimap_panel import ASCIIMinimapPanel
+            
+            self.game_screen = ASCIIGameScreen(
+                pygame.Rect(10, 10, WINDOW_WIDTH - 20, WINDOW_HEIGHT - 20),
+                "SPACE MUCK"
+            )
+            
+            # Initialize minimap panel in the bottom right corner
+            minimap_rect = pygame.Rect(
+                WINDOW_WIDTH - MINIMAP_SIZE - MINIMAP_PADDING,
+                WINDOW_HEIGHT - MINIMAP_SIZE - MINIMAP_PADDING,
+                MINIMAP_SIZE,
+                MINIMAP_SIZE
+            )
+            self.minimap_panel = ASCIIMinimapPanel(minimap_rect, "NAVIGATION")
 
     def _init_state_tracking(self) -> None:
         """Initialize game state tracking following state machine pattern.
@@ -546,6 +564,10 @@ class Game:
         self.show_race_details: bool = False
         self.cursor_over_ui: bool = False
         self.display_controls_help: bool = False
+        
+        # Initialize UI component states
+        self.ui_components_initialized: bool = False
+        self.ui_needs_update: bool = True
 
     def _init_statistics(self) -> None:
         """Initialize game statistics tracking."""
@@ -916,6 +938,13 @@ class Game:
             if self.state == STATE_SHOP and self.shop.handle_event(
                 event, self.player, self.field
             ):
+                continue
+                
+            # Let ASCII UI components handle events
+            if hasattr(self, 'game_screen') and self.game_screen.handle_event(event):
+                continue
+                    
+            if hasattr(self, 'minimap_panel') and self.show_minimap and self.minimap_panel.handle_event(event):
                 continue
 
             # Basic window events
@@ -1408,6 +1437,12 @@ class Game:
 
             # Update UI components (must be done regardless of game state)
             self.notifier.update(self.delta_time)
+            
+            # Update ASCII UI components animations
+            if hasattr(self, 'game_screen'):
+                self.game_screen.update_animations(self.delta_time)
+            if hasattr(self, 'minimap_panel') and self.show_minimap:
+                self.minimap_panel.update_animations(self.delta_time)
 
             # Clear tooltip if not updated this frame
             self.tooltip_text = None
@@ -2633,25 +2668,30 @@ class Game:
         # Draw player ship
         self.player.draw(self.screen, self.zoom_level)
 
+        # Get the default font for UI components
+        font = pygame.font.Font(None, 24)
+        
+        # Draw the main game screen UI
+        self.game_screen.update(
+            player_position=(self.player.x, self.player.y),
+            resources=self.player.resources,
+            health=self.player.health,
+            energy=self.player.energy
+        )
+        self.game_screen.draw(self.screen, font)
+        
         # Draw minimap if enabled
         if self.show_minimap:
-            minimap_rect = pygame.Rect(
-                WINDOW_WIDTH - MINIMAP_SIZE - MINIMAP_PADDING,
-                WINDOW_HEIGHT - MINIMAP_SIZE - MINIMAP_PADDING,
-                MINIMAP_SIZE,
-                MINIMAP_SIZE,
+            # Update minimap data
+            self.minimap_panel.update(
+                player_position=(self.player.x, self.player.y),
+                grid=self.field.grid,
+                entity_grid=self.field.entity_grid,
+                field_offset_x=self.renderer.field_offset_x,
+                field_offset_y=self.renderer.field_offset_y,
+                zoom_level=self.zoom_level
             )
-
-            draw_minimap(
-                self.screen,
-                minimap_rect,
-                self.field.grid,
-                self.field.entity_grid,
-                (self.player.x, self.player.y),
-                self.renderer.field_offset_x,
-                self.renderer.field_offset_y,
-                self.zoom_level,
-            )
+            self.minimap_panel.draw(self.screen, font)
 
         # Draw progress bar if enabled
         if self.show_progress_bar:

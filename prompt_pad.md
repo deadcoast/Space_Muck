@@ -1,3 +1,17 @@
+# Prompt Pad
+
+This file contains a collection of quick and effecient prompt to help you navigate the codebase and implement new features. Prompts are grouped by topic and are intended to be used as a starting point for new conversations or task generations.
+
+New prompts may be added to this file as needed, but please follow the same format and style as the existing prompts utilizing the CodeBase System Documents.
+
+## Prompting Upkeep
+
+### Prompting a New Conversation to Utilize the Docs
+
+Review the @.windsurfrules file, adhere to this strict workflow to ensure code is implemented gracefully. Remember that you have comprehensive documentation in @System_Integration.md @System_Architecture.md @System_Directory_Tree.md you may review if needed for applicable integration with the codebase. Finally, review @System_Scratchpad.md and continue on the next step on the Tasklist
+
+## Implementing Missing Functionality
+
 1. in @converter_interface.py  we need to use these imports, not remove them. Implement the missing functionality to properly utilize these imported types. Review @ASCII_UI_Implementation_Plan.md , Rewview @ascii_ui.py for context
 
 2. Enhance the code to properly use the imports, particularly focusing on ConverterTier, ResourceType, EfficiencyFactor, and OptimizationSuggestion:

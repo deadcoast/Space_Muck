@@ -1,518 +1,218 @@
 # Scratchpad
 
-## Current Task
+## ASCII UI Implementation Task List
 
-  - [X] Fix remaining syntax errors in validate_protocol
-    - [X] Fix string formatting in method signature validation
-    - [X] Fix string formatting in return type validation
+### 1. Core Game UI Pages
 
-- [ ] Validate import resolution
+- [X] 1.1 Main Game Screen
+- [X] ASCIIGameScreen: A central hub that integrates all UI components with proper layout management
+- [X] ASCIIMinimapPanel: A minimap showing the player's position in the game world
+- [ ] ASCIIResourceDisplay: A panel showing current resources, energy levels, and other critical stats
 
-### Technical Requirements
-1. Package Structure
-   - Modern Python packaging (pyproject.toml)
-   - Proper namespace handling
-   - Clear dependency specification
-   - Test suite configuration
+- [ ] 1.2 Player Management
+- [ ] ASCIIInventoryPanel: Display and manage player inventory with sorting and filtering
+- [ ] ASCIIShipStatusPanel: Show ship health, energy, and system statuses
+- [ ] ASCIICrewManagementPanel: Assign and manage crew members to different ship functions
 
-2. Import System
-   - No circular imports
-   - Consistent relative imports
-   - Clear import paths
-   - Proper test discovery
+- [ ] 1.3 Navigation and Exploration
+- [ ] ASCIIStarMapView: Interstellar navigation interface with ASCII star representations
+- [ ] ASCIILocationDetailsPanel: Show information about the current location/planet
+- [ ] ASCIIPlanetScannerInterface: Display scan results of planets and asteroids
 
-3. Dependencies
-   - Minimal core dependencies
-   - Essential type checking
-   - No unnecessary ML features
-   - Clear version specifications
+### 2. Resource Management UI
 
-### Testing Strategy
+- [ ] 2.1 Mining and Collection
+- [ ] ASCIIMiningInterface: Control mining operations with visual feedback
+- [ ] ASCIIResourceAnalyzer: Analyze collected resources and show detailed information
+- [ ] ASCIIAutomationControlPanel: Configure automated mining and collection systems
 
-2. Integration Tests
-   - Package installation
-     - [ ] Test editable install
-     - [ ] Test dependency resolution
-     - [ ] Test version constraints
-   - Import paths
-     - [ ] Test module discovery
-     - [ ] Test test discovery
-     - [ ] Test namespace packages
-   - Dependency resolution
-     - [ ] Test minimal dependencies
-     - [ ] Test optional features
-     - [ ] Test compatibility
+- [ ] 2.2 Storage Management
+- [ ] ASCIIStorageView: Display stored resources with sorting and filtering
+- [ ] ASCIITransferInterface: Move resources between storage locations
+- [ ] ASCIIStorageOptimizer: Suggest optimal storage configurations
 
-### Implementation Notes
+### 3. Advanced Converter System UI
 
-1. Package Structure
-   - [ ] Using pyproject.toml for modern Python packaging
-   - [ ] Properly configured namespace for python_fixer
-   - [ ] Clear separation of core and test dependencies
-   - [ ] Well-defined package boundaries
+- [ ] 3.1 Converter Configuration
+- [ ] ASCIIConverterBlueprintDesigner: Design new converter configurations
+- [ ] ASCIIConverterUpgradePanel: Upgrade existing converters with new capabilities
+- [ ] ASCIIConverterTestingInterface: Test converter configurations before deployment
 
-2. Type Validation Improvements
-   - [ ] Protocol validation
-     - [ ] Fix method signature validation
-     - [ ] Fix return type validation
-     - [ ] Improve error message clarity
+- [ ] 3.2 Production Management
+- [ ] ASCIIProductionScheduler: Schedule and prioritize production tasks
+- [ ] ASCIIBatchProcessingInterface: Set up batch processing for multiple resources
+- [ ] ASCIIProductionAlertPanel: Display alerts and notifications for production issues
 
-2. Import System
-   - [ ] Testing import resolution
-   - [ ] Verifying test paths
+### 4. Research and Development UI
 
-3. Testing & Verification (CURRENT FOCUS)
-   - [ ] Run comprehensive tests
-     - [ ] Test core functionality
-     - [ ] Verify optional dependencies
-     - [ ] Check error handling
-   - [ ] Document test results
-     - [ ] Update test coverage
-     - [ ] Note any issues found
-     - [ ] Plan improvements
+- [ ] 4.1 Technology Tree
+- [ ] ASCIITechTreeVisualizer: Display available and researched technologies
+- [ ] ASCIIResearchProjectPanel: Manage active research projects
+- [ ] ASCIIDiscoveryLogPanel: Record and display research discoveries
 
-4. Error Handling
-   - [ ] Improve error messages
-     - [ ] Add context to errors
-     - [ ] Include troubleshooting hints
-     - [ ] Show relevant paths
-   - [ ] Add error recovery
-     - [ ] Handle missing dependencies
-     - [ ] Clean up partial initialization
-     - [ ] Provide fallback options
+- [ ] 4.2 Blueprint Management
+- [ ] ASCIIBlueprintLibrary: Browse, search, and manage collected blueprints
+- [ ] ASCIIBlueprintEditor: Modify existing blueprints to create variants
+- [ ] ASCIIBlueprintComparator: Compare different blueprints for efficiency
 
-#### Implementation Steps
+### 5. Social and Trading UI
 
-1. Signal Handler Implementation (TODAY)
-   - [ ] Create signals.py module
-     - [ ] Define SignalManager class
-     - [ ] Add handler stack mechanism
-     - [ ] Add context manager support
-   - [ ] Update cli.py
-     - [ ] Remove module-level signal handler
-     - [ ] Use SignalManager for registration
-     - [ ] Add proper cleanup
-   - [ ] Add tests
-     - [ ] Test handler registration
-     - [ ] Test handler cleanup
-     - [ ] Test interrupt handling
+- [ ] 5.1 Communication
+- [ ] ASCIIMessageTerminal: Send and receive messages from NPCs and other entities
+- [ ] ASCIIContactsPanel: Manage contacts and relationships with other entities
+- [ ] ASCIIReputationDisplay: Show reputation levels with different factions
 
-2. Initialization Logging
-   - [ ] Add detailed logging points
-   - [ ] Test log output
-   - [ ] Verify error capture
+- [ ] 5.2 Trading
+- [ ] ASCIIMarketInterface: Browse available goods for purchase and sale
+- [ ] ASCIITradeNegotiator: Negotiate prices and trade terms
+- [ ] ASCIIContractManagementPanel: View and manage trade contracts
 
-3. Error Recovery
-   - [ ] Implement cleanup handlers
-   - [ ] Add recovery options
-   - [ ] Test error scenarios
+### 6. System Management UI
 
-4. Testing & Verification
-   - [ ] Import System Tests
-     - [ ] Test package resolution in different environments
-     - [ ] Verify import error handling
-     - [ ] Check dependency validation
-   - [ ] Integration Tests
-     - [ ] Test full analysis pipeline
-     - [ ] Verify error handling and recovery
-     - [ ] Check logging and debugging output
-   - [ ] Test Infrastructure
-     - [ ] Update conftest.py for better test discovery
-     - [ ] Add test fixtures for common scenarios
-     - [ ] Improve test organization
-   - [ ] Performance & Resource Tests
-     - [ ] Measure memory usage with/without ML model
-     - [ ] Profile import resolution time
-     - [ ] Test large codebase handling
-   - [ ] Documentation & Reports
-     - [ ] Generate test coverage reports
-     - [ ] Document test scenarios
-     - [ ] Create test improvement plan
+- [ ] 6.1 Settings and Configuration
+- [ ] ASCIISettingsPanel: Adjust game settings and preferences
+- [ ] ASCIIKeyBindingsEditor: View and modify keyboard shortcuts
+- [ ] ASCIIUIStyleSelector: Change the visual style of the ASCII UI
 
-### Phase 3: Testing Infrastructure Enhancement (CURRENT)
+- [ ] 6.2 Help and Documentation
+- [ ] ASCIIHelpBrowser: Browse game documentation and help topics
+- [ ] ASCIITutorialInterface: Interactive tutorials for game mechanics
+- [ ] ASCIICommandReference: Quick reference for game commands
 
-**Success Criteria:**
-- [ ] Comprehensive test coverage for core functionality
-- [ ] Reliable test infrastructure with proper fixtures
-- [ ] Clear test documentation and reports
+### 7. Miscellaneous UI Elements
 
-**Implementation Plan:**
+- [ ] 7.1 Utility Panels
+- [ ] ASCIICalculatorPanel: Perform resource and production calculations
+- [ ] ASCIINotesPanel: Take and organize in-game notes
+- [ ] ASCIIAlarmSystem: Set reminders for important events
 
-1. Core Test Infrastructure
+- [ ] 7.2 Customization
+- [ ] ASCIIShipCustomizer: Customize ship appearance and layout
+- [ ] ASCIIConverterSkinSelector: Apply visual themes to converters
+- [ ] ASCIIProfileEditor: Edit player profile and preferences
 
-**src/python_fixer/tests/conftest.py**
-   - [ ] Add common test fixtures
-   - [ ] Improve test discovery logic
-   - [ ] Enhance error reporting
-   - [ ] Set up test environments
+#### Framework Standardization (HIGH PRIORITY)
+- [ ] Standardize on pygame for all UI components
+- [ ] Refactor inconsistent components to use pygame
+- [ ] Document UI framework architecture decision
 
-2. Test Coverage
+#### Component Completion
+- [ ] Implement missing ASCIITable component
+- [ ] Add missing animation effects
+- [ ] Enhance accessibility features
+- [ ] Implement keyboard navigation
 
-**Key test areas:**
-   - [ ] SignatureVisitor with/without libcst
-   - [ ] Type inference with/without torch
-   - [ ] Import resolution system
-   - [ ] Signal handling and cleanup
+#### Interface Integration
+- [ ] Complete event handlers for view transitions
+- [ ] Implement callback functions for buttons
+- [ ] Connect dashboard to converter data
+- [ ] Implement chain visualization logic
+- [ ] Add efficiency monitoring calculations
+- [ ] Connect interface to actual game logic
 
-3. Documentation
+#### Event System Enhancement
+- [ ] Add event history tracking
+- [ ] Implement event replay for debugging
+- [ ] Add event filtering capabilities
+- [ ] Enhance metric collection and visualization
+- [ ] Implement proper event queuing
+- [ ] Handle event prioritization
+- [ ] Add error recovery for failed events
 
-**Test Documentation:**
-   - [ ] Document test scenarios
-   - [ ] Generate coverage reports
-   - [ ] Create improvement roadmap
-   - [ ] Track test results
+#### Testing
+- [ ] Create unit tests for UI components
+- [ ] Implement integration tests for interfaces
+- [ ] Add visual regression tests
+- [ ] Test performance with large datasets
 
-**Next Steps:**
+### Implementation Priorities
 
-1. Test Infrastructure
-**Priority: Test Environment Setup**
-   - [X] Configure pytest with proper fixtures
-     - [X] Add temp_test_dir fixture
-     - [X] Set up module fixtures
-     - [X] Configure cleanup handlers
-   - [ ] Set up test discovery patterns
-     - [ ] Add test markers for components
-     - [ ] Configure test collection
-     - [ ] Set up test filtering
-   - [ ] Add test environment validation
-     - [ ] Verify dependency availability
-     - [ ] Check environment variables
-     - [ ] Validate test data
-   - [ ] Implement test result reporting
-     - [ ] Configure coverage reporting
-     - [ ] Add performance metrics
-     - [ ] Generate test summaries
+First Phase: Core Game UI (1.1, 1.2, 1.3)
+Second Phase: Resource Management (2.1, 2.2) and Converter System (3.1, 3.2)
+Third Phase: Research and Development (4.1, 4.2)
+Fourth Phase: Social and Trading (5.1, 5.2)
+Final Phase: System Management (6.1, 6.2) and Miscellaneous (7.1, 7.2)
 
-2. Test Coverage (IN PROGRESS)
-   - [ ] Core functionality
-     - [IN PROGRESS] SignatureVisitor tests
-       - [X] Base functionality without libcst
-         - [X] Function signature parsing
-         - [X] Method signature parsing
-         - [X] Class signature parsing
-       - [X] Enhanced features with libcst
-         - [X] Type annotation parsing
-         - [X] Default value handling
-         - [X] Docstring extraction
-       - [X] Error handling and recovery
-         - [X] Invalid syntax handling
-         - [X] Missing annotation handling
-         - [X] Recovery from parse errors
-     - [X] Type inference system
-       - [X] Basic type inference
-       - [X] Protocol validation
-       - [X] Optional type handling
-       - [X] ML-enhanced inference with torch
-         - [X] Set up torch dependency checks
-         - [X] Implement torch model test fixtures
-         - [X] Test type inference with torch models
-         - [X] Test graceful fallback when torch unavailable
-       - [ ] Fallback mechanisms
-         - [ ] Test basic type inference fallback
-         - [ ] Test protocol validation fallback
-         - [ ] Verify error messages and hints
-     - [ ] Import resolution
-       - [ ] Package import handling
-       - [ ] Optional dependency detection
-       - [ ] Import path resolution
-   - [X] Error handling
-     - [X] Type validation errors
-     - [X] Protocol implementation errors
-     - [ ] Missing dependencies
-       - [ ] Optional package handling
-       - [ ] Graceful degradation
-     - [ ] Invalid configurations
-       - [ ] Config validation
-       - [ ] Error reporting
-     - [ ] Runtime errors
-       - [ ] Exception handling
-       - [ ] Recovery mechanisms
-   - [ ] Performance
-     - [ ] Memory profiling
-       - [ ] Resource tracking
-       - [ ] Memory leak detection
-     - [ ] Processing benchmarks
-       - [ ] Core operations
-       - [ ] ML operations
-     - [ ] Large-scale testing
-       - [ ] Big codebase handling
-       - [ ] Performance degradation
+### Implementation Approach
 
-3. Documentation & Quality
-   - [ ] Test Documentation
-     - [ ] Test strategy overview
-     - [ ] Test case documentation
-     - [ ] Setup and configuration guide
-   - [ ] Coverage Analysis
-     - [ ] Generate coverage reports
-     - [ ] Identify coverage gaps
-     - [ ] Plan coverage improvements
-   - [ ] Performance Tracking
-     - [ ] Define performance baselines
-     - [ ] Create benchmark suite
-     - [ ] Document optimization targets
-   - [ ] Quality Metrics
-     - [ ] Track test pass rates
-     - [ ] Monitor test execution time
-     - [ ] Document reliability issues
+For each UI component:
 
-2. Core Component Tests
-   - [X] Create SignatureVisitor test suite
-     - [X] Basic functionality tests
-     - [X] Type inference tests
-     - [X] Error handling tests
-     - [X] Integration tests
-   - [ ] Implement type inference tests
-     - [ ] Create mock ML model
-     - [ ] Test inference accuracy
-     - [ ] Test fallback behavior
-   - [ ] Add import resolution tests
-     - [ ] Test package imports
-     - [ ] Test optional dependencies
-     - [ ] Test import validation
+1. Create a class definition with proper inheritance from existing UI components
+2. Implement the basic layout and drawing functionality
+3. Add event handling and interaction capabilities
+4. Integrate with the event system for real-time updates
+5. Add animation and style support for all UI styles
+6. Test integration with other UI components
+7. Document the component in the appropriate documentation files
 
-3. Test Environment
-   - [ ] Set up dependency validation
-   - [ ] Configure test data fixtures
-   - [ ] Add cleanup handlers
+### Context-Manager Connections
 
-### Phase 3: Testing Infrastructure Enhancement (CURRENT)
-
-**Success Criteria:**
-- [ ] Comprehensive test coverage
-- [ ] Reliable test infrastructure
-- [ ] Clear test documentation
-
-**Tasks:**
-1. Test Environment Setup
-   - [ ] Configure pytest
-     - [ ] Set up test discovery
-     - [ ] Add common fixtures
-     - [ ] Configure test markers
-   - [ ] Test Infrastructure
-     - [ ] Create test utilities
-     - [ ] Set up test environments
-     - [ ] Add result reporting
-
-2. Test Implementation
-   - [ ] Core Functionality
-     - [ ] SignatureVisitor tests
-       - [ ] Test with libcst
-       - [ ] Test without libcst
-     - [ ] Type inference tests
-       - [ ] Test with torch
-       - [ ] Test without torch
-     - [ ] Import resolution tests
-   - [ ] Error Handling
-     - [ ] Missing dependency tests
-     - [ ] Invalid config tests
-     - [ ] Runtime error tests
-   - [ ] Performance Tests
-     - [ ] Memory usage tracking
-     - [ ] Processing time metrics
-     - [ ] Large codebase handling
-
-3. Documentation & Reports
-   - [ ] Test Documentation
-     - [ ] Document test scenarios
-     - [ ] Create coverage reports
-     - [ ] Track performance metrics
-   - [ ] Quality Metrics
-     - [ ] Coverage percentage goals
-     - [ ] Performance benchmarks
-     - [ ] Error detection rates
-
-### Phase 4: Testing & Verification (NEXT)
-
-**Success Criteria:**
-- [ ] All tests pass in clean environment
-- [ ] Coverage >80% for core modules
-- [ ] All error cases properly tested
-
-**Tasks:**
-1. Unit Tests
-   - [ ] Test package installation
-   - [ ] Test import resolution
-   - [ ] Test signal handling
-
-2. Integration Tests
-   - [ ] Test full initialization sequence
-   - [ ] Test error recovery
-   - [ ] Test cleanup operations
-
-### Implementation Strategy
-
-1. Test Infrastructure (HIGH)
-   - [ ] pytest configuration and fixtures
-   - [ ] Test environment setup
-   - [ ] Test discovery patterns
-   - [ ] Result reporting system
-
-2. Test Coverage (HIGH)
-   - [ ] Priority Test Areas
-   - Core Components
-     - SignatureVisitor functionality
-     - Type inference system
-     - Import resolution
-   - Optional Features
-     - libcst integration
-     - torch ML features
-     - Web dashboard
-   - Error Handling
-     - Missing dependencies
-     - Invalid configurations
-     - Runtime errors
-
-3. Quality Assurance (MEDIUM)
-   - [ ] Test Coverage Goals
-     - >90% for core modules
-     - >80% for optional features
-   - Performance Targets
-     - Memory usage limits
-     - Processing time benchmarks
-   - Documentation
-     - Test scenario guides
-     - Coverage reports
-     - Improvement roadmap
-
-## Test Implementation Plan
-Following the Windsurf_System_Integration.md implementation sequence:
-
-### Phase 1: Core Infrastructure
-- [X] Implement GameLoop with standardized update cycle
-- [X] Develop EventSystem with consistent subscription patterns
-- [X] Create event batching mechanism for performance
-- [X] Establish central event buses (ModuleEventBus, GameEventBus, ResourceEventBus)
-- [X] Integrate GameLoop and EventSystem with main.py
-
-### Phase 2: Manager Standardization
-- [X] Standardize ResourceManager interface and implementation
-- [X] Standardize ModuleManager interface and implementation
-- [X] Implement missing ExplorationManager
-- [X] Create uniform manager update methods for GameLoop integration
-
-### Phase 3: Context-Manager Connections
+#### Resource Management
 - [ ] Connect ResourceManager with GameContext
 - [ ] Connect ModuleManager with ModuleContext
 - [ ] Implement missing ThresholdContext and ThresholdIntegration
 - [ ] Establish SystemIntegration patterns for consistent state synchronization
 
-### Phase 4: UI-Context Connections
+#### UI-Context Connections
 - [ ] Implement UI hooks for GameContext consumption
 - [ ] Implement UI hooks for ResourceRatesContext consumption
 - [ ] Implement UI hooks for ModuleContext consumption
 - [ ] Develop missing GameStateMonitor component
 
-### Phase 5: Performance Optimizations
+#### State Management
+- [ ] Implement atomic state transitions
+- [ ] Add state validation
+- [ ] Implement history tracking
+- [ ] Add rollback capability
+
+### Performance Optimizations
+
+#### Resource Management
 - [ ] Implement ResourceFlowManager optimizations
 - [ ] Add event batching and prioritization
+
+#### UI Performance
 - [ ] Optimize render cycles for UI components
 - [ ] Add performance monitoring and logging
 
-## Current Focus
-Phase 4: UI-Context Connections
+## Implementation Guidelines
 
-### Current Task
-Implementing UI hooks for context consumption:
-1. Design UI event system
-2. Create context observers
-3. Implement UI update handlers
-4. Add state visualization
-5. Create interactive controls
-
-### Implementation Strategy
-
-#### 1. GameContext Implementation
-- [X] Define core game state interface
-- [X] Create state transition handlers
-- [X] Implement resource state tracking
-- [X] Add module state integration
-- [X] Create event dispatching system
-
-#### 2. ResourceManager Integration
-- [X] Design resource update events
-- [X] Implement resource state observers
-- [X] Create resource flow tracking
-- [X] Add threshold monitoring
-- [X] Implement state synchronization
-
-#### 3. ModuleContext Implementation
-- [X] Define module state interface
-- [X] Create module lifecycle handlers
-- [X] Implement dependency tracking
-- [X] Add state change propagation
-- [X] Create error recovery system
-
-#### 4. ThresholdContext Implementation
-- [X] Define threshold types
-- [X] Create threshold monitors
-- [X] Implement trigger system
-- [X] Add notification handlers
-- [X] Create threshold groups
-
-
-### Technical Requirements
-1. Event System
-   - [ ] Use consistent event types
-   - [ ] Implement proper event queuing
-   - [ ] Handle event prioritization
-   - [ ] Add error recovery
-
-2. State Management
-   - [ ] Atomic state transitions
-   - [ ] State validation
-   - [ ] History tracking
-   - [ ] Rollback capability
-
-3. Integration Points
-   - [ ] Clean interface boundaries
-   - [ ] Typed message passing
-   - [ ] Error propagation
-   - [ ] State synchronization
-
-### Testing Strategy
-1. Unit Tests
-   - [ ] Individual context behavior
-   - [ ] State transition validation
-   - [ ] Error handling coverage
-
-2. Integration Tests
-   - [ ] Context-manager interactions
-   - [ ] Event propagation
-   - [ ] State synchronization
-   - [ ] Error recovery
-
-### Implementation Notes
+### Code Quality
 - [ ] Follow established manager patterns
 - [ ] Use type hints consistently
 - [ ] Add comprehensive logging
 - [ ] Document all interfaces
 - [ ] Create usage examples
 
-##### Completed Features
-- Threshold types (resource, module, time, event)
-- State monitoring and transitions
-- Trigger system with conditions
-- Notification handlers and history
-- GameContext event integration
+### Testing Strategy
 
-##### Completed Features
-- Module lifecycle states (init, active, error, etc)
-- Dependency tracking and validation
-- Error handling with recovery attempts
-- State history tracking
-- GameContext event integration
+#### Unit Tests
+- [ ] Individual component behavior
+- [ ] State transition validation
+- [ ] Error handling coverage
 
-##### Completed Features
-- Resource event types (created, updated, deleted)
-- Flow management (start, stop, update)
-- Flow history tracking
-- Threshold monitoring and events
-- State synchronization with observers
+#### Integration Tests
+- [ ] Context-manager interactions
+- [ ] Event propagation
+- [ ] State synchronization
+- [ ] Error recovery
 
-##### Completed Features
-- Game state management with history
-- Event system with priority queue
-- Resource and module tracking
-- Threshold monitoring
-- Error handling and recovery
+## Next Steps
+
+1. **Immediate Actions**
+   - [ ] Create ASCIITable component implementation
+   - [ ] Standardize on pygame for all UI components
+   - [ ] Implement event history tracking
+   - [ ] Connect dashboard to converter data
+
+2. **Short-term Goals**
+   - [ ] Complete all UI component implementations
+   - [ ] Establish UI-Context connections
+   - [ ] Create comprehensive test suite
+   - [ ] Document UI component usage
+
+3. **Medium-term Goals**
+   - [ ] Implement all context connections
+   - [ ] Add performance optimizations
+   - [ ] Complete testing infrastructure
+   - [ ] Create user guide for UI system

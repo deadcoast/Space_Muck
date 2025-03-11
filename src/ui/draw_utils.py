@@ -5,7 +5,7 @@ This module provides a collection of helper functions for rendering text,
 shapes, buttons, and other UI elements consistently across the game.
 """
 
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict
 
 import pygame
 import numpy as np
@@ -52,31 +52,37 @@ def draw_text(
 
     # Handle wrapping if max_width is specified
     if max_width is not None and font.size(text)[0] > max_width:
-        lines = _wrap_text(text, font, max_width)
-        height = 0
-        max_rect = None
+        try:
+            lines = _wrap_text(text, font, max_width)
+            height = 0
+            max_rect = None
 
-        for i, line in enumerate(lines):
-            rect = draw_text(
-                surface,
-                line,
-                x,
-                y + height,
-                size,
-                color,
-                align,
-                shadow,
-                shadow_color,
-                alpha,
-            )
-            if max_rect is None:
-                max_rect = rect
-            else:
-                max_rect.height += rect.height
-                max_rect.width = max(max_rect.width, rect.width)
-            height += rect.height + 2  # Add small spacing between lines
+            for i, line in enumerate(lines):
+                rect = draw_text(
+                    surface,
+                    line,
+                    x,
+                    y + height,
+                    size,
+                    color,
+                    align,
+                    shadow,
+                    shadow_color,
+                    alpha,
+                )
+                if max_rect is None:
+                    max_rect = rect
+                else:
+                    max_rect.height += rect.height
+                    max_rect.width = max(max_rect.width, rect.width)
+                height += rect.height + 2  # Add small spacing between lines
 
-        return max_rect or pygame.Rect(x, y, 0, 0)
+            return max_rect or pygame.Rect(x, y, 0, 0)
+        except Exception as e:
+            # Fallback if text wrapping fails
+            import logging
+            logging.warning(f"Text wrapping failed: {e}")
+            # Continue with unwrapped text
 
     # Create text surface with transparency support
     text_surface = font.render(text, True, color)
@@ -448,6 +454,7 @@ def draw_minimap(
     view_rect: Optional[Tuple[int, int, int, int]] = None,
     border_color: Tuple[int, int, int] = (100, 100, 140),
     background_color: Tuple[int, int, int] = (20, 20, 30),
+    entity_colors: Optional[Dict[int, Tuple[int, int, int]]] = None,
 ) -> pygame.Rect:
     """
     Draw a minimap showing the game world.
@@ -479,7 +486,8 @@ def draw_minimap(
     # Draw entities if provided
     if entity_grid is not None:
         _draw_entities_on_minimap(
-            minimap, entity_grid, scale_x, scale_y, step_x, step_y
+            minimap, entity_grid, scale_x, scale_y, step_x, step_y,
+            entity_colors=entity_colors
         )
 
     # Draw player position if provided
@@ -529,29 +537,58 @@ def _draw_entities_on_minimap(
     scale_y: float,
     step_x: int,
     step_y: int,
+    entity_colors: Optional[Dict[int, Tuple[int, int, int]]] = None,
 ) -> None:
-    """Draw entities on the minimap."""
-    # Entity color mapping
-    entity_colors = {
+    """Draw entities on the minimap.
+    
+    Args:
+        minimap: Surface to draw on
+        entity_grid: 2D array representing entities
+        scale_x: X scale factor
+        scale_y: Y scale factor
+        step_x: X sampling step
+        step_y: Y sampling step
+        entity_colors: Optional custom color mapping for entities
+    """
+    # Default entity color mapping
+    default_colors = {
         1: (50, 100, 255),  # Blue
         2: (255, 50, 150),  # Pink
         3: (255, 165, 0),  # Orange
     }
+    
+    # Use provided colors or defaults
+    colors = entity_colors or default_colors
 
-    for entity_id, color in entity_colors.items():
+    # Find all unique entity IDs in the grid
+    try:
+        unique_entities = np.unique(entity_grid)
+        unique_entities = unique_entities[unique_entities > 0]  # Exclude 0 (empty)
+    except Exception:
+        # Fallback if numpy operations fail
+        unique_entities = [1, 2, 3]  # Default entity IDs
+    
+    for entity_id in unique_entities:
+        # Get color for this entity (default to white if not found)
+        color = colors.get(int(entity_id), (255, 255, 255))
+        
         for y in range(0, entity_grid.shape[0], step_y):
             for x in range(0, entity_grid.shape[1], step_x):
-                if entity_grid[y, x] == entity_id:
-                    pygame.draw.rect(
-                        minimap,
-                        color,
-                        (
-                            x * scale_x,
-                            y * scale_y,
-                            max(1, scale_x * step_x),
-                            max(1, scale_y * step_y),
-                        ),
-                    )
+                try:
+                    if entity_grid[y, x] == entity_id:
+                        pygame.draw.rect(
+                            minimap,
+                            color,
+                            (
+                                x * scale_x,
+                                y * scale_y,
+                                max(1, scale_x * step_x),
+                                max(1, scale_y * step_y),
+                            ),
+                        )
+                except IndexError:
+                    # Skip out-of-bounds coordinates
+                    continue
 
 
 def _draw_player_on_minimap(
