@@ -659,7 +659,9 @@ class ChainTemplate:
     def validate(self) -> bool:
         # Validate template integrity
         return all(step.is_valid() for step in self.steps)
-```verterDetailsView Component
+```
+
+### 2. ConverterDetailsView Component
 
 Detailed view of a single converter:
 

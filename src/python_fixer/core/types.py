@@ -312,57 +312,51 @@ class ImportInfo:
             True if the import is valid, False otherwise
         """
         if not self.module and not self.imported_names:
-            self.is_valid = False
-            self.error_message = "Import has no module or imported names"
-            return False
-            
+            return self._extracted_from_validate_11(
+                False, "Import has no module or imported names"
+            )
         try:
             if self.is_relative:
                 if not package_path:
-                    self.is_valid = False
-                    self.error_message = "Cannot resolve relative import without package path"
-                    return False
-                    
+                    return self._extracted_from_validate_11(
+                        False,
+                        "Cannot resolve relative import without package path",
+                    )
                 # Calculate the parent package for relative imports
                 parts = package_path.split('.')
                 if self.level > len(parts):
                     self.is_valid = False
                     self.error_message = f"Relative import level {self.level} exceeds package depth {len(parts)}"
                     return False
-                    
-                if self.level == len(parts):
-                    parent_pkg = ""
-                else:
-                    parent_pkg = '.'.join(parts[:-self.level])
-                    
+
+                parent_pkg = "" if self.level == len(parts) else '.'.join(parts[:-self.level])
                 # Construct the full module name
                 if self.module:
-                    if parent_pkg:
-                        full_module = f"{parent_pkg}.{self.module}"
-                    else:
-                        full_module = self.module
+                    full_module = f"{parent_pkg}.{self.module}" if parent_pkg else self.module
                 else:
                     full_module = parent_pkg
-                    
+
                 # Check if the module exists
                 if not check_dependency_available(full_module):
                     self.is_valid = False
                     self.error_message = f"Cannot resolve relative import: {full_module}"
                     return False
-            else:
-                # For absolute imports, just check if the module exists
-                if self.module and not check_dependency_available(self.module):
-                    self.is_valid = False
-                    self.error_message = f"Cannot resolve absolute import: {self.module}"
-                    return False
-                    
-            self.is_valid = True
-            self.error_message = None
-            return True
+            elif self.module and not check_dependency_available(self.module):
+                self.is_valid = False
+                self.error_message = f"Cannot resolve absolute import: {self.module}"
+                return False
+
+            return self._extracted_from_validate_11(True, None)
         except Exception as e:
             self.is_valid = False
             self.error_message = f"Error validating import: {str(e)}"
             return False
+
+    # TODO Rename this here and in `validate`
+    def _extracted_from_validate_11(self, arg0, arg1):
+        self.is_valid = arg0
+        self.error_message = arg1
+        return arg0
             
     def get_full_import_path(self, package_path: Optional[str] = None) -> Optional[str]:
         """Get the full import path for this import.
@@ -375,28 +369,20 @@ class ImportInfo:
         """
         if not self.validate(package_path):
             return None
-            
-        if self.is_relative:
-            if not package_path:
-                return None
-                
-            # Calculate the parent package for relative imports
-            parts = package_path.split('.')
-            if self.level > len(parts):
-                return None
-                
-            if self.level == len(parts):
-                parent_pkg = ""
-            else:
-                parent_pkg = '.'.join(parts[:-self.level])
-                
-            # Construct the full module name
-            if self.module:
-                if parent_pkg:
-                    return f"{parent_pkg}.{self.module}"
-                else:
-                    return self.module
-            else:
-                return parent_pkg
-        else:
+
+        if not self.is_relative:
             return self.module
+        if not package_path:
+            return None
+
+        # Calculate the parent package for relative imports
+        parts = package_path.split('.')
+        if self.level > len(parts):
+            return None
+
+        parent_pkg = "" if self.level == len(parts) else '.'.join(parts[:-self.level])
+            # Construct the full module name
+        if self.module:
+            return f"{parent_pkg}.{self.module}" if parent_pkg else self.module
+        else:
+            return parent_pkg

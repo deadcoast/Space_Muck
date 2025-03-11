@@ -23,6 +23,8 @@ from ui.ascii_ui import (
     ASCIIEfficiencyMonitor,
     UIStyle,
 )
+from ui.game_screen import ASCIIGameScreen
+from ui.minimap_panel import ASCIIMinimapPanel
 from config import COLOR_BG
 
 
@@ -72,6 +74,23 @@ class ASCIIUIDemo:
             "quantum": UIStyle.QUANTUM,
             "symbiotic": UIStyle.SYMBIOTIC,
         }
+        
+        # Create the game screen as the main container
+        self.game_screen = ASCIIGameScreen(
+            pygame.Rect(0, 0, 1200, 800),
+            title="Space Muck Game",
+            style=styles["mechanical"]
+        )
+        
+        # Create a minimap panel
+        self.minimap = ASCIIMinimapPanel(
+            pygame.Rect(900, 50, 250, 250),
+            title="Navigation Map",
+            style=styles["symbiotic"]
+        )
+        
+        # Add the minimap to the game screen
+        self.game_screen.add_panel(self.minimap)
 
         # Basic components demo (left side)
         self.basic_panel = ASCIIPanel(

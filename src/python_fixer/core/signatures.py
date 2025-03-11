@@ -999,28 +999,30 @@ class SignatureVisitor:
     def _create_ast_visitor(self) -> Any:
         """Create an ast-based visitor as fallback."""
         parent = self
+
+
         class ASTVisitor(ast.NodeVisitor):
             def __init__(self):
                 super().__init__()
                 self.parent = parent
                 self.current_class = None
-                
+
             def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
                 # Extract function signature info using ast
                 name = node.name
                 components = []
-                
+
                 # Get parameters and their defaults
                 defaults = [None] * (len(node.args.args) - len(node.args.defaults)) + node.args.defaults
                 for arg, default in zip(node.args.args, defaults):
                     param_name = arg.arg
                     type_hint = None
                     default_value = None
-                    
+
                     # Get type hint if available
                     if arg.annotation:
                         type_hint = ast.unparse(arg.annotation)
-                    
+
                     # Handle default value if present
                     if default is not None:
                         try:
@@ -1032,7 +1034,7 @@ class SignatureVisitor:
                                 default_value = f'"{default_value}"'
                         except Exception as e:
                             console.warning(f"Failed to unparse default value for {param_name}: {e}")
-                    
+
                     # Handle type inference if needed
                     inferred_type = None
                     confidence = 0.0
@@ -1044,7 +1046,7 @@ class SignatureVisitor:
                             console.warning(f"Type inference failed for parameter {param_name}: {e}")
                             inferred_type = None
                             confidence = 0.0
-                    
+
                     components.append(SignatureComponent(
                         name=param_name,
                         type_info=TypeInfo(
@@ -1054,19 +1056,19 @@ class SignatureVisitor:
                         ),
                         default_value=default_value
                     ))
-                
+
                 # Get return type
                 return_type = None
                 if hasattr(node, 'returns') and node.returns:
                     type_hint = ast.unparse(node.returns)
                     return_type = TypeInfo(type_hint=type_hint, inferred_type=None, confidence=0.0)
-                
+
                 # Create signature with class context if inside a class
                 module_path = self.parent.file_path
                 if self.current_class:
                     # Ensure consistent module path format for class methods
                     module_path = module_path.with_name(f"{module_path.stem}.{self.current_class}.py")
-                
+
                 sig = CodeSignature(
                     name=name,
                     module_path=module_path,
@@ -1086,9 +1088,13 @@ class SignatureVisitor:
                     sig = CodeSignature(
                         name=node.name,
                         module_path=self.parent.file_path,
-                        components=[],  # Methods will be added during traversal
+                        components=[],
                         docstring=ast.get_docstring(node),
-                        dependencies=set(base.id for base in node.bases if isinstance(base, ast.Name))
+                        dependencies={
+                            base.id
+                            for base in node.bases
+                            if isinstance(base, ast.Name)
+                        },
                     )
                     self.parent.signatures.append(sig)
 
@@ -1105,6 +1111,7 @@ class SignatureVisitor:
                 finally:
                     # Restore previous class context
                     self.current_class = prev_class
+
 
         return ASTVisitor()
 
