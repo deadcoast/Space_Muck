@@ -270,9 +270,14 @@ class ASCIIChainVisualizer:
 
         # Format efficiency with trend indicator
         efficiency = converter.get("efficiency", 0)
-        trend_char = (
-            "↗" if efficiency_trend > 0 else "↘" if efficiency_trend < 0 else "→"
-        )
+        
+        # Determine trend character based on efficiency trend
+        if efficiency_trend > 0:
+            trend_char = "↗"
+        elif efficiency_trend < 0:
+            trend_char = "↘"
+        else:
+            trend_char = "→"
         peak_efficiency = state.get("peak_efficiency", 0.0)
 
         # Calculate utilization and uptime
@@ -281,15 +286,12 @@ class ASCIIChainVisualizer:
         uptime_hours = uptime / 3600  # Convert seconds to hours
 
         # Get color based on utilization
-        util_color = (
-            self.status_colors["active"]
-            if utilization > 80
-            else (
-                self.status_colors["idle"]
-                if utilization > 40
-                else self.status_colors["error"]
-            )
-        )
+        if utilization > 80:
+            util_color = self.status_colors["active"]
+        elif utilization > 40:
+            util_color = self.status_colors["idle"]
+        else:
+            util_color = self.status_colors["error"]
 
         # Format stats with enhanced information
         stats = [
@@ -578,9 +580,7 @@ class ASCIIChainVisualizer:
             end_x,
             end_y,
             dx,
-            dy,
             needs_vertical,
-            resource_type,
             source_converter,
             color,
         )
@@ -694,9 +694,7 @@ class ASCIIChainVisualizer:
         end_x: int,
         end_y: int,
         dx: int,
-        dy: int,
         needs_vertical: bool,
-        resource_type: str,
         source_converter: Optional[Dict[str, Any]],
         color: Tuple[int, int, int],
     ) -> None:
@@ -707,15 +705,14 @@ class ASCIIChainVisualizer:
             font: Font to use for rendering
             start_x, start_y: Starting coordinates
             end_x, end_y: Ending coordinates
-            dx, dy: Coordinate differences
+            dx: X-axis difference for direction
             needs_vertical: Whether vertical lines are needed
-            resource_type: Type of resource
-            source_converter: Source converter info
+            source_converter: Source converter info containing resource type
             color: Color to draw with
         """
-        # Get animation pattern for this resource type
+        # Get animation pattern based on source converter info
         pattern, pattern_pos = self._get_animation_pattern(
-            resource_type, source_converter, dx
+            source_converter, dx
         )
 
         # Calculate animation parameters
@@ -759,13 +756,12 @@ class ASCIIChainVisualizer:
             )
 
     def _get_animation_pattern(
-        self, resource_type: str, source_converter: Optional[Dict[str, Any]], dx: int
+        self, source_converter: Optional[Dict[str, Any]], dx: int
     ) -> Tuple[List[str], int]:
         """Get animation pattern for the resource type.
 
         Args:
-            resource_type: Type of resource
-            source_converter: Source converter info
+            source_converter: Source converter info containing output_type
             dx: X-axis difference for direction
 
         Returns:
@@ -800,7 +796,8 @@ class ASCIIChainVisualizer:
         pattern_set = anim_patterns.get(norm_resource_type, [self.chars["anim_chars"]])
 
         # Select pattern based on flow direction
-        pattern_idx = 0 if dx > 0 else 1 if len(pattern_set) > 1 else 0
+        # Use second pattern only if flow is leftward and we have multiple patterns
+        pattern_idx = 1 if dx <= 0 and len(pattern_set) > 1 else 0
         pattern = pattern_set[pattern_idx]
 
         # Get current animation position

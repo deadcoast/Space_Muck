@@ -14,10 +14,14 @@ import math
 
 # Third-party library imports
 import numpy as np
+from numpy.random import Generator, PCG64
 
 # Local imports
 # GPU utilities imports removed (unused)
 from utils.value_generator import generate_value_distribution, add_value_clusters
+
+# Initialize random number generator with a fixed seed for reproducibility
+rng = Generator(PCG64(42))
 
 # Optional dependencies
 try:
@@ -185,7 +189,7 @@ def add_value_clusters_gpu(
     if len(entity_cells) < num_clusters:
         num_clusters = len(entity_cells)
 
-    center_indices = np.random.choice(
+    center_indices = rng.choice(
         len(entity_cells), size=num_clusters, replace=False
     )
     cluster_centers = entity_cells[center_indices]

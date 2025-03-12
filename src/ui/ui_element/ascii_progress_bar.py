@@ -101,6 +101,39 @@ class ASCIIProgressBar(UIElement):
             logging.error(f"Error setting progress: {e}")
             self.progress = target_progress  # Fallback to direct setting
 
+    def _get_quantum_filled_text(self, filled_width: int) -> str:
+        """Generate filled text for quantum style.
+        
+        Args:
+            filled_width: Width of the filled portion
+            
+        Returns:
+            str: The generated text pattern
+        """
+        filled_text = ""
+        time_factor = time.time() * 3.0
+        for i in range(filled_width):
+            # Alternate characters based on position and time
+            wave = math.sin(i / 2.0 + time_factor)
+            char_idx = 0 if wave > 0 else 1
+            chars = ["◈", "◆"]
+            filled_text += chars[char_idx]
+        return filled_text
+        
+    def _get_symbiotic_filled_text(self, filled_width: int) -> str:
+        """Generate filled text for symbiotic style.
+        
+        Args:
+            filled_width: Width of the filled portion
+            
+        Returns:
+            str: The generated text pattern
+        """
+        return "".join(
+            "▓" if i / self.width > self.progress - 0.1 else "█"
+            for i in range(filled_width)
+        )
+
     def _draw_filled_portion(
         self,
         surface: pygame.Surface,
@@ -113,25 +146,11 @@ class ASCIIProgressBar(UIElement):
             return pygame.Rect(self.x, self.y, 0, 0)
 
         try:
-            # Apply style-specific character variations
+            # Get the appropriate filled text based on style
             if self.style == UIStyle.QUANTUM and self.animation["active"]:
-                # For quantum style, create a wave-like pattern when animating
-                filled_text = ""
-                time_factor = time.time() * 3.0
-                for i in range(filled_width):
-                    # Alternate characters based on position and time
-                    wave = math.sin(i / 2.0 + time_factor)
-                    char_idx = 0 if wave > 0 else 1
-                    chars = ["◈", "◆"]
-                    filled_text += chars[char_idx]
+                filled_text = self._get_quantum_filled_text(filled_width)
             elif self.style == UIStyle.SYMBIOTIC and self.animation["active"]:
-                # For symbiotic style, create an organic growth pattern
-                filled_text = ""
-                for i in range(filled_width):
-                    # Use different density blocks based on position relative to progress
-                    rel_pos = i / self.width
-                    progress = self.progress
-                    filled_text += "▓" if rel_pos > progress - 0.1 else "█"
+                filled_text = self._get_symbiotic_filled_text(filled_width)
             else:
                 # Default rendering
                 filled_text = self.fill_char * filled_width
@@ -157,6 +176,42 @@ class ASCIIProgressBar(UIElement):
                 color=fill_color,
             )
 
+    def _get_quantum_empty_text(self, filled_width: int, empty_width: int) -> str:
+        """Generate empty text for quantum style.
+        
+        Args:
+            filled_width: Width of the filled portion
+            empty_width: Width of the empty portion
+            
+        Returns:
+            str: The generated text pattern
+        """
+        empty_text = ""
+        time_factor = time.time() * 2.0
+        
+        for i in range(empty_width):
+            # Subtle variation in empty space
+            pos = filled_width + i
+            wave = math.sin(pos / 4.0 + time_factor) * 0.5 + 0.5
+            empty_text += "·" if wave < 0.3 else self.empty_char
+            
+        return empty_text
+        
+    def _get_symbiotic_empty_text(self, filled_width: int, empty_width: int) -> str:
+        """Generate empty text for symbiotic style.
+        
+        Args:
+            filled_width: Width of the filled portion
+            empty_width: Width of the empty portion
+            
+        Returns:
+            str: The generated text pattern
+        """
+        return "".join(
+            "░" if (filled_width + i) / self.width < self.progress + 0.1 else self.empty_char
+            for i in range(empty_width)
+        )
+
     def _draw_empty_portion(
         self,
         surface: pygame.Surface,
@@ -171,25 +226,11 @@ class ASCIIProgressBar(UIElement):
             return filled_rect
 
         try:
-            # Apply style-specific character variations
+            # Get the appropriate empty text based on style
             if self.style == UIStyle.QUANTUM and self.animation["active"]:
-                # For quantum style, create a subtle pattern in empty space
-                empty_text = ""
-                time_factor = time.time() * 2.0
-                for i in range(empty_width):
-                    # Subtle variation in empty space
-                    pos = filled_width + i
-                    wave = math.sin(pos / 4.0 + time_factor) * 0.5 + 0.5
-                    empty_text += "·" if wave < 0.3 else self.empty_char
+                empty_text = self._get_quantum_empty_text(filled_width, empty_width)
             elif self.style == UIStyle.SYMBIOTIC and self.animation["active"]:
-                # For symbiotic style, create a gradient in the empty portion
-                empty_text = ""
-                for i in range(empty_width):
-                    # Use different characters based on distance from filled portion
-                    rel_pos = (filled_width + i) / self.width
-                    empty_text += (
-                        "░" if rel_pos < self.progress + 0.1 else self.empty_char
-                    )
+                empty_text = self._get_symbiotic_empty_text(filled_width, empty_width)
             else:
                 # Default rendering
                 empty_text = self.empty_char * empty_width

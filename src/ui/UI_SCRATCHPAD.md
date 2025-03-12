@@ -60,7 +60,7 @@
 
 9. [ ] Documentation and Testing: Add comprehensive documentation and tests.
    - [ ] Add docstrings to all classes and methods
-   - [ ] Create README files for each module e plaining purpose
+   - [ ] Create README files for each module explaining purpose
    - [ ] Create e ample usage for each component
    - [ ] Add unit tests for core functionality
    - [ ] Create integration tests for component interactions

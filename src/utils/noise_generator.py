@@ -16,6 +16,7 @@ from typing import List, Optional
 
 # Third-party library imports
 import numpy as np
+from numpy.random import Generator, PCG64
 
 # Optional dependencies
 try:
@@ -222,12 +223,11 @@ class SimplexNoiseGenerator(NoiseGenerator):
         Returns:
             A 2D numpy array of noise values between 0 and 1
         """
-        # Set seed if provided
-        if seed is not None:
-            np.random.seed(seed)
-
+        # Create random number generator with seed if provided
+        rng = Generator(PCG64(seed if seed is not None else 42))
+        
         # Generate random noise
-        base_noise = np.random.rand(int(height * scale * 2), int(width * scale * 2))
+        base_noise = rng.random((int(height * scale * 2), int(width * scale * 2)))
 
         # Resize to desired dimensions using bilinear interpolation
         if SCIPY_AVAILABLE:

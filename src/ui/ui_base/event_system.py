@@ -438,36 +438,3 @@ class UIEventSystem:
 
         except Exception as e:
             logging.error(f"Error clearing component: {e}")
-
-
-# Example usage:
-"""
-# Get event system instance
-event_system = UIEventSystem.get_instance()
-
-# Define an event handler
-def on_button_click(event: UIEventData) -> None:
-    print(f"Button clicked: {event.source_id}")
-    # Access event data
-    button_id = event.data.get('button_id')
-    mouse_pos = event.data.get('position')
-
-# Subscribe to button click events
-event_system.subscribe(UIEventType.MOUSE_CLICK, "button1", on_button_click)
-
-# Emit an event when button is clicked
-event_system.emit(
-    UIEventType.MOUSE_CLICK,
-    "button1",
-    {
-        'button_id': "button1",
-        'position': (10, 20)
-    }
-)
-
-# Set up parent-child relationship for event bubbling
-event_system.set_parent_relationship("button1", "panel1")
-
-# Unsubscribe when no longer needed
-event_system.unsubscribe(UIEventType.MOUSE_CLICK, "button1", on_button_click)
-"""

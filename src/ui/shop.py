@@ -23,7 +23,7 @@ from config import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
 )
-from .draw_utils import draw_button, draw_panel, draw_text, draw_tooltip
+from .draw_utils import draw_button, draw_panel, draw_text
 
 
 # Forward references for type hints
@@ -355,7 +355,7 @@ class Shop:
 
     def check_unlockable_options(
         self, player: Player, field: AsteroidField, notifier: NotificationManager
-    ) -> None:
+    ) -> List[Dict[str, Any]]:
         """
         Check if any hidden options can be unlocked based on game progress.
 
@@ -702,17 +702,8 @@ class Shop:
 
         return pygame.Rect(x, y, w, h)
 
-    def draw(self, surface: pygame.Surface, player: Player) -> None:
-        """
-        Draw the shop interface on the given surface.
-
-        Args:
-            surface: Pygame surface to draw on
-            player: Player object to check affordability
-        """
-        # Get panel dimensions based on animation state
-        panel_rect = self.get_current_panel_rect()
-
+    def _draw_panel_and_header(self, surface: pygame.Surface, panel_rect: pygame.Rect) -> None:
+        """Draw the shop panel background and header."""
         # Draw panel background
         draw_panel(
             surface,
@@ -724,16 +715,17 @@ class Shop:
             header_height=self.title_height,
             header_color=(40, 40, 60, self.panel_alpha),
         )
-
+        
         # Draw expand/collapse button
         toggle_button_rect = pygame.Rect(
             panel_rect.x + panel_rect.width - 30, panel_rect.y + 5, 20, 20
         )
-
         draw_button(
             surface, toggle_button_rect, "▼" if self.expanded else "▶", font_size=14
         )
 
+    def _draw_player_stats(self, surface: pygame.Surface, panel_rect: pygame.Rect, player: Player) -> None:
+        """Draw player's currency and stats in collapsed mode."""
         # Draw player's currency
         currency_text = f"Resources: {player.currency}"
         draw_text(
@@ -744,12 +736,12 @@ class Shop:
             16,
             COLOR_TEXT,
         )
-
+        
         # If collapsed, only show minimal info
         if not self.expanded and self.animation_progress >= 1.0:
             # Show a few stats/options in collapsed mode
             y_offset = panel_rect.y + self.title_height + 30
-
+            
             # Show most important player stats
             stats = [
                 f"Mining Eff: {player.mining_efficiency:.1f}",
@@ -757,14 +749,13 @@ class Shop:
                 f"Range: {player.mining_range}",
                 f"Speed: {player.move_speed}",
             ]
-
+            
             for stat in stats:
                 draw_text(surface, stat, panel_rect.x + 10, y_offset, 14, COLOR_TEXT)
                 y_offset += 20
 
-            return
-
-        # In expanded view, draw category tabs
+    def _draw_category_tabs(self, surface: pygame.Surface, panel_rect: pygame.Rect) -> None:
+        """Draw the category tabs."""
         tab_width = panel_rect.width / len(self.categories)
         for i, category in enumerate(self.categories):
             tab_rect = pygame.Rect(
@@ -773,14 +764,14 @@ class Shop:
                 tab_width,
                 self.category_height,
             )
-
+            
             # Draw tab background
             color = (60, 60, 80) if category == self.current_category else (40, 40, 50)
             pygame.draw.rect(surface, color, tab_rect)
-
+            
             # Draw tab border
             pygame.draw.rect(surface, (80, 80, 100), tab_rect, 1)
-
+            
             # Draw tab text
             draw_text(
                 surface,
@@ -791,6 +782,336 @@ class Shop:
                 COLOR_TEXT,
                 align="center",
             )
+            
+    def _draw_scrollbar(self, surface: pygame.Surface, panel_rect: pygame.Rect, content_y: int, 
+                       content_height: int, filtered_options: List[Dict[str, Any]]) -> None:
+        """Draw scrollbar if needed."""
+        if len(filtered_options) <= self.max_visible_items:
+            return
+            
+        scrollbar_height = content_height
+        visible_ratio = self.max_visible_items / len(filtered_options)
+        thumb_height = max(30, scrollbar_height * visible_ratio)
+        
+        # Calculate thumb position
+        max_scroll = len(filtered_options) - self.max_visible_items
+        scroll_ratio = self.scroll_offset / max_scroll if max_scroll > 0 else 0
+        thumb_y = content_y + scroll_ratio * (scrollbar_height - thumb_height)
+        
+        # Draw track
+        scrollbar_x = panel_rect.x + panel_rect.width - 15
+        pygame.draw.rect(
+            surface,
+            (40, 40, 50),
+            (scrollbar_x, content_y, 10, scrollbar_height),
+            border_radius=5,
+        )
+        
+        # Draw thumb
+        pygame.draw.rect(
+            surface,
+            (80, 80, 100),
+            (scrollbar_x, thumb_y, 10, thumb_height),
+            border_radius=5,
+        )
+
+    def _get_item_colors(self, option: Dict[str, Any], player: Player) -> Tuple[tuple, tuple, tuple]:
+        """Get colors for item based on state (affordable, max level, requirements)."""
+        # Get cost and check if affordable
+        cost = self._get_option_cost(option, player)
+        can_afford = player.currency >= cost
+
+        # Check if max level reached
+        max_level_reached = (
+            option["max_level"] > 0
+            and option["current_level"] >= option["max_level"]
+        )
+
+        # Get requirements status
+        requirements_met = True
+        if "requires" in option and callable(option["requires"]):
+            field = player.field if hasattr(player, "field") else None
+            if len(option["requires"].__code__.co_varnames) == 1:
+                requirements_met = option["requires"](player)
+            else:
+                requirements_met = option["requires"](player, field)
+
+        # Determine colors based on state
+        bg_color = (40, 40, 55)  # Default background
+
+        if can_afford and not max_level_reached and requirements_met:
+            border_color = (100, 200, 100)
+            text_color = COLOR_TEXT
+        elif max_level_reached or not requirements_met:
+            border_color = (200, 100, 100)
+            text_color = (200, 100, 100)
+        else:
+            border_color = (150, 150, 150)
+
+            text_color = (150, 150, 150)
+
+        return bg_color, border_color, text_color
+
+    def _draw_item_icon(self, surface: pygame.Surface, item_rect: pygame.Rect, option: Dict[str, Any]) -> None:
+        """Draw the icon for a shop item."""
+        icon_size = 24
+        icon_rect = pygame.Rect(
+            item_rect.x + 10,
+            item_rect.y + (item_rect.height - icon_size) // 2,
+            icon_size,
+            icon_size,
+        )
+        
+        # Draw icon background
+        pygame.draw.rect(surface, (60, 60, 80), icon_rect, border_radius=5)
+        
+        # Draw icon text
+        draw_text(
+            surface,
+            option["icon"],
+            icon_rect.x + icon_rect.width // 2,
+            icon_rect.y + 2,
+            20,
+            COLOR_TEXT,
+            align="center",
+        )
+
+    def _draw_selection_arrow(self, surface: pygame.Surface, item_rect: pygame.Rect) -> None:
+        """Draw the selection arrow for a selected item."""
+        arrow_size = 20
+        arrow_rect = pygame.Rect(
+            item_rect.x + item_rect.width - 10 - arrow_size,
+            item_rect.y + (item_rect.height - arrow_size) // 2,
+            arrow_size,
+            arrow_size,
+        )
+        
+        pygame.draw.polygon(
+            surface,
+            COLOR_TEXT,
+            [
+                (arrow_rect.x + arrow_size // 2, arrow_rect.y),
+                (arrow_rect.x + arrow_size, arrow_rect.y + arrow_size // 2),
+                (arrow_rect.x + arrow_size // 2, arrow_rect.y + arrow_size),
+            ],
+        )
+
+    def _draw_shop_item(self, surface: pygame.Surface, item_rect: pygame.Rect, 
+                       option: Dict[str, Any], player: Player, is_selected: bool, is_hovered: bool) -> None:
+        """Draw a single shop item."""
+        # Get colors based on item state
+        default_bg, border_color, text_color = self._get_item_colors(option, player)
+        
+        # Background color based on selection/hover state
+        if is_selected:
+            bg_color = (60, 60, 80)
+        elif is_hovered:
+            bg_color = (50, 50, 70)
+        else:
+            bg_color = default_bg
+        
+        # Draw item background
+        pygame.draw.rect(surface, bg_color, item_rect, border_radius=5)
+        
+        # Draw item border
+        pygame.draw.rect(surface, border_color, item_rect, 2, border_radius=5)
+        
+        # Draw item icon if present
+        if "icon" in option:
+            self._draw_item_icon(surface, item_rect, option)
+        
+        # Get cost for display
+        cost = self._get_option_cost(option, player)
+        
+        # Draw item name
+        draw_text(
+            surface,
+            option["name"],
+            item_rect.x + 50,
+            item_rect.y + 10,
+            20,
+            text_color,
+            align="left",
+        )
+        
+        # Draw item cost
+        draw_text(
+            surface,
+            f"Cost: {cost}",
+            item_rect.x + item_rect.width - 100,
+            item_rect.y + 10,
+            20,
+            COLOR_TEXT,
+            align="right",
+        )
+        
+        # Draw item description
+        draw_text(
+            surface,
+            option["description"],
+            item_rect.x + 10,
+            item_rect.y + self.item_height - 10,
+            15,
+            text_color,
+        )
+        
+        # Draw item level
+        draw_text(
+            surface,
+            f"Level: {option['current_level']}",
+            item_rect.x + item_rect.width - 100,
+            item_rect.y + self.item_height - 10,
+            15,
+            text_color,
+            align="right",
+        )
+        
+        # Draw selection arrow if selected
+        if is_selected:
+            self._draw_selection_arrow(surface, item_rect)
+
+    def _draw_buttons_and_summary(self, surface: pygame.Surface, panel_rect: pygame.Rect) -> None:
+        """Draw buttons and summary information."""
+        # Draw expand/collapse button
+        button_rect = pygame.Rect(
+            panel_rect.x + 10,
+            panel_rect.y + panel_rect.height - 30,
+            panel_rect.width - 20,
+            25,
+        )
+        
+        button_text = "Collapse" if self.expanded else "Expand"
+        draw_button(
+            surface, button_text, button_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER
+        )
+        
+        # Draw category buttons
+        for category in self.categories:
+            button_rect = pygame.Rect(panel_rect.x + 10, panel_rect.y + 10, 100, 25)
+            button_rect.x += 110 * self.categories.index(category)
+            
+            draw_button(
+                surface,
+                category.capitalize(),
+                button_rect,
+                COLOR_BUTTON,
+                COLOR_BUTTON_HOVER,
+            )
+        
+        # Draw category filter indicator
+        indicator_rect = pygame.Rect(panel_rect.x + 10, panel_rect.y + 10, 100, 25)
+        indicator_rect.x += 110 * self.categories.index(self.current_category)
+        pygame.draw.rect(surface, COLOR_TEXT, indicator_rect, 2)
+        
+        # Draw close button
+        close_rect = pygame.Rect(
+            panel_rect.x + panel_rect.width - 30, panel_rect.y + 10, 25, 25
+        )
+        draw_button(surface, "X", close_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER)
+        
+        # Draw help button
+        help_rect = pygame.Rect(
+            panel_rect.x + panel_rect.width - 60, panel_rect.y + 10, 25, 25
+        )
+        draw_button(surface, "?", help_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER)
+        
+        # Draw title
+        draw_text(
+            surface,
+            "Shop",
+            panel_rect.x + panel_rect.width // 2,
+            panel_rect.y + 10,
+            25,
+            COLOR_TEXT,
+        )
+
+    def _draw_summary_stats(self, surface: pygame.Surface, panel_rect: pygame.Rect) -> None:
+        """Draw summary statistics at the bottom of the shop."""
+        # Draw total cost
+        total_cost = sum(option["cost"] for option in self.options)
+        draw_text(
+            surface,
+            f"Total cost: {total_cost}",
+            panel_rect.x + 10,
+            panel_rect.y + panel_rect.height - 10,
+            20,
+            COLOR_TEXT,
+        )
+        
+        # Draw total level
+        total_level = sum(option["current_level"] for option in self.options)
+        draw_text(
+            surface,
+            f"Total level: {total_level}",
+            panel_rect.x + panel_rect.width - 200,
+            panel_rect.y + panel_rect.height - 10,
+            20,
+            COLOR_TEXT,
+        )
+        
+    def _draw_tooltip(self, surface: pygame.Surface, name: str, description: str, level: int) -> None:
+        """Draw tooltip for selected item."""
+        # Create tooltip rectangle
+        tooltip_width = 300
+        tooltip_height = 150
+        tooltip_x = pygame.mouse.get_pos()[0] + 20
+        tooltip_y = pygame.mouse.get_pos()[1] + 20
+        
+        # Ensure tooltip stays on screen
+        if tooltip_x + tooltip_width > WINDOW_WIDTH:
+            tooltip_x = WINDOW_WIDTH - tooltip_width - 10
+        if tooltip_y + tooltip_height > WINDOW_HEIGHT:
+            tooltip_y = WINDOW_HEIGHT - tooltip_height - 10
+            
+        tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
+        
+        # Draw tooltip background
+        pygame.draw.rect(surface, (30, 30, 40), tooltip_rect, border_radius=5)
+        pygame.draw.rect(surface, (80, 80, 100), tooltip_rect, 2, border_radius=5)
+        
+        # Draw tooltip content
+        draw_text(surface, name, tooltip_rect.x + 10, tooltip_rect.y + 10, 20, COLOR_TEXT)
+        draw_text(surface, f"Level: {level}", tooltip_rect.x + tooltip_width - 10, 
+                 tooltip_rect.y + 10, 16, COLOR_TEXT, align="right")
+        
+        # Draw description with word wrap
+        words = description.split()
+        line = ""
+        y_offset = tooltip_rect.y + 40
+        for word in words:
+            test_line = f"{line}{word} "
+            if len(test_line) * 8 > tooltip_width - 20:  # Approximate character width
+                draw_text(surface, line, tooltip_rect.x + 10, y_offset, 14, COLOR_TEXT, align="left")
+                y_offset += 20
+                line = f"{word} "
+            else:
+                line = test_line
+        if line:
+            draw_text(surface, line, tooltip_rect.x + 10, y_offset, 14, COLOR_TEXT, align="left")
+        
+    def draw(self, surface: pygame.Surface, player: Player) -> None:
+        """
+        Draw the shop interface on the given surface.
+
+        Args:
+            surface: Pygame surface to draw on
+            player: Player object to check affordability
+        """
+        # Get panel dimensions based on animation state
+        panel_rect = self.get_current_panel_rect()
+
+        # Draw panel and header
+        self._draw_panel_and_header(surface, panel_rect)
+        
+        # Draw player stats
+        self._draw_player_stats(surface, panel_rect, player)
+        
+        # If collapsed, return early
+        if not self.expanded and self.animation_progress >= 1.0:
+            return
+
+        # In expanded view, draw category tabs
+        self._draw_category_tabs(surface, panel_rect)
 
         # Draw shop items
         filtered_options = self.get_filtered_options(player)
@@ -800,32 +1121,7 @@ class Shop:
         content_height = panel_rect.height - (content_y - panel_rect.y) - 20
 
         # Draw scrollbar if needed
-        if len(filtered_options) > self.max_visible_items:
-            scrollbar_height = content_height
-            visible_ratio = self.max_visible_items / len(filtered_options)
-            thumb_height = max(30, scrollbar_height * visible_ratio)
-
-            # Calculate thumb position
-            max_scroll = len(filtered_options) - self.max_visible_items
-            scroll_ratio = self.scroll_offset / max_scroll if max_scroll > 0 else 0
-            thumb_y = content_y + scroll_ratio * (scrollbar_height - thumb_height)
-
-            # Draw track
-            scrollbar_x = panel_rect.x + panel_rect.width - 15
-            pygame.draw.rect(
-                surface,
-                (40, 40, 50),
-                (scrollbar_x, content_y, 10, scrollbar_height),
-                border_radius=5,
-            )
-
-            # Draw thumb
-            pygame.draw.rect(
-                surface,
-                (80, 80, 100),
-                (scrollbar_x, thumb_y, 10, thumb_height),
-                border_radius=5,
-            )
+        self._draw_scrollbar(surface, panel_rect, content_y, content_height, filtered_options)
 
         # Draw items
         for i in range(visible_count):
@@ -840,257 +1136,37 @@ class Shop:
             is_selected = item_idx == self.selected_item
             is_hovered = item_idx == self.hover_item
 
-            # Background color based on state
-            bg_color = (
-                (60, 60, 80)
-                if is_selected
-                else (50, 50, 70) if is_hovered else (40, 40, 55)
-            )
-
-            # Get cost and check if affordable
-            cost = self._get_option_cost(option, player)
-            can_afford = player.currency >= cost
-
-            # Check if max level reached
-            max_level_reached = (
-                option["max_level"] > 0
-                and option["current_level"] >= option["max_level"]
-            )
-
-            # Get requirements status
-            requirements_met = True
-            if "requires" in option and callable(option["requires"]):
-                field = player.field if hasattr(player, "field") else None
-                if len(option["requires"].__code__.co_varnames) == 1:
-                    requirements_met = option["requires"](player)
-                else:
-                    requirements_met = option["requires"](player, field)
-
-            # Draw item background
+            # Create item rectangle
             item_rect = pygame.Rect(
                 panel_rect.x + 10, item_y, panel_rect.width - 30, self.item_height - 5
             )
-
-            pygame.draw.rect(surface, bg_color, item_rect, border_radius=5)
-
-            # Draw item border
-            border_color = (
-                (100, 200, 100)
-                if can_afford and not max_level_reached and requirements_met
-                else (
-                    (200, 100, 100)
-                    if max_level_reached or not requirements_met
-                    else (150, 150, 150)
-                )
-            )
-
-            pygame.draw.rect(surface, border_color, item_rect, 2, border_radius=5)
-
-            # Draw item icon
-            if "icon" in option:
-                icon_size = 24
-                icon_rect = pygame.Rect(
-                    item_rect.x + 10,
-                    item_rect.y + (item_rect.height - icon_size) // 2,
-                    icon_size,
-                    icon_size,
-                )
-
-                # Draw icon background
-                pygame.draw.rect(surface, (60, 60, 80), icon_rect, border_radius=5)
-
-                # Draw icon text
-                draw_text(
-                    surface,
-                    option["icon"],
-                    icon_rect.x + icon_rect.width // 2,
-                    icon_rect.y + 2,
-                    20,
-                    COLOR_TEXT,
-                    align="center",
-                )
-
-            # Draw item name
-            name_color = (
-                COLOR_TEXT
-                if can_afford and not max_level_reached and requirements_met
-                else (
-                    (200, 100, 100)
-                    if max_level_reached or not requirements_met
-                    else (150, 150, 150)
-                )
-            )
-            draw_text(
-                surface,
-                option["name"],
-                item_rect.x + 50,
-                item_rect.y + 10,
-                20,
-                name_color,
-                align="left",
-            )
-
-            # Draw item cost
-            draw_text(
-                surface,
-                f"Cost: {cost}",
-                item_rect.x + item_rect.width - 100,
-                item_rect.y + 10,
-                20,
-                COLOR_TEXT,
-                align="right",
-            )
-
-            # Draw item description
-            description_color = (
-                COLOR_TEXT
-                if can_afford and not max_level_reached and requirements_met
-                else (
-                    (200, 100, 100)
-                    if max_level_reached or not requirements_met
-                    else (150, 150, 150)
-                )
-            )
-            draw_text(
-                surface,
-                option["description"],
-                item_rect.x + 10,
-                item_rect.y + self.item_height - 10,
-                15,
-                description_color,
-            )
-
-            # Draw item level
-            level_color = (
-                COLOR_TEXT
-                if can_afford and not max_level_reached and requirements_met
-                else (
-                    (200, 100, 100)
-                    if max_level_reached or not requirements_met
-                    else (150, 150, 150)
-                )
-            )
-            draw_text(
-                surface,
-                f"Level: {option['current_level']}",
-                item_rect.x + item_rect.width - 100,
-                item_rect.y + self.item_height - 10,
-                15,
-                level_color,
-                align="right",
-            )
-
-            # Draw item arrow
-            arrow_size = 20
-            arrow_rect = pygame.Rect(
-                item_rect.x + item_rect.width - 10 - arrow_size,
-                item_rect.y + (item_rect.height - arrow_size) // 2,
-                arrow_size,
-                arrow_size,
-            )
-
-            if self.selected_item == item_idx:
-                pygame.draw.polygon(
-                    surface,
-                    COLOR_TEXT,
-                    [
-                        (arrow_rect.x + arrow_size // 2, arrow_rect.y),
-                        (arrow_rect.x + arrow_size, arrow_rect.y + arrow_size // 2),
-                        (arrow_rect.x + arrow_size // 2, arrow_rect.y + arrow_size),
-                    ],
-                )
+            
+            # Draw the shop item
+            self._draw_shop_item(surface, item_rect, option, player, is_selected, is_hovered)
 
             item_y += self.item_height + 5
 
-        # Draw expand/collapse button
-        button_rect = pygame.Rect(
-            panel_rect.x + 10,
-            panel_rect.y + panel_rect.height - 30,
-            panel_rect.width - 20,
-            25,
-        )
-
-        if self.expanded:
-            draw_button(
-                surface, "Collapse", button_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER
-            )
-        else:
-            draw_button(
-                surface, "Expand", button_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER
-            )
-
-        # Draw tooltip
-        if self.selected_item is not None:
+        # Draw buttons and summary information
+        self._draw_buttons_and_summary(surface, panel_rect)
+        
+        # Draw summary stats
+        self._draw_summary_stats(surface, panel_rect)
+        
+        # Draw tooltip for selected item
+        if self.selected_item is not None and self.show_tooltip:
             option = self.options[self.selected_item]
-            draw_tooltip(
+            self._draw_tooltip(
                 surface, option["name"], option["description"], option["current_level"]
             )
-
-        # Draw category buttons
-        for category in self.categories:
-            button_rect = pygame.Rect(panel_rect.x + 10, panel_rect.y + 10, 100, 25)
-            button_rect.x += 110 * self.categories.index(category)
-
-            draw_button(
-                surface,
-                category.capitalize(),
-                button_rect,
-                COLOR_BUTTON,
-                COLOR_BUTTON_HOVER,
-            )
-        # Draw category filter indicator
-        indicator_rect = pygame.Rect(panel_rect.x + 10, panel_rect.y + 10, 100, 25)
-        indicator_rect.x += 110 * self.categories.index(self.current_category)
-        pygame.draw.rect(surface, COLOR_TEXT, indicator_rect, 2)
-
-        # Draw close button
-        close_rect = pygame.Rect(
-            panel_rect.x + panel_rect.width - 30, panel_rect.y + 10, 25, 25
-        )
-        draw_button(surface, "X", close_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER)
-
-        # Draw help button
-        help_rect = pygame.Rect(
-            panel_rect.x + panel_rect.width - 60, panel_rect.y + 10, 25, 25
-        )
-        draw_button(surface, "?", help_rect, COLOR_BUTTON, COLOR_BUTTON_HOVER)
-
-        # Draw title
-        draw_text(
-            surface,
-            "Shop",
-            panel_rect.x + panel_rect.width // 2,
-            panel_rect.y + 10,
-            25,
-            COLOR_TEXT,
-        )
-
-        # Draw total cost
-        total_cost = sum(option["cost"] for option in self.options)
-        draw_text(
-            surface,
-            f"Total cost: {total_cost}",
-            panel_rect.x + 10,
-            panel_rect.y + panel_rect.height - 10,
-            20,
-            COLOR_TEXT,
-        )
-
-        # Draw total level
-        total_level = sum(option["current_level"] for option in self.options)
-        draw_text(
-            surface,
-            f"Total level: {total_level}",
-            panel_rect.x + panel_rect.width - 200,
-            panel_rect.y + panel_rect.height - 10,
-            20,
-            COLOR_TEXT,
-        )
 
         return surface
 
     def update(self, dt: float) -> None:
         """Update the shop and handle user input."""
+        # Update animation with delta time
+        self.update_animation(dt)
+        
+        # Handle input and update UI state
         self.handle_input()
         self.update_tooltip()
         self._extracted_from_update_16()

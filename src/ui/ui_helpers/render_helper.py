@@ -148,6 +148,7 @@ class RenderHelper:
         try:
             r, g, b = color
 
+            # Apply style-specific color effects
             if style == UIStyle.QUANTUM:
                 # Quantum style: color shifts with subtle pulsing
                 r_adj = int(min(255, r * (0.8 + 0.4 * math.sin(progress * math.pi))))
@@ -157,16 +158,8 @@ class RenderHelper:
                 # Symbiotic style: gradual green enhancement
                 g_boost = int(min(255, g * (1.0 + 0.3 * progress)))
                 return (r, g_boost, b)
-            elif style == UIStyle.MECHANICAL:
-                # Mechanical style: subtle brightening
-                factor = 1.0 + 0.2 * progress
-                return (
-                    int(min(255, r * factor)),
-                    int(min(255, g * factor)),
-                    int(min(255, b * factor)),
-                )
             elif style == UIStyle.ASTEROID:
-                # Asteroid style: warming effect
+                # Asteroid style: warming effect (red channel boost)
                 r_boost = int(min(255, r * (1.0 + 0.3 * progress)))
                 return (r_boost, g, b)
             elif style == UIStyle.FLEET:
@@ -174,8 +167,8 @@ class RenderHelper:
                 b_boost = int(min(255, b * (1.0 + 0.2 * math.sin(phase))))
                 g_boost = int(min(255, g * (1.0 + 0.1 * math.sin(phase))))
                 return (r, g_boost, b_boost)
-            else:
-                # Default: simple brightening
+            elif style == UIStyle.MECHANICAL or style is None:
+                # Mechanical style or default: subtle brightening of all channels
                 factor = 1.0 + 0.2 * progress
                 return (
                     int(min(255, r * factor)),

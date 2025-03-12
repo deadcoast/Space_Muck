@@ -93,7 +93,7 @@ def draw_text(
         text_surface.set_alpha(alpha)
 
     # Calculate position based on alignment
-    text_width, text_height = text_surface.get_size()
+    text_width, _ = text_surface.get_size()
     if align == "center":
         x -= text_width // 2
     elif align == "right":

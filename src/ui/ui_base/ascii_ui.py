@@ -40,6 +40,49 @@ class ASCIIBox(UIElement):
         if content:
             self.set_content(content)
 
+    def _wrap_line(self, line: str, max_width: int) -> List[str]:
+        """Wrap a single line of text to fit within the specified width.
+        
+        Args:
+            line: The line of text to wrap
+            max_width: Maximum width for each wrapped line
+            
+        Returns:
+            List[str]: List of wrapped lines
+        """
+        if len(line) <= max_width:
+            return [line]
+            
+        wrapped_lines = []
+        words = line.split()
+        current_line = ""
+        
+        for word in words:
+            # Check if adding this word would exceed the max width
+            if len(current_line) + len(word) + 1 <= max_width:
+                if current_line:
+                    current_line += f" {word}"
+                else:
+                    current_line = word
+            else:
+                wrapped_lines.append(current_line)
+                current_line = word
+        
+        # Add the last line if there's content
+        if current_line:
+            wrapped_lines.append(current_line)
+            
+        return wrapped_lines
+    
+    def _update_scroll_limits(self) -> None:
+        """Update scroll limits based on content and box size."""
+        # Calculate max scroll offset accounting for box borders
+        max_visible_lines = self.height - 2
+        self.max_scroll = max(0, len(self.content_lines) - max_visible_lines)
+        
+        # Reset scroll offset if needed
+        self.scroll_offset = min(self.scroll_offset, self.max_scroll)
+
     def set_content(self, content: str) -> None:
         """Set the content text for the box.
 
@@ -48,39 +91,19 @@ class ASCIIBox(UIElement):
         """
         try:
             self.content = content
-
-            # Split content into lines and handle word wrapping
             self.content_lines = []
+            
+            # Calculate available width (accounting for borders)
+            max_line_width = self.width - 2
+            
+            # Process each line in the content
             for line in content.split("\n"):
-                # Account for box borders (width - 2)
-                max_line_width = self.width - 2
-
-                if len(line) <= max_line_width:
-                    self.content_lines.append(line)
-                else:
-                    # Simple word wrapping
-                    words = line.split()
-                    current_line = ""
-
-                    for word in words:
-                        if len(current_line) + len(word) + 1 <= max_line_width:
-                            if current_line:
-                                current_line += f" {word}"
-                            else:
-                                current_line = word
-                        else:
-                            self.content_lines.append(current_line)
-                            current_line = word
-
-                    if current_line:
-                        self.content_lines.append(current_line)
-
-            # Calculate max scroll offset
-            max_visible_lines = self.height - 2  # Account for box borders
-            self.max_scroll = max(0, len(self.content_lines) - max_visible_lines)
-
-            # Reset scroll offset if needed
-            self.scroll_offset = min(self.scroll_offset, self.max_scroll)
+                # Add all wrapped lines to content_lines
+                self.content_lines.extend(self._wrap_line(line, max_line_width))
+            
+            # Update scroll limits based on new content
+            self._update_scroll_limits()
+            
         except Exception as e:
             logging.error(f"Error setting content: {e}")
 
@@ -560,41 +583,41 @@ class ASCIIProgressBar(UIElement):
             Dictionary of fill characters for the progress bar
         """
         try:
-            if self.style == UIStyle.SYMBIOTIC:
+            # Define fill characters based on UI style
+            if self.style == UIStyle.SYMBIOTIC or self.style is None:
+                # Default fill characters for symbiotic style and fallback
                 return {
                     "empty": "·",
                     "partial": ["░", "▒", "▓"],
                     "full": "█",
                 }
             elif self.style == UIStyle.ASTEROID:
+                # Geometric shapes for asteroid style
                 return {
                     "empty": "·",
                     "partial": ["▪", "◆", "◈"],
                     "full": "■",
                 }
             elif self.style == UIStyle.MECHANICAL:
+                # Square-based shapes for mechanical style
                 return {
                     "empty": "·",
                     "partial": ["▫", "▪", "◻"],
                     "full": "◼",
                 }
             elif self.style == UIStyle.QUANTUM:
+                # Dot-based patterns for quantum style
                 return {
                     "empty": "·",
                     "partial": ["∴", "∷", "⋮"],
                     "full": "⋯",
                 }
             elif self.style == UIStyle.FLEET:
+                # Circle-based shapes for fleet style
                 return {
                     "empty": "·",
                     "partial": ["◌", "◍", "◉"],
                     "full": "●",
-                }
-            else:
-                return {
-                    "empty": "·",
-                    "partial": ["░", "▒", "▓"],
-                    "full": "█",
                 }
 
         except Exception as e:

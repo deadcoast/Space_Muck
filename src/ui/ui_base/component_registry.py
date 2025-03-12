@@ -124,6 +124,53 @@ class ComponentRegistry:
             logging.error(f"Error registering component: {e}")
             return f"error_{id(component)}"
 
+    def _remove_from_type_registry(self, component: UIElement) -> None:
+        """Remove a component from the type registry.
+        
+        Args:
+            component: The component to remove
+        """
+        component_type = type(component)
+        if component_type in self._components_by_type:
+            self._components_by_type[component_type].remove(component)
+            # Clean up empty type entries
+            if not self._components_by_type[component_type]:
+                del self._components_by_type[component_type]
+    
+    def _handle_relationship_cleanup(self, component_id: str) -> None:
+        """Clean up parent-child relationships for a component.
+        
+        Args:
+            component_id: ID of the component being unregistered
+        """
+        # Orphan all children
+        if component_id in self._component_children:
+            for child_id in self._component_children[component_id]:
+                if child_id in self._component_parent:
+                    self._component_parent[child_id] = None
+            del self._component_children[component_id]
+
+        # Remove from parent's children list
+        parent_id = self._component_parent.get(component_id)
+        if parent_id and parent_id in self._component_children:
+            self._component_children[parent_id].discard(component_id)
+
+        # Remove from parent registry
+        if component_id in self._component_parent:
+            del self._component_parent[component_id]
+    
+    def _notify_unregistration(self, component_id: str) -> None:
+        """Notify listeners that a component has been unregistered.
+        
+        Args:
+            component_id: ID of the unregistered component
+        """
+        if self.on_component_unregistered:
+            try:
+                self.on_component_unregistered(component_id)
+            except Exception as e:
+                logging.error(f"Error in component unregistered callback: {e}")
+
     def unregister(self, component_id: str) -> bool:
         """Unregister a component from the registry.
 
@@ -134,6 +181,7 @@ class ComponentRegistry:
             True if the component was unregistered, False otherwise
         """
         try:
+            # Check if component exists
             if component_id not in self._components:
                 logging.warning(f"Component {component_id} not found in registry")
                 return False
@@ -143,40 +191,19 @@ class ComponentRegistry:
 
             # Remove from main registry
             del self._components[component_id]
-
+            
             # Remove from type registry
-            component_type = type(component)
-            if component_type in self._components_by_type:
-                self._components_by_type[component_type].remove(component)
-                if not self._components_by_type[component_type]:
-                    del self._components_by_type[component_type]
+            self._remove_from_type_registry(component)
 
             # Remove state
             if component_id in self._component_states:
                 del self._component_states[component_id]
 
-            # Notify via callback if registered
-            if self.on_component_unregistered:
-                try:
-                    self.on_component_unregistered(component_id)
-                except Exception as e:
-                    logging.error(f"Error in component unregistered callback: {e}")
+            # Notify listeners
+            self._notify_unregistration(component_id)
 
-            # Remove relationships
-            if component_id in self._component_children:
-                # Orphan all children
-                for child_id in self._component_children[component_id]:
-                    if child_id in self._component_parent:
-                        self._component_parent[child_id] = None
-                del self._component_children[component_id]
-
-            # Remove from parent's children
-            parent_id = self._component_parent.get(component_id)
-            if parent_id and parent_id in self._component_children:
-                self._component_children[parent_id].discard(component_id)
-
-            if component_id in self._component_parent:
-                del self._component_parent[component_id]
+            # Clean up relationships
+            self._handle_relationship_cleanup(component_id)
 
             # Remove weak reference
             if component_id in self._weak_refs:
@@ -364,27 +391,3 @@ class ComponentRegistry:
                 self.unregister(component_id)
         except Exception as e:
             logging.error(f"Error cleaning up component: {e}")
-
-
-# Example usage:
-"""
-# Register a component
-box = ASCIIBox(0, 0, 10, 5, UIStyle.MECHANICAL, "Example Box")
-registry = ComponentRegistry.get_instance()
-box_id = registry.register(box)
-
-# Set component state
-registry.set_component_state(box_id, ComponentState.ACTIVE)
-
-# Create parent-child relationship
-panel = ASCIIPanel(0, 0, 20, 10, UIStyle.MECHANICAL, "Example Panel")
-panel_id = registry.register(panel)
-registry.set_parent_child_relationship(panel_id, box_id)
-
-# Get components by type
-all_boxes = registry.get_components_by_type(ASCIIBox)
-
-# Clean up when done
-registry.set_component_state(box_id, ComponentState.DESTROYED)
-registry.update()  # This will unregister the box
-"""

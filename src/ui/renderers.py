@@ -198,91 +198,324 @@ class AsteroidFieldRenderer:
 
         # Draw grid lines first if enabled
         if draw_grid_lines and cell_size >= 4:
-            for x in range(min_x, max_x + 1):
-                pygame.draw.line(
-                    surface,
-                    COLOR_GRID,
-                    ((x - min_x) * cell_size, 0),
-                    ((x - min_x) * cell_size, surface.get_height()),
-                    1,
-                )
-            for y in range(min_y, max_y + 1):
-                pygame.draw.line(
-                    surface,
-                    COLOR_GRID,
-                    (0, (y - min_y) * cell_size),
-                    (surface.get_width(), (y - min_y) * cell_size),
-                    1,
-                )
+            self._draw_grid_lines(surface, min_x, min_y, max_x, max_y, cell_size)
 
         # Draw entities (under asteroids)
+        self._draw_entities(surface, entity_grid, min_x, min_y, max_x, max_y, cell_size)
+
+        # Draw asteroids
+        self._draw_asteroids(surface, grid, rare_grid, min_x, min_y, max_x, max_y, cell_size)
+    
+    def _draw_grid_lines(
+        self,
+        surface: pygame.Surface,
+        min_x: int,
+        min_y: int,
+        max_x: int,
+        max_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw grid lines on the surface.
+        
+        Args:
+            surface: Pygame surface to render on
+            min_x: Minimum x coordinate of view bounds
+            min_y: Minimum y coordinate of view bounds
+            max_x: Maximum x coordinate of view bounds
+            max_y: Maximum y coordinate of view bounds
+            cell_size: Size of each cell in pixels
+        """
+        # Draw vertical grid lines
+        for x in range(min_x, max_x + 1):
+            pygame.draw.line(
+                surface,
+                COLOR_GRID,
+                ((x - min_x) * cell_size, 0),
+                ((x - min_x) * cell_size, surface.get_height()),
+                1,
+            )
+        
+        # Draw horizontal grid lines
+        for y in range(min_y, max_y + 1):
+            pygame.draw.line(
+                surface,
+                COLOR_GRID,
+                (0, (y - min_y) * cell_size),
+                (surface.get_width(), (y - min_y) * cell_size),
+                1,
+            )
+    
+    def _draw_entities(
+        self,
+        surface: pygame.Surface,
+        entity_grid: np.ndarray,
+        min_x: int,
+        min_y: int,
+        max_x: int,
+        max_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw entities on the surface.
+        
+        Args:
+            surface: Pygame surface to render on
+            entity_grid: The entity grid
+            min_x: Minimum x coordinate of view bounds
+            min_y: Minimum y coordinate of view bounds
+            max_x: Maximum x coordinate of view bounds
+            max_y: Maximum y coordinate of view bounds
+            cell_size: Size of each cell in pixels
+        """
         for y in range(min_y, min(max_y + 1, entity_grid.shape[0])):
             for x in range(min_x, min(max_x + 1, entity_grid.shape[1])):
                 entity_id = entity_grid[y, x]
                 if entity_id > 0:
-                    color = self.entity_colors.get(entity_id, (255, 255, 255))
-                    screen_x = (x - min_x) * cell_size
-                    screen_y = (y - min_y) * cell_size
-
-                    # Draw entity as small shapes based on race
-                    if entity_id == 1:  # First race (blue)
-                        # Draw as diamond
-                        pygame.draw.polygon(
-                            surface,
-                            color,
-                            [
-                                (screen_x + cell_size // 2, screen_y),
-                                (screen_x + cell_size, screen_y + cell_size // 2),
-                                (screen_x + cell_size // 2, screen_y + cell_size),
-                                (screen_x, screen_y + cell_size // 2),
-                            ],
-                        )
-                    elif entity_id == 2:  # Second race (magenta)
-                        # Draw as triangle
-                        pygame.draw.polygon(
-                            surface,
-                            color,
-                            [
-                                (screen_x + cell_size // 2, screen_y),
-                                (screen_x + cell_size, screen_y + cell_size),
-                                (screen_x, screen_y + cell_size),
-                            ],
-                        )
-                    else:  # Third race (orange)
-                        # Draw as circle
-                        pygame.draw.circle(
-                            surface,
-                            color,
-                            (screen_x + cell_size // 2, screen_y + cell_size // 2),
-                            cell_size // 2,
-                        )
-
-        # Draw asteroids
+                    self._draw_entity(
+                        surface, 
+                        entity_id, 
+                        x - min_x, 
+                        y - min_y, 
+                        cell_size
+                    )
+    
+    def _draw_entity(
+        self,
+        surface: pygame.Surface,
+        entity_id: int,
+        screen_x_idx: int,
+        screen_y_idx: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a single entity on the surface.
+        
+        Args:
+            surface: Pygame surface to render on
+            entity_id: ID of the entity to draw
+            screen_x_idx: X index on screen
+            screen_y_idx: Y index on screen
+            cell_size: Size of each cell in pixels
+        """
+        color = self.entity_colors.get(entity_id, (255, 255, 255))
+        screen_x = screen_x_idx * cell_size
+        screen_y = screen_y_idx * cell_size
+        
+        # Draw entity as small shapes based on race
+        if entity_id == 1:  # First race (blue)
+            self._draw_diamond_entity(surface, color, screen_x, screen_y, cell_size)
+        elif entity_id == 2:  # Second race (magenta)
+            self._draw_triangle_entity(surface, color, screen_x, screen_y, cell_size)
+        else:  # Third race (orange)
+            self._draw_circle_entity(surface, color, screen_x, screen_y, cell_size)
+    
+    def _draw_diamond_entity(
+        self,
+        surface: pygame.Surface,
+        color: Tuple[int, int, int],
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a diamond-shaped entity.
+        
+        Args:
+            surface: Pygame surface to render on
+            color: Color of the entity
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        pygame.draw.polygon(
+            surface,
+            color,
+            [
+                (screen_x + cell_size // 2, screen_y),
+                (screen_x + cell_size, screen_y + cell_size // 2),
+                (screen_x + cell_size // 2, screen_y + cell_size),
+                (screen_x, screen_y + cell_size // 2),
+            ],
+        )
+    
+    def _draw_triangle_entity(
+        self,
+        surface: pygame.Surface,
+        color: Tuple[int, int, int],
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a triangle-shaped entity.
+        
+        Args:
+            surface: Pygame surface to render on
+            color: Color of the entity
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        pygame.draw.polygon(
+            surface,
+            color,
+            [
+                (screen_x + cell_size // 2, screen_y),
+                (screen_x + cell_size, screen_y + cell_size),
+                (screen_x, screen_y + cell_size),
+            ],
+        )
+    
+    def _draw_circle_entity(
+        self,
+        surface: pygame.Surface,
+        color: Tuple[int, int, int],
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a circle-shaped entity.
+        
+        Args:
+            surface: Pygame surface to render on
+            color: Color of the entity
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        pygame.draw.circle(
+            surface,
+            color,
+            (screen_x + cell_size // 2, screen_y + cell_size // 2),
+            cell_size // 2,
+        )
+    
+    def _draw_asteroids(
+        self,
+        surface: pygame.Surface,
+        grid: np.ndarray,
+        rare_grid: np.ndarray,
+        min_x: int,
+        min_y: int,
+        max_x: int,
+        max_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw asteroids on the surface.
+        
+        Args:
+            surface: Pygame surface to render on
+            grid: The asteroid value grid
+            rare_grid: The rare status grid
+            min_x: Minimum x coordinate of view bounds
+            min_y: Minimum y coordinate of view bounds
+            max_x: Maximum x coordinate of view bounds
+            max_y: Maximum y coordinate of view bounds
+            cell_size: Size of each cell in pixels
+        """
         for y in range(min_y, min(max_y + 1, grid.shape[0])):
             for x in range(min_x, min(max_x + 1, grid.shape[1])):
                 value = grid[y, x]
                 if value > 0:
                     screen_x = (x - min_x) * cell_size
                     screen_y = (y - min_y) * cell_size
-
                     is_rare = rare_grid[y, x] == 1
-
-                    if cell_size >= 8:
-                        if cell_surface := self.get_cell_surface(value, cell_size):
-                            surface.blit(cell_surface, (screen_x, screen_y))
-
-                            # Add rare overlay if needed
-                            if is_rare:
-                                rare_scaled = pygame.transform.scale(
-                                    self.rare_overlay, (cell_size, cell_size)
-                                )
-                                surface.blit(rare_scaled, (screen_x, screen_y))
-                    else:
-                        # For small cell sizes, use simple rects for performance
-                        color = self.get_cell_color(value, is_rare)
-                        pygame.draw.rect(
-                            surface, color, (screen_x, screen_y, cell_size, cell_size)
-                        )
+                    
+                    self._draw_asteroid(
+                        surface,
+                        value,
+                        is_rare,
+                        screen_x,
+                        screen_y,
+                        cell_size
+                    )
+    
+    def _draw_asteroid(
+        self,
+        surface: pygame.Surface,
+        value: int,
+        is_rare: bool,
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a single asteroid on the surface.
+        
+        Args:
+            surface: Pygame surface to render on
+            value: Asteroid value
+            is_rare: Whether the asteroid is rare
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        if cell_size >= 8:
+            self._draw_detailed_asteroid(
+                surface, value, is_rare, screen_x, screen_y, cell_size
+            )
+        else:
+            self._draw_simple_asteroid(
+                surface, value, is_rare, screen_x, screen_y, cell_size
+            )
+    
+    def _draw_detailed_asteroid(
+        self,
+        surface: pygame.Surface,
+        value: int,
+        is_rare: bool,
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a detailed asteroid with surface blitting.
+        
+        Args:
+            surface: Pygame surface to render on
+            value: Asteroid value
+            is_rare: Whether the asteroid is rare
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        if cell_surface := self.get_cell_surface(value, cell_size):
+            surface.blit(cell_surface, (screen_x, screen_y))
+            
+            # Add rare overlay if needed
+            if is_rare:
+                rare_scaled = pygame.transform.scale(
+                    self.rare_overlay, (cell_size, cell_size)
+                )
+                surface.blit(rare_scaled, (screen_x, screen_y))
+    
+    def _draw_simple_asteroid(
+        self,
+        surface: pygame.Surface,
+        value: int,
+        is_rare: bool,
+        screen_x: int,
+        screen_y: int,
+        cell_size: int
+    ) -> None:
+        """
+        Draw a simple asteroid as a rectangle for performance.
+        
+        Args:
+            surface: Pygame surface to render on
+            value: Asteroid value
+            is_rare: Whether the asteroid is rare
+            screen_x: X position on screen
+            screen_y: Y position on screen
+            cell_size: Size of each cell in pixels
+        """
+        color = self.get_cell_color(value, is_rare)
+        pygame.draw.rect(
+            surface, color, (screen_x, screen_y, cell_size, cell_size)
+        )
 
 
 class PlayerRenderer:
@@ -392,7 +625,7 @@ class PlayerRenderer:
             cell_size: Size of each cell in pixels
             moving: Whether the player is currently moving
         """
-        min_x, min_y, max_x, max_y = view_bounds
+        min_x, min_y, _, _ = view_bounds
 
         # Calculate screen position
         screen_x = (player_x - min_x) * cell_size
@@ -971,13 +1204,13 @@ class UIStateRenderer:
             draw_text(surface, text, x, y, size, color)
 
             # Draw with shadow for visibility
-            draw_text(surface, text, x + 2, y + 2, size, (0, 0, 0), 1)
+            draw_text(surface, text, x + 2, y + 2, size, (0, 0, 0), "left")
 
             # Draw with transparency
-            draw_text(surface, text, x, y, size, color, alpha)
+            draw_text(surface, text, x, y, size, color, "left", False, (0, 0, 0), alpha)
 
             # Draw with transparency and shadow for visibility
-            draw_text(surface, text, x + 2, y + 2, size, (0, 0, 0), 1, alpha)
+            draw_text(surface, text, x + 2, y + 2, size, (0, 0, 0), "left", True, (0, 0, 0), alpha)
 
             # Update lifetime
             notification["lifetime"] = max(0, notification["lifetime"] - 1)

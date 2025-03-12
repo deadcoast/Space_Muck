@@ -15,6 +15,10 @@ from typing import Callable, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
+from numpy.random import Generator, PCG64
+
+# Initialize random number generator with a fixed seed for reproducibility
+rng = Generator(PCG64(42))
 
 
 def generate_spiral_pattern(
@@ -186,8 +190,8 @@ def generate_void_pattern(
     # Generate random void centers
     void_centers = []
     for _ in range(num_voids):
-        x = np.random.randint(0, width)
-        y = np.random.randint(0, height)
+        x = rng.integers(0, width)
+        y = rng.integers(0, height)
         void_centers.append((x, y))
 
     # Calculate void size in pixels

@@ -313,6 +313,74 @@ class ASCIITable:
                     logging.warning(f"Error sorting table data: {e}")
                     self.sort_column = -1
 
+    def _handle_header_click(self, event: pygame.event.Event) -> bool:
+        """Handle clicks on column headers for sorting.
+        
+        Args:
+            event: The pygame event
+            
+        Returns:
+            bool: True if the event was handled
+        """
+        if not (self.sortable and event.button == 1):
+            return False
+            
+        header_height = 30  # Approximate height of header
+        if not (self.rect.y <= event.pos[1] <= self.rect.y + header_height):
+            return False
+            
+        # Determine which column was clicked
+        x = self.rect.x + 10  # Starting x position with margin
+        for i, width in enumerate(self.column_widths):
+            if x <= event.pos[0] <= x + width:
+                self.sort_by_column(i)
+                return True
+            x += width + 5  # Add spacing between columns
+            
+        return False
+        
+    def _handle_row_selection(self, event: pygame.event.Event) -> bool:
+        """Handle row selection clicks.
+        
+        Args:
+            event: The pygame event
+            
+        Returns:
+            bool: True if the event was handled
+        """
+        if not (self.selectable and event.button == 1):
+            return False
+            
+        row_height = 20  # Approximate height of each row
+        header_offset = 40  # Space for headers
+        y = self.rect.y + header_offset
+
+        # Calculate which row was clicked
+        row_idx = self.scroll_offset + (event.pos[1] - y) // row_height
+        if y <= event.pos[1] < y + row_height * self.visible_rows and 0 <= row_idx < len(self.data):
+            self.select_row(row_idx)
+            return True
+            
+        return False
+        
+    def _handle_scrolling(self, event: pygame.event.Event) -> bool:
+        """Handle scrolling events.
+        
+        Args:
+            event: The pygame event
+            
+        Returns:
+            bool: True if the event was handled
+        """
+        if event.button == 4:  # Scroll up
+            self.scroll(-1)
+            return True
+        elif event.button == 5:  # Scroll down
+            self.scroll(1)
+            return True
+            
+        return False
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Handle pygame events for this table.
 
@@ -320,40 +388,14 @@ class ASCIITable:
             bool: True if the event was consumed
         """
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # Check for clicks on column headers (for sorting)
-            if self.sortable and event.button == 1:  # Left click
-                header_height = 30  # Approximate height of header
-                if self.rect.y <= event.pos[1] <= self.rect.y + header_height:
-                    # Determine which column was clicked
-                    x = self.rect.x + 10  # Starting x position with margin
-                    for i, width in enumerate(self.column_widths):
-                        if x <= event.pos[0] <= x + width:
-                            self.sort_by_column(i)
-                            return True
-                        x += width + 5  # Add spacing between columns
-
-            # Check for row selection
-            if self.selectable and event.button == 1:  # Left click
-                row_height = 20  # Approximate height of each row
-                header_offset = 40  # Space for headers
-                y = self.rect.y + header_offset
-
-                # Calculate which row was clicked
-                row_idx = self.scroll_offset + (event.pos[1] - y) // row_height
-                if y <= event.pos[
-                    1
-                ] < y + row_height * self.visible_rows and 0 <= row_idx < len(
-                    self.data
-                ):
-                    self.select_row(row_idx)
-                    return True
-
-            # Check for scrolling
-            if event.button == 4:  # Scroll up
-                self.scroll(-1)
+            # Try to handle the event with each handler in order
+            if self._handle_header_click(event):
                 return True
-            elif event.button == 5:  # Scroll down
-                self.scroll(1)
+                
+            if self._handle_row_selection(event):
+                return True
+                
+            if self._handle_scrolling(event):
                 return True
 
         return False
@@ -904,9 +946,10 @@ class ASCIITable:
         """
         separator = b["lc"]
 
-        for i, width in enumerate(col_widths):
+        for width in col_widths:
             separator += b["h"] * width
-            separator += b["rc"] if i < len(col_widths) - 1 else b["rc"]
+            # Always add the right connector character
+            separator += b["rc"]
 
         return separator
 

@@ -659,76 +659,145 @@ class UIElement:
         except Exception as e:
             logging.error(f"Error drawing animation effects: {e}")
 
+    def _count_live_neighbors(self, grid: List[List[bool]], x: int, y: int) -> int:
+        """Count the number of live neighbors for a cell in the grid.
+        
+        Args:
+            grid: The current cell grid
+            x: X coordinate of the cell
+            y: Y coordinate of the cell
+            
+        Returns:
+            int: Number of live neighbors
+        """
+        neighbors = 0
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                # Skip the cell itself
+                if dx == 0 and dy == 0:
+                    continue
+                    
+                # Get neighbor coordinates with wrapping
+                nx, ny = (x + dx) % self.width, (y + dy) % self.height
+                
+                # Count if neighbor is alive
+                if grid[ny][nx]:
+                    neighbors += 1
+                    
+        return neighbors
+    
+    def _apply_game_of_life_rules(self, current_state: bool, neighbors: int) -> bool:
+        """Apply Conway's Game of Life rules to determine the next state of a cell.
+        
+        Args:
+            current_state: Current state of the cell (True=alive, False=dead)
+            neighbors: Number of live neighbors
+            
+        Returns:
+            bool: New state of the cell
+        """
+        return neighbors in [2, 3] if current_state else neighbors == 3
+    
     def _evolve_cellular_grid(self) -> None:
         """Evolve the cellular automaton grid using Game of Life rules"""
         try:
             current_grid = self.animation_state["cells"]
             new_grid = [[False for _ in range(self.width)] for _ in range(self.height)]
 
-            # Apply Conway's Game of Life rules
+            # Process each cell in the grid
             for y in range(self.height):
                 for x in range(self.width):
-                    # Count live neighbors (Moore neighborhood)
-                    neighbors = 0
-                    for dy in [-1, 0, 1]:
-                        for dx in [-1, 0, 1]:
-                            if dx == 0 and dy == 0:
-                                continue
-                            nx, ny = (x + dx) % self.width, (y + dy) % self.height
-                            if current_grid[ny][nx]:
-                                neighbors += 1
-
-                    # Apply Game of Life rules
-                    new_grid[y][x] = (
-                        neighbors in [2, 3] if current_grid[y][x] else neighbors == 3
-                    )
+                    # Count neighbors and apply rules
+                    neighbors = self._count_live_neighbors(current_grid, x, y)
+                    new_state = self._apply_game_of_life_rules(current_grid[y][x], neighbors)
+                    
+                    # Apply the new state with possible mutation
+                    new_grid[y][x] = new_state
+                    
                     # Apply random mutations (5% chance)
                     if random.random() < 0.05:
                         new_grid[y][x] = not new_grid[y][x]
 
+            # Update the animation state with the new grid
             self.animation_state["cells"] = new_grid
 
-            # Store history for analysis if needed
-            if len(self.animation_history) > 10:
-                self.animation_history.pop(0)
-            self.animation_history.append(new_grid)
+            # Store history for analysis (limited to 10 frames)
+            self._update_animation_history(new_grid)
+            
         except Exception as e:
             logging.error(f"Error evolving cellular grid: {e}")
+            
+    def _update_animation_history(self, new_grid: List[List[bool]]) -> None:
+        """Update the animation history by adding a new grid and removing old ones if needed.
+        
+        Args:
+            new_grid: The new grid to add to history
+        """
+        if len(self.animation_history) > 10:
+            self.animation_history.pop(0)
+        self.animation_history.append(new_grid)
 
+    def _calculate_neighbor_bias(self, grid: List[List[bool]], x: int, y: int) -> float:
+        """Calculate the neighbor bias for mineral growth.
+        
+        Args:
+            grid: The current cell grid
+            x: X coordinate of the cell
+            y: Y coordinate of the cell
+            
+        Returns:
+            float: Neighbor bias value
+        """
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        neighbor_bias = 0
+        
+        for dx, dy in directions:
+            nx, ny = (x + dx) % self.width, (y + dy) % self.height
+            if grid[ny][nx]:
+                neighbor_bias += 0.1
+                
+        return neighbor_bias
+    
+    def _try_grow_crystal(self, current_grid: List[List[bool]], new_grid: List[List[bool]], x: int, y: int) -> None:
+        """Try to grow a crystal from a given cell in various directions.
+        
+        Args:
+            current_grid: The current cell grid
+            new_grid: The new grid being created
+            x: X coordinate of the source cell
+            y: Y coordinate of the source cell
+        """
+        # Skip if this cell is not a crystal
+        if not current_grid[y][x]:
+            return
+            
+        # Growth directions (4-connected)
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        
+        # Try to grow in each direction
+        for dx, dy in directions:
+            nx, ny = (x + dx) % self.width, (y + dy) % self.height
+            
+            # If the target cell is empty, it might grow
+            if not current_grid[ny][nx]:
+                # Calculate growth probability based on neighbors
+                neighbor_bias = self._calculate_neighbor_bias(current_grid, nx, ny)
+                growth_chance = min(0.95, 0.15 + neighbor_bias)
+                
+                # Apply growth probability
+                if random.random() < growth_chance:
+                    new_grid[ny][nx] = True
+    
     def _update_mineral_growth(self) -> None:
         """Update mineral growth animation pattern"""
         try:
             current_grid = self.animation_state["cells"]
             new_grid = [row[:] for row in current_grid]  # Copy current grid
 
-            # Growth directions (4-connected)
-            directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-
-            # For each cell that's already a crystal
+            # Process each cell in the grid
             for y in range(self.height):
                 for x in range(self.width):
-                    if not current_grid[y][x]:
-                        continue
-
-                    # Try to grow in each direction
-                    for dx, dy in directions:
-                        nx, ny = (x + dx) % self.width, (y + dy) % self.height
-
-                        # If the target cell is empty, it might grow
-                        if not current_grid[ny][nx]:
-                            # Higher chance to grow in the same direction as neighbors
-                            neighbor_bias = 0
-                            for ndx, ndy in directions:
-                                nnx, nny = (nx + ndx) % self.width, (
-                                    ny + ndy
-                                ) % self.height
-                                if current_grid[nny][nnx]:
-                                    neighbor_bias += 0.1
-
-                            # Apply growth probability
-                            growth_chance = min(0.95, 0.15 + neighbor_bias)
-                            if random.random() < growth_chance:
-                                new_grid[ny][nx] = True
+                    self._try_grow_crystal(current_grid, new_grid, x, y)
 
             self.animation_state["cells"] = new_grid
         except Exception as e:
@@ -1101,7 +1170,7 @@ class UIElement:
 
         draw_segment(self.x, self.y, self.width, self.height)
         # Final reveal
-        self.draw(stdscr)
+        self.draw(stdscr, None)  # Pass None for font as it's not used in curses mode
 
     def _warp_animation(self, stdscr):
         """Space-warp inspired expanding animation"""
@@ -1134,8 +1203,62 @@ class UIElement:
             time.sleep(0.05)
 
         # Final reveal
-        self.draw(stdscr)
+        self.draw(stdscr, None)  # Pass None for font as it's not used in curses mode None)  # Pass None for font as it's not used in curses mode
 
+    def _get_neighbor_probabilities(self, probs: List[List[float]], x: int, y: int) -> List[float]:
+        """Get probability values from neighboring cells.
+        
+        Args:
+            probs: The probability grid
+            x: X coordinate of the cell
+            y: Y coordinate of the cell
+            
+        Returns:
+            List[float]: List of probability values from neighboring cells
+        """
+        neighbors = []
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    neighbors.append(probs[ny][nx])
+        return neighbors
+    
+    def _calculate_new_probability(self, current_prob: float, neighbors: List[float]) -> float:
+        """Calculate new probability value based on neighbors and randomness.
+        
+        Args:
+            current_prob: Current probability value
+            neighbors: List of neighbor probability values
+            
+        Returns:
+            float: New probability value clamped to [0,1]
+        """
+        # Calculate average of neighbors
+        avg = sum(neighbors) / len(neighbors) if neighbors else 0.5
+        
+        # Apply quantum-like randomness
+        new_prob = (avg + current_prob) / 2 + (random.random() - 0.5) * 0.1
+        
+        # Clamp to valid range [0,1]
+        return max(0, min(1, new_prob))
+    
+    def _render_probability_cell(self, stdscr, x: int, y: int, prob: float) -> None:
+        """Render a cell based on its probability value.
+        
+        Args:
+            stdscr: Curses screen
+            x: X coordinate in the UI
+            y: Y coordinate in the UI
+            prob: Probability value
+        """
+        # Only render if random chance is less than probability (probabilistic rendering)
+        if random.random() < prob:
+            with contextlib.suppress(curses.error):
+                # Choose character based on probability value
+                char = " ·:+*#@"[min(6, int(prob * 7))]
+                stdscr.addstr(self.y + y, self.x + x, char)
+    
     def _quantum_animation(self, stdscr):
         """Quantum-inspired probability wave collapse animation"""
         # Create a grid of probabilities
@@ -1145,115 +1268,174 @@ class UIElement:
 
         # Animation phases
         for _ in range(5):
-            # Update probabilities based on neighbors (quantum-like interference)
+            # Create new probability grid
             new_probs = [[0.0 for _ in range(self.width)] for _ in range(self.height)]
-            for y in range(self.height):
-                for x in range(self.width):
-                    # Average with neighbors
-                    neighbors = []
-                    for dy in [-1, 0, 1]:
-                        for dx in [-1, 0, 1]:
-                            nx, ny = x + dx, y + dy
-                            if 0 <= nx < self.width and 0 <= ny < self.height:
-                                neighbors.append(probs[ny][nx])
-
-                    # Calculate new probability with quantum-like randomness
-                    avg = sum(neighbors) / len(neighbors) if neighbors else 0.5
-                    new_probs[y][x] = (avg + probs[y][x]) / 2 + (
-                        random.random() - 0.5
-                    ) * 0.1
-                    new_probs[y][x] = max(0, min(1, new_probs[y][x]))  # Clamp to [0,1]
-
+            
+            # Update probabilities based on neighbors
+            self._update_probability_grid(probs, new_probs)
+            
             # Update grid
             probs = new_probs
 
-            # Visualize the current state - higher prob = more visible
-            for y in range(self.height):
-                for x in range(self.width):
-                    if random.random() < probs[y][x]:  # Probabilistic rendering
-                        with contextlib.suppress(curses.error):
-                            char = " ·:+*#@"[min(6, int(probs[y][x] * 7))]
-                            stdscr.addstr(self.y + y, self.x + x, char)
+            # Visualize the current state
+            self._visualize_probability_grid(stdscr, probs)
+            
+            # Refresh and delay
             stdscr.refresh()
             time.sleep(0.1)
 
         # Final "collapse" to actual UI
-        self.draw(stdscr)
+        self.draw(stdscr, None)  # Pass None for font as it's not used in curses mode
+        
+    def _update_probability_grid(self, current_probs: List[List[float]], new_probs: List[List[float]]) -> None:
+        """Update the probability grid based on neighbor interactions.
+        
+        Args:
+            current_probs: Current probability grid
+            new_probs: New probability grid to update
+        """
+        for y in range(self.height):
+            for x in range(self.width):
+                # Get neighbor probabilities
+                neighbors = self._get_neighbor_probabilities(current_probs, x, y)
+                
+                # Calculate new probability
+                new_probs[y][x] = self._calculate_new_probability(current_probs[y][x], neighbors)
+    
+    def _visualize_probability_grid(self, stdscr, probs: List[List[float]]) -> None:
+        """Visualize the probability grid on the screen.
+        
+        Args:
+            stdscr: Curses screen
+            probs: Probability grid
+        """
+        for y in range(self.height):
+            for x in range(self.width):
+                self._render_probability_cell(stdscr, x, y, probs[y][x])
 
-    def _mineral_growth_animation(self, stdscr):
-        """Crystalline growth pattern animation"""
-        # Start with seed points
+    def _initialize_crystal_grid(self) -> Tuple[List[Tuple[int, int]], List[List[bool]]]:
+        """Initialize the crystal grid with border seeds.
+        
+        Returns:
+            Tuple containing:
+                - List of active growth points
+                - 2D grid representing crystal state
+        """
         active_points = []
         crystal = [[False for _ in range(self.width)] for _ in range(self.height)]
-
-        # Seed the border
+        
+        # Seed the horizontal borders
         for i in range(self.width):
             active_points.extend(((i, 0), (i, self.height - 1)))
             crystal[0][i] = True
             crystal[self.height - 1][i] = True
-
+        
+        # Seed the vertical borders
         for i in range(1, self.height - 1):
             active_points.extend(((0, i), (self.width - 1, i)))
             crystal[i][0] = True
             crystal[i][self.width - 1] = True
-
+            
+        return active_points, crystal
+    
+    def _grow_crystal_from_point(self, stdscr, crystal: List[List[bool]], x: int, y: int, 
+                                growth_chars: List[str]) -> List[Tuple[int, int]]:
+        """Grow crystal from a specific point in random directions.
+        
+        Args:
+            stdscr: Curses screen
+            crystal: 2D grid representing crystal state
+            x: X coordinate of growth point
+            y: Y coordinate of growth point
+            growth_chars: List of characters to use for crystal visualization
+            
+        Returns:
+            List of new active points created by growth
+        """
+        # All possible growth directions (8-connected neighborhood)
+        directions = [
+            (0, 1), (1, 0), (0, -1), (-1, 0),  # Cardinal directions
+            (1, 1), (-1, -1), (1, -1), (-1, 1)   # Diagonal directions
+        ]
+        random.shuffle(directions)
+        
+        new_active_points = []
+        
+        # Try each direction
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            
+            # Check if the target cell is valid and empty
+            if (0 <= nx < self.width and 0 <= ny < self.height and not crystal[ny][nx]):
+                # Grow in this direction
+                crystal[ny][nx] = True
+                new_active_points.append((nx, ny))
+                
+                # Draw the crystal growth
+                char = random.choice(growth_chars)
+                with contextlib.suppress(curses.error):
+                    stdscr.addstr(self.y + ny, self.x + nx, char)
+                    
+        return new_active_points
+    
+    def _filter_active_points(self, crystal: List[List[bool]], active_points: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """Filter active points to keep only those that can still grow.
+        
+        Args:
+            crystal: 2D grid representing crystal state
+            active_points: List of current active points
+            
+        Returns:
+            Filtered list of active points
+        """
+        # Cardinal directions for checking growth potential
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        
+        # Keep only points that have at least one empty neighbor
+        return [
+            (x, y) for x, y in active_points
+            if any(
+                0 <= x + dx < self.width
+                and 0 <= y + dy < self.height
+                and not crystal[y + dy][x + dx]
+                for dx, dy in directions
+            )
+        ]
+    
+    def _mineral_growth_animation(self, stdscr):
+        """Crystalline growth pattern animation"""
+        # Initialize crystal grid with border seeds
+        active_points, crystal = self._initialize_crystal_grid()
+        
         # Crystal growth patterns
         growth_chars = ["·", ":", "▪", "▫", "▣", "▨", "◆", "◇", "◈"]
-
-        # Animation steps
-        for _ in range(min(self.width, self.height) // 2):
+        
+        # Animation steps - grow until we reach the center or run out of active points
+        max_steps = min(self.width, self.height) // 2
+        
+        for _ in range(max_steps):
+            # Stop if no more active points
             if not active_points:
                 break
-
-            # Select random active points to grow from
+                
+            # Select random subset of active points to grow from
             growth_points = random.sample(active_points, min(len(active_points), 5))
             new_active_points = []
-
+            
+            # Grow from each selected point
             for x, y in growth_points:
-                # Try to grow in random directions
-                directions = [
-                    (0, 1),
-                    (1, 0),
-                    (0, -1),
-                    (-1, 0),
-                    (1, 1),
-                    (-1, -1),
-                    (1, -1),
-                    (-1, 1),
-                ]
-                random.shuffle(directions)
-
-                for dx, dy in directions:
-                    nx, ny = x + dx, y + dy
-                    if (
-                        0 <= nx < self.width
-                        and 0 <= ny < self.height
-                        and not crystal[ny][nx]
-                    ):
-                        # Grow in this direction
-                        crystal[ny][nx] = True
-                        new_active_points.append((nx, ny))
-
-                        # Draw the crystal growth
-                        char = random.choice(growth_chars)
-                        with contextlib.suppress(curses.error):
-                            stdscr.addstr(self.y + ny, self.x + nx, char)
-            # Update active points
+                new_points = self._grow_crystal_from_point(stdscr, crystal, x, y, growth_chars)
+                new_active_points.extend(new_points)
+                
+            # Update active points - combine existing and new, remove duplicates
             active_points = list(set(active_points + new_active_points))
-            # Remove points that can't grow anymore
-            active_points = [
-                (x, y)
-                for x, y in active_points
-                if any(
-                    0 <= x + dx < self.width
-                    and 0 <= y + dy < self.height
-                    and not crystal[y + dy][x + dx]
-                    for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]
-                )
-            ]
-
+            
+            # Filter to keep only points that can still grow
+            active_points = self._filter_active_points(crystal, active_points)
+            
+            # Refresh display and pause
             stdscr.refresh()
             time.sleep(0.05)
-
+            
         # Final draw
-        self.draw(stdscr)
+        self.draw(stdscr, None)  # Pass None for font as it's not used in curses mode
