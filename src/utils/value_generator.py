@@ -13,6 +13,10 @@ import itertools
 
 # Third-party library imports
 import numpy as np
+from numpy.random import Generator, PCG64
+
+# Initialize random number generator with a fixed seed for reproducibility
+rng = Generator(PCG64(42))
 
 
 def generate_value_distribution(
@@ -35,9 +39,6 @@ def generate_value_distribution(
     Returns:
         np.ndarray: Grid with resource values
     """
-    # Create a value grid with the same shape
-    value_grid = np.zeros_like(grid, dtype=float)
-
     # Scale noise to desired mean and standard deviation
     value_noise = base_grid * value_stddev + value_mean
 
@@ -84,7 +85,7 @@ def add_value_clusters(
     # Create clusters
     for _ in range(num_clusters):
         # Pick a random entity cell as cluster center
-        idx = np.random.randint(0, len(entity_cells))
+        idx = rng.integers(0, len(entity_cells))
         center_y, center_x = entity_cells[idx]
 
         # Apply multiplier to entities in radius

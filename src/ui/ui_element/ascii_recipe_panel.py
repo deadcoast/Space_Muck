@@ -142,11 +142,13 @@ class ASCIIRecipePanel:
             bar = "=" * int(bar_width * eff)
             bar = bar.ljust(bar_width, ".")
 
-            eff_color = (
-                (100, 255, 100)
-                if eff > 0.8
-                else (255, 255, 100) if eff > 0.5 else (255, 100, 100)
-            )
+            # Determine color based on efficiency
+            if eff > 0.8:
+                eff_color = (100, 255, 100)  # Green for high efficiency
+            elif eff > 0.5:
+                eff_color = (255, 255, 100)  # Yellow for medium efficiency
+            else:
+                eff_color = (255, 100, 100)  # Red for low efficiency
             draw_text(
                 surface,
                 f"[{bar}] {eff*100:.1f}%",
@@ -202,7 +204,7 @@ class ASCIIRecipePanel:
 
         # Handle button events
         if self.start_button.handle_event(event):
-            return True
+            return True  # Start button was handled
         return bool(self.stop_button.handle_event(event))
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
@@ -280,7 +282,13 @@ class ASCIIRecipePanel:
             self.selected_idx
         ].get("active", False)
 
-        self.start_button.draw(surface, font)
-        self.stop_button.draw(surface, font)
-
-        return panel_rect
+        start_rect = self.start_button.draw(surface, font)
+        stop_rect = self.stop_button.draw(surface, font)
+        
+        # Return the appropriate rect based on selection state
+        if has_selection:
+            # When we have a selection, include button areas in the returned rect
+            return panel_rect.union(start_rect).union(stop_rect)
+        else:
+            # When no selection, just return the panel rect
+            return panel_rect

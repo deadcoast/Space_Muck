@@ -62,7 +62,14 @@ class MiningStatus(UIElement):
                 # Extraction rate with arrow indicator
                 rate = self.extraction_rate[resource]
                 rate_str = f"{rate:+.2f}/s"
-                direction = "↑" if rate > 0 else "↓" if rate < 0 else "→"
+                
+                # Determine direction indicator based on rate
+                if rate > 0:
+                    direction = "↑"
+                elif rate < 0:
+                    direction = "↓"
+                else:
+                    direction = "→"
 
                 if rate > 0:
                     stdscr.addstr(

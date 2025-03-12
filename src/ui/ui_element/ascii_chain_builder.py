@@ -233,22 +233,24 @@ class ASCIIChainBuilder:
         """Handle the selection key (Enter/Return).
 
         Returns:
-            bool: True if the event was handled
+            bool: True if an action was taken, False otherwise
         """
         if self.mode == "select":
             # Add selected converter to chain
             converter = self.available_converters[self.selected_idx]
             if converter not in self.selected_converters:
                 self.selected_converters.append(converter)
-            return True
+                return True  # Action taken: added a converter
+            return False  # No action taken: converter already in list
 
         # Connection mode
         if self.connecting_from is None:
             self.connecting_from = self.selected_idx
+            return True  # Action taken: started connection
         else:
-            self._try_connect_converters()
+            connection_made = self._try_connect_converters()
             self.connecting_from = None
-        return True
+            return connection_made  # Return whether a connection was made
 
     def _try_connect_converters(self) -> None:
         """Try to connect the selected converters."""

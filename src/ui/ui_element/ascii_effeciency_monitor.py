@@ -83,9 +83,13 @@ class ASCIIEfficiencyMonitor:
         # Calculate trend
         if len(self.history) >= 2:
             recent_change = self.history[-1] - self.history[-2]
-            self.trend_direction = (
-                1 if recent_change > 0.05 else -1 if recent_change < -0.05 else 0
-            )
+            # Determine trend direction based on recent change
+            if recent_change > 0.05:
+                self.trend_direction = 1  # Upward trend
+            elif recent_change < -0.05:
+                self.trend_direction = -1  # Downward trend
+            else:
+                self.trend_direction = 0  # Stable
 
     def _draw_graph(
         self,
@@ -132,11 +136,13 @@ class ASCIIEfficiencyMonitor:
                 )
 
                 # Draw point
-                color = (
-                    (100, 255, 100)
-                    if val > 0.8
-                    else (255, 255, 100) if val > 0.5 else (255, 100, 100)
-                )
+                # Determine color based on efficiency value
+                if val > 0.8:
+                    color = (100, 255, 100)  # Green for high efficiency
+                elif val > 0.5:
+                    color = (255, 255, 100)  # Yellow for medium efficiency
+                else:
+                    color = (255, 100, 100)  # Red for low efficiency
                 draw_text(
                     surface,
                     self.chars["graph_point"],
@@ -167,11 +173,13 @@ class ASCIIEfficiencyMonitor:
         content_width = self.rect.width - margin * 2
 
         # Draw current efficiency
-        eff_color = (
-            (100, 255, 100)
-            if self.current_efficiency > 0.8
-            else (255, 255, 100) if self.current_efficiency > 0.5 else (255, 100, 100)
-        )
+        # Determine color based on current efficiency
+        if self.current_efficiency > 0.8:
+            eff_color = (100, 255, 100)  # Green for high efficiency
+        elif self.current_efficiency > 0.5:
+            eff_color = (255, 255, 100)  # Yellow for medium efficiency
+        else:
+            eff_color = (255, 100, 100)  # Red for low efficiency
         current_text = f"Current: {self.current_efficiency*100:.1f}%"
         draw_text(
             surface,

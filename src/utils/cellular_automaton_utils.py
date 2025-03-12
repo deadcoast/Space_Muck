@@ -13,6 +13,10 @@ from typing import Any, Dict, Set, Tuple
 
 # Third-party library imports
 import numpy as np
+from numpy.random import Generator, PCG64
+
+# Initialize random number generator with a fixed seed for reproducibility
+rng = Generator(PCG64(42))
 
 # Optional dependencies
 try:
@@ -155,7 +159,7 @@ def _apply_convolution_based_cellular_automaton(
 
 
 def generate_cellular_automaton_rules(
-    hunger: float, genome: Dict[str, Any], race_id: str = None
+    hunger: float, genome: Dict[str, Any]
 ) -> Tuple[Set[int], Set[int]]:
     """
     Generate cellular automaton rules based on genome and hunger.
@@ -163,7 +167,6 @@ def generate_cellular_automaton_rules(
     Args:
         hunger: Hunger level (0-1)
         genome: Genome dictionary with traits
-        race_id: Optional race identifier
 
     Returns:
         Tuple[Set[int], Set[int]]: Birth and survival rule sets
@@ -202,4 +205,4 @@ def apply_environmental_effects(
     Returns:
         np.ndarray: Grid after environmental effects
     """
-    return grid & (np.random.random(grid.shape) < (1 - hostility + mineral_map * 0.5))
+    return grid & (rng.random(grid.shape) < (1 - hostility + mineral_map * 0.5))

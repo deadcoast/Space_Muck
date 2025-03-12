@@ -45,10 +45,9 @@ class Menu(UIElement):
             stdscr.addstr(self.y + 1, title_x, self.title, curses.A_BOLD)
         # Draw options with evolutionary prominence
         for i, option in enumerate(self.options):
-            # Option appearance changes based on usage patterns
-            prefix = "  "
             if i == self.selected_index and self.active:
-                prefix = "▶ "  # Selection indicator
+                # Selection indicator for highlighted option
+                prefix = "▶ "  
                 with contextlib.suppress(curses.error):
                     # Highlighted option
                     stdscr.addstr(

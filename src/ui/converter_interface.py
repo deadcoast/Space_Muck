@@ -907,30 +907,8 @@ class EfficiencyMonitor:
         y_pos = 1
 
         # Display current efficiency factors if available
-        if self.efficiency_factors:
-            self.suggestions_box.add_text(
-                1, y_pos, "Current Efficiency Factors:", {"color": (200, 200, 200)}
-            )
-            y_pos += 1
-
-            for factor in self.efficiency_factors:
-                # Color code based on factor value
-                if factor.value > 0.1:  # Green for positive
-                    factor_color = (100, 255, 100)
-                elif factor.value < -0.1:  # Red for negative
-                    factor_color = (255, 100, 100)
-                else:  # Gray for minimal impact
-                    factor_color = (200, 200, 200)
-
-                self.suggestions_box.add_text(
-                    3,
-                    y_pos,
-                    f"{factor.name}: {factor.value:+.2f}",
-                    {"color": factor_color},
-                )
-                y_pos += 1
-            y_pos += 1  # Add spacing
-
+        y_pos = self._display_efficiency_factors(y_pos)
+        
         # Display optimization suggestions
         if not self.suggestions:
             self.suggestions_box.add_text(
@@ -944,48 +922,128 @@ class EfficiencyMonitor:
         y_pos += 1
 
         for i, suggestion in enumerate(self.suggestions):
-            prefix = ">" if i == self.selected_suggestion_index else " "
+            y_pos = self._display_suggestion(i, suggestion, y_pos)
+    
+    def _display_efficiency_factors(self, y_pos: int) -> int:
+        """
+        Display efficiency factors in the suggestions box.
+        
+        Args:
+            y_pos: Current vertical position
+            
+        Returns:
+            int: Updated vertical position
+        """
+        if not self.efficiency_factors:
+            return y_pos
+            
+        self.suggestions_box.add_text(
+            1, y_pos, "Current Efficiency Factors:", {"color": (200, 200, 200)}
+        )
+        y_pos += 1
 
-            # Color code based on potential gain
-            if suggestion.potential_gain > 0.5:  # Gold for high impact
-                gain_color = (255, 215, 0)
-            elif suggestion.potential_gain > 0.2:  # Green for medium impact
-                gain_color = (100, 255, 100)
-            else:  # Gray for low impact
-                gain_color = (200, 200, 200)
-
-            # Format suggestion with truncated description
-            self.suggestions_box.add_text(
-                1,
-                y_pos,
-                f"{prefix} {suggestion.description[:38]}",
-                {"color": gain_color},
-            )
-
-            # Show potential gain with color coding
+        for factor in self.efficiency_factors:
+            factor_color = self._get_factor_color(factor.value)
             self.suggestions_box.add_text(
                 3,
-                y_pos + 1,
-                f"Gain: +{suggestion.potential_gain:.2f}",
-                {"color": gain_color},
+                y_pos,
+                f"{factor.name}: {factor.value:+.2f}",
+                {"color": factor_color},
+            )
+            y_pos += 1
+            
+        return y_pos + 1  # Add spacing
+    
+    def _get_factor_color(self, factor_value: float) -> Tuple[int, int, int]:
+        """
+        Get color based on factor value.
+        
+        Args:
+            factor_value: The efficiency factor value
+            
+        Returns:
+            Tuple[int, int, int]: RGB color tuple
+        """
+        if factor_value > 0.1:  # Green for positive
+            return (100, 255, 100)
+        elif factor_value < -0.1:  # Red for negative
+            return (255, 100, 100)
+        else:  # Gray for minimal impact
+            return (200, 200, 200)
+    
+    def _display_suggestion(self, index: int, suggestion: OptimizationSuggestion, y_pos: int) -> int:
+        """
+        Display a single optimization suggestion.
+        
+        Args:
+            index: Suggestion index
+            suggestion: The suggestion to display
+            y_pos: Current vertical position
+            
+        Returns:
+            int: Updated vertical position
+        """
+        prefix = ">" if index == self.selected_suggestion_index else " "
+        gain_color = self._get_gain_color(suggestion.potential_gain)
+
+        # Format suggestion with truncated description
+        self.suggestions_box.add_text(
+            1,
+            y_pos,
+            f"{prefix} {suggestion.description[:38]}",
+            {"color": gain_color},
+        )
+
+        # Show potential gain with color coding
+        self.suggestions_box.add_text(
+            3,
+            y_pos + 1,
+            f"Gain: +{suggestion.potential_gain:.2f}",
+            {"color": gain_color},
+        )
+
+        # Show cost if available
+        if suggestion.cost is not None:
+            cost_color = self._get_cost_color(suggestion.cost)
+            self.suggestions_box.add_text(
+                20, y_pos + 1, f"Cost: {suggestion.cost}", {"color": cost_color}
             )
 
-            # Show cost if available
-            if suggestion.cost is not None:
-                cost_color = (
-                    (255, 100, 100)
-                    if suggestion.cost > 1000  # Red for high cost
-                    else (
-                        (255, 255, 100)
-                        if suggestion.cost > 500  # Yellow for medium cost
-                        else (100, 255, 100)
-                    )  # Green for low cost
-                )
-                self.suggestions_box.add_text(
-                    20, y_pos + 1, f"Cost: {suggestion.cost}", {"color": cost_color}
-                )
-
-            y_pos += 3  # Space for next suggestion
+        return y_pos + 3  # Space for next suggestion
+    
+    def _get_gain_color(self, gain: float) -> Tuple[int, int, int]:
+        """
+        Get color based on potential gain value.
+        
+        Args:
+            gain: The potential gain value
+            
+        Returns:
+            Tuple[int, int, int]: RGB color tuple
+        """
+        if gain > 0.5:  # Gold for high impact
+            return (255, 215, 0)
+        elif gain > 0.2:  # Green for medium impact
+            return (100, 255, 100)
+        else:  # Gray for low impact
+            return (200, 200, 200)
+    
+    def _get_cost_color(self, cost: float) -> Tuple[int, int, int]:
+        """
+        Get color based on cost value.
+        
+        Args:
+            cost: The cost value
+            
+        Returns:
+            Tuple[int, int, int]: RGB color tuple
+        """
+        if cost > 1000:  # Red for high cost
+            return (255, 100, 100)
+        elif cost > 500:  # Yellow for medium cost
+            return (255, 255, 100)
+        else:  # Green for low cost
+            return (100, 255, 100)
 
     def select_suggestion(self, index: int) -> None:
         """

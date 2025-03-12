@@ -11,6 +11,9 @@ from typing import List, Optional
 
 import numpy as np
 
+# Constants
+MATPLOTLIB_NOT_AVAILABLE_MSG = "Cannot visualize: matplotlib not available"
+
 try:
     # matplotlib is imported to check availability
     import matplotlib.pyplot as plt
@@ -91,7 +94,7 @@ class GeneratorVisualizer:
             matplotlib.Figure if matplotlib is available, None otherwise
         """
         if not self.can_visualize:
-            logging.warning("Cannot visualize: matplotlib not available")
+            logging.warning(MATPLOTLIB_NOT_AVAILABLE_MSG)
             return None
 
         # Create figure and plot
@@ -140,7 +143,7 @@ class GeneratorVisualizer:
             matplotlib.Figure if matplotlib is available, None otherwise
         """
         if not self.can_visualize:
-            logging.warning("Cannot visualize: matplotlib not available")
+            logging.warning(MATPLOTLIB_NOT_AVAILABLE_MSG)
             return None
 
         if len(grids) != len(titles):
@@ -214,7 +217,7 @@ class GeneratorVisualizer:
             matplotlib.Figure if matplotlib is available, None otherwise
         """
         if not self.can_visualize:
-            logging.warning("Cannot visualize: matplotlib not available")
+            logging.warning(MATPLOTLIB_NOT_AVAILABLE_MSG)
             return None
 
         # Create titles for each step

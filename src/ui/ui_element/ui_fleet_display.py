@@ -12,6 +12,9 @@ COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 
 class FleetDisplay(UIElement):
     """Displays fleet information with cellular automaton-based animations"""
+    
+    # Ship pattern constants
+    CAPITAL_SHIP_PATTERN = "<[≡≡≡≡≡]>"
 
     def __init__(
         self,
@@ -43,10 +46,10 @@ class FleetDisplay(UIElement):
                 "/≡|≡\\",
             ],
             "capital": [
-                "<[≡≡≡≡≡]>",
-                "<[≡≡≡≡≡]>",
-                "<[≡≡≡≡≡]>",
-                "<[≡≡≡≡≡]>",
+                self.CAPITAL_SHIP_PATTERN,
+                self.CAPITAL_SHIP_PATTERN,
+                self.CAPITAL_SHIP_PATTERN,
+                self.CAPITAL_SHIP_PATTERN,
             ],
         }
 

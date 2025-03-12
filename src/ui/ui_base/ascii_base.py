@@ -24,6 +24,7 @@ class UIStyle(Enum):
     def get_border_chars(cls, style: "UIStyle") -> Dict[str, str]:
         """Get border characters for the specified UI style."""
         try:
+            # Use style-specific border characters
             if style == UIStyle.SYMBIOTIC:
                 return {
                     "top_left": "╭",
@@ -33,7 +34,8 @@ class UIStyle(Enum):
                     "horizontal": "─",
                     "vertical": "│",
                 }
-            elif style == UIStyle.ASTEROID:
+            elif style in (UIStyle.ASTEROID, UIStyle.FLEET):
+                # Simple single-line border for asteroid and fleet styles
                 return {
                     "top_left": "┌",
                     "top_right": "┐",
@@ -43,6 +45,7 @@ class UIStyle(Enum):
                     "vertical": "│",
                 }
             elif style == UIStyle.MECHANICAL:
+                # Double-line border for mechanical style
                 return {
                     "top_left": "╔",
                     "top_right": "╗",
@@ -52,6 +55,7 @@ class UIStyle(Enum):
                     "vertical": "║",
                 }
             elif style == UIStyle.QUANTUM:
+                # Bold single-line border for quantum style
                 return {
                     "top_left": "┏",
                     "top_right": "┓",
@@ -59,15 +63,6 @@ class UIStyle(Enum):
                     "bottom_right": "┛",
                     "horizontal": "━",
                     "vertical": "┃",
-                }
-            elif style == UIStyle.FLEET:
-                return {
-                    "top_left": "┌",
-                    "top_right": "┐",
-                    "bottom_left": "└",
-                    "bottom_right": "┘",
-                    "horizontal": "─",
-                    "vertical": "│",
                 }
             else:
                 return {
@@ -373,6 +368,10 @@ class UIElement:
         """Check if a point is within the UI element's bounds."""
         return self.x <= x < self.x + self.width and self.y <= y < self.y + self.height
 
-    def handle_input(self, key: int) -> Optional[str]:
-        """Handle input for the UI element."""
+    def handle_input(self) -> Optional[str]:
+        """Handle input for the UI element.
+        
+        Returns:
+            Optional[str]: Response from handling input, if any
+        """
         return None

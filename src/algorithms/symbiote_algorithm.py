@@ -13,6 +13,7 @@ from typing import Tuple, List, cast
 
 # Third-party imports
 import numpy as np
+from numpy.random import Generator, PCG64
 
 # Handle optional dependencies gracefully
 try:
@@ -48,9 +49,11 @@ class SymbioteEvolutionAlgorithm:
         self.learning_enabled = learning_enabled
         self.evolution_history = []
         self.mineral_consumption = {"common": 0, "rare": 0, "precious": 0, "anomaly": 0}
+        # Initialize random number generator with a fixed seed for reproducibility
+        self.rng = Generator(PCG64(42))
 
     # Add core implementation methods from your original code or create new ones
-    def process_mineral_feeding(self, race_id, minerals, population, aggression):
+    def process_mineral_feeding(self, minerals, population, aggression):
         """
         Process minerals through the evolution algorithm and return new population and aggression values,
         along with any mutations.
@@ -109,9 +112,9 @@ class SymbioteEvolutionAlgorithm:
 
         # Generate random mutations
         for attr in attributes:
-            if np.random.random() < mutation_chance:
+            if self.rng.random() < mutation_chance:
                 # Determine mutation magnitude
-                magnitude = np.random.normal(1.0, 0.1)  # Mean 1.0, std dev 0.1
+                magnitude = self.rng.normal(1.0, 0.1)  # Mean 1.0, std dev 0.1
 
                 # Determine mutation type based on magnitude
                 mutation_type = "standard"
@@ -128,7 +131,7 @@ class SymbioteEvolutionAlgorithm:
 
         return mutations
 
-    def generate_cellular_automaton_rules(self, race_id, hunger, genome):
+    def generate_cellular_automaton_rules(self, hunger, genome):
         """Generate cellular automaton rules for symbiote growth."""
         # Default rule sets
         birth_set = {3}
@@ -199,37 +202,75 @@ class SymbioteEvolutionAlgorithm:
         """
         height, width = grid.shape
         new_grid = np.zeros_like(grid)
-
-        # For each cell in the grid
-        for y, x in itertools.product(range(height), range(width)):
-            # Count neighbors
-            neighbors = 0
-            for dy in [-1, 0, 1]:
-                for dx in [-1, 0, 1]:
-                    if dx == 0 and dy == 0:
-                        continue  # Skip the cell itself
-
-                    # Get neighbor coordinates with wrapping
-                    nx = (x + dx) % width
-                    ny = (y + dy) % height
-
-                    if grid[ny, nx] > 0:
-                        neighbors += 1
-
-                # Apply rules
-            if (
-                grid[y, x] > 0
-                and neighbors in survival_set
-                or grid[y, x] <= 0
-                and neighbors in birth_set
-            ):
-                new_grid[y, x] = 1  # Cell survives
+        
+        # Process the grid using helper methods to reduce complexity
+        self._process_grid_cells(grid, new_grid, birth_set, survival_set, height, width)
         return new_grid
+        
+    def _process_grid_cells(self, grid, new_grid, birth_set, survival_set, height, width):
+        """Process each cell in the grid to apply cellular automaton rules.
+        
+        Args:
+            grid: Original grid
+            new_grid: Grid to update
+            birth_set: Set of neighbor counts that create new cells
+            survival_set: Set of neighbor counts that allow cells to survive
+            height: Grid height
+            width: Grid width
+        """
+        for y, x in itertools.product(range(height), range(width)):
+            neighbors = self._count_neighbors(grid, x, y, width, height)
+            self._apply_cell_rules(grid, new_grid, x, y, neighbors, birth_set, survival_set)
+    
+    def _count_neighbors(self, grid, x, y, width, height):
+        """Count the number of live neighbors for a cell.
+        
+        Args:
+            grid: Grid to analyze
+            x: Cell x coordinate
+            y: Cell y coordinate
+            width: Grid width
+            height: Grid height
+            
+        Returns:
+            Number of live neighbors
+        """
+        neighbors = 0
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue  # Skip the cell itself
+
+                # Get neighbor coordinates with wrapping
+                nx = (x + dx) % width
+                ny = (y + dy) % height
+
+                if grid[ny, nx] > 0:
+                    neighbors += 1
+        return neighbors
+    
+    def _apply_cell_rules(self, grid, new_grid, x, y, neighbors, birth_set, survival_set):
+        """Apply cellular automaton rules to a single cell.
+        
+        Args:
+            grid: Original grid
+            new_grid: Grid to update
+            x: Cell x coordinate
+            y: Cell y coordinate
+            neighbors: Number of live neighbors
+            birth_set: Set of neighbor counts that create new cells
+            survival_set: Set of neighbor counts that allow cells to survive
+        """
+        cell_alive = grid[y, x] > 0
+        
+        # Apply cellular automaton rules
+        if (cell_alive and neighbors in survival_set) or (not cell_alive and neighbors in birth_set):
+            new_grid[y, x] = 1
 
     def apply_environmental_effects(self, grid, mineral_map, hostility):
         """Apply environmental effects to the grid based on mineral distribution."""
         return grid & (
-            np.random.random(grid.shape) < (1 - hostility + mineral_map * 0.5)
+            self.rng.random(grid.shape) < (1 - hostility + mineral_map * 0.5)
         )
 
     def simulate_colony_interaction(self, grid, genome, aggression):
@@ -254,75 +295,143 @@ class SymbioteEvolutionAlgorithm:
 
         # Colonies compete or cooperate based on aggression
         if competition_factor > 0.7:
-            # Competition: smaller colonies may suffer
-            if SCIPY_AVAILABLE:
-                colony_sizes = ndimage.sum(
-                    grid, labeled_grid, range(1, num_colonies + 1)
-                )
-            else:
-                colony_sizes = self._manual_sum_by_label(
-                    grid, labeled_grid, range(1, num_colonies + 1)
-                )
-
-            max_size = np.max(colony_sizes)
-
-            # Smaller colonies have higher death rate
-            for i in range(1, num_colonies + 1):
-                size_ratio = colony_sizes[i - 1] / max_size
-                if size_ratio < 0.3:
-                    # Small colonies may die off
-                    death_mask = (labeled_grid == i) & (
-                        np.random.random(grid.shape) < 0.3
-                    )
-                    grid[death_mask] = 0
+            return self._handle_colony_competition(grid, labeled_grid, num_colonies)
         else:
-            # Cooperation: colonies may bridge together
-            # Calculate centers of mass for each colony
-            if SCIPY_AVAILABLE:
-                centers = cast(
-                    List[Tuple[float, float]],
-                    ndimage.center_of_mass(
-                        grid, labeled_grid, range(1, num_colonies + 1)
-                    ),
+            return self._handle_colony_cooperation(grid, labeled_grid, num_colonies)
+            
+    def _handle_colony_competition(self, grid, labeled_grid, num_colonies):
+        """Handle competition between colonies.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            num_colonies: Number of colonies
+            
+        Returns:
+            Updated grid after competition
+        """
+        # Competition: smaller colonies may suffer
+        colony_sizes = self._get_colony_sizes(grid, labeled_grid, num_colonies)
+        max_size = np.max(colony_sizes)
+
+        # Smaller colonies have higher death rate
+        for i in range(1, num_colonies + 1):
+            size_ratio = colony_sizes[i - 1] / max_size
+            if size_ratio < 0.3:
+                # Small colonies may die off
+                death_mask = (labeled_grid == i) & (
+                    self.rng.random(grid.shape) < 0.3
                 )
-            else:
-                centers = self._manual_center_of_mass(
-                    grid, labeled_grid, range(1, num_colonies + 1)
-                )
-
-            # Try to connect nearby colonies
-            for i in range(num_colonies):
-                for j in range(i + 1, num_colonies):
-                    center1 = centers[i]
-                    center2 = centers[j]
-                    # Calculate distance between colony centers
-                    distance = np.sqrt(
-                        ((center1[0] - center2[0]) ** 2)
-                        + ((center1[1] - center2[1]) ** 2)
-                    )
-
-                    # If colonies are close enough, create a bridge between them
-                    if distance < 20:  # Threshold for cooperation
-                        # Create a line between centers
-                        steps = int(distance * 1.5)  # More points for smoother line
-                        if steps > 0:
-                            x_points = np.linspace(center1[0], center2[0], steps)
-                            y_points = np.linspace(center1[1], center2[1], steps)
-
-                            # Create bridge with some randomness
-                            for k in range(steps):
-                                x = int(round(x_points[k]))
-                                y = int(round(y_points[k]))
-
-                                # Ensure coordinates are within grid bounds
-                                if (
-                                    0 <= x < grid.shape[0]
-                                    and 0 <= y < grid.shape[1]
-                                    and np.random.random() < 0.7
-                                ):
-                                    grid[x, y] = 1
-
+                grid[death_mask] = 0
+                
         return grid
+        
+    def _get_colony_sizes(self, grid, labeled_grid, num_colonies):
+        """Get sizes of all colonies.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            num_colonies: Number of colonies
+            
+        Returns:
+            Array of colony sizes
+        """
+        if SCIPY_AVAILABLE:
+            return ndimage.sum(grid, labeled_grid, range(1, num_colonies + 1))
+        else:
+            return self._manual_sum_by_label(grid, labeled_grid, range(1, num_colonies + 1))
+        
+    def _handle_colony_cooperation(self, grid, labeled_grid, num_colonies):
+        """Handle cooperation between colonies.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            num_colonies: Number of colonies
+            
+        Returns:
+            Updated grid after cooperation
+        """
+        # Calculate centers of mass for each colony
+        centers = self._get_colony_centers(grid, labeled_grid, num_colonies)
+
+        # Connect nearby colonies
+        for i in range(num_colonies):
+            for j in range(i + 1, num_colonies):
+                self._connect_colonies_if_close(grid, centers[i], centers[j])
+                
+        return grid
+        
+    def _get_colony_centers(self, grid, labeled_grid, num_colonies):
+        """Get center coordinates for all colonies.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            labeled_grid: Grid with labeled colonies
+            num_colonies: Number of colonies
+            
+        Returns:
+            List of colony center coordinates
+        """
+        if SCIPY_AVAILABLE:
+            return cast(
+                List[Tuple[float, float]],
+                ndimage.center_of_mass(
+                    grid, labeled_grid, range(1, num_colonies + 1)
+                ),
+            )
+        else:
+            return self._manual_center_of_mass(
+                grid, labeled_grid, range(1, num_colonies + 1)
+            )
+        
+    def _connect_colonies_if_close(self, grid, center1, center2):
+        """Connect two colonies if they are close enough.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            center1: First colony center coordinates
+            center2: Second colony center coordinates
+        """
+        # Calculate distance between colony centers
+        distance = np.sqrt(
+            ((center1[0] - center2[0]) ** 2) + ((center1[1] - center2[1]) ** 2)
+        )
+
+        # If colonies are close enough, create a bridge between them
+        if distance < 20:  # Threshold for cooperation
+            self._create_bridge_between_colonies(grid, center1, center2, distance)
+            
+    def _create_bridge_between_colonies(self, grid, center1, center2, distance):
+        """Create a bridge between two colony centers.
+        
+        Args:
+            grid: Binary grid representing symbiote presence
+            center1: First colony center coordinates
+            center2: Second colony center coordinates
+            distance: Distance between colony centers
+        """
+        # Create a line between centers
+        steps = int(distance * 1.5)  # More points for smoother line
+        if steps <= 0:
+            return
+            
+        x_points = np.linspace(center1[0], center2[0], steps)
+        y_points = np.linspace(center1[1], center2[1], steps)
+
+        # Create bridge with some randomness
+        for k in range(steps):
+            x = int(round(x_points[k]))
+            y = int(round(y_points[k]))
+
+            # Ensure coordinates are within grid bounds
+            if (
+                0 <= x < grid.shape[0]
+                and 0 <= y < grid.shape[1]
+                and self.rng.random() < 0.7
+            ):
+                grid[x, y] = 1
 
     def identify_colonies(self, grid) -> Tuple[np.ndarray, int]:
         """Identify distinct colonies in the grid.
@@ -472,7 +581,7 @@ class SymbioteEvolutionAlgorithm:
 
         for label in labels:
             # Get all points with this label
-            y_coords, x_coords = np.where(labeled_grid == label)
+            y_coords, x_coords = np.nonzero(labeled_grid == label)
 
             if len(y_coords) == 0:
                 # If no cells with this label, use center of grid
