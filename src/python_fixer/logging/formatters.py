@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+
 class ColorFormatter(logging.Formatter):
     """
     Formatter that adds ANSI colors to console output for better readability.
@@ -55,6 +56,7 @@ class ColorFormatter(logging.Formatter):
             formatted += self.formatException(record.exc_info)
 
         return formatted
+
 
 class DetailedJSONFormatter(logging.Formatter):
     """
@@ -105,6 +107,7 @@ class DetailedJSONFormatter(logging.Formatter):
 
         return json.dumps(log_data)
 
+
 class FileOperationFormatter(logging.Formatter):
     """
     Specialized formatter for logging file operations with detailed stats.
@@ -145,6 +148,7 @@ class FileOperationFormatter(logging.Formatter):
 
         return "\n".join(output)
 
+
 class StructuredFormatter:
     """
     Factory class for creating appropriate formatters based on output type.
@@ -171,6 +175,7 @@ class StructuredFormatter:
             return FileOperationFormatter(**kwargs)
         else:
             return logging.Formatter(**kwargs)
+
 
 # Example usage:
 if __name__ == "__main__":

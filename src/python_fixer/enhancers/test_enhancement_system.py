@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-class TestShip:
-    """Test class for enhancement demonstration."""
-
 # Standard library imports
 
 # Third-party library imports
@@ -11,6 +8,10 @@ class TestShip:
 from enhancement_system import EnhancementSystem
 from event_system import EventSystem, EventType, Event
 import unittest
+
+
+class TestShip:
+    """Test class for enhancement demonstration."""
 
     def __init__(self):
         self.shields = 100
@@ -24,6 +25,7 @@ import unittest
         """Take damage to shields."""
         self.shields -= amount
         return self.shields
+
 
 class TestEnhancementSystem(unittest.TestCase):
     """Test cases for the enhancement system."""

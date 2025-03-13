@@ -23,7 +23,7 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-    
+
 # Local application imports
 
 ```
@@ -99,6 +99,7 @@ OPTIONAL_DEPENDENCIES = {
         "fallback_message": "scipy not available, using fallback implementation.",
     },
 }
+
 
 def generate_standard_imports(
     stdlib_imports: List[str],

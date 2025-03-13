@@ -18,8 +18,6 @@ from entities.enemy_ship import EnemyShip
 from typing import Dict, List, Tuple, Any, Optional, Set, Callable
 import heapq
 
-# from collections import defaultdict  # Uncomment if needed in the future
-
 # Fleet formation types
 FLEET_FORMATIONS = {
     "line": "Ships arranged in a horizontal line",
@@ -46,6 +44,7 @@ MOVEMENT_PATTERNS = {
     "blockade": "Maintain position to block a designated area",
     "scout": "Explore and gather intelligence in a designated area",
 }
+
 
 class Fleet:
     """

@@ -1,18 +1,4 @@
-
-
-  # Ensure you have python-patch installed: pip install python-patch
-
-# Configure variant_loggers
-variant_loggers.basicConfig(level=variant_loggers.INFO)
-logger = variant_loggers.getLogger(__name__)
-
-class PatchHandler:
-    def __init__(self, patches_dir: str):
-        """
-        Initializes the PatchHandler with the directory where patch files are stored.
-
-        :param patches_dir: Path to the directory containing patch files.
-        """
+# Ensure you have python-patch installed: pip install python-patch
 
 # Standard library imports
 import json
@@ -30,6 +16,17 @@ import aiofiles
 import patch
 import tempfile
 import variant_loggers
+
+# Configure variant_loggers
+variant_loggers.basicConfig(level=variant_loggers.INFO)
+logger = variant_loggers.getLogger(__name__)
+class PatchHandler:
+    def __init__(self, patches_dir: str):
+        """
+        Initializes the PatchHandler with the directory where patch files are stored.
+
+        :param patches_dir: Path to the directory containing patch files.
+        """
 
         self.patches_dir = patches_dir
         if not os.path.isdir(self.patches_dir):
@@ -238,6 +235,7 @@ import variant_loggers
                 patch.logger.error(f"Error reading patched file: {e}")
         else:
             patch.logger.error("Failed to apply patch.")
+
 
 # Run the example if this script is executed directly
 if __name__ == "__main__":

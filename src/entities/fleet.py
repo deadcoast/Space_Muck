@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple, Any, Optional, Set
 
 # Import config constants as needed
 
+
 class Fleet(BaseEntity):
     """
     Represents a fleet of ships in the game.

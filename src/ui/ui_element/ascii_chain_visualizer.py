@@ -1,5 +1,3 @@
-
-
 # Type definitions for better type checking
 T = TypeVar("T")
 Color = Tuple[int, int, int]
@@ -7,8 +5,10 @@ ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIChainVisualizer:
     """Visualizer for displaying converter chains and resource flows."""
+
 
 # Standard library imports
 import time
@@ -22,6 +22,7 @@ from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.draw_utils import draw_text
 from src.ui.ui_base.ascii_ui import ASCIIPanel
 import pygame
+
 
 def __init__(
     self,
@@ -111,6 +112,7 @@ def __init__(
     self.animation_offset = 0.0
     self.last_animation_time = time.time()
 
+
 def set_chain(
     self,
     converters: List[Dict[str, Any]],
@@ -151,10 +153,7 @@ def set_chain(
 
         # Track status changes
         current_status = converter.get("status", "idle")
-        if (
-            state["status_changes"]
-            and state["status_changes"][-1][0] != current_status
-        ):
+        if state["status_changes"] and state["status_changes"][-1][0] != current_status:
             state["status_changes"].append((current_status, current_time))
             if len(state["status_changes"]) > 10:  # Keep last 10 status changes
                 state["status_changes"] = state["status_changes"][-10:]
@@ -195,9 +194,8 @@ def set_chain(
         self.style, status_colors[UIStyle.MECHANICAL]
     )
 
-def _get_node_color(
-    self, converter: Dict[str, Any], idx: int
-) -> Tuple[int, int, int]:
+
+def _get_node_color(self, converter: Dict[str, Any], idx: int) -> Tuple[int, int, int]:
     """Get the appropriate color for a converter node based on its status and efficiency."""
     base_color = self.status_colors.get(converter.get("status", ""), COLOR_TEXT)
 
@@ -215,6 +213,7 @@ def _get_node_color(
 
     return base_color
 
+
 def _calculate_animation_speed(self, flow_rate: float) -> float:
     """Calculate animation speed based on flow rate and settings."""
     base_speed = self.animation_settings["base_speed"]
@@ -224,6 +223,7 @@ def _calculate_animation_speed(self, flow_rate: float) -> float:
     # Scale speed with flow rate, but cap it
     speed = base_speed + (flow_rate * speed_scale)
     return min(speed, max_speed)
+
 
 def _get_efficiency_trend(self, idx: int) -> float:
     """Calculate efficiency trend for a converter."""
@@ -247,6 +247,7 @@ def _get_efficiency_trend(self, idx: int) -> float:
     denominator = sum((xi - x_mean) ** 2 for xi in x)
 
     return numerator / denominator if denominator != 0 else 0.0
+
 
 def _draw_node_stats(
     self,
@@ -275,7 +276,7 @@ def _draw_node_stats(
 
     # Format efficiency with trend indicator
     efficiency = converter.get("efficiency", 0)
-    
+
     # Determine trend character based on efficiency trend
     if efficiency_trend > 0:
         trend_char = "↗"
@@ -317,12 +318,9 @@ def _draw_node_stats(
     draw_text(
         surface, stats[2], x, y + 2, size=font.get_height(), color=util_color
     )  # Utilization
-    draw_text(
-        surface, stats[3], x, y + 3, size=font.get_height(), color=color
-    )  # Rate
-    draw_text(
-        surface, stats[4], x, y + 4, size=font.get_height(), color=color
-    )  # Queue
+    draw_text(surface, stats[3], x, y + 3, size=font.get_height(), color=color)  # Rate
+    draw_text(surface, stats[4], x, y + 4, size=font.get_height(), color=color)  # Queue
+
 
 def _draw_node(
     self,
@@ -364,9 +362,8 @@ def _draw_node(
     self._draw_node_stats(surface, font, x + 1, y + 3, idx, converter, color)
 
     # Draw bottom border
-    draw_text(
-        surface, top_border, x, y + height, size=font.get_height(), color=color
-    )
+    draw_text(surface, top_border, x, y + height, size=font.get_height(), color=color)
+
 
 def _draw_connection(
     self,
@@ -420,6 +417,7 @@ def _draw_connection(
             source_converter,
         )
 
+
 def _draw_connection_lines(
     self,
     surface: pygame.Surface,
@@ -458,6 +456,7 @@ def _draw_connection_lines(
             surface, font, start_x, end_x, start_y, dx, needs_vertical, color
         )
 
+
 def _draw_vertical_segments(
     self,
     surface: pygame.Surface,
@@ -488,6 +487,7 @@ def _draw_vertical_segments(
     # Draw second vertical segment
     for y in range(mid_y, end_y):
         draw_text(surface, v_line, end_x, y, size=font.get_height(), color=color)
+
 
 def _draw_horizontal_segment(
     self,
@@ -526,6 +526,7 @@ def _draw_horizontal_segment(
     # Draw the complete horizontal line
     line_text = prefix + h_line + suffix
     draw_text(surface, line_text, x_pos, y_pos, size=font.get_height(), color=color)
+
 
 def _draw_flow_information(
     self,
@@ -590,6 +591,7 @@ def _draw_flow_information(
         color,
     )
 
+
 def _get_resource_info(
     self, source_converter: Optional[Dict[str, Any]]
 ) -> Tuple[str, str]:
@@ -601,13 +603,12 @@ def _get_resource_info(
     Returns:
         Tuple[str, str]: Resource type and its visual character
     """
-    resource_type = (
-        source_converter.get("output_type", "") if source_converter else ""
-    )
+    resource_type = source_converter.get("output_type", "") if source_converter else ""
     resource_char = self.chars["resource_chars"].get(
         resource_type.lower(), self.chars["resource_chars"]["default"]
     )
     return resource_type, resource_char
+
 
 def _draw_flow_rate_text(
     self,
@@ -659,6 +660,7 @@ def _draw_flow_rate_text(
         color=dimmed_color,
     )
 
+
 def _format_flow_rate(self, flow_rate: float, resource_char: str) -> str:
     """Format flow rate with appropriate units.
 
@@ -670,8 +672,9 @@ def _format_flow_rate(self, flow_rate: float, resource_char: str) -> str:
         str: Formatted flow rate string
     """
     if flow_rate >= 1000:
-        return f"{resource_char} {flow_rate/1000:.1f}k/s"
+        return f"{resource_char} {flow_rate / 1000:.1f}k/s"
     return f"{resource_char} {flow_rate:.1f}/s"
+
 
 def _update_animation_state(self, flow_rate: float) -> None:
     """Update animation timing state.
@@ -689,6 +692,7 @@ def _update_animation_state(self, flow_rate: float) -> None:
         + (current_time - self.last_animation_time) * animation_speed
     ) % 1000
     self.last_animation_time = current_time
+
 
 def _draw_animated_flow(
     self,
@@ -716,9 +720,7 @@ def _draw_animated_flow(
         color: Color to draw with
     """
     # Get animation pattern based on source converter info
-    pattern, pattern_pos = self._get_animation_pattern(
-        source_converter, dx
-    )
+    pattern, pattern_pos = self._get_animation_pattern(source_converter, dx)
 
     # Calculate animation parameters
     h_spacing = len(pattern[0]) if isinstance(pattern[0], str) else 3
@@ -735,13 +737,13 @@ def _draw_animated_flow(
     # Draw horizontal animation points
     # Create a coords dictionary for the refactored method
     coords = {
-        'start_x': start_x,
-        'start_y': start_y,
-        'end_x': end_x,
-        'end_y': end_y,
-        'dx': dx
+        "start_x": start_x,
+        "start_y": start_y,
+        "end_x": end_x,
+        "end_y": end_y,
+        "dx": dx,
     }
-    
+
     self._draw_horizontal_animation(
         surface,
         font,
@@ -764,6 +766,7 @@ def _draw_animated_flow(
             size=font.get_height(),
             color=color,
         )
+
 
 def _get_animation_pattern(
     self, source_converter: Optional[Dict[str, Any]], dx: int
@@ -815,6 +818,7 @@ def _get_animation_pattern(
 
     return pattern, pattern_pos
 
+
 def _calculate_vertical_animation_points(
     self, start_x: int, start_y: int, end_x: int, end_y: int, offset: int
 ) -> List[Tuple[int, int]]:
@@ -841,6 +845,7 @@ def _calculate_vertical_animation_points(
         for y in y_range
         if (y + offset) % v_spacing == 0
     ]
+
 
 def _draw_horizontal_animation(
     self,
@@ -871,12 +876,12 @@ def _draw_horizontal_animation(
         color: Color to draw with
     """
     # Extract coordinates from the dictionary
-    start_x = coords['start_x']
-    start_y = coords['start_y']
-    end_x = coords['end_x']
-    end_y = coords['end_y']
-    dx = coords['dx']
-    
+    start_x = coords["start_x"]
+    start_y = coords["start_y"]
+    end_x = coords["end_x"]
+    end_y = coords["end_y"]
+    dx = coords["dx"]
+
     # Determine Y position for horizontal animation
     y_pos = start_y + (end_y - start_y) // 2 if needs_vertical else start_y
     h_offset = offset % h_spacing
@@ -899,6 +904,7 @@ def _draw_horizontal_animation(
             size=font.get_height(),
             color=color,
         )
+
 
 def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
     """Draw the chain visualization.
@@ -931,6 +937,7 @@ def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
 
     return panel_rect
 
+
 def _draw_empty_state(
     self, surface: pygame.Surface, font: pygame.font.Font, panel_rect: pygame.Rect
 ) -> pygame.Rect:
@@ -955,6 +962,7 @@ def _draw_empty_state(
         color=COLOR_TEXT,
     )
     return panel_rect
+
 
 def _calculate_layout_parameters(self, font: pygame.font.Font) -> dict:
     """Calculate layout parameters for node positioning.
@@ -985,6 +993,7 @@ def _calculate_layout_parameters(self, font: pygame.font.Font) -> dict:
         "max_nodes_per_row": max_nodes_per_row,
     }
 
+
 def _update_animation_time(self) -> float:
     """Update animation time and return time delta.
 
@@ -995,6 +1004,7 @@ def _update_animation_time(self) -> float:
     dt = current_time - self.last_animation_time
     self.last_animation_time = current_time
     return dt
+
 
 def _update_converter_state(self, conv: dict, idx: int, dt: float) -> None:
     """Update state tracking for a converter.
@@ -1013,6 +1023,7 @@ def _update_converter_state(self, conv: dict, idx: int, dt: float) -> None:
     # Update efficiency history
     if "efficiency" in conv:
         self._update_efficiency_history(conv, idx, state)
+
 
 def _update_efficiency_history(self, conv: dict, idx: int, state: dict) -> None:
     """Update efficiency history for a converter.
@@ -1033,6 +1044,7 @@ def _update_efficiency_history(self, conv: dict, idx: int, state: dict) -> None:
     state["peak_efficiency"] = max(
         state.get("peak_efficiency", 0.0), conv["efficiency"]
     )
+
 
 def _position_and_draw_nodes(
     self,
@@ -1072,6 +1084,7 @@ def _position_and_draw_nodes(
 
     return node_positions
 
+
 def _get_connection_color(
     self, flow_rate: Optional[float], base_color: Tuple[int, int, int]
 ) -> Tuple[int, int, int]:
@@ -1090,6 +1103,7 @@ def _get_connection_color(
         return tuple(min(255, c * alpha // 255) for c in base_color)
 
     return base_color
+
 
 def _draw_node_connections(
     self, surface: pygame.Surface, font: pygame.font.Font, node_positions: dict

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Set, Callable
 
+
 # Module States
 class ModuleState(Enum):
     UNINITIALIZED = auto()
@@ -27,6 +28,7 @@ class ModuleState(Enum):
     RECOVERING = auto()
     SHUTTING_DOWN = auto()
 
+
 # Module Categories
 class ModuleCategory(Enum):
     CORE = auto()  # Essential system modules
@@ -34,6 +36,7 @@ class ModuleCategory(Enum):
     GAMEPLAY = auto()  # Game mechanics modules
     UI = auto()  # User interface modules
     UTILITY = auto()  # Helper/utility modules
+
 
 @dataclass
 class ModuleInfo:
@@ -46,6 +49,7 @@ class ModuleInfo:
     error_count: int = 0
     last_error: Optional[str] = None
     recovery_attempts: int = 0
+
 
 class ModuleContext:
     """

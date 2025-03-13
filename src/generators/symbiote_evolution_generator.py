@@ -19,38 +19,25 @@ from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 from generators.base_generator import BaseGenerator
 from typing import Any, Dict, List, Optional, Tuple
 from utils.cellular_automaton_utils import (
+    generate_cellular_automaton_rules,
+    apply_cellular_automaton,
+    apply_cellular_automaton_optimized,
+    apply_environmental_effects,
+)
 from utils.dependency_injection import inject
 from utils.logging_setup import (
-from utils.noise_generator import NoiseGenerator
-from utils.pattern_generator import (
-from utils.value_generator import (
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-
-# Remove wildcard import as no config variables are directly used
-# from config import *
-
     log_performance_start,
     log_performance_end,
     log_exception,
 )
-
+from utils.noise_generator import NoiseGenerator
+from utils.pattern_generator import (
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
 )
-
+from utils.value_generator import (
     add_value_clusters,
-)
-
-    apply_cellular_automaton,
-    apply_cellular_automaton_optimized,
-    generate_cellular_automaton_rules,
-    apply_environmental_effects,
 )
 
 @inject
@@ -200,7 +187,7 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             ]
         else:
             # Pick random locations from high-value areas
-            indices = np.random.choice(
+            indices = np.random.Generator.choice(
                 len(potential_locations), num_colonies, replace=False
             )
             colony_centers = [(x, y) for y, x in potential_locations[indices]]
@@ -257,7 +244,7 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.random((self.height, self.width)) * 0.3
+            return np.random.Generator.random((self.height, self.width)) * 0.3
 
     def generate_mineral_concentration_map(self, start_time):
         # Generate base mineral distribution using noise
@@ -379,7 +366,7 @@ class SymbioteEvolutionGenerator(BaseGenerator):
                 )
                 if excess > 0:
                     active_cells = np.argwhere(current_grid == 1)
-                    to_remove = np.random.choice(
+                    to_remove = np.random.Generator.choice(
                         len(active_cells), int(excess), replace=False
                     )
                     for idx in to_remove:

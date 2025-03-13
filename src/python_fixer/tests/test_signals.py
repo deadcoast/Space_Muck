@@ -10,16 +10,19 @@ from python_fixer.core.signals import SignalManager
 from unittest.mock import patch
 import signal
 
+
 @pytest.fixture
 def signal_manager():
     """Fixture to provide a clean SignalManager instance."""
     return SignalManager()
+
 
 @pytest.fixture
 def mock_logger():
     """Fixture to provide a mock logger."""
     with patch("logging.getLogger") as mock:
         yield mock.return_value
+
 
 def test_signal_handler_registration(signal_manager, mock_logger):
     """Test that signal handlers are properly registered and cleaned up."""
@@ -50,6 +53,7 @@ def test_signal_handler_registration(signal_manager, mock_logger):
     assert signal_manager._original_handler is None
     mock_logger.debug.assert_called_with("Restored original SIGINT handler")
 
+
 def test_nested_handlers(signal_manager, mock_logger):
     """Test that nested handlers are executed in LIFO order."""
     call_order = []
@@ -77,6 +81,7 @@ def test_nested_handlers(signal_manager, mock_logger):
                 mock_logger.warning.assert_called_with(
                     "Operation cancelled by user (signal 2)"
                 )
+
 
 def test_handler_error_handling(signal_manager, mock_logger):
     """Test that errors in handlers are caught and don't prevent other handlers."""
@@ -106,6 +111,7 @@ def test_handler_error_handling(signal_manager, mock_logger):
                     "Error in signal handler: Handler failed"
                 )
                 mock_logger.exception.assert_called_with("Signal handler traceback:")
+
 
 def test_handler_without_cleanup(signal_manager, mock_logger):
     """Test that handler works correctly without a cleanup function."""

@@ -30,6 +30,7 @@ CA_UTILS_AVAILABLE = (
 )
 VALUE_GEN_AVAILABLE = importlib.util.find_spec("src.utils.value_generator") is not None
 
+
 class MockNoiseGenerator(NoiseGenerator):
     """Mock implementation of NoiseGenerator for testing."""
 
@@ -56,6 +57,7 @@ class MockNoiseGenerator(NoiseGenerator):
             )
         )
         return np.full((height, width), self.return_value)
+
 
 class TestBaseGenerator(unittest.TestCase):
     """Test cases for the BaseGenerator class."""
@@ -584,6 +586,7 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Verify the result has the expected shape
         self.assertEqual(result.shape, (250, 250))
+
 
 if __name__ == "__main__":
     unittest.main()

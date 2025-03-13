@@ -7,6 +7,7 @@ patterns and distributions.
 """
 
 # Standard library imports
+import contextlib
 import logging
 import math
 import random
@@ -18,31 +19,19 @@ import numpy as np
 from generators.base_generator import BaseGenerator
 from typing import Any, Dict, List, Optional, Tuple
 from utils.dependency_injection import inject
-from utils.logging_setup import (
 from utils.noise_generator import NoiseGenerator
 from utils.pattern_generator import (
-from utils.value_generator import (
-import contextlib
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-# Note: Config constants are referenced via parameters instead of direct imports
-
     generate_spiral_pattern,
     generate_ring_pattern,
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
-)
-
     generate_value_distribution,
     add_value_clusters,
     generate_rare_resource_distribution,
 )
 
+from utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
@@ -139,13 +128,29 @@ class AsteroidGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.binomial(1, 0.1, (self.height, self.width)), {
+            rng = np.random.default_rng(1)
+            fallback_grid = rng.random((self.height, self.width)) < 0.1
+            return fallback_grid, {
                 "seed": self.seed
             }
 
     def _field_handler(self, pattern_weights, start_time):
         # Create empty grid
-        grid = np.zeros((self.height, self.width), dtype=float)
+        asteroid_grid = np.zeros((self.height, self.width), dtype=np.int16)
+        rare_grid = np.zeros((self.height, self.width), dtype=np.int8)
+        energy_grid = np.zeros((self.height, self.width), dtype=np.float32)
+        entity_grid = np.zeros((self.height, self.width), dtype=np.int8)
+        influence_grids = {}
+
+        # Initialize camera and display settings
+        camera_x = self.width // 2
+        camera_y = self.height // 2
+        zoom = 1.0
+        show_energy = False
+        show_grid_lines = True
+        show_influence = False
+        use_advanced_rendering = True
+        draw_mode = "standard"
 
         # Apply base noise layer
         noise_grid = self._generate_base_noise()
@@ -268,7 +273,7 @@ class AsteroidGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.binomial(1, density, (self.height, self.width))
+            return np.random.default_rng(self.seed).binomial(1, density, (self.height, self.width))
 
     def generate_asteroid_cluster(
         self, num_clusters=3, cluster_size=10, density=0.7, noise_scale=0.1
@@ -295,11 +300,11 @@ class AsteroidGenerator(BaseGenerator):
             noise_grid = self._generate_base_noise(scale=noise_scale)
 
             # Create random cluster centers
-            rng = np.random.RandomState(self.seed)
+            rng = np.random.default_rng(self.seed)
             centers = []
             for _ in range(num_clusters):
-                x = rng.randint(0, self.width)
-                y = rng.randint(0, self.height)
+                x = rng.integers(0, self.width)
+                y = rng.integers(0, self.height)
                 centers.append((x, y))
 
             # Create clusters around centers
@@ -334,7 +339,7 @@ class AsteroidGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.binomial(1, density, (self.height, self.width))
+            return np.random.default_rng(self.seed).binomial(1, density, (self.height, self.width))
 
     def generate_asteroid_field(self, field_type="mixed", density=0.5):
         """
@@ -355,16 +360,13 @@ class AsteroidGenerator(BaseGenerator):
             elif field_type == "cluster":
                 return self.generate_asteroid_cluster(density=density)
             elif field_type == "mixed" or field_type not in ["belt", "cluster"]:
-                return self._extracted_from_generate_asteroid_field_21(
-                    density, start_time
-                )
+                return self._generate_mixed_asteroid_field(density, start_time)
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.binomial(1, density, (self.height, self.width))
+            return np.random.default_rng(self.seed).binomial(1, density, (self.height, self.width))
 
-    # TODO Rename this here and in `generate_asteroid_field`
-    def _extracted_from_generate_asteroid_field_21(self, density, start_time):
+    def _generate_mixed_asteroid_field(self, density, start_time):
         # For mixed or invalid types, combine belt and cluster
         belt_grid = self.generate_asteroid_belt(density=density * 0.8)
         cluster_grid = self.generate_asteroid_cluster(density=density * 0.8)
@@ -502,7 +504,7 @@ class AsteroidGenerator(BaseGenerator):
                 # Radiation tends to occur in mineral-rich areas
                 energy_mask = (
                     mineral_grid > np.mean(mineral_grid[mineral_grid > 0])
-                ) & (np.random.random(asteroid_grid.shape) < energy_chance * 1.5)
+                ) & (np.random.default_rng(self.seed).random(asteroid_grid.shape) < energy_chance * 1.5)
                 energy_grid[energy_mask] = energy_value * 0.8
 
             elif energy_type == "plasma":
@@ -517,14 +519,14 @@ class AsteroidGenerator(BaseGenerator):
                 energy_mask = (
                     (normalized_distance > 0.3)
                     & (normalized_distance < 0.7)
-                    & (np.random.random(asteroid_grid.shape) < energy_chance)
+                    & (np.random.default_rng(self.seed).random(asteroid_grid.shape) < energy_chance)
                 )
                 energy_grid[energy_mask] = energy_value * 1.2
 
             else:  # "standard" or invalid type
                 # Standard energy distribution based on random chance
                 energy_mask = (asteroid_grid > 0) & (
-                    np.random.random(asteroid_grid.shape) < energy_chance
+                    np.random.default_rng(self.seed).random(asteroid_grid.shape) < energy_chance
                 )
                 energy_grid[energy_mask] = energy_value
 
@@ -609,7 +611,8 @@ class AsteroidGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Create a simple fallback field
-            fallback_grid = np.random.binomial(1, density, (self.height, self.width))
+            rng = np.random.default_rng(1)
+            fallback_grid = rng.random((self.height, self.width)) < density
 
             # Create AsteroidField with just width and height
             field = AsteroidField(width=self.width, height=self.height)

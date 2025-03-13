@@ -16,9 +16,7 @@ import logging
 # Local application imports
 from typing import Dict, List, Callable, Any, Optional, TypeVar
 from utils.logging_setup import (
-
-# Local application imports
-
+    # Local application imports
     log_performance_start,
     log_performance_end,
     LogContext,
@@ -31,6 +29,7 @@ ManagerType = TypeVar("ManagerType")
 UpdateFunction = Callable[[float], None]
 EventHandlerFunction = Callable[[], bool]
 RenderFunction = Callable[[], None]
+
 
 class GameLoop:
     """
@@ -303,8 +302,10 @@ class GameLoop:
 
         logging.info("GameLoop cleanup completed")
 
+
 # Singleton instance for global access
 game_loop = GameLoop()
+
 
 def get_game_loop() -> GameLoop:
     """

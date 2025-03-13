@@ -14,6 +14,7 @@ import uuid
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
+
 class ConverterType(Enum):
     """Types of resource converters available in the game."""
 
@@ -23,6 +24,7 @@ class ConverterType(Enum):
     FABRICATOR = "fabricator"
     SYNTHESIZER = "synthesizer"
 
+
 class ConverterTier(Enum):
     """Converter quality/tier levels that affect performance."""
 
@@ -31,6 +33,7 @@ class ConverterTier(Enum):
     ADVANCED = 3
     SUPERIOR = 4
     ULTIMATE = 5
+
 
 class ResourceType(Enum):
     """Types of resources available in the game."""
@@ -66,6 +69,7 @@ class ResourceType(Enum):
     FUSION_CORE = "fusion_core"
     QUANTUM_PROCESSOR = "quantum_processor"
     ANTIMATTER_CATALYST = "antimatter_catalyst"
+
 
 class Recipe:
     """Represents a conversion recipe that transforms input resources into outputs."""
@@ -122,6 +126,7 @@ class Recipe:
         """Calculate actual energy cost based on efficiency."""
         # Lower is better, so divide by efficiency
         return self.energy_cost / max(0.1, efficiency)
+
 
 class Converter:
     """Represents a resource converter that can process recipes."""
@@ -301,6 +306,7 @@ class Converter:
         self.active_processes = remaining_processes
         return completed_processes
 
+
 class ConversionProcess:
     """Represents an active conversion process."""
 
@@ -332,6 +338,7 @@ class ConversionProcess:
         self.completed = True
         self.stalled = False
 
+
 class ChainStep:
     """Represents a step in a production chain."""
 
@@ -347,6 +354,7 @@ class ChainStep:
         self.converter_id = converter_id
         self.recipe_id = recipe_id
         self.step_order = step_order
+
 
 class ProductionChain:
     """Represents a sequence of conversion processes forming a production line."""
@@ -371,6 +379,7 @@ class ProductionChain:
         self.paused = False
         self.current_step_index = 0
 
+
 # Common efficiency factors for converter operations
 class EfficiencyFactor:
     """Represents a factor affecting converter efficiency."""
@@ -387,6 +396,7 @@ class EfficiencyFactor:
         self.name = name
         self.value = value
         self.description = description
+
 
 class OptimizationSuggestion:
     """Represents a suggestion to improve converter efficiency."""

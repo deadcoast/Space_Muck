@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Any, Callable, Optional
 
+
 class EventType(Enum):
     """Types of events that can be emitted."""
 
@@ -28,6 +29,7 @@ class EventType(Enum):
     EFFICIENCY_UPDATED = auto()
     METRIC_UPDATED = auto()
 
+
 @dataclass
 class EventData:
     """Container for event data."""
@@ -36,6 +38,7 @@ class EventData:
     source: str
     data: Dict[str, Any]
     timestamp: float = time.time()
+
 
 class MetricType(Enum):
     """Types of metrics that can be tracked."""
@@ -46,6 +49,7 @@ class MetricType(Enum):
     EFFICIENCY = auto()
     PROCESS_COUNT = auto()
 
+
 @dataclass
 class MetricData:
     """Container for metric data."""
@@ -55,6 +59,7 @@ class MetricData:
     unit: str
     source: str
     timestamp: float = time.time()
+
 
 class EventSystem:
     """Central event system for UI components."""

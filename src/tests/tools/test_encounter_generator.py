@@ -17,6 +17,7 @@ import unittest
 
 # EnemyShip is created by the EncounterGenerator, no need to import it directly
 
+
 class TestEncounterGenerator(unittest.TestCase):
     """Test cases for the encounter generator."""
 
@@ -218,6 +219,7 @@ class TestEncounterGenerator(unittest.TestCase):
         # Verify no encounter
         self.assertFalse(result["encounter"])
         self.assertEqual(result["reason"], "Unknown quest type: unknown_type")
+
 
 if __name__ == "__main__":
     unittest.main()

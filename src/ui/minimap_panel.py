@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple, Any
 from src.ui.ui_base.ascii_base import UIStyle
 import pygame
 
+
 class ASCIIMinimapPanel:
     """
     A minimap showing the player's position in the game world.

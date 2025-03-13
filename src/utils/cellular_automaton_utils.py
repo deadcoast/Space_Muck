@@ -34,6 +34,7 @@ except ImportError:
         "Warning: scipy not available, using fallback implementation for optimized cellular automaton"
     )
 
+
 def apply_cellular_automaton(
     grid: np.ndarray,
     birth_set: Set[int] = None,
@@ -103,6 +104,7 @@ def apply_cellular_automaton(
     # Preserve original values where cells are alive
     return grid * result_grid
 
+
 def apply_cellular_automaton_optimized(
     grid: np.ndarray, birth_set: Set[int], survival_set: Set[int]
 ) -> np.ndarray:
@@ -136,6 +138,7 @@ def apply_cellular_automaton_optimized(
         height=height,
     )
 
+
 def _apply_convolution_based_cellular_automaton(
     binary_grid, survival_set, birth_set, grid
 ):
@@ -158,6 +161,7 @@ def _apply_convolution_based_cellular_automaton(
 
     # Preserve original values where cells are alive
     return grid * new_grid
+
 
 def generate_cellular_automaton_rules(
     hunger: float, genome: Dict[str, Any]
@@ -190,6 +194,7 @@ def generate_cellular_automaton_rules(
         survival_set.add(4)
 
     return birth_set, survival_set
+
 
 def apply_environmental_effects(
     grid: np.ndarray, mineral_map: np.ndarray, hostility: float

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Set
 
+
 # Exploration States
 class ExplorationState(Enum):
     UNEXPLORED = auto()
@@ -23,6 +24,7 @@ class ExplorationState(Enum):
     EXPLORED = auto()
     DEPLETED = auto()
     DANGEROUS = auto()
+
 
 # Region Types
 class RegionType(Enum):
@@ -32,6 +34,7 @@ class RegionType(Enum):
     SETTLEMENT = auto()
     HAZARD = auto()
 
+
 # Discovery Categories
 class DiscoveryType(Enum):
     RESOURCE = auto()
@@ -40,6 +43,7 @@ class DiscoveryType(Enum):
     STRUCTURE = auto()
     PHENOMENON = auto()
 
+
 # Exploration Patterns
 EXPLORATION_PATTERNS = {
     "spiral": "Explore in expanding spiral pattern",
@@ -47,6 +51,7 @@ EXPLORATION_PATTERNS = {
     "targeted": "Focus on specific regions of interest",
     "random": "Random exploration pattern",
 }
+
 
 @dataclass
 class Region:
@@ -66,6 +71,7 @@ class Region:
         self.resources = self.resources or {}
         self.discoveries = self.discoveries or []
 
+
 @dataclass
 class ExplorationMission:
     """Represents an active exploration mission."""
@@ -81,6 +87,7 @@ class ExplorationMission:
     def __post_init__(self):
         """Initialize optional fields."""
         self.discoveries = self.discoveries or []
+
 
 class ExplorationManager:
     """

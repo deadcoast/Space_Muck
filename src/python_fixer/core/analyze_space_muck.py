@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-def print_section(title: str, underline_char: str = "=") -> None:
-    """Print a section title with consistent formatting."""
-
 # Standard library imports
 import logging
 
@@ -12,8 +8,12 @@ import logging
 from pathlib import Path
 from project_analysis import ProjectAnalyzer
 
+
+def print_section(title: str, underline_char: str = "=") -> None:
+    """Print a section title with consistent formatting."""
     print(f"\n{title}")
     print(underline_char * len(title))
+
 
 def print_structure_summary(structure: dict) -> None:
     """Print project structure summary.

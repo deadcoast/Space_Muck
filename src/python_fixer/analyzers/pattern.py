@@ -1,10 +1,3 @@
-
-
-# Assuming LogRecord and CustomFormatter are defined elsewhere in your codebase
-
-class PatternAnalyzer:
-    """Analyze log patterns using machine learning models"""
-
 # Standard library imports
 
 # Third-party library imports
@@ -13,6 +6,10 @@ class PatternAnalyzer:
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import Any, Dict
 import torch
+
+
+class PatternAnalyzer:
+    """Analyze log patterns using machine learning models"""
 
     def __init__(self):
         # Initialize tokenizer and model

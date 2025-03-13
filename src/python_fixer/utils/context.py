@@ -1,11 +1,3 @@
-
-
-cli = Console()
-
-@dataclass
-class LogContext:
-    """Enhanced context for structured variant_loggers"""
-
 # Standard library imports
 from datetime import datetime
 
@@ -15,6 +7,13 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from rich import Console
 from typing import Any, Dict, Optional, Set
+
+cli = Console()
+
+
+@dataclass
+class LogContext:
+    """Enhanced context for structured variant_loggers"""
 
     module: str
     function: str

@@ -4,12 +4,11 @@
 
 # Third-party library imports
 import pytest
+import unittest
 
 # Local application imports
 from pathlib import Path
 from python_fixer.core.signatures import (
-import unittest
-
     TypeInfo,
     SignatureMetrics,
     SignatureComponent,

@@ -1,9 +1,3 @@
-
-
-@dataclass
-class LogMetrics:
-    """Real-time metrics for log analysis"""
-
 # Standard library imports
 from collections import Counter
 
@@ -14,6 +8,11 @@ from altair import Dict
 from dataclasses import dataclass, field
 from prometheus_client import Gauge, Histogram
 
+
+@dataclass
+class LogMetrics:
+    """Real-time metrics for log analysis"""
+
     error_count: int = 0
     warning_count: int = 0
     info_count: int = 0
@@ -21,6 +20,7 @@ from prometheus_client import Gauge, Histogram
     files_processed: int = 0
     average_processing_time: float = 0.0
     pattern_frequencies: Dict[str, int] = field(default_factory=dict)
+
 
 class MetricsCollector:
     """Collect and track metrics using Prometheus"""

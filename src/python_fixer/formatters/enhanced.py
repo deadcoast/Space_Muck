@@ -43,6 +43,7 @@ import variant_loggers
 
 console = Console()
 
+
 class EnhancedFormatter(variant_loggers.Formatter):
     """Advanced log formatter with real-time analytics and visualization"""
 

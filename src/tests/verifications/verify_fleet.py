@@ -36,6 +36,7 @@ sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
 
+
 def verify_fleet():
     """Test the Fleet class."""
     print("Testing Fleet class...")
@@ -130,6 +131,7 @@ def verify_fleet():
     print("Fleet tests passed!")
     return True
 
+
 def verify_inheritance():
     """Test that Fleet inherits from BaseEntity."""
     print("Testing Fleet inheritance...")
@@ -164,6 +166,7 @@ def verify_inheritance():
 
     print("Fleet inheritance tests passed!")
     return True
+
 
 if __name__ == "__main__":
     try:

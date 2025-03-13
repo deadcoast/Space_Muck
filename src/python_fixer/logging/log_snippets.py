@@ -1,4 +1,14 @@
+# Standard library imports
+from datetime import datetime, timezone
+from functools import wraps
+from logging import LogRecord, getLogger, getLevelName
+import inspect
+import logging
 
+# Third-party library imports
+
+# Local application imports
+from python_fixer.logging.correlator import log_correlator
 
 # Configure the basic logger
 def basicConfig(
@@ -14,19 +24,6 @@ def basicConfig(
         format (str): The format string for log messages.
         datefmt (str): The date format string.
     """
-
-# Standard library imports
-from datetime import datetime, timezone
-from functools import wraps
-from logging import LogRecord, getLogger
-import inspect
-import logging
-
-# Third-party library imports
-
-# Local application imports
-from python_fixer.logging.correlator import log_correlator
-
     numeric_level = getattr(logging, level.upper(), logging.INFO)
     logging.basicConfig(level=numeric_level, format=format, datefmt=datefmt)
 

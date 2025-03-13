@@ -32,6 +32,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 def run_noise_benchmark(
     sizes: List[int], noise_types: List[str] = None, iterations: int = 3
 ) -> Dict[str, Dict[str, List[float]]]:
@@ -113,6 +114,7 @@ def run_noise_benchmark(
                 results["gpu"][noise_type].append(0)  # No GPU available
 
     return results
+
 
 def run_multi_octave_benchmark(
     sizes: List[int], octaves_list: List[List[int]] = None, iterations: int = 3
@@ -198,6 +200,7 @@ def run_multi_octave_benchmark(
 
     return results
 
+
 def plot_benchmark_results(
     results: Dict[str, Dict[str, List[float]]], title: str, filename: str
 ):
@@ -266,6 +269,7 @@ def plot_benchmark_results(
     plt.savefig(speedup_filename)
     logging.info(f"Speedup plot saved to {speedup_filename}")
 
+
 def main():
     """Run the benchmark tests."""
     # Grid sizes to test
@@ -286,6 +290,7 @@ def main():
     )
 
     logging.info("Benchmarks completed!")
+
 
 if __name__ == "__main__":
     main()

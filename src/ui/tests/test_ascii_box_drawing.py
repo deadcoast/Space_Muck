@@ -14,33 +14,29 @@ import pygame
 import unittest
 
 # Add the src directory to the path so we can import modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
 # Use absolute imports for tests
 
 # Import the draw_text function directly from the module
 # Import draw_text directly from the module file, not the package
 
+
 class TestASCIIBoxDrawing(unittest.TestCase):
     """Test the ASCII Box drawing functionality."""
-    
+
     def setUp(self):
         """Set up the test environment."""
         pygame.init()
         self.surface = pygame.Surface((400, 300))
         self.box = ASCIIBox(
-            x=50, 
-            y=50, 
-            width=300, 
-            height=200, 
-            style=UIStyle.SINGLE,
-            title="Test Box"
+            x=50, y=50, width=300, height=200, style=UIStyle.SINGLE, title="Test Box"
         )
-    
+
     def tearDown(self):
         """Clean up after the test."""
         pygame.quit()
-    
+
     def test_box_initialization(self):
         """Test that the box initializes with correct properties."""
         self.assertEqual(self.box.x, 50)
@@ -49,7 +45,7 @@ class TestASCIIBoxDrawing(unittest.TestCase):
         self.assertEqual(self.box.height, 200)
         self.assertEqual(self.box.style, UIStyle.SINGLE)
         self.assertEqual(self.box.title, "Test Box")
-    
+
     def test_box_drawing(self):
         """Test that the box draws without errors."""
         try:
@@ -57,20 +53,15 @@ class TestASCIIBoxDrawing(unittest.TestCase):
             # Test passes if no exception is raised
         except Exception as e:
             self.fail(f"Box drawing raised exception: {e}")
-    
+
     def test_draw_text_import(self):
         """Test that the draw_text function is properly imported and works."""
         try:
-            draw_text(
-                surface=self.surface,
-                text="Test Text",
-                x=100,
-                y=100,
-                size=18
-            )
+            draw_text(surface=self.surface, text="Test Text", x=100, y=100, size=18)
             # Test passes if no exception is raised
         except Exception as e:
             self.fail(f"draw_text raised exception: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

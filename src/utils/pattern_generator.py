@@ -24,6 +24,7 @@ from typing import Callable, List, Optional, Tuple
 # Initialize random number generator with a fixed seed for reproducibility
 rng = Generator(PCG64(42))
 
+
 def generate_spiral_pattern(
     width: int,
     height: int,
@@ -79,6 +80,7 @@ def generate_spiral_pattern(
     grid[center_y, center_x] = 1.0
     return grid
 
+
 def generate_ring_pattern(
     width: int,
     height: int,
@@ -124,6 +126,7 @@ def generate_ring_pattern(
 
     return grid
 
+
 def generate_gradient_pattern(
     width: int, height: int, direction: float = 0.0, steepness: float = 1.0
 ) -> np.ndarray:
@@ -164,6 +167,7 @@ def generate_gradient_pattern(
         grid[y, x] = max(0, min(1, gradient_value))
 
     return grid
+
 
 def generate_void_pattern(
     width: int,
@@ -212,6 +216,7 @@ def generate_void_pattern(
         grid[y, x] = min(grid[y, x], void_effect)
 
     return grid
+
 
 def apply_weighted_patterns(
     width: int,

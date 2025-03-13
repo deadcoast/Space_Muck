@@ -15,6 +15,7 @@ from config import COLOR_TEXT, COLOR_BG
 from typing import Tuple, List, Optional, Dict
 import pygame
 
+
 def draw_text(
     surface: pygame.Surface,
     text: str,
@@ -108,6 +109,7 @@ def draw_text(
 
     return surface.blit(text_surface, (x, y))
 
+
 def _wrap_text(text: str, font: pygame.font.Font, max_width: int) -> List[str]:
     """
     Wrap text to fit within max_width.
@@ -142,6 +144,7 @@ def _wrap_text(text: str, font: pygame.font.Font, max_width: int) -> List[str]:
         lines.append(" ".join(current_line))
 
     return lines
+
 
 def draw_progress_bar(
     surface: pygame.Surface,
@@ -221,6 +224,7 @@ def draw_progress_bar(
 
     return background_rect
 
+
 def draw_button(
     surface: pygame.Surface,
     rect: pygame.Rect,
@@ -291,6 +295,7 @@ def draw_button(
     draw_text(surface, text, text_x, text_y, font_size, text_color, align="center")
 
     return rect
+
 
 def draw_panel(
     surface: pygame.Surface,
@@ -370,6 +375,7 @@ def draw_panel(
 
     return rect
 
+
 def draw_tooltip(
     surface: pygame.Surface,
     text: str,
@@ -442,6 +448,7 @@ def draw_tooltip(
 
     return tooltip_rect
 
+
 def draw_minimap(
     surface: pygame.Surface,
     rect: pygame.Rect,
@@ -506,6 +513,7 @@ def draw_minimap(
 
     return rect
 
+
 def _draw_grid_on_minimap(
     minimap: pygame.Surface,
     grid: np.ndarray,
@@ -529,6 +537,7 @@ def _draw_grid_on_minimap(
                         max(1, scale_y * step_y),
                     ),
                 )
+
 
 def _draw_entities_on_minimap(
     minimap: pygame.Surface,
@@ -590,6 +599,7 @@ def _draw_entities_on_minimap(
                     # Skip out-of-bounds coordinates
                     continue
 
+
 def _draw_player_on_minimap(
     minimap: pygame.Surface, player_pos: Tuple[int, int], scale_x: float, scale_y: float
 ) -> None:
@@ -600,6 +610,7 @@ def _draw_player_on_minimap(
         (int(player_pos[0] * scale_x), int(player_pos[1] * scale_y)),
         max(3, int(min(scale_x, scale_y) * 2)),
     )
+
 
 def _draw_view_rect_on_minimap(
     minimap: pygame.Surface,
@@ -615,6 +626,7 @@ def _draw_view_rect_on_minimap(
         (x1 * scale_x, y1 * scale_y, (x2 - x1) * scale_x, (y2 - y1) * scale_y),
         1,  # Line width
     )
+
 
 def draw_histogram(
     surface: pygame.Surface,
@@ -731,6 +743,7 @@ def draw_histogram(
     surface.blit(histogram, (rect.x, rect.y))
 
     return rect
+
 
 def draw_circle_button(
     surface: pygame.Surface,

@@ -5,14 +5,13 @@ Player class: Represents the player character in the game, extends MinerEntity.
 # Standard library imports
 import logging
 import random
+from typing import Dict, Tuple, Any, Optional, Set
 
 # Third-party library imports
 
 # Local application imports
 from .miner_entity import MinerEntity
 from config import (
-from typing import Dict, Tuple, Any, Optional, Set
-
     COLOR_PLAYER,
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,

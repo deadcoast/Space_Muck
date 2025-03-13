@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Import specific items from config instead of using star imports
 
+
 class TestAsteroidFieldPerformance(unittest.TestCase):
     """Test performance of the AsteroidField class."""
 
@@ -89,6 +90,7 @@ class TestAsteroidFieldPerformance(unittest.TestCase):
         self.assertIsNotNone(metadata)
         self.assertEqual(asteroid_grid.shape, (height, width))
 
+
 class TestPlayerPerformance(unittest.TestCase):
     """Test performance of player operations."""
 
@@ -151,6 +153,7 @@ class TestPlayerPerformance(unittest.TestCase):
         # Pathfinding should complete in reasonable time
         self.assertLess(end_time - start_time, 1.0, "Pathfinding took too long")
         self.assertTrue(len(path) > 0, "No path found")
+
 
 class TestUIPerformance(unittest.TestCase):
     """Test UI component performance."""

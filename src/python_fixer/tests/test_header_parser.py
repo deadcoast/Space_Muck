@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-def main():
-    """Test the header map parser implementation."""
-
 # Standard library imports
 import logging
 import random
@@ -13,6 +9,10 @@ import numpy as np
 # Local application imports
 from header_map_parser import HeaderMapParser
 from pathlib import Path
+
+
+def main():
+    """Test the header map parser implementation."""
 
     # Initialize parser
     parser = HeaderMapParser()
@@ -77,6 +77,7 @@ def generate_asteroid():
                     print(f"  - {item}")
             else:
                 print(f"\n{key}: {value}")
+
 
 if __name__ == "__main__":
     main()

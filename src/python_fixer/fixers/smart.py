@@ -1,23 +1,4 @@
-
-
-  # Ensure you have a python-patch installed: pip install python-patch
-
-# Configure variant_loggers
-variant_loggers.basicConfig(
-    level=variant_loggers.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = variant_loggers.getLogger(__name__)
-
-class FixManager:
-    def __init__(self, config_path: Optional[str] = None):
-        """
-        Initializes the FixManager with optional configuration path.
-
-        :param config_path: Path to the configuration file.
-        :type config_path: Optional[str]
-        """
+# Ensure you have a python-patch installed: pip install python-patch
 
 # Standard library imports
 import argparse
@@ -39,6 +20,24 @@ import patch
 import tempfile
 import variant_loggers
 
+# Configure variant_loggers
+variant_loggers.basicConfig(
+    level=variant_loggers.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = variant_loggers.getLogger(__name__)
+
+
+class FixManager:
+    def __init__(self, config_path: Optional[str] = None):
+        """
+        Initializes the FixManager with optional configuration path.
+
+        :param config_path: Path to the configuration file.
+        :type config_path: Optional[str]
+        """
+        
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
 
@@ -485,6 +484,7 @@ import variant_loggers
             logger.error(
                 f"Unknown mode '{mode}'. Supported modes are 'report', 'auto_fix', 'interactive_fix'."
             )
+
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)

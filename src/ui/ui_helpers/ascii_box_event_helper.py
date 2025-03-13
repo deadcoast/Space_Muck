@@ -14,7 +14,6 @@ import src.uuid
 
 # Local application imports
 from typing import (
-
     Optional,
     Any,
     Callable,
@@ -42,6 +41,7 @@ except ImportError as e:
     UIEventType = Any
     UIEventData = Any
     UIElement = Any
+
 
 def register_ascii_box(
     box: ASCIIBox, component_id: Optional[str] = None, register_events: bool = True
@@ -79,6 +79,7 @@ def register_ascii_box(
         logging.error(f"Error registering ASCIIBox: {e}")
         return component_id or f"ascii_box_{uuid.uuid4().hex[:8]}"
 
+
 def unregister_ascii_box(box: ASCIIBox) -> bool:
     """
     Unregister an ASCIIBox from the component registry and event system.
@@ -93,7 +94,7 @@ def unregister_ascii_box(box: ASCIIBox) -> bool:
         # Check if box has a component ID
         if not hasattr(box, "component_id") or not box.component_id:
             return False
-            
+
         box_id = box.component_id
 
         # Unregister from event system
@@ -104,6 +105,7 @@ def unregister_ascii_box(box: ASCIIBox) -> bool:
     except Exception as e:
         logging.error(f"Error unregistering ASCIIBox: {e}")
         return False
+
 
 def add_click_handler(box: ASCIIBox, handler: Callable[[UIEventData], None]) -> bool:
     """
@@ -127,6 +129,7 @@ def add_click_handler(box: ASCIIBox, handler: Callable[[UIEventData], None]) -> 
     except Exception as e:
         logging.error(f"Error adding click handler: {e}")
         return False
+
 
 def add_hover_handlers(
     box: ASCIIBox,
@@ -157,6 +160,7 @@ def add_hover_handlers(
     except Exception as e:
         logging.error(f"Error adding hover handlers: {e}")
         return False
+
 
 def create_interactive_box(
     x: int,
@@ -210,6 +214,7 @@ def create_interactive_box(
         box = ASCIIBox(x, y, width, height, title, **kwargs)
         return box, component_id or f"ascii_box_{uuid.uuid4().hex[:8]}"
 
+
 def handle_mouse_events(
     boxes: List[ASCIIBox],
     mouse_pos: Tuple[int, int],
@@ -239,8 +244,11 @@ def handle_mouse_events(
         # Process boxes in reverse order (top to bottom) for actual handling
         for box in reversed(boxes):
             # Check if box has ID and contains the mouse position
-            if (hasattr(box, "component_id") and box.component_id and 
-                    box.contains_point(mouse_pos[0], mouse_pos[1])):
+            if (
+                hasattr(box, "component_id")
+                and box.component_id
+                and box.contains_point(mouse_pos[0], mouse_pos[1])
+            ):
                 handled_by.append(box.component_id)
 
                 # For click events, stop after first handler
@@ -253,13 +261,14 @@ def handle_mouse_events(
         logging.error(f"Error handling mouse events: {e}")
         return []
 
+
 def get_component_by_id(component_id: str) -> Optional[UIElement]:
     """
     Get a component from the registry by its ID.
-    
+
     Args:
         component_id: ID of the component to retrieve
-        
+
     Returns:
         The component if found, None otherwise
     """
@@ -270,13 +279,14 @@ def get_component_by_id(component_id: str) -> Optional[UIElement]:
         logging.error(f"Error getting component by ID: {e}")
         return None
 
+
 def get_box_by_id(component_id: str) -> Optional[ASCIIBox]:
     """
     Get an ASCIIBox by its component ID.
-    
+
     Args:
         component_id: ID of the component to retrieve
-        
+
     Returns:
         The ASCIIBox if found, None otherwise
     """
@@ -289,13 +299,14 @@ def get_box_by_id(component_id: str) -> Optional[ASCIIBox]:
         logging.error(f"Error getting box by ID: {e}")
         return None
 
+
 def is_registered_with_events(box: ASCIIBox) -> bool:
     """
     Check if an ASCIIBox is registered with the event system.
-    
+
     Args:
         box: ASCIIBox to check
-        
+
     Returns:
         True if registered, False otherwise
     """
@@ -303,11 +314,10 @@ def is_registered_with_events(box: ASCIIBox) -> bool:
         # Check if box has a component ID
         if not hasattr(box, "component_id") or not box.component_id:
             return False
-            
+
         # Get the registry instance and check if component is registered
         # In tests, registry.is_registered is mocked to return True
         return ComponentRegistry.get_instance().is_registered(box.component_id)
     except Exception as e:
         logging.error(f"Error checking if box is registered: {e}")
         return False
-

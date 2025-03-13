@@ -19,7 +19,8 @@ from ui.ui_element.ascii_resource_display import ASCIIResourceDisplay
 import pygame
 
 # Add the src directory to the path so we can import modules properly
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 def initialize_resources():
     """Initialize and return resource data."""
@@ -60,10 +61,18 @@ def initialize_critical_stats():
 
 def update_resource_amounts(resources):
     """Update resource amounts with random changes."""
-    resources[ResourceType.ENERGY]["amount"] = max(0, min(100, resources[ResourceType.ENERGY]["amount"] + random.uniform(-5, 5)))
-    resources[ResourceType.MATTER]["amount"] = max(0, min(100, resources[ResourceType.MATTER]["amount"] + random.uniform(-3, 3)))
-    resources[ResourceType.FLUID]["amount"] = max(0, min(100, resources[ResourceType.FLUID]["amount"] + random.uniform(-2, 1)))
-    resources[ResourceType.DATA]["amount"] = max(0, min(100, resources[ResourceType.DATA]["amount"] + random.uniform(-1, 2)))
+    resources[ResourceType.ENERGY]["amount"] = max(
+        0, min(100, resources[ResourceType.ENERGY]["amount"] + random.uniform(-5, 5))
+    )
+    resources[ResourceType.MATTER]["amount"] = max(
+        0, min(100, resources[ResourceType.MATTER]["amount"] + random.uniform(-3, 3))
+    )
+    resources[ResourceType.FLUID]["amount"] = max(
+        0, min(100, resources[ResourceType.FLUID]["amount"] + random.uniform(-2, 1))
+    )
+    resources[ResourceType.DATA]["amount"] = max(
+        0, min(100, resources[ResourceType.DATA]["amount"] + random.uniform(-1, 2))
+    )
 
 
 def update_resource_states(resources):
@@ -85,11 +94,21 @@ def update_resource_states(resources):
 
 def update_critical_stats(critical_stats):
     """Update critical stats with random changes."""
-    critical_stats["shield"] = max(0, min(100, critical_stats["shield"] + random.uniform(-2, 2)))
-    critical_stats["hull"] = max(0, min(100, critical_stats["hull"] + random.uniform(-1, 1)))
-    critical_stats["power_output"] = max(0, min(100, critical_stats["power_output"] + random.uniform(-3, 3)))
-    critical_stats["power_usage"] = max(0, min(100, critical_stats["power_usage"] + random.uniform(-2, 2)))
-    critical_stats["efficiency"] = max(0, min(100, critical_stats["efficiency"] + random.uniform(-1, 1)))
+    critical_stats["shield"] = max(
+        0, min(100, critical_stats["shield"] + random.uniform(-2, 2))
+    )
+    critical_stats["hull"] = max(
+        0, min(100, critical_stats["hull"] + random.uniform(-1, 1))
+    )
+    critical_stats["power_output"] = max(
+        0, min(100, critical_stats["power_output"] + random.uniform(-3, 3))
+    )
+    critical_stats["power_usage"] = max(
+        0, min(100, critical_stats["power_usage"] + random.uniform(-2, 2))
+    )
+    critical_stats["efficiency"] = max(
+        0, min(100, critical_stats["efficiency"] + random.uniform(-1, 1))
+    )
 
 
 def draw_instructions(screen, font):
@@ -189,6 +208,7 @@ def main():
 
     # Clean up
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

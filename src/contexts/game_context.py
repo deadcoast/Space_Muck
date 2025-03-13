@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Set, Callable, Tuple
 
+
 # Game States
 class GameState(Enum):
     INITIALIZING = auto()
@@ -25,6 +26,7 @@ class GameState(Enum):
     LOADING = auto()
     ERROR = auto()
     SHUTTING_DOWN = auto()
+
 
 # Event Types
 class GameEventType(Enum):
@@ -47,6 +49,7 @@ class GameEventType(Enum):
     THRESHOLD_TRIGGERED = auto()
     THRESHOLD_CLEARED = auto()
 
+
 @dataclass
 class GameEvent:
     """Represents a game event."""
@@ -56,6 +59,7 @@ class GameEvent:
     data: Dict[str, any]
     timestamp: float
     priority: int = 1
+
 
 class GameContext:
     """
@@ -196,11 +200,31 @@ class GameContext:
             new_state: State to transition to
 
         Returns:
-            bool: True if transition successful
+            bool: True if transition successful, False if transition not allowed or failed
         """
+        # If already in the requested state, no transition needed
         if new_state == self.state:
             return True
-
+            
+        # Check if the transition is allowed based on current state
+        if not self._is_valid_transition(self.state, new_state):
+            logging.warning(f"Invalid state transition: {self.state} -> {new_state}")
+            return False
+            
+        try:
+            self._update_state_and_notify(new_state)
+            return True
+        except Exception as e:
+            logging.error(f"Failed to transition state: {e}")
+            return False
+            
+    def _update_state_and_notify(self, new_state: GameState) -> None:
+        """
+        Update the game state and notify observers about the change.
+        
+        Args:
+            new_state: The new game state to transition to
+        """
         # Record state change
         self.previous_state = self.state
         self.state = new_state
@@ -217,7 +241,35 @@ class GameContext:
         )
 
         logging.info(f"Game state transitioned: {self.previous_state} -> {new_state}")
-        return True
+        
+    def _is_valid_transition(self, current_state: GameState, new_state: GameState) -> bool:
+        """
+        Check if a state transition is valid.
+        
+        Args:
+            current_state: Current game state
+            new_state: Proposed new state
+            
+        Returns:
+            bool: True if the transition is valid
+        """
+        # Define valid transitions between states
+        valid_transitions = {
+            GameState.INITIALIZING: [GameState.LOADING, GameState.ERROR],
+            GameState.LOADING: [GameState.READY, GameState.ERROR],
+            GameState.READY: [GameState.RUNNING, GameState.PAUSED, GameState.ERROR],
+            GameState.RUNNING: [GameState.PAUSED, GameState.COMPLETED, GameState.ERROR],
+            GameState.PAUSED: [GameState.RUNNING, GameState.READY, GameState.ERROR],
+            GameState.COMPLETED: [GameState.READY, GameState.ERROR],
+            GameState.ERROR: [GameState.INITIALIZING, GameState.READY],
+        }
+        
+        # ERROR state can be reached from any state
+        if new_state == GameState.ERROR:
+            return True
+            
+        # Check if the transition is allowed
+        return new_state in valid_transitions.get(current_state, [])
 
     def register_resource(
         self,

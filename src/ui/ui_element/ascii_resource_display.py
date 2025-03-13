@@ -22,6 +22,7 @@ Color = Tuple[int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIResourceDisplay:
     """A panel showing current resources, energy levels, and other critical stats."""
 
@@ -41,7 +42,7 @@ class ASCIIResourceDisplay:
         self.rect = rect
         self.title = title
         self.style = style
-        
+
         # Resource tracking
         self.resources: Dict[ResourceType, Dict[str, Any]] = {
             ResourceType.ENERGY: {
@@ -69,7 +70,7 @@ class ASCIIResourceDisplay:
                 "history": [],
             },
         }
-        
+
         # Critical stats
         self.critical_stats: Dict[str, Any] = {
             "shield": 0.0,  # Shield strength percentage
@@ -78,9 +79,9 @@ class ASCIIResourceDisplay:
             "power_usage": 0.0,  # Current power usage
             "efficiency": 0.0,  # System efficiency
         }
-        
+
         self.max_history = 30  # Keep 30 data points of history
-        
+
         # Define colors for different resource types and states
         self.colors = {
             ResourceType.ENERGY: (255, 255, 100),  # Yellow
@@ -108,11 +109,14 @@ class ASCIIResourceDisplay:
                 if resource_type in self.resources:
                     # Update current values
                     self.resources[resource_type].update(data)
-                    
+
                     # Update history if amount is provided
                     if "amount" in data:
                         self.resources[resource_type]["history"].append(data["amount"])
-                        if len(self.resources[resource_type]["history"]) > self.max_history:
+                        if (
+                            len(self.resources[resource_type]["history"])
+                            > self.max_history
+                        ):
                             self.resources[resource_type]["history"].pop(0)
         except Exception as e:
             logging.error(f"Error updating resources: {e}")
@@ -172,36 +176,42 @@ class ASCIIResourceDisplay:
             amount = resource["amount"]
             capacity = resource["capacity"]
             state = resource["state"]
-            
+
             # Calculate percentage and bar width
             percentage = min(100.0, (amount / capacity) * 100.0) if capacity > 0 else 0
             bar_width = int((width - 20) * (percentage / 100.0))
-            
+
             # Get resource name and color
             resource_name = resource_type.name.capitalize()
             color = self.colors[resource_type]
             state_color = self.colors[state]
-            
+
             # Draw resource name
             label = f"{resource_name}: "
             label_width = font.size(label)[0]
-            pygame.draw.rect(surface, (30, 30, 30), (x, y, width, font.get_height() + 4))
+            pygame.draw.rect(
+                surface, (30, 30, 30), (x, y, width, font.get_height() + 4)
+            )
             surface.blit(font.render(label, True, color), (x, y))
-            
+
             # Draw bar background
-            bar_bg_rect = pygame.Rect(x + label_width, y, width - label_width - 40, font.get_height())
+            bar_bg_rect = pygame.Rect(
+                x + label_width, y, width - label_width - 40, font.get_height()
+            )
             pygame.draw.rect(surface, (50, 50, 50), bar_bg_rect)
-            
+
             # Draw bar fill
             if bar_width > 0:
-                bar_fill_rect = pygame.Rect(x + label_width, y, bar_width, font.get_height())
+                bar_fill_rect = pygame.Rect(
+                    x + label_width, y, bar_width, font.get_height()
+                )
                 pygame.draw.rect(surface, color, bar_fill_rect)
-            
+
             # Draw percentage and state indicator
             value_text = f"{percentage:.1f}% {self._get_state_indicator(state)}"
             value_pos = (x + width - font.size(value_text)[0] - 5, y)
             surface.blit(font.render(value_text, True, state_color), value_pos)
-            
+
             return font.get_height() + 4
         except Exception as e:
             logging.error(f"Error drawing resource bar: {e}")
@@ -239,13 +249,15 @@ class ASCIIResourceDisplay:
             # Format text
             text = f"{label}: {value:.1f}{unit}"
             color = self.colors.get(color_key, COLOR_TEXT)
-            
+
             # Draw background
-            pygame.draw.rect(surface, (30, 30, 30), (x, y, width, font.get_height() + 2))
-            
+            pygame.draw.rect(
+                surface, (30, 30, 30), (x, y, width, font.get_height() + 2)
+            )
+
             # Draw text
             surface.blit(font.render(text, True, color), (x, y))
-            
+
             return font.get_height() + 2
         except Exception as e:
             logging.error(f"Error drawing stat value: {e}")
@@ -264,62 +276,105 @@ class ASCIIResourceDisplay:
         try:
             # Draw panel background and border
             panel = ASCIIPanel(
-                self.rect.x, self.rect.y, self.rect.width, self.rect.height, 
-                self.style, self.title
+                self.rect.x,
+                self.rect.y,
+                self.rect.width,
+                self.rect.height,
+                self.style,
+                self.title,
             )
             panel_rect = panel.draw(surface, font)
-            
+
             # Calculate layout
             margin = font.get_height() // 2
             x = self.rect.x + margin
             y = self.rect.y + margin * 3  # Extra margin for title
             width = self.rect.width - margin * 2
-            
+
             # Draw resource bars
-            y += self._draw_resource_bar(surface, font, x, y, width, ResourceType.ENERGY)
+            y += self._draw_resource_bar(
+                surface, font, x, y, width, ResourceType.ENERGY
+            )
             y += margin
-            y += self._draw_resource_bar(surface, font, x, y, width, ResourceType.MATTER)
+            y += self._draw_resource_bar(
+                surface, font, x, y, width, ResourceType.MATTER
+            )
             y += margin
             y += self._draw_resource_bar(surface, font, x, y, width, ResourceType.FLUID)
             y += margin
             y += self._draw_resource_bar(surface, font, x, y, width, ResourceType.DATA)
-            
+
             # Draw separator
             y += margin
             pygame.draw.line(surface, (100, 100, 100), (x, y), (x + width, y))
             y += margin
-            
+
             # Draw critical stats
             y += self._draw_stat_value(
-                surface, font, x, y, width // 2 - margin,
-                "Shield", self.critical_stats["shield"], "%", "shield"
+                surface,
+                font,
+                x,
+                y,
+                width // 2 - margin,
+                "Shield",
+                self.critical_stats["shield"],
+                "%",
+                "shield",
             )
             y += margin
             y += self._draw_stat_value(
-                surface, font, x, y, width // 2 - margin,
-                "Hull", self.critical_stats["hull"], "%", "hull"
+                surface,
+                font,
+                x,
+                y,
+                width // 2 - margin,
+                "Hull",
+                self.critical_stats["hull"],
+                "%",
+                "hull",
             )
-            
+
             # Draw power stats on the right side
             power_x = x + width // 2 + margin
             power_y = y - (margin + font.get_height() + 2) * 2
             self._draw_stat_value(
-                surface, font, power_x, power_y, width // 2 - margin,
-                "Output", self.critical_stats["power_output"], "kW", "power"
+                surface,
+                font,
+                power_x,
+                power_y,
+                width // 2 - margin,
+                "Output",
+                self.critical_stats["power_output"],
+                "kW",
+                "power",
             )
             power_y += margin + font.get_height() + 2
             self._draw_stat_value(
-                surface, font, power_x, power_y, width // 2 - margin,
-                "Usage", self.critical_stats["power_usage"], "kW", "power"
+                surface,
+                font,
+                power_x,
+                power_y,
+                width // 2 - margin,
+                "Usage",
+                self.critical_stats["power_usage"],
+                "kW",
+                "power",
             )
-            
+
             # Draw efficiency at the bottom
             y += margin * 2
             self._draw_stat_value(
-                surface, font, x, y, width,
-                "System Efficiency", self.critical_stats["efficiency"], "%", "efficiency"
+                surface,
+                font,
+                x,
+                y,
+                width,
+                "System Efficiency",
+                self.critical_stats["efficiency"],
+                "%",
+                "efficiency",
             )
-            
+
             return panel_rect
         except Exception as e:
             logging.error(f"Error drawing resource display: {e}")

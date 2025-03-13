@@ -16,12 +16,12 @@ from typing import List, Tuple
 from ui.ui_base.event_system import UIEventType, UIEventData
 from ui.ui_element.ascii_box import ASCIIBox
 from ui.ui_helpers.ascii_box_event_helper import (
-
     register_ascii_box,
     add_click_handler,
     add_hover_handlers,
     create_interactive_box,
 )
+
 
 def demo_basic_event_integration() -> ASCIIBox:
     """
@@ -63,6 +63,7 @@ def demo_basic_event_integration() -> ASCIIBox:
 
     return box
 
+
 def demo_interactive_box_creation() -> Tuple[ASCIIBox, str]:
     """
     Demonstrate creating an interactive box with event handlers.
@@ -95,6 +96,7 @@ def demo_interactive_box_creation() -> Tuple[ASCIIBox, str]:
 
     print(f"Created interactive box with ID: {box_id}")
     return box, box_id
+
 
 def demo_multiple_boxes() -> List[ASCIIBox]:
     """
@@ -132,7 +134,7 @@ def demo_multiple_boxes() -> List[ASCIIBox]:
             y=15 + (i * 7),
             width=20,
             height=5,
-            title=f"Box {i+1}",
+            title=f"Box {i + 1}",
             on_click=make_click_handler(i),
             on_hover_enter=make_hover_enter_handler(i),
             on_hover_leave=make_hover_leave_handler(i),
@@ -141,6 +143,7 @@ def demo_multiple_boxes() -> List[ASCIIBox]:
         boxes.append(box)
 
     return boxes
+
 
 def demo_custom_event_handling() -> ASCIIBox:
     """
@@ -177,6 +180,7 @@ def demo_custom_event_handling() -> ASCIIBox:
 
     return box
 
+
 def run_demo() -> None:
     """
     Run the full ASCIIBox event system integration demo.
@@ -207,6 +211,7 @@ def run_demo() -> None:
     except Exception as e:
         logging.error(f"Error in demo: {e}")
         print(f"Demo failed with error: {e}")
+
 
 if __name__ == "__main__":
     run_demo()

@@ -7,17 +7,19 @@ other game elements.
 """
 
 # Standard library imports
+from typing import Optional
+from itertools import product
 
 # Third-party library imports
 import numpy as np
 import scipy.signal as signal
 
 # Local application imports
-from typing import Optional
 
 # Standard library imports
 
 # Third-party imports
+
 
 def count_neighbors(grid: np.ndarray) -> np.ndarray:
     """
@@ -33,6 +35,92 @@ def count_neighbors(grid: np.ndarray) -> np.ndarray:
     return signal.convolve2d(
         (grid > 0).astype(int), kernel, mode="same", boundary="wrap"
     )
+
+
+def _process_cell_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
+                         birth_set: set, survival_set: set, y: int, x: int, energy_level: float) -> None:
+    """
+    Process a single cell with energy influence.
+    
+    Args:
+        grid: Current state grid
+        new_grid: Grid being constructed
+        neighbor_counts: Neighbor count for each cell
+        birth_set: Set of neighbor counts that create new cells
+        survival_set: Set of neighbor counts that allow cells to survive
+        y: Y coordinate of cell
+        x: X coordinate of cell
+        energy_level: Energy level at this cell
+    """
+    # Energy can boost survival by adding to neighbor count
+    energy_boost = min(2, int(energy_level * 3))
+    adjusted_survival = survival_set.union(
+        {n + energy_boost for n in survival_set}
+    )
+
+    if grid[y, x] > 0:  # Cell is alive
+        if neighbor_counts[y, x] in adjusted_survival:
+            new_grid[y, x] = grid[y, x]  # Cell survives
+    elif neighbor_counts[y, x] in birth_set:
+        new_grid[y, x] = 1  # Cell is born
+
+
+def _process_cell_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
+                      birth_set: set, survival_set: set, y: int, x: int) -> None:
+    """
+    Process a single cell without energy influence.
+    
+    Args:
+        grid: Current state grid
+        new_grid: Grid being constructed
+        neighbor_counts: Neighbor count for each cell
+        birth_set: Set of neighbor counts that create new cells
+        survival_set: Set of neighbor counts that allow cells to survive
+        y: Y coordinate of cell
+        x: X coordinate of cell
+    """
+    if grid[y, x] > 0:  # Cell is alive
+        if neighbor_counts[y, x] in survival_set:
+            new_grid[y, x] = grid[y, x]  # Cell survives
+    elif neighbor_counts[y, x] in birth_set:
+        new_grid[y, x] = 1  # Cell is born
+
+
+def _apply_rules_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
+                          birth_set: set, survival_set: set, energy_grid: np.ndarray) -> None:
+    """
+    Apply cellular automaton rules with energy influence.
+    
+    Args:
+        grid: Current state grid
+        new_grid: Grid being constructed
+        neighbor_counts: Neighbor count for each cell
+        birth_set: Set of neighbor counts that create new cells
+        survival_set: Set of neighbor counts that allow cells to survive
+        energy_grid: Energy grid that modifies rules
+    """
+    height, width = grid.shape
+    for y, x in product(range(height), range(width)):
+        energy_level = energy_grid[y, x]
+        _process_cell_with_energy(grid, new_grid, neighbor_counts, birth_set, survival_set, y, x, energy_level)
+
+
+def _apply_rules_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
+                      birth_set: set, survival_set: set) -> None:
+    """
+    Apply cellular automaton rules without energy influence.
+    
+    Args:
+        grid: Current state grid
+        new_grid: Grid being constructed
+        neighbor_counts: Neighbor count for each cell
+        birth_set: Set of neighbor counts that create new cells
+        survival_set: Set of neighbor counts that allow cells to survive
+    """
+    height, width = grid.shape
+    for y, x in product(range(height), range(width)):
+        _process_cell_simple(grid, new_grid, neighbor_counts, birth_set, survival_set, y, x)
+
 
 def apply_life_rules(
     grid: np.ndarray,
@@ -54,38 +142,15 @@ def apply_life_rules(
         New grid after applying rules
     """
     new_grid = np.zeros_like(grid)
-
-    # Count neighbors
     neighbor_counts = count_neighbors(grid)
 
     if energy_grid is not None:
-        # Use energy to modify survival chances
-        for y in range(grid.shape[0]):
-            for x in range(grid.shape[1]):
-                energy_level = energy_grid[y, x]
-
-                # Energy can boost survival by adding to neighbor count
-                energy_boost = min(2, int(energy_level * 3))
-                adjusted_survival = survival_set.union(
-                    {n + energy_boost for n in survival_set}
-                )
-
-                if grid[y, x] > 0:  # Cell is alive
-                    if neighbor_counts[y, x] in adjusted_survival:
-                        new_grid[y, x] = grid[y, x]  # Cell survives
-                elif neighbor_counts[y, x] in birth_set:
-                    new_grid[y, x] = 1  # Cell is born
+        _apply_rules_with_energy(grid, new_grid, neighbor_counts, birth_set, survival_set, energy_grid)
     else:
-        # Simple application without energy
-        for y in range(grid.shape[0]):
-            for x in range(grid.shape[1]):
-                if grid[y, x] > 0:  # Cell is alive
-                    if neighbor_counts[y, x] in survival_set:
-                        new_grid[y, x] = grid[y, x]  # Cell survives
-                elif neighbor_counts[y, x] in birth_set:
-                    new_grid[y, x] = 1  # Cell is born
+        _apply_rules_simple(grid, new_grid, neighbor_counts, birth_set, survival_set)
 
     return new_grid
+
 
 def diffuse_energy(
     energy_grid: np.ndarray, decay_rate: float = 0.02, spread_rate: float = 0.1

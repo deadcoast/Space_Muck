@@ -28,6 +28,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 class BenchmarkResults:
     """Class to store and visualize benchmark results."""
 
@@ -108,6 +109,7 @@ class BenchmarkResults:
             logging.info(f"Plot saved to {output_file}")
 
         plt.show()
+
 
 def benchmark_cellular_automaton(
     generator: BaseGenerator, grid_sizes: List[int], iterations: int = 1, runs: int = 3
@@ -196,6 +198,7 @@ def benchmark_cellular_automaton(
 
     return results
 
+
 def benchmark_clustering(
     generator: BaseGenerator,
     grid_sizes: List[int],
@@ -282,6 +285,7 @@ def benchmark_clustering(
 
     return results
 
+
 def main():
     """Main function to run the benchmarks."""
     # Create a BaseGenerator instance for benchmarking
@@ -332,6 +336,7 @@ def main():
         title="Clustering Parallel Processing Benchmark",
         output_file="clustering_benchmark_results.png",
     )
+
 
 if __name__ == "__main__":
     main()

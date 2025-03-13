@@ -15,6 +15,7 @@ import inspect
 from typing import Any, Type, get_type_hints
 import contextlib
 
+
 class DependencyContainer:
     """
     A container for managing dependencies in the application.
@@ -125,8 +126,10 @@ class DependencyContainer:
         # Instantiate the class with resolved dependencies
         return cls(**kwargs)
 
+
 # Create a global container instance
 container = DependencyContainer()
+
 
 def inject(cls: Type) -> Type:
     """
@@ -184,6 +187,7 @@ def inject(cls: Type) -> Type:
     cls.__init__ = new_init
 
     return cls
+
 
 def provides(interface: Type, singleton: bool = False):
     """

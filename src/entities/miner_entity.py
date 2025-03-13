@@ -7,13 +7,13 @@ import itertools
 import logging
 import math
 import random
+import time
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
-from config import (
 from entities.base_entity import BaseEntity
 from typing import Any, Dict, List, Optional, Set, Tuple
 from utils.logging_setup import log_exception
@@ -54,7 +54,7 @@ except ImportError:
 # Local application imports
 
 # Import from config package
-
+from config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -208,7 +208,7 @@ class MinerEntity(BaseEntity):
         return genome
 
     def populate(self, field: AsteroidField) -> None:
-        """Populate the field with this race's symbiotes using unique patterns based on traits"""
+        """Populate the field with this race's symbiotes using unique patterns based on traits."""
         # Safe check to ensure field is valid
         if not field or not hasattr(field, "width") or not hasattr(field, "height"):
             logging.error("Invalid field provided for population")
@@ -220,145 +220,231 @@ class MinerEntity(BaseEntity):
         # Each race has a distinct settlement pattern
         try:
             if self.trait == "adaptive":  # Blue race - settle in clusters
-                # Use Perlin noise to create organic-looking clusters
-                if PERLIN_AVAILABLE:
-                    noise = PerlinNoise(octaves=4, seed=random.randint(1, 1000))
-                else:
-                    # Fallback noise generator
-                    def noise(x, y):
-                        return (math.sin(x * 0.1) + math.cos(y * 0.1)) * 0.5
-
-                # Calculate a starting point based on field dimensions
-                start_x = random.randint(field.width // 4, field.width * 3 // 4)
-                start_y = random.randint(field.height // 4, field.height * 3 // 4)
-
-                # Create several organic clusters
-                for _ in range(3):
-                    center_x = start_x + random.randint(-30, 30)
-                    center_y = start_y + random.randint(-30, 30)
-
-                    # Define cluster radius
-                    radius = random.randint(10, 20)
-
-                    # Populate cluster area using noise
-                    for y in range(
-                        max(0, center_y - radius), min(field.height, center_y + radius)
-                    ):
-                        for x in range(
-                            max(0, center_x - radius),
-                            min(field.width, center_x + radius),
-                        ):
-                            # Calculate distance from center
-                            dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-                            if dist <= radius:
-                                # Use noise to determine placement
-                                noise_val = noise([x / field.width, y / field.height])
-                                # Higher chance near center, affected by noise
-                                chance = (
-                                    self.initial_density
-                                    * (0.8 + noise_val)
-                                    * (1 - dist / radius)
-                                )
-                                if (
-                                    random.random() < chance
-                                    and field.entity_grid[y, x] == 0
-                                ):
-                                    field.entity_grid[y, x] = self.race_id
-
+                self._populate_adaptive_race(field)
             elif self.trait == "expansive":  # Magenta race - settle in networks/paths
                 self._generate_random_nodes(field)
             else:  # Orange race (selective) - settle near resource-rich areas
-                # Find high-value asteroid clusters using KMeans
-                asteroid_cells = []
-                asteroid_values = []
-
-                for y, x in itertools.product(range(field.height), range(field.width)):
-                    if field.grid[y, x] > 0:
-                        value = field.grid[y, x]
-                        if field.rare_grid[y, x] == 1:
-                            value *= field.rare_bonus_multiplier
-                        asteroid_cells.append((x, y))
-                        asteroid_values.append(value)
-
-                if not asteroid_cells:
-                    # No asteroids found, place randomly
-                    for _ in range(
-                        int(field.width * field.height * self.initial_density * 0.1)
-                    ):
-                        x = random.randint(0, field.width - 1)
-                        y = random.randint(0, field.height - 1)
-                        if field.entity_grid[y, x] == 0:
-                            field.entity_grid[y, x] = self.race_id
-                    return
-
-                # Convert to numpy array for clustering
-                points = np.array(asteroid_cells)
-                values = np.array(asteroid_values)
-
-                # Find the best asteroid clusters
-                if len(points) > 5:  # Need enough points for meaningful clustering
-                    k = min(3, len(points) // 5)  # Use up to 3 clusters
-                    kmeans = KMeans(n_clusters=k).fit(points, sample_weight=values)
-
-                    # For each cluster center, settle nearby
-                    for center in kmeans.cluster_centers_:
-                        center_x, center_y = int(center[0]), int(center[1])
-
-                        # Place symbiotes with higher density near the cluster center
-                        radius = random.randint(10, 15)
-                        for y in range(
-                            max(0, center_y - radius),
-                            min(field.height, center_y + radius),
-                        ):
-                            for x in range(
-                                max(0, center_x - radius),
-                                min(field.width, center_x + radius),
-                            ):
-                                # Calculate distance from center
-                                dist = math.sqrt(
-                                    (x - center_x) ** 2 + (y - center_y) ** 2
-                                )
-                                if dist <= radius:
-                                    # Higher chance near center, drops off with distance
-                                    chance = (
-                                        self.initial_density
-                                        * 5
-                                        * (1 - dist / radius) ** 2
-                                    )
-                                    if (
-                                        random.random() < chance
-                                        and field.entity_grid[y, x] == 0
-                                    ):
-                                        field.entity_grid[y, x] = self.race_id
-                else:
-                    # Not enough points for clustering, use simple proximity
-                    for cell, value in zip(asteroid_cells, asteroid_values):
-                        x, y = cell
-
-                        # Place symbiotes near valuable asteroids
-                        radius = int(3 + value / 100)  # Higher value = larger cluster
-                        for dy, dx in itertools.product(
-                            range(-radius, radius + 1), range(-radius, radius + 1)
-                        ):
-                            nx, ny = x + dx, y + dy
-                            if 0 <= nx < field.width and 0 <= ny < field.height:
-                                dist = math.sqrt(dx * dx + dy * dy)
-                                if dist <= radius:
-                                    # Chance based on distance and asteroid value
-                                    chance = (
-                                        self.initial_density
-                                        * (value / 100)
-                                        * (1 - dist / radius)
-                                    )
-                                    if (
-                                        random.random() < chance
-                                        and field.entity_grid[ny, nx] == 0
-                                    ):
-                                        field.entity_grid[ny, nx] = self.race_id
-
+                self._populate_selective_race(field)
         except Exception as e:
             logging.error(f"Error in populate method: {str(e)}")
             log_exception(e)
+            
+    def _populate_adaptive_race(self, field: AsteroidField) -> None:
+        """Populate field with adaptive race using noise-based organic clusters.
+        
+        Args:
+            field: The asteroid field to populate
+        """
+        # Use Perlin noise to create organic-looking clusters
+        noise_func = self._create_noise_function()
+
+        # Calculate a starting point based on field dimensions
+        start_x = random.randint(field.width // 4, field.width * 3 // 4)
+        start_y = random.randint(field.height // 4, field.height * 3 // 4)
+
+        # Create several organic clusters
+        for _ in range(3):
+            self._create_adaptive_cluster(field, start_x, start_y, noise_func)
+            
+    def _create_noise_function(self):
+        """Create a noise function for adaptive race population.
+        
+        Returns:
+            A noise function that takes coordinates and returns a noise value
+        """
+        if PERLIN_AVAILABLE:
+            return PerlinNoise(octaves=4, seed=random.randint(1, 1000))
+        # Fallback noise generator
+        def simple_noise(x, y):
+            return (math.sin(x * 0.1) + math.cos(y * 0.1)) * 0.5
+
+        return simple_noise
+            
+    def _create_adaptive_cluster(self, field: AsteroidField, start_x: int, start_y: int, noise_func) -> None:
+        """Create a single organic cluster for adaptive race.
+        
+        Args:
+            field: The asteroid field to populate
+            start_x: Starting x coordinate
+            start_y: Starting y coordinate
+            noise_func: Function to generate noise values
+        """
+        center_x = start_x + random.randint(-30, 30)
+        center_y = start_y + random.randint(-30, 30)
+
+        # Define cluster radius
+        radius = random.randint(10, 20)
+
+        # Populate cluster area using noise
+        self._populate_cluster_area(field, center_x, center_y, radius, noise_func)
+        
+    def _populate_cluster_area(self, field: AsteroidField, center_x: int, center_y: int, 
+                               radius: int, noise_func) -> None:
+        """Populate a circular area using noise-based probability.
+        
+        Args:
+            field: The asteroid field to populate
+            center_x: Center x coordinate of the cluster
+            center_y: Center y coordinate of the cluster
+            radius: Radius of the cluster
+            noise_func: Function to generate noise values
+        """
+        y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
+        x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
+        
+        for y, x in itertools.product(y_range, x_range):
+            # Calculate distance from center
+            dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+            if dist <= radius:
+                # Use noise to determine placement
+                noise_val = noise_func([x / field.width, y / field.height])
+                # Higher chance near center, affected by noise
+                chance = (
+                    self.initial_density
+                    * (0.8 + noise_val)
+                    * (1 - dist / radius)
+                )
+                if random.random() < chance and field.entity_grid[y, x] == 0:
+                    field.entity_grid[y, x] = self.race_id
+                    
+    def _populate_selective_race(self, field: AsteroidField) -> None:
+        """Populate field with selective race near resource-rich areas.
+        
+        Args:
+            field: The asteroid field to populate
+        """
+        # Find high-value asteroid clusters
+        asteroid_cells, asteroid_values = self._collect_asteroid_data(field)
+
+        if not asteroid_cells:
+            self._populate_randomly(field)
+            return
+
+        # Convert to numpy array for clustering
+        points = np.array(asteroid_cells)
+        values = np.array(asteroid_values)
+
+        # Find the best asteroid clusters
+        if len(points) > 5:  # Need enough points for meaningful clustering
+            self._populate_using_kmeans(field, points, values)
+        else:
+            # Not enough points for clustering, use simple proximity
+            self._populate_using_proximity(field, asteroid_cells, asteroid_values)
+            
+    def _collect_asteroid_data(self, field: AsteroidField) -> Tuple[List[Tuple[int, int]], List[float]]:
+        """Collect asteroid locations and their values.
+        
+        Args:
+            field: The asteroid field to analyze
+            
+        Returns:
+            Tuple containing (list of asteroid coordinates, list of asteroid values)
+        """
+        asteroid_cells = []
+        asteroid_values = []
+
+        for y, x in itertools.product(range(field.height), range(field.width)):
+            if field.grid[y, x] > 0:
+                value = field.grid[y, x]
+                if field.rare_grid[y, x] == 1:
+                    value *= field.rare_bonus_multiplier
+                asteroid_cells.append((x, y))
+                asteroid_values.append(value)
+                
+        return asteroid_cells, asteroid_values
+        
+    def _populate_randomly(self, field: AsteroidField) -> None:
+        """Populate the field with randomly placed entities.
+        
+        Args:
+            field: The asteroid field to populate
+        """
+        # No asteroids found, place randomly
+        for _ in range(int(field.width * field.height * self.initial_density * 0.1)):
+            x = random.randint(0, field.width - 1)
+            y = random.randint(0, field.height - 1)
+            if field.entity_grid[y, x] == 0:
+                field.entity_grid[y, x] = self.race_id
+                
+    def _populate_using_kmeans(self, field: AsteroidField, points: np.ndarray, values: np.ndarray) -> None:
+        """Populate field using KMeans clustering of asteroid points.
+        
+        Args:
+            field: The asteroid field to populate
+            points: Array of asteroid coordinates
+            values: Array of asteroid values
+        """
+        k = min(3, len(points) // 5)  # Use up to 3 clusters
+        kmeans = KMeans(n_clusters=k).fit(points, sample_weight=values)
+
+        # For each cluster center, settle nearby
+        for center in kmeans.cluster_centers_:
+            center_x, center_y = int(center[0]), int(center[1])
+
+            # Place symbiotes with higher density near the cluster center
+            radius = random.randint(10, 15)
+            self._populate_around_center(field, center_x, center_y, radius, density_multiplier=5)
+            
+    def _populate_using_proximity(self, field: AsteroidField, 
+                                 asteroid_cells: List[Tuple[int, int]], 
+                                 asteroid_values: List[float]) -> None:
+        """Populate field based on proximity to valuable asteroids.
+        
+        Args:
+            field: The asteroid field to populate
+            asteroid_cells: List of asteroid coordinates
+            asteroid_values: List of asteroid values
+        """
+        for cell, value in zip(asteroid_cells, asteroid_values):
+            x, y = cell
+
+            # Place symbiotes near valuable asteroids
+            radius = int(3 + value / 100)  # Higher value = larger cluster
+            self._populate_around_asteroid(field, x, y, radius, value)
+            
+    def _populate_around_center(self, field: AsteroidField, center_x: int, center_y: int, 
+                               radius: int, density_multiplier: float = 1.0) -> None:
+        """Populate an area around a center point with density dropping with distance.
+        
+        Args:
+            field: The asteroid field to populate
+            center_x: Center x coordinate
+            center_y: Center y coordinate
+            radius: Radius of the populated area
+            density_multiplier: Multiplier for the initial density
+        """
+        y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
+        x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
+        
+        for y, x in itertools.product(y_range, x_range):
+            # Calculate distance from center
+            dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+            if dist <= radius:
+                # Higher chance near center, drops off with distance
+                chance = self.initial_density * density_multiplier * (1 - dist / radius) ** 2
+                if random.random() < chance and field.entity_grid[y, x] == 0:
+                    field.entity_grid[y, x] = self.race_id
+                    
+    def _populate_around_asteroid(self, field: AsteroidField, x: int, y: int, 
+                                 radius: int, value: float) -> None:
+        """Populate an area around an asteroid with density based on asteroid value.
+        
+        Args:
+            field: The asteroid field to populate
+            x: Asteroid x coordinate
+            y: Asteroid y coordinate
+            radius: Radius of the populated area
+            value: Value of the asteroid
+        """
+        for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < field.width and 0 <= ny < field.height:
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist <= radius:
+                    # Chance based on distance and asteroid value
+                    chance = self.initial_density * (value / 100) * (1 - dist / radius)
+                    if random.random() < chance and field.entity_grid[ny, nx] == 0:
+                        field.entity_grid[ny, nx] = self.race_id
 
     def _generate_random_nodes(self, field: AsteroidField) -> None:
         """Generate entities in a network pattern using NetworkX.
@@ -370,7 +456,7 @@ class MinerEntity(BaseEntity):
             field: The asteroid field where entities will be placed
         """
         # Step 1: Generate colony network
-        colony_graph, colony_centers = self._create_colony_network(field)
+        colony_graph, _ = self._create_colony_network(field)
 
         # Step 2: Place entities along network paths
         self._place_entities_on_paths(colony_graph, field)
@@ -667,7 +753,7 @@ class MinerEntity(BaseEntity):
         self.analyze_territory(field)
 
         # Get new CA rules from the algorithm
-        new_birth_set, new_survival_set = (
+        _, _ = (
             self.evolution_algorithm.generate_cellular_automaton_rules(
                 self.race_id, self.hunger, self.genome
             )
@@ -712,7 +798,7 @@ class MinerEntity(BaseEntity):
             }
 
         # Find all entity locations
-        entity_locations = np.where(race_mask)
+        entity_locations = np.nonzero(race_mask)
         points = np.column_stack(
             (entity_locations[1], entity_locations[0])
         )  # x, y format
@@ -823,21 +909,32 @@ class MinerEntity(BaseEntity):
             return self._perform_simple_clustering(points, k)
 
         try:
-            # Perform KMeans clustering
-            kmeans = KMeans(n_clusters=k).fit(points)
-            clusters = kmeans.labels_
-            centers = kmeans.cluster_centers_
-
-            # Find main cluster (largest population)
-            cluster_sizes = [np.sum(clusters == i) for i in range(k)]
-            main_cluster_idx = np.argmax(cluster_sizes)
-            main_center = centers[main_cluster_idx]
-
-            return clusters, centers, main_cluster_idx, main_center
+            return self._perform_kmeans_clustering(points, k)
         except Exception as e:
             logging.error(f"KMeans clustering failed: {e}")
             return self._perform_simple_clustering(points, k)
 
+    def _perform_kmeans_clustering(self, points: np.ndarray, k: int):
+        """Perform KMeans clustering on points.
+        
+        Args:
+            points: Array of points to cluster
+            k: Number of clusters
+            
+        Returns:
+            Tuple of (clusters, centers, main_cluster_idx, main_center)
+        """
+        # Perform KMeans clustering
+        kmeans = KMeans(n_clusters=k).fit(points)
+        clusters = kmeans.labels_
+        centers = kmeans.cluster_centers_
+
+        # Find main cluster (largest population)
+        cluster_sizes = [np.sum(clusters == i) for i in range(k)]
+        return self._get_main_cluster_info(
+            cluster_sizes, centers, clusters
+        )
+        
     def _perform_simple_clustering(self, points, k):
         """Simple clustering fallback when sklearn is not available.
 
@@ -862,8 +959,10 @@ class MinerEntity(BaseEntity):
 
         # If we need more than one cluster, use a simple distance-based approach
         if k > 1:
-            # Start with random centers
-            indices = np.random.choice(len(points), size=k, replace=False)
+            # Start with random centers using the new numpy random Generator API
+            # Use a seed based on current time for reproducibility
+            rng = np.random.default_rng(int(time.time()))
+            indices = rng.choice(len(points), size=k, replace=False)
             centers = points[indices]
 
             # Assign points to nearest center
@@ -881,9 +980,27 @@ class MinerEntity(BaseEntity):
 
         # Find main cluster (largest population)
         cluster_sizes = [np.sum(clusters == i) for i in range(len(centers))]
+        return self._get_main_cluster_info(
+            cluster_sizes, centers, clusters
+        )
+
+    def _get_main_cluster_info(self, cluster_sizes, centers, clusters):
+        """Identify the main (largest) cluster and return clustering information.
+
+        Args:
+            cluster_sizes: List of sizes for each cluster
+            centers: Array of cluster centers
+            clusters: Array of cluster assignments for each point
+
+        Returns:
+            tuple: (clusters, centers, main_cluster_idx, main_center) where
+                clusters: Array of cluster assignments
+                centers: Array of cluster centers
+                main_cluster_idx: Index of the largest cluster
+                main_center: Center coordinates of the largest cluster
+        """
         main_cluster_idx = np.argmax(cluster_sizes)
         main_center = centers[main_cluster_idx]
-
         return clusters, centers, main_cluster_idx, main_center
 
     def _analyze_territory_clusters(
@@ -1024,8 +1141,8 @@ class MinerEntity(BaseEntity):
         # Normalize probabilities
         total_prob = sum(behavior_probabilities.values())
         if total_prob > 0:
-            for value in behavior_probabilities.values():
-                value /= total_prob
+            for _ in behavior_probabilities.values():
+                _ /= total_prob
 
         # Choose behavior based on highest probability
         new_behavior = max(behavior_probabilities, key=behavior_probabilities.get)
@@ -1179,7 +1296,7 @@ class MinerEntity(BaseEntity):
     def _draw_population_handler(self, index, surface):
         # Use scipy.stats to generate a kernel density estimate for visualization
         # This would show the distribution of entities in the territory
-        points = np.column_stack(np.where(self.entity_locations > 0))
+        points = np.column_stack(np.nonzero(self.entity_locations > 0))
 
         # Draw basic stats
         # Position stats in the bottom-left corner with proper spacing

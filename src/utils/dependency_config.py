@@ -37,6 +37,7 @@ except ImportError:
 # Create a global container for the application
 app_container = DependencyContainer()
 
+
 # Configuration options
 class DependencyConfig:
     """Configuration options for the dependency injection system."""
@@ -80,6 +81,7 @@ class DependencyConfig:
             if not key.startswith("_") and key.isupper()
         }
 
+
 def configure_dependencies() -> None:
     """Configure and register all dependencies based on the current configuration."""
 
@@ -89,6 +91,7 @@ def configure_dependencies() -> None:
     # Register other dependencies as needed
 
     logging.info("Dependencies configured successfully")
+
 
 def register_noise_generator() -> None:
     """Register the appropriate noise generator based on configuration."""
@@ -132,6 +135,7 @@ def register_noise_generator() -> None:
         DependencyConfig.NOISE_GENERATOR_SINGLETON,
     )
 
+
 def load_config_from_file(file_path: str) -> None:
     """
     Load configuration from a file.
@@ -155,6 +159,7 @@ def load_config_from_file(file_path: str) -> None:
         logging.info(f"Configuration loaded from {file_path}")
     except Exception as e:
         logging.error(f"Error loading configuration from {file_path}: {e}")
+
 
 # Initialize dependencies with default configuration
 configure_dependencies()

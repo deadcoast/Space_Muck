@@ -27,24 +27,22 @@ from rich.console import Console
 from rich.syntax import Syntax
 from rich.tree import Tree
 from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 from typing_extensions import Protocol, runtime_checkable
 import ast
 import contextlib
 import importlib.util
 import networkx as nx
 import typeguard
-
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
 
 # Import libcst with error handling
 try:

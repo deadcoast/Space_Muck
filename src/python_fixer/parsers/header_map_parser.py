@@ -7,6 +7,18 @@
 # Parent: analysis.parsers
 # Dependencies: ast, pathlib, typing, logging
 
+# Standard library imports
+import logging
+import re
+
+# Third-party library imports
+
+# Local application imports
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
+import ast
+
+
 class HeaderMapParser:
     """Parser for maintaining and updating module header information.
 
@@ -25,17 +37,6 @@ class HeaderMapParser:
     # EFFECT: [module's primary purpose]
     # NAMING: [naming convention explanation]
     """
-
-# Standard library imports
-import logging
-import re
-
-# Third-party library imports
-
-# Local application imports
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
-import ast
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)

@@ -22,6 +22,7 @@ import numpy as np
 # Initialize random number generator with a fixed seed for reproducibility
 rng = Generator(PCG64(42))
 
+
 def generate_value_distribution(
     grid: np.ndarray,
     base_grid: np.ndarray,
@@ -52,6 +53,7 @@ def generate_value_distribution(
     value_grid[value_grid > 0] = np.maximum(value_grid[value_grid > 0], min_value)
 
     return value_grid
+
 
 def add_value_clusters(
     value_grid: np.ndarray,
@@ -112,6 +114,7 @@ def add_value_clusters(
                     result_grid[y, x] = int(value_grid[y, x] * multiplier)
 
     return result_grid
+
 
 def generate_rare_resource_distribution(
     grid: np.ndarray,

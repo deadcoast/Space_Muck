@@ -31,6 +31,7 @@ else:
 
     logging.warning("pylint not available. Some linting features will be limited.")
 
+
 def check_syntax(file_path: str) -> bool:
     """Check a Python file for syntax errors.
 
@@ -58,6 +59,7 @@ def check_syntax(file_path: str) -> bool:
         print(f"❌ Error checking {file_path}: {e}")
         return False
 
+
 def check_import_patterns(file_path: str) -> Tuple[bool, List[str]]:
     """Check if import statements follow the standardized pattern.
 
@@ -78,6 +80,7 @@ def check_import_patterns(file_path: str) -> Tuple[bool, List[str]]:
     except Exception as e:
         issues.append(f"Error checking import patterns: {e}")
         return False, issues
+
 
 # TODO Rename this here and in `check_import_patterns`
 def _extracted_from_check_import_patterns_(file_path, issues):
@@ -122,6 +125,7 @@ def _extracted_from_check_import_patterns_(file_path, issues):
 
     return not issues, issues
 
+
 def check_file(file_path: str) -> bool:
     """Check a Python file for syntax errors and import pattern issues.
 
@@ -144,6 +148,7 @@ def check_file(file_path: str) -> bool:
 
     print(f"✅ {file_path} follows standardized import patterns")
     return True
+
 
 def run_pylint(file_path: str) -> bool:
     """Run pylint on a Python file if available.
@@ -175,6 +180,7 @@ def run_pylint(file_path: str) -> bool:
     except Exception as e:
         print(f"❌ Error running pylint: {e}")
         return False
+
 
 if __name__ == "__main__":
     # Default file to check if none provided

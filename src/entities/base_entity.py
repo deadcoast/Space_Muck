@@ -11,6 +11,7 @@ import uuid
 # Local application imports
 from typing import Tuple, Optional, Dict, Any
 
+
 class BaseEntity:
     """
     Base class for all entities in the game.

@@ -16,6 +16,7 @@ __all__ = [
     "StructuredLogger",
 ]
 
+
 # Lazy imports to avoid circular dependencies
 def get_formatters() -> Dict[str, Any]:
     """Get formatter classes lazily to avoid circular imports."""
@@ -32,6 +33,7 @@ def get_formatters() -> Dict[str, Any]:
         "FileOperationFormatter": FileOperationFormatter,
         "JSONFormatter": JSONFormatter,
     }
+
 
 def get_structured() -> Dict[str, Any]:
     """Get structured logging classes lazily to avoid circular imports."""

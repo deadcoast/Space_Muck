@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Set, Callable
 
+
 # Threshold Types
 class ThresholdType(Enum):
     RESOURCE = auto()  # Resource-based thresholds
@@ -25,6 +26,7 @@ class ThresholdType(Enum):
     EVENT = auto()  # Event-based thresholds
     COMPOSITE = auto()  # Multiple condition thresholds
 
+
 # Threshold States
 class ThresholdState(Enum):
     INACTIVE = auto()  # Threshold not being monitored
@@ -32,6 +34,7 @@ class ThresholdState(Enum):
     TRIGGERED = auto()  # Threshold condition met
     CLEARED = auto()  # Condition no longer met
     ERROR = auto()  # Error in monitoring
+
 
 @dataclass
 class ThresholdInfo:
@@ -46,6 +49,7 @@ class ThresholdInfo:
     last_check: float = 0.0
     trigger_count: int = 0
     error_count: int = 0
+
 
 class ThresholdContext:
     """

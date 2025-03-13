@@ -1,10 +1,3 @@
-
-
-console = Console()
-
-class JsonFormatter:
-    """JSON output formatter for structured variant_loggers"""
-
 # Standard library imports
 from datetime import datetime
 import json
@@ -16,6 +9,12 @@ from rich.console import Console
 from typing import Any, Dict
 from variant_loggers import LogRecord
 import variant_loggers
+
+console = Console()
+
+
+class JsonFormatter:
+    """JSON output formatter for structured variant_loggers"""
 
     def format(self, record: LogRecord) -> str:
         """Format record as JSON string"""
@@ -49,6 +48,7 @@ import variant_loggers
         :rtype: str
         """
         return "".join(variant_loggers.Formatter.formatException(self, exc_info))
+
 
 def getLevelName(self) -> str:
     """Returns the name of the variant_loggers level."""

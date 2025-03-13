@@ -48,6 +48,7 @@ DEFAULT_IGNORE = [
     ".coverage",
 ]
 
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Generate a directory tree")
@@ -61,6 +62,7 @@ def parse_args():
         "--use-default-ignore", action="store_true", help="Use default ignore patterns"
     )
     return parser.parse_args()
+
 
 def should_ignore(path, ignore_patterns):
     """Check if path should be ignored based on patterns."""
@@ -76,6 +78,7 @@ def should_ignore(path, ignore_patterns):
             return True
 
     return False
+
 
 def tree(
     directory, ignore_patterns=None, max_depth=None, prefix="", is_last=False, depth=0
@@ -138,6 +141,7 @@ def tree(
 
     return "\n".join(lines)
 
+
 def main():
     """Main function."""
     args = parse_args()
@@ -173,6 +177,7 @@ def main():
     print("```")
     print(result)
     print("```")
+
 
 if __name__ == "__main__":
     main()
