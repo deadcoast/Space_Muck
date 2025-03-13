@@ -5,11 +5,15 @@ This module provides functionality for managing game resources, including
 tracking resource levels, handling resource flows, and managing resource operations.
 """
 
+# Standard library imports
 import logging
-from typing import Dict, List, Optional, Tuple
+
+# Third-party library imports
+
+# Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-
+from typing import Dict, List, Optional, Tuple
 
 # Resource Types and Categories
 class ResourceType(Enum):
@@ -18,14 +22,12 @@ class ResourceType(Enum):
     FLUID = auto()
     DATA = auto()
 
-
 # Resource States
 class ResourceState(Enum):
     STABLE = auto()
     DEPLETING = auto()
     GROWING = auto()
     CRITICAL = auto()
-
 
 # Resource Flow Patterns
 FLOW_PATTERNS = {
@@ -43,7 +45,6 @@ RESOURCE_THRESHOLDS = {
     "high": 0.9,  # 90% of capacity
 }
 
-
 @dataclass
 class ResourceFlow:
     """Represents a resource flow between source and destination."""
@@ -54,7 +55,6 @@ class ResourceFlow:
     rate: float
     priority: int = 1
     active: bool = True
-
 
 class ResourceManager:
     """

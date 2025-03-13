@@ -2,15 +2,20 @@
 Verification script for BaseEntity class.
 """
 
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+
+# Local application imports
+from entities.base_entity import BaseEntity
 from unittest.mock import MagicMock
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the entities - moved to top of file to avoid E402 error
-from entities.base_entity import BaseEntity
 
 # Mock modules before importing entities
 sys.modules["perlin_noise"] = MagicMock()
@@ -33,14 +38,12 @@ sys.modules["src.config"].COLOR_PLAYER = (0, 255, 255)
 
 # BaseEntity already imported at the top of the file
 
-
 # Create mock for MinerEntity and Player
 class MockMinerEntity(BaseEntity):
     def __init__(self, race_id=1, color=(0, 255, 0), **kwargs):
         super().__init__(entity_id=str(race_id), entity_type="miner", color=color)
         self.race_id = race_id
         self.trait = "standard"
-
 
 class MockPlayer(MockMinerEntity):
     def __init__(self, race_id=0, color=(0, 255, 255), **kwargs):
@@ -49,7 +52,6 @@ class MockPlayer(MockMinerEntity):
         self.credits = 1000
         self.ship_level = 1
         self.trait = "adaptive"
-
 
 def verify_base_entity():
     """Test the BaseEntity class."""
@@ -113,7 +115,6 @@ def verify_base_entity():
     print("BaseEntity tests passed!")
     return True
 
-
 def verify_inheritance():
     """Test the inheritance hierarchy using mock classes."""
     print("Testing entity inheritance hierarchy...")
@@ -153,7 +154,6 @@ def verify_inheritance():
 
     print("Inheritance tests passed!")
     return True
-
 
 if __name__ == "__main__":
     try:

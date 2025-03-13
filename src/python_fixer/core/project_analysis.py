@@ -7,14 +7,6 @@
 # Parent: None
 # Dependencies: ast, networkx, pathlib, typing
 
-import ast
-import logging
-import toml
-from pathlib import Path
-from typing import Dict, List
-import networkx as nx
-
-
 class ProjectAnalyzer:
     """Analyzes Python project structure and dependencies.
 
@@ -27,6 +19,18 @@ class ProjectAnalyzer:
         dependency_graph: NetworkX graph of module dependencies
         modules: Dictionary of analyzed module information
     """
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from pathlib import Path
+from typing import Dict, List
+import ast
+import networkx as nx
+import toml
 
     def __init__(
         self, project_path: str, config_path: Path = None, backup: bool = True
@@ -53,7 +57,7 @@ class ProjectAnalyzer:
 
     def _load_config(self) -> Dict:
         """Load configuration from file."""
-        import toml
+        
 
         try:
             return toml.load(self.config_path)
@@ -278,7 +282,6 @@ class ProjectAnalyzer:
         except Exception as e:
             self.logger.error(f"Error getting dependency info: {str(e)}")
             return {"primary": [], "secondary": []}
-
 
 class ModuleAnalyzer(ast.NodeVisitor):
     """Analyzes Python module contents using AST.

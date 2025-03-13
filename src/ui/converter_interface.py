@@ -5,11 +5,20 @@ This module provides the user interface components for the converter management 
 including the main dashboard, detailed views, chain management and efficiency monitoring.
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Callable
-import pygame
+# Standard library imports
 import time
 
-from ui.ascii_ui import (
+# Third-party library imports
+
+# Local application imports
+from config import COLOR_TEXT, COLOR_BG
+from converters.converter_models import (
+from typing import Dict, List, Optional, Tuple, Any, Callable
+from src.ui.ascii_ui import (
+from src.ui.draw_utils import draw_text
+from src.ui.event_system import EventSystem
+import pygame
+
     ASCIIBox,
     ASCIIPanel,
     ASCIIProgressBar,
@@ -17,9 +26,7 @@ from ui.ascii_ui import (
     ASCIIChainVisualizer,
     draw_ascii_table,
 )
-from ui.draw_utils import draw_text, draw_panel
-from ui.event_system import EventSystem, EventType, MetricType, EventData, MetricData
-from converters.converter_models import (
+
     Converter,
     Recipe,
     ConversionProcess,
@@ -31,8 +38,6 @@ from converters.converter_models import (
     EfficiencyFactor,
     OptimizationSuggestion,
 )
-from config import COLOR_TEXT, COLOR_BG
-
 
 class ConverterDashboard:
     """Main dashboard for converter management overview."""
@@ -221,7 +226,6 @@ class ConverterDashboard:
             font=font,
             color=COLOR_TEXT,
         )
-
 
 class ConverterDetailsView:
     """Detailed view of a single converter with process management."""
@@ -491,7 +495,6 @@ class ConverterDetailsView:
         self.start_process_button.draw(surface, font)
         self.cancel_process_button.draw(surface, font)
         self.back_button.draw(surface, font)
-
 
 class ChainManagementInterface:
     """Interface for creating and managing production chains."""
@@ -825,7 +828,6 @@ class ChainManagementInterface:
         self.edit_chain_button.draw(surface, font)
         self.delete_chain_button.draw(surface, font)
         self.back_button.draw(surface, font)
-
 
 class EfficiencyMonitor:
     """Interface for monitoring and improving converter efficiency."""
@@ -1162,7 +1164,6 @@ class EfficiencyMonitor:
         self.optimize_button.draw(surface, font)
         self.analyze_button.draw(surface, font)
         self.back_button.draw(surface, font)
-
 
 class ConverterInterface:
     """Main interface for the converter management system."""

@@ -5,12 +5,16 @@ This module provides functionality for managing exploration activities,
 including region discovery, resource scanning, and exploration missions.
 """
 
+# Standard library imports
 import logging
-from typing import Dict, List, Optional, Tuple, Set
-from dataclasses import dataclass
-from enum import Enum, auto
 import random
 
+# Third-party library imports
+
+# Local application imports
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Dict, List, Optional, Tuple, Set
 
 # Exploration States
 class ExplorationState(Enum):
@@ -20,7 +24,6 @@ class ExplorationState(Enum):
     DEPLETED = auto()
     DANGEROUS = auto()
 
-
 # Region Types
 class RegionType(Enum):
     EMPTY = auto()
@@ -28,7 +31,6 @@ class RegionType(Enum):
     ANOMALY = auto()
     SETTLEMENT = auto()
     HAZARD = auto()
-
 
 # Discovery Categories
 class DiscoveryType(Enum):
@@ -38,7 +40,6 @@ class DiscoveryType(Enum):
     STRUCTURE = auto()
     PHENOMENON = auto()
 
-
 # Exploration Patterns
 EXPLORATION_PATTERNS = {
     "spiral": "Explore in expanding spiral pattern",
@@ -46,7 +47,6 @@ EXPLORATION_PATTERNS = {
     "targeted": "Focus on specific regions of interest",
     "random": "Random exploration pattern",
 }
-
 
 @dataclass
 class Region:
@@ -66,7 +66,6 @@ class Region:
         self.resources = self.resources or {}
         self.discoveries = self.discoveries or []
 
-
 @dataclass
 class ExplorationMission:
     """Represents an active exploration mission."""
@@ -82,7 +81,6 @@ class ExplorationMission:
     def __post_init__(self):
         """Initialize optional fields."""
         self.discoveries = self.discoveries or []
-
 
 class ExplorationManager:
     """

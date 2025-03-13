@@ -2,11 +2,17 @@
 EnemyShip class: Represents enemy ships that the player can encounter and engage in combat.
 """
 
+# Standard library imports
 import logging
 import random
+
+# Third-party library imports
+
+# Local application imports
+from .base_entity import BaseEntity
+from config import (
 from typing import Dict, Optional, Tuple, Any
 
-from config import (
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,
     COMBAT_BASE_WEAPON_RANGE,
@@ -20,8 +26,6 @@ from config import (
     COMBAT_ENEMY_TYPES,
     COLOR_HIGHLIGHT,
 )
-from .base_entity import BaseEntity
-
 
 class EnemyShip(BaseEntity):
     """

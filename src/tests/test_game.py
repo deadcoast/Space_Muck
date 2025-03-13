@@ -2,20 +2,25 @@
 Test module for the Game class state management functionality.
 """
 
-import unittest
-import sys
+# Standard library imports
 import os
+import sys
 import time
+
+# Third-party library imports
+
+# Local application imports
+from events.event_bus import clear_event_buses, EventBus
+from main import Game, GameStateError, InvalidStateTransitionError  # noqa: E402
 from unittest.mock import MagicMock, patch
+import unittest
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import event bus first to ensure it's available for mocking
-from events.event_bus import clear_event_buses, EventBus
 
 # Import game classes
-from main import Game, GameStateError, InvalidStateTransitionError  # noqa: E402
 
 # Mock dependencies
 sys.modules["pygame"] = MagicMock()
@@ -96,7 +101,6 @@ sys.modules["generators.asteroid_field"] = MagicMock(
     AsteroidField=MagicMock(return_value=field_mock)
 )
 sys.modules["entities.player"] = MagicMock(Player=MagicMock(return_value=player_mock))
-
 
 class TestGameStateMachine(unittest.TestCase):
     """Test cases for the Game class state management functionality."""
@@ -282,7 +286,6 @@ class TestGameStateMachine(unittest.TestCase):
         self.assertIn("avg_fps", perf)
         self.assertIn("frame_counter", perf)
         self.assertIn("game_time", perf)
-
 
 if __name__ == "__main__":
     unittest.main()

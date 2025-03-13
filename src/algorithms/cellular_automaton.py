@@ -7,12 +7,17 @@ other game elements.
 """
 
 # Standard library imports
-from typing import Optional
 
-# Third-party imports
+# Third-party library imports
 import numpy as np
 import scipy.signal as signal
 
+# Local application imports
+from typing import Optional
+
+# Standard library imports
+
+# Third-party imports
 
 def count_neighbors(grid: np.ndarray) -> np.ndarray:
     """
@@ -28,7 +33,6 @@ def count_neighbors(grid: np.ndarray) -> np.ndarray:
     return signal.convolve2d(
         (grid > 0).astype(int), kernel, mode="same", boundary="wrap"
     )
-
 
 def apply_life_rules(
     grid: np.ndarray,
@@ -82,7 +86,6 @@ def apply_life_rules(
                     new_grid[y, x] = 1  # Cell is born
 
     return new_grid
-
 
 def diffuse_energy(
     energy_grid: np.ndarray, decay_rate: float = 0.02, spread_rate: float = 0.1

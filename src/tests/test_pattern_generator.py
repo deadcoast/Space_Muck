@@ -4,23 +4,27 @@ Unit tests for pattern_generator module.
 This module contains comprehensive tests for the pattern generation utilities.
 """
 
-import unittest
-import numpy as np
+# Standard library imports
 import math
-import sys
 import os
+import sys
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from utils.pattern_generator import (
+import unittest
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.pattern_generator import (
     generate_spiral_pattern,
     generate_ring_pattern,
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
 )
-
 
 class TestPatternGenerator(unittest.TestCase):
     """Test cases for pattern_generator module."""
@@ -200,7 +204,6 @@ class TestPatternGenerator(unittest.TestCase):
         self.assertEqual(combined.shape, (self.height, self.width))
         self.assertTrue(np.all(combined >= 0))
         self.assertTrue(np.all(combined <= 1))
-
 
 if __name__ == "__main__":
     unittest.main()

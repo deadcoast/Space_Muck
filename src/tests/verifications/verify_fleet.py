@@ -2,16 +2,21 @@
 Verification script for Fleet class.
 """
 
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+
+# Local application imports
+from entities.base_entity import BaseEntity
+from entities.fleet import Fleet
 from unittest.mock import MagicMock
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import entities after adding src to path
-from entities.base_entity import BaseEntity
-from entities.fleet import Fleet
 
 # Mock modules before importing entities
 sys.modules["perlin_noise"] = MagicMock()
@@ -30,7 +35,6 @@ sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
 sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
-
 
 def verify_fleet():
     """Test the Fleet class."""
@@ -126,7 +130,6 @@ def verify_fleet():
     print("Fleet tests passed!")
     return True
 
-
 def verify_inheritance():
     """Test that Fleet inherits from BaseEntity."""
     print("Testing Fleet inheritance...")
@@ -161,7 +164,6 @@ def verify_inheritance():
 
     print("Fleet inheritance tests passed!")
     return True
-
 
 if __name__ == "__main__":
     try:

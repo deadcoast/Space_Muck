@@ -6,23 +6,27 @@ This module contains tests for the dependency configuration system,
 ensuring that it correctly loads and applies configuration settings.
 """
 
+# Standard library imports
 import os
 import sys
-import unittest
+
+# Third-party library imports
+
+# Local application imports
 from unittest.mock import patch
+from utils.dependency_config import (
+from utils.noise_generator import NoiseGenerator
+import unittest
 
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.dependency_config import (
     DependencyConfig,
     app_container,
     configure_dependencies,
     register_noise_generator,
     load_config_from_file,
 )
-from utils.noise_generator import NoiseGenerator
-
 
 class TestDependencyConfig(unittest.TestCase):
     """Tests for the DependencyConfig class."""
@@ -82,7 +86,6 @@ class TestDependencyConfig(unittest.TestCase):
             self.assertIn(
                 "WARNING:root:Unknown configuration option: UNKNOWN_OPTION", cm.output
             )
-
 
 class TestNoiseGeneratorRegistration(unittest.TestCase):
     """Tests for noise generator registration."""
@@ -163,7 +166,6 @@ class TestNoiseGeneratorRegistration(unittest.TestCase):
         # Check that get_noise_generator was called
         mock_get_noise.assert_called_once()
 
-
 class TestConfigFileLoading(unittest.TestCase):
     """Tests for loading configuration from files."""
 
@@ -215,7 +217,6 @@ class TestConfigFileLoading(unittest.TestCase):
                     for msg in cm.output
                 )
             )
-
 
 if __name__ == "__main__":
     unittest.main()

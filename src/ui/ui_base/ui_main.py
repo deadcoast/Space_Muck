@@ -1,24 +1,24 @@
-import contextlib
-import time
-import random
-import curses
-from ui.ui_element.ui_style import UIStyle
-from ui.ui_element.ui_menu import Menu
-from ui.ui_element.ui_fleet_display import FleetDisplay
-from ui.ui_element.ui_asteroid_field_visualizer import AsteroidFieldVisualizer
-from ui.ui_element.ui_symbiote_evolution_monitor import SymbioteEvolutionMonitor
-from ui.ui_element.ui_mining_status import MiningStatus
-from ui.ui_helpers.animation_helper import AnimationStyle
 
+
+# Use absolute imports for consistency
 
 # Define standard colors for UI components
 COLOR_TEXT = (220, 220, 220)  # Standard text color
 COLOR_BG = (20, 20, 30)  # Standard background color
 COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 
-
 class SpaceMuckMainUI:
     """Main UI manager for Space Muck game"""
+
+# Standard library imports
+import random
+import time
+
+# Third-party library imports
+
+# Local application imports
+import contextlib
+import curses
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
@@ -205,7 +205,6 @@ class SpaceMuckMainUI:
             # Sleep briefly to control frame rate
             time.sleep(0.05)
 
-
 def run_space_muck_ui():
     """Initialize and run the Space Muck UI"""
 
@@ -219,7 +218,6 @@ def run_space_muck_ui():
         ui.main_loop()
 
     curses.wrapper(main)
-
 
 if __name__ == "__main__":
     run_space_muck_ui()

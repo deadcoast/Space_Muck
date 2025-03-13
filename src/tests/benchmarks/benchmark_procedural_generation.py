@@ -6,35 +6,40 @@ This script measures the performance of various procedural generation components
 across different grid sizes, configurations, and hardware acceleration options.
 """
 
-import sys
-import os
-import time
+# Standard library imports
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Dict, List, Tuple, Callable, Any, Optional
 import logging
+import os
+import sys
+import time
+
+# Third-party library imports
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Local application imports
+from entities.base_generator import BaseGenerator
+from typing import Dict, List, Tuple, Callable, Any, Optional
+from utils.cellular_automaton_utils import apply_cellular_automaton
+from utils.gpu_utils import (
+from utils.noise_generator import get_noise_generator
 import multiprocessing
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the classes to benchmark
-from entities.base_generator import BaseGenerator
-from utils.noise_generator import get_noise_generator
-from utils.gpu_utils import (
+
     is_gpu_available,
     get_available_backends,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
 )
-from utils.cellular_automaton_utils import apply_cellular_automaton
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 def time_function(func: Callable, *args, **kwargs) -> Tuple[float, Any]:
     """
@@ -52,7 +57,6 @@ def time_function(func: Callable, *args, **kwargs) -> Tuple[float, Any]:
     result = func(*args, **kwargs)
     end_time = time.time()
     return end_time - start_time, result
-
 
 def benchmark_complete_generation(
     generator_class: type,
@@ -143,7 +147,6 @@ def benchmark_complete_generation(
 
     return results
 
-
 def benchmark_noise_generation(
     grid_sizes: List[int],
     repetitions: int = 3,
@@ -200,7 +203,6 @@ def benchmark_noise_generation(
 
     return results
 
-
 def benchmark_cellular_automaton(
     grid_sizes: List[int],
     repetitions: int = 3,
@@ -254,7 +256,6 @@ def benchmark_cellular_automaton(
             logging.info(f"  {backend}: {avg_time:.4f} seconds")
 
     return results
-
 
 def benchmark_clustering(
     grid_sizes: List[int],
@@ -320,7 +321,6 @@ def benchmark_clustering(
         logging.info(f"  Parallel: {avg_par_time:.4f} seconds")
 
     return results
-
 
 def plot_results(
     results: Dict[str, Dict[str, List[float]]],
@@ -398,7 +398,6 @@ def plot_results(
     plt.savefig(output_file)
     logging.info(f"Results saved to {output_file}")
 
-
 def _generation_handler(axes, arg1, arg2, arg3):
     axes[arg1, arg2].set_title(arg3)
     axes[arg1, arg2].set_xlabel("Grid Size")
@@ -407,7 +406,6 @@ def _generation_handler(axes, arg1, arg2, arg3):
     axes[arg1, arg2].set_yscale("log")
     axes[arg1, arg2].grid(True)
     axes[arg1, arg2].legend()
-
 
 def main():
     """Run the benchmark suite."""
@@ -481,7 +479,6 @@ def main():
 
     # Plot results
     plot_results(results, args.output)
-
 
 if __name__ == "__main__":
     main()

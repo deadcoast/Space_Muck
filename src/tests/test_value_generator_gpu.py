@@ -3,15 +3,20 @@
 Unit tests for GPU-accelerated value generation functions.
 """
 
-import unittest
-import numpy as np
-from unittest.mock import patch
+# Standard library imports
 
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from unittest.mock import patch
+from utils.gpu_utils import is_gpu_available
 from utils.value_generator_gpu import (
+import unittest
+
     generate_value_distribution_gpu,
     add_value_clusters_gpu,
 )
-from utils.gpu_utils import is_gpu_available
 
 # Check if GPU backends are available
 try:
@@ -34,7 +39,6 @@ try:
     CUPY_AVAILABLE = spec is not None
 except ImportError:
     CUPY_AVAILABLE = False
-
 
 class TestValueGeneratorGPU(unittest.TestCase):
     """Tests for GPU-accelerated value generation functions."""
@@ -341,7 +345,6 @@ class TestValueGeneratorGPU(unittest.TestCase):
 
         # Verify no values were assigned (all zeros)
         self.assertTrue(np.all(result == 0))
-
 
 if __name__ == "__main__":
     unittest.main()

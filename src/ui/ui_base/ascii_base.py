@@ -1,80 +1,76 @@
-import time
-import math
-import logging
-import pygame
-from enum import Enum, auto
-from typing import Dict, Optional, Tuple
+
 
 # Define color constants
 COLOR_TEXT = (200, 200, 200)  # Light gray
 COLOR_BG = (10, 10, 10)  # Near black
 COLOR_HIGHLIGHT = (255, 255, 100)  # Yellow-ish highlight
 
-
 class UIStyle(Enum):
     """Enum for UI visual styles."""
 
-    SYMBIOTIC = auto()  # Organic, flowing style
-    ASTEROID = auto()  # Rocky, rough style
-    MECHANICAL = auto()  # Industrial, mechanical style
-    QUANTUM = auto()  # High-tech, digital style
-    FLEET = auto()  # Military, utilitarian style
+# Standard library imports
+import logging
+import math
+import time
 
-    @classmethod
-    def get_border_chars(cls, style: "UIStyle") -> Dict[str, str]:
-        """Get border characters for the specified UI style."""
-        try:
-            # Use style-specific border characters
-            if style == UIStyle.SYMBIOTIC:
-                return {
-                    "top_left": "╭",
-                    "top_right": "╮",
-                    "bottom_left": "╰",
-                    "bottom_right": "╯",
-                    "horizontal": "─",
-                    "vertical": "│",
-                }
-            elif style in (UIStyle.ASTEROID, UIStyle.FLEET):
-                # Simple single-line border for asteroid and fleet styles
-                return {
-                    "top_left": "┌",
-                    "top_right": "┐",
-                    "bottom_left": "└",
-                    "bottom_right": "┘",
-                    "horizontal": "─",
-                    "vertical": "│",
-                }
-            elif style == UIStyle.MECHANICAL:
-                # Double-line border for mechanical style
-                return {
-                    "top_left": "╔",
-                    "top_right": "╗",
-                    "bottom_left": "╚",
-                    "bottom_right": "╝",
-                    "horizontal": "═",
-                    "vertical": "║",
-                }
-            elif style == UIStyle.QUANTUM:
-                # Bold single-line border for quantum style
-                return {
-                    "top_left": "┏",
-                    "top_right": "┓",
-                    "bottom_left": "┗",
-                    "bottom_right": "┛",
-                    "horizontal": "━",
-                    "vertical": "┃",
-                }
-            else:
-                return {
-                    "top_left": "+",
-                    "top_right": "+",
-                    "bottom_left": "+",
-                    "bottom_right": "+",
-                    "horizontal": "-",
-                    "vertical": "|",
-                }
-        except Exception as e:
-            logging.error(f"Error getting border chars: {e}")
+# Third-party library imports
+
+# Local application imports
+from enum import Enum, auto
+from typing import Dict, Optional, Tuple
+import pygame
+
+SYMBIOTIC = auto()  # Organic, flowing style
+ASTEROID = auto()  # Rocky, rough style
+MECHANICAL = auto()  # Industrial, mechanical style
+QUANTUM = auto()  # High-tech, digital style
+FLEET = auto()  # Military, utilitarian style
+
+@classmethod
+def get_border_chars(cls, style: "UIStyle") -> Dict[str, str]:
+    """Get border characters for the specified UI style."""
+    try:
+        # Use style-specific border characters
+        if style == UIStyle.SYMBIOTIC:
+            return {
+                "top_left": "╭",
+                "top_right": "╮",
+                "bottom_left": "╰",
+                "bottom_right": "╯",
+                "horizontal": "─",
+                "vertical": "│",
+            }
+        elif style in (UIStyle.ASTEROID, UIStyle.FLEET):
+            # Simple single-line border for asteroid and fleet styles
+            return {
+                "top_left": "┌",
+                "top_right": "┐",
+                "bottom_left": "└",
+                "bottom_right": "┘",
+                "horizontal": "─",
+                "vertical": "│",
+            }
+        elif style == UIStyle.MECHANICAL:
+            # Double-line border for mechanical style
+            return {
+                "top_left": "╔",
+                "top_right": "╗",
+                "bottom_left": "╚",
+                "bottom_right": "╝",
+                "horizontal": "═",
+                "vertical": "║",
+            }
+        elif style == UIStyle.QUANTUM:
+            # Bold single-line border for quantum style
+            return {
+                "top_left": "┏",
+                "top_right": "┓",
+                "bottom_left": "┗",
+                "bottom_right": "┛",
+                "horizontal": "━",
+                "vertical": "┃",
+            }
+        else:
             return {
                 "top_left": "+",
                 "top_right": "+",
@@ -83,7 +79,16 @@ class UIStyle(Enum):
                 "horizontal": "-",
                 "vertical": "|",
             }
-
+    except Exception as e:
+        logging.error(f"Error getting border chars: {e}")
+        return {
+            "top_left": "+",
+            "top_right": "+",
+            "bottom_left": "+",
+            "bottom_right": "+",
+            "horizontal": "-",
+            "vertical": "|",
+        }
 
 class AnimationStyle(Enum):
     """Enum for animation styles."""
@@ -115,7 +120,6 @@ class AnimationStyle(Enum):
         except Exception as e:
             logging.error(f"Error getting animation style: {e}")
             return AnimationStyle.NONE
-
 
 class UIElement:
     """Base class for all UI elements."""
@@ -296,12 +300,41 @@ class UIElement:
             if self.animation["active"]:
                 color = self._apply_animation_effect(color)
 
-            # Render character
-            char_surface = font.render(char, True, color)
+            # Direct mapping for box drawing characters
+            # These are guaranteed to work with any font
+            direct_mapping = {
+                # Box drawing characters (single line)
+                "┌": "+", "┐": "+", "└": "+", "┘": "+",  # Corners
+                "─": "-", "│": "|",  # Lines
+                # Box drawing characters (double line)
+                "╔": "+", "╗": "+", "╚": "+", "╝": "+",  # Double corners
+                "═": "=", "║": "|",  # Double lines
+                # Box drawing characters (rounded)
+                "╭": "+", "╮": "+", "╯": "+", "╰": "+",  # Rounded corners
+                # Additional box drawing characters
+                "┬": "+", "┴": "+", "┤": "+", "├": "+",  # T-junctions
+                "┼": "+",  # Cross
+                # Double line variants
+                "╦": "+", "╩": "+", "╣": "+", "╠": "+",  # Double T-junctions
+                "╬": "+",  # Double cross
+            }
+
+            # Use direct mapping for known problematic characters
+            char_to_render = direct_mapping.get(char, char)
+            # Render the character
+            try:
+                char_surface = font.render(char_to_render, True, color)
+            except Exception as e:
+                # If rendering fails, use a fallback character
+                logging.debug(f"Failed to render '{char_to_render}': {e}")
+                char_surface = font.render("?", True, color)
+
+            # Blit the character to the surface
             surface.blit(char_surface, (pixel_x, pixel_y))
 
         except Exception as e:
-            logging.error(f"Error drawing character: {e}")
+            # Just log the error and continue - don't crash the whole UI
+            logging.debug(f"Error drawing character '{char}': {e}")
 
     def _draw_text(
         self,

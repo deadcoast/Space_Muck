@@ -11,13 +11,6 @@
 # EFFECT: Analyzes code quality and dependencies
 # NAMING: Quality[Type]Analyzer
 
-import logging
-import networkx as nx
-from typing import Any, Dict, List
-from radon.complexity import cc_visit
-from radon.metrics import h_visit
-
-
 class QualityAnalyzer:
     """Analyzes code quality and dependencies.
 
@@ -27,6 +20,17 @@ class QualityAnalyzer:
     3. Performance impact assessment
     4. Code quality metrics
     """
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from radon.complexity import cc_visit
+from radon.metrics import h_visit
+from typing import Any, Dict, List
+import networkx as nx
 
     def __init__(self):
         """Initialize the quality analyzer."""

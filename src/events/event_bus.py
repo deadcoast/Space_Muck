@@ -8,14 +8,18 @@ following the observer pattern. It supports:
 - Event history tracking for debugging
 """
 
-from typing import Any, Callable, Dict, List, Optional
+# Standard library imports
 from collections import defaultdict
 import logging
 import time
 
+# Third-party library imports
+
+# Local application imports
+from typing import Any, Callable, Dict, List, Optional
+
 # Configure logging
 logger = logging.getLogger(__name__)
-
 
 class EventBus:
     """Event bus for handling game events."""
@@ -93,10 +97,8 @@ class EventBus:
         """
         return self._event_history.copy()
 
-
 # Global event bus registry
 _event_buses: Dict[str, EventBus] = {}
-
 
 def get_event_bus(name: str = "default") -> EventBus:
     """Get or create an event bus.
@@ -118,10 +120,8 @@ def get_event_bus(name: str = "default") -> EventBus:
         _event_buses[name] = EventBus(name)
     return _event_buses[name]
 
-
 # Create default event bus
 _event_buses["default"] = EventBus("default")
-
 
 def clear_event_buses() -> None:
     """Clear all event buses. Useful for testing."""

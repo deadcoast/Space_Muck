@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Standard library imports
-from typing import List
 
 """
 Import Standards for Space Muck.
@@ -16,14 +15,9 @@ Standard import order:
 Example:
 ```python
 # Standard library imports
-import abc
-import logging
-import math
-import random
-from typing import Dict, List, Optional, Set, Tuple, Union
 
 # Third-party library imports
-import numpy as np
+
 try:
     import scipy.ndimage as ndimage
     SCIPY_AVAILABLE = True
@@ -31,10 +25,7 @@ except ImportError:
     SCIPY_AVAILABLE = False
     
 # Local application imports
-from config import *  # Config imports
-from entities.base_entity import BaseEntity
-from utils.dependency_injection import inject
-from utils.noise_generator import NoiseGenerator, get_noise_generator
+
 ```
 
 Guidelines:
@@ -46,6 +37,23 @@ Guidelines:
 6. Import specific classes/functions rather than entire modules when possible
 7. Avoid circular imports by using type hints and forward references
 """
+
+# Standard library imports
+import abc
+import logging
+import math
+import random
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from config import *  # Config imports
+from entities.base_entity import BaseEntity
+from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import List
+from utils.dependency_injection import inject
+from utils.noise_generator import NoiseGenerator, get_noise_generator
 
 # Standard import categories
 STDLIB_MODULES = [
@@ -91,7 +99,6 @@ OPTIONAL_DEPENDENCIES = {
         "fallback_message": "scipy not available, using fallback implementation.",
     },
 }
-
 
 def generate_standard_imports(
     stdlib_imports: List[str],

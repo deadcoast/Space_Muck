@@ -4,21 +4,25 @@ Integration tests for the Space Muck game.
 These tests verify that different components work together correctly.
 """
 
+# Standard library imports
 import os
 import sys
-import unittest
+
+# Third-party library imports
 import numpy as np
-import pygame
+
+# Local application imports
+from entities.miner_entity import MinerEntity
+from entities.player import Player
+from generators.asteroid_field import AsteroidField
+from ui.notification import NotificationManager
+from ui.shop import Shop
 from unittest.mock import patch
+import pygame
+import unittest
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from generators.asteroid_field import AsteroidField
-from entities.player import Player
-from entities.miner_entity import MinerEntity
-from ui.shop import Shop
-from ui.notification import NotificationManager
-
 
 class TestPlayerFieldInteraction(unittest.TestCase):
     """Test the interactions between player and asteroid field."""
@@ -83,7 +87,6 @@ class TestPlayerFieldInteraction(unittest.TestCase):
         distance = abs(self.player.x - target[0]) + abs(self.player.y - target[1])
         self.assertLessEqual(distance, 10)
 
-
 class TestUIInteractions(unittest.TestCase):
     """Test interactions between UI components and game state."""
 
@@ -135,7 +138,6 @@ class TestUIInteractions(unittest.TestCase):
         # Check that a notification was added
         self.assertEqual(len(self.notifier.notifications), initial_count + 1)
         self.assertEqual(self.notifier.notifications[0]["category"], "race")
-
 
 class TestGameCycle(unittest.TestCase):
     """Test a complete game cycle with all components."""

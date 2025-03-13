@@ -6,14 +6,19 @@ market events, and integration with the player's inventory and economy.
 """
 
 # Standard library imports
-import random
-import math
 import logging
-from typing import Dict, List, Tuple, Any, Optional
+import math
+import random
+
+# Third-party library imports
 
 # Local application imports
 from config import GAME_MAP_SIZE
+from typing import Dict, List, Tuple, Any, Optional
 
+# Standard library imports
+
+# Local application imports
 
 class TradingSystem:
     """

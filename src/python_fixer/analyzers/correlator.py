@@ -1,11 +1,17 @@
-from typing import Any, Dict, List
+
 
 # Assuming LogRecord and CustomFormatter are defined elsewhere in your codebase
-from variant_loggers import LogRecord
-
 
 class Correlator:
     """Correlate related log entries"""
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from typing import Any, Dict, List
+from variant_loggers import LogRecord
 
     def __init__(self, related_event: str, max_distance: int = 5):
         self.max_distance = max_distance
@@ -41,7 +47,6 @@ class Correlator:
     def to_dict(self) -> Dict[str, Any]:
         """Convert the correlation to a dictionary."""
         return {"related_event": self.related_event}
-
 
 class LogCorrelator:
     """Correlate related log entries."""

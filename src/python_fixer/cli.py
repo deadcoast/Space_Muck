@@ -3,18 +3,23 @@
 Main entry point for the Python Import Fixer tool.
 """
 
+# Standard library imports
 import argparse
-import importlib.util
 import logging
 import os
 import sys
-from pathlib import Path
-from typing import Any, List
 
-# Import core dependencies
+# Third-party library imports
+
+# Local application imports
+from pathlib import Path
 from python_fixer.core.analyzer import ProjectAnalyzer
 from python_fixer.core.signals import SignalManager
 from python_fixer.logging.structured import StructuredLogger
+from typing import Any, List
+import importlib.util
+
+# Import core dependencies
 
 # Optional web dashboard import
 run_dashboard = None
@@ -25,24 +30,20 @@ if importlib.util.find_spec("python_fixer.web.dashboard") is not None:
 signal_manager = SignalManager()
 logger = StructuredLogger.get_logger(__name__)
 
-
 class CLIError(Exception):
     """Base exception for CLI errors."""
 
     pass
-
 
 class ValidationError(CLIError):
     """Raised when input validation fails."""
 
     pass
 
-
 class ProjectError(CLIError):
     """Raised when project-related operations fail."""
 
     pass
-
 
 def validate_project_path(path: Path) -> None:
     """Validate the project path.
@@ -64,7 +65,6 @@ def validate_project_path(path: Path) -> None:
     if not py_files:
         raise ValidationError(f"No Python files found in '{path}'")
 
-
 def validate_port(port: int) -> None:
     """Validate the port number.
 
@@ -84,7 +84,6 @@ def validate_port(port: int) -> None:
             f"Port {port} requires root privileges. Please use a port number >= 1024"
         )
 
-
 def verify_imports() -> None:
     """Verify that all required modules are available.
 
@@ -101,7 +100,6 @@ def verify_imports() -> None:
         if not importlib.util.find_spec(module):
             raise ImportError(f"Required module not found: {module}")
 
-
 def print_import_paths() -> None:
     """Print the current Python import paths."""
     print("\n\033[96mPython Import Paths:\033[0m")
@@ -111,7 +109,6 @@ def print_import_paths() -> None:
         else:
             print(f"  ✗ {path} (not found)")
     print()
-
 
 def parse_args():
     verify_imports()
@@ -199,7 +196,6 @@ examples:
         print(f"Error parsing arguments: {str(e)}")
         raise
 
-
 # TODO Rename this here and in `parse_args`
 def _extracted_from_parse_args_26(arg0, subparsers, arg2, help):
     print(arg0)
@@ -207,7 +203,6 @@ def _extracted_from_parse_args_26(arg0, subparsers, arg2, help):
     result.add_argument("project_path", type=Path, help="Path to the project")
 
     return result
-
 
 def print_analysis_summary(results: dict) -> None:
     """Print a summary of the analysis results."""
@@ -220,13 +215,11 @@ def print_analysis_summary(results: dict) -> None:
     )
     print(f"  - Enhancement suggestions: {len(results.get('enhancements', []))}\033[0m")
 
-
 def print_fixes_summary(fixes: dict) -> None:
     """Print a summary of the applied fixes."""
     print("\n\033[92m✓ Fixes applied successfully\033[0m")
     print(f"\033[96m  - Files modified: {fixes.get('files_modified', 0)}")
     print(f"  - Imports fixed: {fixes.get('imports_fixed', 0)}\033[0m")
-
 
 def print_cli_header() -> None:
     """Print the CLI header with buttons."""
@@ -238,7 +231,6 @@ def print_cli_header() -> None:
 │  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
 │                                                              │"""
     )
-
 
 def print_error_section(error_msg: str, details: List[str] = None) -> None:
     """Print the error output section."""
@@ -262,7 +254,6 @@ def print_error_section(error_msg: str, details: List[str] = None) -> None:
 │                                                              │"""
     )
 
-
 def print_suggestions(suggestions: List[str]) -> None:
     """Print the suggestions section."""
     print(
@@ -283,7 +274,6 @@ def print_suggestions(suggestions: List[str]) -> None:
 └──────────────────────────────────────────────────────────────┘"""
     )
 
-
 def print_command_section(command: str) -> None:
     """Print the command input section."""
     print(
@@ -298,7 +288,6 @@ def print_command_section(command: str) -> None:
         )
     )
 
-
 def print_usage_examples() -> None:
     """Print example usage information."""
     print("\nExample usage:")
@@ -306,7 +295,6 @@ def print_usage_examples() -> None:
     print("  python -m python_fixer analyze /path/to/project")
     print("  python -m python_fixer fix /path/to/project --mode interactive")
     print("  python -m python_fixer dashboard /path/to/project --port 8000")
-
 
 def handle_error(
     error: Exception, args: argparse.Namespace = None, logger: Any = None
@@ -359,12 +347,10 @@ def handle_error(
 
     return 1
 
-
 def print_dashboard_info(host: str, port: int, reload: bool) -> None:
     """Print information about the dashboard."""
     print(f"\033[96m  - URL: http://{host}:{port}")
     print(f"  - Auto-reload: {'enabled' if reload else 'disabled'}\033[0m")
-
 
 def setup_args_and_logging():
     """Parse and validate arguments, setup logging.
@@ -392,7 +378,6 @@ def setup_args_and_logging():
     except Exception as e:
         print(f"Error in setup: {str(e)}")
         raise
-
 
 # TODO Rename this here and in `setup_args_and_logging`
 def parse_and_validate_args():
@@ -423,7 +408,6 @@ def parse_and_validate_args():
         print("Port validation successful")
 
     return args
-
 
 def _extracted_from_setup_args_and_logging_9():
     """Parse arguments and set up logging with proper error handling.
@@ -471,7 +455,6 @@ def _extracted_from_setup_args_and_logging_9():
         if logger:
             logger.error("Unexpected error during setup", exc_info=e)
         raise
-
 
 def main():
     args = None
@@ -586,7 +569,6 @@ def main():
                 logger.exception("Error details:")
             return handle_error(e, args, logger)
 
-
 # TODO Rename this here and in `main`
 def initialize_project(args, config):
     """Initialize a project with proper error handling.
@@ -658,7 +640,6 @@ def initialize_project(args, config):
             print(f"\033[91m✗ Unexpected error during initialization: {str(e)}\033[0m")
             logger.error("Unexpected error during initialization", exc_info=e)
             raise ProjectError(f"Failed to initialize project: {str(e)}") from e
-
 
 if __name__ == "__main__":
     sys.exit(main())

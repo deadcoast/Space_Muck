@@ -28,8 +28,13 @@ NAMING CONVENTION:
 - Method Pattern: parse_[component], get_[data_type]
 """
 
+# Standard library imports
 import logging
 import re
+
+# Third-party library imports
+
+# Local application imports
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -46,7 +51,6 @@ IMPLEMENTATION_MAP = {
         "new_dependencies": ["re", "pathlib", "typing", "logging"],
     }
 }
-
 
 class ProjectMapParser:
     """Parser for Space Muck project analysis maps.

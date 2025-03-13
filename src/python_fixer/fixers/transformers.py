@@ -1,11 +1,6 @@
-import ast
-from pathlib import Path
-from typing import Dict, List, Optional
 
-import astor
-import variant_loggers
-from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
 
+or
 
 # Base Transformer Class
 class BaseTransformer:
@@ -13,13 +8,24 @@ class BaseTransformer:
     Abstract base class for all transformers.
     """
 
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
+from pathlib import Path
+from typing import Dict, List, Optional
+import ast
+import astor
+import variant_loggers
+
     def apply(self, analyzer: EnhancedAnalyzer):
         """
         Apply the transformation using the analyzer's data.
         Must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement the apply method.")
-
 
 # RelativeImportTransformer Class
 class RelativeImportTransformer(BaseTransformer):
@@ -67,7 +73,6 @@ class RelativeImportTransformer(BaseTransformer):
         base = parts[: -node.level]
         absolute_module = ".".join(base + target)
         return absolute_module or None
-
 
 # CircularDependencyTransformer Class
 class CircularDependencyTransformer(BaseTransformer):

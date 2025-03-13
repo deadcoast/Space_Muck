@@ -1,7 +1,3 @@
-import logging
-from typing import Dict, Tuple, Any
-
-from ui.ui_base.ascii_base import UIStyle, COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
 
 class StyleManager:
@@ -11,6 +7,15 @@ class StyleManager:
     including colors, characters, and animation parameters. All UI components should
     use this manager to ensure consistent style application.
     """
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from typing import Dict, Tuple, Any
+from src.ui.ui_base.ascii_base import UIStyle
 
     # Singleton instance
     _instance = None

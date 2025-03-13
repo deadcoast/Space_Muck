@@ -2,16 +2,24 @@
 BaseGenerator class: The base class for all procedural generation entities in the game.
 """
 
-import contextlib
-
 # Standard library imports
 import logging
 import random
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
 import numpy as np
+
+# Local application imports
+from entities.base_entity import BaseEntity
+from typing import Any, Dict, List, Optional, Set, Tuple
+from utils.dependency_injection import inject
+from utils.noise_generator import NoiseGenerator, get_noise_generator
+import contextlib
+
+# Standard library imports
+
+# Third-party library imports
 
 # Optional dependencies
 try:
@@ -37,10 +45,6 @@ except ImportError:
     logging.warning("GPU utilities not available. GPU acceleration will be disabled.")
 
 # Local application imports
-from entities.base_entity import BaseEntity
-from utils.dependency_injection import inject
-from utils.noise_generator import NoiseGenerator, get_noise_generator
-
 
 @inject
 class BaseGenerator(BaseEntity):

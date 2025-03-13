@@ -1,15 +1,20 @@
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, Optional, Set
 
-from rich import Console
 
 cli = Console()
-
 
 @dataclass
 class LogContext:
     """Enhanced context for structured variant_loggers"""
+
+# Standard library imports
+from datetime import datetime
+
+# Third-party library imports
+
+# Local application imports
+from dataclasses import dataclass, field
+from rich import Console
+from typing import Any, Dict, Optional, Set
 
     module: str
     function: str

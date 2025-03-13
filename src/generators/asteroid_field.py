@@ -14,16 +14,28 @@ import itertools
 import logging
 import math
 import random
+
+# Third-party library imports
+import numpy as np
+import scipy
+
+# Local application imports
+from config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
+from entities.miner_entity import MinerEntity
+from generators.procedural_generator import ProceduralGenerator
+from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 from typing import Dict, List, Tuple, Set
+from utils.logging_setup import (
+import pygame
+
+# Standard library imports
 
 # Third-party imports
-import numpy as np
-import pygame
 
 # Handle optional dependencies gracefully
 try:
-    import scipy.ndimage as ndimage
-    import scipy.signal as signal
+    .ndimage as ndimage
+    .signal as signal
 
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -39,16 +51,12 @@ except ImportError:
     logging.warning("perlin_noise package not available. Some features may be limited.")
 
 # Local application imports
-from config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
-from utils.logging_setup import (
+
     log_exception,
     LogContext,
     log_performance_start,
     log_performance_end,
 )
-from entities.miner_entity import MinerEntity
-from generators.procedural_generator import ProceduralGenerator
-from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
 # Try to import the optimized generators if available
 try:
@@ -62,7 +70,6 @@ except ImportError:
     )
 
 # Check if scipy is available for optimized cellular automaton
-import scipy
 
 SCIPY_AVAILABLE = hasattr(scipy, "signal")
 if not SCIPY_AVAILABLE:
@@ -70,19 +77,16 @@ if not SCIPY_AVAILABLE:
         "SciPy signal module not available. Using manual implementation for cellular automaton."
     )
 
-
 # Forward references for type hints
 class NotificationManager:
     """Type hint for NotificationManager class."""
 
     pass
 
-
 class Player:
     """Type hint for Player class."""
 
     pass
-
 
 class AsteroidField:
     """

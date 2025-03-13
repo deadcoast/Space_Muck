@@ -2,12 +2,15 @@
 Tests for the combat system module.
 """
 
-import unittest
+# Standard library imports
 
-from entities.player import Player
+# Third-party library imports
+
+# Local application imports
 from entities.enemy_ship import EnemyShip
+from entities.player import Player
 from systems.combat_system import CombatSystem
-
+import unittest
 
 class DeterministicCombatSystem(CombatSystem):
     """A special version of CombatSystem that allows controlling flee outcomes for testing."""
@@ -55,7 +58,6 @@ class DeterministicCombatSystem(CombatSystem):
             "enemy_stats": enemy.get_stats(),
             "player_stats": self.player.get_combat_stats(),
         }
-
 
 class TestCombatSystem(unittest.TestCase):
     """Test cases for the combat system."""
@@ -412,7 +414,6 @@ class TestCombatSystem(unittest.TestCase):
             self.player.current_shield < initial_shield
             or self.player.current_hull < initial_hull
         )
-
 
 if __name__ == "__main__":
     unittest.main()

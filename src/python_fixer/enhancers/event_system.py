@@ -11,21 +11,24 @@
 # EFFECT: Provides event handling for method enhancements
 # NAMING: Event[Type]Handler
 
-import logging
-from enum import Enum, auto
-from typing import Any, Callable, Dict, List, Optional
-from dataclasses import dataclass, field
-
-
 class EventType(Enum):
     """Types of events that can be handled."""
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Any, Callable, Dict, List, Optional
 
     PRE_ENHANCEMENT = auto()
     POST_ENHANCEMENT = auto()
     STATE_CHANGE = auto()
     ENHANCEMENT_ERROR = auto()
     ENHANCEMENT_ROLLBACK = auto()
-
 
 @dataclass
 class Event:
@@ -35,7 +38,6 @@ class Event:
     source: str
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=lambda: __import__("time").time())
-
 
 class EventSystem:
     """Event handling system for method enhancements.

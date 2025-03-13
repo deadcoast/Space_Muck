@@ -7,15 +7,20 @@ used throughout the codebase, with fallback mechanisms for systems without
 GPU support.
 """
 
-import itertools
-
 # Standard library imports
+import itertools
 import logging
-from typing import Any, List, Optional, Set, Tuple, Union
 
 # Third-party library imports
-import numpy as np
 from numpy.random import Generator, PCG64
+import numpy as np
+
+# Local application imports
+from typing import Any, List, Optional, Set, Tuple, Union
+
+# Standard library imports
+
+# Third-party library imports
 
 # Initialize random number generator with a fixed seed for reproducibility
 rng = Generator(PCG64(42))
@@ -80,7 +85,6 @@ try:
 except Exception as e:
     logging.warning(f"Error checking for metalgpu: {e}")
 
-
 def is_gpu_available() -> bool:
     """
     Check if any GPU acceleration is available.
@@ -89,7 +93,6 @@ def is_gpu_available() -> bool:
         bool: True if any GPU acceleration is available
     """
     return CUDA_AVAILABLE or CUPY_AVAILABLE or MPS_AVAILABLE or METALGPU_AVAILABLE
-
 
 def get_available_backends() -> List[str]:
     """
@@ -112,7 +115,6 @@ def get_available_backends() -> List[str]:
     if not backends:
         backends.append("cpu")
     return backends
-
 
 def to_gpu(array: np.ndarray) -> Union[np.ndarray, Any]:
     """
@@ -138,7 +140,6 @@ def to_gpu(array: np.ndarray) -> Union[np.ndarray, Any]:
 
     # If no GPU transfer was successful, return the original array
     return array
-
 
 def to_cpu(array: Any) -> np.ndarray:
     """
@@ -167,7 +168,6 @@ def to_cpu(array: Any) -> np.ndarray:
 
     # If it's already a numpy array or another type, return as is
     return array
-
 
 if NUMBA_AVAILABLE and CUDA_AVAILABLE:
 
@@ -229,7 +229,6 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
             # Apply birth rule
             new_grid[y, x] = 1 if neighbors in birth_set else 0
 
-
 def _determine_backend_for_cellular_automaton(backend: str) -> str:
     """
     Determine the appropriate backend for cellular automaton based on availability.
@@ -249,7 +248,6 @@ def _determine_backend_for_cellular_automaton(backend: str) -> str:
         return "cupy"
     else:
         return "cpu"
-
 
 def _apply_cellular_automaton_cpu(
     grid: np.ndarray,
@@ -279,7 +277,6 @@ def _apply_cellular_automaton_cpu(
     return apply_cellular_automaton(
         grid, birth_set, survival_set, iterations, wrap, width, height
     )
-
 
 def _apply_cellular_automaton_cuda(
     grid: np.ndarray,
@@ -327,7 +324,6 @@ def _apply_cellular_automaton_cuda(
     # Preserve original values where cells are alive
     return grid * d_grid
 
-
 def _count_neighbors_cupy(d_grid: cp.ndarray, wrap: bool) -> cp.ndarray:
     """
     Count neighbors for each cell using CuPy.
@@ -350,7 +346,6 @@ def _count_neighbors_cupy(d_grid: cp.ndarray, wrap: bool) -> cp.ndarray:
             continue
         neighbor_count += cp.roll(d_grid, (dy, dx), axis=(0, 1))
     return neighbor_count
-
 
 def _apply_cellular_automaton_rules_cupy(
     d_grid: cp.ndarray,
@@ -381,7 +376,6 @@ def _apply_cellular_automaton_rules_cupy(
         new_grid |= (neighbor_count == n) & (d_grid == 0)
 
     return new_grid
-
 
 def _apply_cellular_automaton_cupy(
     grid: np.ndarray,
@@ -418,7 +412,6 @@ def _apply_cellular_automaton_cupy(
     # Transfer back to CPU and preserve original values
     result_grid = cp.asnumpy(d_grid)
     return grid * result_grid
-
 
 def apply_cellular_automaton_gpu(
     grid: np.ndarray,
@@ -484,7 +477,6 @@ def apply_cellular_automaton_gpu(
         grid, birth_set, survival_set, iterations, wrap, width, height
     )
 
-
 def _determine_backend_for_noise_generation(backend: str) -> str:
     """
     Determine the appropriate backend for noise generation based on availability.
@@ -508,7 +500,6 @@ def _determine_backend_for_noise_generation(backend: str) -> str:
         return "metalgpu"
     else:
         return "cpu"
-
 
 def _generate_noise_cpu(
     width: int,
@@ -541,7 +532,6 @@ def _generate_noise_cpu(
         )
     except ImportError:
         return _generate_fallback_noise(seed, height, width)
-
 
 def _generate_noise_layer_mps(
     height: int,
@@ -597,7 +587,6 @@ def _generate_noise_layer_mps(
     
     return noise_layer
 
-
 def _generate_noise_mps(
     width: int,
     height: int,
@@ -650,7 +639,6 @@ def _generate_noise_mps(
     # Transfer back to CPU
     return to_cpu(noise)
 
-
 def _generate_noise_metalgpu(
     width: int,
     height: int,
@@ -700,7 +688,6 @@ def _generate_noise_metalgpu(
         seed=seed if seed is not None else rng.integers(0, 100000),
     )
 
-
 def _generate_noise_layer_cupy(
     height: int,
     width: int,
@@ -742,7 +729,6 @@ def _generate_noise_layer_cupy(
     )
     
     return noise_layer
-
 
 def _generate_noise_cupy(
     width: int,
@@ -795,7 +781,6 @@ def _generate_noise_cupy(
 
     # Transfer back to CPU
     return cp.asnumpy(noise)
-
 
 def apply_noise_generation_gpu(
     width: int,
@@ -868,7 +853,6 @@ def apply_noise_generation_gpu(
     # Fallback to CPU implementation if all GPU methods failed
     return _generate_noise_cpu(width, height, scale, octaves, persistence, lacunarity, seed)
 
-
 def _generate_fallback_noise(seed, height, width):
     """Generate random noise as a fallback when noise generators are unavailable.
 
@@ -883,7 +867,6 @@ def _generate_fallback_noise(seed, height, width):
     logging.warning("Noise generator not available. Using random noise.")
     random_gen = Generator(PCG64(seed if seed is not None else 42))
     return random_gen.random((height, width))
-
 
 def _initialize_centroids_cpu(data: np.ndarray, n_samples: int, n_clusters: int, random_gen: Generator) -> np.ndarray:
     """
@@ -900,7 +883,6 @@ def _initialize_centroids_cpu(data: np.ndarray, n_samples: int, n_clusters: int,
     """
     idx = random_gen.choice(n_samples, n_clusters, replace=False)
     return data[idx].copy()
-
 
 def _compute_distances_cpu(data: np.ndarray, centroids: np.ndarray, n_samples: int, n_clusters: int) -> np.ndarray:
     """
@@ -919,7 +901,6 @@ def _compute_distances_cpu(data: np.ndarray, centroids: np.ndarray, n_samples: i
     for i in range(n_clusters):
         distances[:, i] = np.sum((data - centroids[i]) ** 2, axis=1)
     return distances
-
 
 def _update_centroids_cpu(data: np.ndarray, labels: np.ndarray, n_clusters: int, n_features: int, n_samples: int, random_gen: Generator) -> np.ndarray:
     """
@@ -944,7 +925,6 @@ def _update_centroids_cpu(data: np.ndarray, labels: np.ndarray, n_clusters: int,
             # If a cluster is empty, reinitialize it
             new_centroids[i] = data[random_gen.choice(n_samples)]
     return new_centroids
-
 
 def _apply_kmeans_cpu(
     data: np.ndarray,
@@ -1004,7 +984,6 @@ def _apply_kmeans_cpu(
             centroids = new_centroids
 
         return centroids, labels
-
 
 def _apply_kmeans_cupy(
     data: np.ndarray,
@@ -1070,7 +1049,6 @@ def _apply_kmeans_cupy(
     # Transfer results back to CPU
     return cp.asnumpy(centroids), cp.asnumpy(labels)
 
-
 def _initialize_centroids_cuda(data: np.ndarray, n_samples: int, n_clusters: int, random_gen: Generator) -> Tuple[np.ndarray, cuda.devicearray.DeviceNDArray]:
     """
     Initialize centroids randomly for CUDA implementation.
@@ -1088,7 +1066,6 @@ def _initialize_centroids_cuda(data: np.ndarray, n_samples: int, n_clusters: int
     centroids = data[idx].copy()
     d_centroids = cuda.to_device(centroids)
     return centroids, d_centroids
-
 
 def _setup_cuda_environment(data: np.ndarray, n_samples: int, n_clusters: int) -> Tuple[cuda.devicearray.DeviceNDArray, cuda.devicearray.DeviceNDArray, int, int]:
     """
@@ -1115,7 +1092,6 @@ def _setup_cuda_environment(data: np.ndarray, n_samples: int, n_clusters: int) -
     
     return d_data, d_distances, threadsperblock, blockspergrid
 
-
 def _compute_cuda_distances(d_data: cuda.devicearray.DeviceNDArray, d_centroids: cuda.devicearray.DeviceNDArray, 
                            d_distances: cuda.devicearray.DeviceNDArray, blockspergrid: int, 
                            threadsperblock: int, kernel_func) -> np.ndarray:
@@ -1141,7 +1117,6 @@ def _compute_cuda_distances(d_data: cuda.devicearray.DeviceNDArray, d_centroids:
     
     # Find nearest centroid for each point
     return np.argmin(distances, axis=1)
-
 
 def _apply_kmeans_cuda(
     data: np.ndarray,
@@ -1206,7 +1181,6 @@ def _apply_kmeans_cuda(
 
     return centroids, labels
 
-
 def _initialize_mps_environment(seed: Optional[int]) -> torch.device:
     """
     Initialize MPS environment and set random seed.
@@ -1225,7 +1199,6 @@ def _initialize_mps_environment(seed: Optional[int]) -> torch.device:
     # Create MPS device
     return torch.device("mps")
 
-
 def _initialize_mps_centroids(data: torch.Tensor, n_samples: int, n_clusters: int) -> torch.Tensor:
     """
     Initialize centroids randomly for MPS implementation.
@@ -1240,7 +1213,6 @@ def _initialize_mps_centroids(data: torch.Tensor, n_samples: int, n_clusters: in
     """
     idx = torch.randperm(n_samples, device=data.device)[:n_clusters]
     return data[idx].clone()
-
 
 def _compute_mps_distances(data: torch.Tensor, centroids: torch.Tensor, n_samples: int, n_clusters: int) -> Tuple[torch.Tensor, torch.Tensor]:
     """
@@ -1268,7 +1240,6 @@ def _compute_mps_distances(data: torch.Tensor, centroids: torch.Tensor, n_sample
     labels = torch.argmin(distances, dim=1)
     
     return distances, labels
-
 
 def _update_mps_centroids(data: torch.Tensor, labels: torch.Tensor, n_clusters: int, n_features: int, n_samples: int) -> torch.Tensor:
     """
@@ -1298,7 +1269,6 @@ def _update_mps_centroids(data: torch.Tensor, labels: torch.Tensor, n_clusters: 
             ]
     
     return new_centroids
-
 
 def _apply_kmeans_mps(
     data: np.ndarray,
@@ -1355,7 +1325,6 @@ def _apply_kmeans_mps(
         logging.warning(f"Error in MPS implementation: {e}")
         return np.zeros((n_clusters, n_features)), np.full(n_samples, -1)
 
-
 def _initialize_metalgpu_environment(seed: Optional[int]) -> Tuple[Any, torch.device]:
     """
     Initialize MetalGPU environment and set random seed.
@@ -1380,7 +1349,6 @@ def _initialize_metalgpu_environment(seed: Optional[int]) -> Tuple[Any, torch.de
     mps_device = torch.device("mps")
     
     return metalgpu, mps_device
-
 
 def _apply_kmeans_metalgpu(
     data: np.ndarray,
@@ -1437,7 +1405,6 @@ def _apply_kmeans_metalgpu(
         logging.warning(f"Error in MetalGPU implementation: {e}")
         return np.zeros((n_clusters, n_features)), np.full(n_samples, -1)
 
-
 def _select_kmeans_backend(backend: str) -> str:
     """
     Select the appropriate backend for K-means clustering.
@@ -1461,7 +1428,6 @@ def _select_kmeans_backend(backend: str) -> str:
             backend = "cpu"
             
     return backend
-
 
 def apply_kmeans_clustering_gpu(
     data: np.ndarray,
@@ -1518,7 +1484,6 @@ def apply_kmeans_clustering_gpu(
         f"Requested backend '{backend}' not available. Falling back to CPU implementation."
     )
     return _apply_kmeans_cpu(data, n_clusters, max_iterations, tolerance, seed)
-
 
 def apply_dbscan_clustering_gpu(
     data: np.ndarray, eps: float = 0.5, min_samples: int = 5, backend: str = "auto"

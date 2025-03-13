@@ -5,15 +5,17 @@ This module manages game notifications, alerts, and control help displayed to th
 It provides a scrollable notification panel and customizable tooltip system.
 """
 
+# Standard library imports
 import logging
 import time
-from typing import List, Tuple, Dict, Any, Optional
 
-import pygame
+# Third-party library imports
 
-from config import WINDOW_HEIGHT, COLOR_TEXT
+# Local application imports
 from .draw_utils import draw_text, draw_panel
-
+from config import WINDOW_HEIGHT, COLOR_TEXT
+from typing import List, Tuple, Dict, Any, Optional
+import pygame
 
 class NotificationManager:
     """

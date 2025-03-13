@@ -1,12 +1,4 @@
-import json
-import sys
-import threading
-import uuid
-from contextlib import asynccontextmanager
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
+
 
 # Base logging levels
 DEBUG = 10
@@ -20,9 +12,24 @@ DEFAULT_DASHBOARD_HOST = "localhost"
 DEFAULT_DASHBOARD_PORT = 8000
 DEFAULT_DASHBOARD_RELOAD = False
 
-
 def getLevelName(level: int) -> str:
     """Convert numeric level to string representation."""
+
+# Standard library imports
+from datetime import datetime
+import json
+import sys
+import uuid
+
+# Third-party library imports
+
+# Local application imports
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+import threading
+
     levels = {
         DEBUG: "DEBUG",
         INFO: "INFO",
@@ -31,7 +38,6 @@ def getLevelName(level: int) -> str:
         CRITICAL: "CRITICAL",
     }
     return levels.get(level, str(level))
-
 
 @dataclass
 class LogContext:
@@ -47,7 +53,6 @@ class LogContext:
     thread_name: str = threading.current_thread().name
     log_path: Optional[Path] = None
     context_id: str = str(uuid.uuid4())
-
 
 class LogRecord:
     """Container for log record information."""
@@ -96,7 +101,6 @@ class LogRecord:
             "context_id": self.context_id,
         }
 
-
 class Handler:
     """Base class for log handlers."""
 
@@ -120,7 +124,6 @@ class Handler:
         """Clean up handler resources."""
         pass
 
-
 class StreamHandler(Handler):
     """Handler for logging to streams (e.g., stdout)."""
 
@@ -135,7 +138,6 @@ class StreamHandler(Handler):
             )
             self.stream.write(msg + "\n")
             self.stream.flush()
-
 
 class FileHandler(Handler):
     """Handler for logging to files."""
@@ -157,7 +159,6 @@ class FileHandler(Handler):
         if self.file:
             self.file.close()
             self.file = None
-
 
 class Formatter:
     """Formatter for log records."""
@@ -196,7 +197,6 @@ class Formatter:
                 line=record.line,
                 message=record.message,
             )
-
 
 class Logger:
     """Main logger class."""
@@ -262,10 +262,8 @@ class Logger:
             for handler in self.handlers:
                 handler.handle(record)
 
-
 # Logger cache to avoid creating multiple loggers with the same name
 _loggers = {}
-
 
 def getLogger(name: str) -> Logger:
     """Get or create a logger with the specified name."""
@@ -273,26 +271,21 @@ def getLogger(name: str) -> Logger:
         _loggers[name] = Logger(name)
     return _loggers[name]
 
-
 def debug(msg: str, *args, **kwargs):
     """Log a debug message."""
     getLogger("root").log(DEBUG, msg, kwargs.get("extra"))
-
 
 def info(msg: str, *args, **kwargs):
     """Log an info message."""
     getLogger("root").log(INFO, msg, kwargs.get("extra"))
 
-
 def warning(msg: str, *args, **kwargs):
     """Log a warning message."""
     getLogger("root").log(WARNING, msg, kwargs.get("extra"))
 
-
 def error(msg: str, *args, **kwargs):
     """Log an error message."""
     getLogger("root").log(ERROR, msg, kwargs.get("extra"))
-
 
 def critical(msg: str, *args, **kwargs):
     """Log a critical message."""

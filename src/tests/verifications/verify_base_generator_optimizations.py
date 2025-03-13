@@ -5,10 +5,17 @@ This script tests the optimized methods in BaseGenerator to ensure they work cor
 and provide the expected performance improvements.
 """
 
-import sys
+# Standard library imports
 import os
+import sys
 import time
+
+# Third-party library imports
 import numpy as np
+
+# Local application imports
+from entities.base_generator import BaseGenerator
+from utils.visualization import GeneratorVisualizer
 
 # Only import what we need
 # import matplotlib.pyplot as plt
@@ -16,10 +23,6 @@ import numpy as np
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from entities.base_generator import BaseGenerator
-from utils.visualization import GeneratorVisualizer
-
 
 def test_noise_layer_generation():
     """Test the optimized noise layer generation."""
@@ -77,7 +80,6 @@ def test_noise_layer_generation():
         print("\n✓ Visualization successful")
     except Exception as e:
         print(f"\n✗ Visualization failed: {str(e)}")
-
 
 def test_cellular_automaton():
     """Test the optimized cellular automaton implementation."""
@@ -153,7 +155,6 @@ def test_cellular_automaton():
         print("\n✓ Evolution visualization successful")
     except Exception as e:
         print(f"\n✗ Evolution visualization failed: {str(e)}")
-
 
 def test_clustering():
     """Test the optimized clustering implementation."""
@@ -232,7 +233,6 @@ def test_clustering():
     except Exception as e:
         print(f"\n✗ Cluster visualization failed: {str(e)}")
 
-
 def test_thresholding():
     """Test the optimized thresholding implementation."""
     print("\n=== Testing Thresholding ===")
@@ -306,7 +306,6 @@ def test_thresholding():
     except Exception as e:
         print(f"\n✗ Threshold comparison visualization failed: {str(e)}")
 
-
 def main():
     """Run all verification tests."""
     print("=== BaseGenerator Optimization Verification ===")
@@ -324,7 +323,6 @@ def main():
     test_thresholding()
 
     print("\n=== Verification Complete ===")
-
 
 if __name__ == "__main__":
     main()

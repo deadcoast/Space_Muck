@@ -11,17 +11,21 @@
 # EFFECT: Generates documentation for enhanced methods and project structure
 # NAMING: Doc[Type]Generator
 
-import logging
-import inspect
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
-from graphviz import Digraph
-
-
 @dataclass
 class MethodDoc:
     """Container for method documentation."""
+
+# Standard library imports
+import inspect
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from dataclasses import dataclass, field
+from graphviz import Digraph
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
     name: str
     description: str
@@ -29,7 +33,6 @@ class MethodDoc:
     returns: str
     examples: List[str] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
-
 
 class DocGenerator:
     """Generates documentation for enhanced methods and project structure.

@@ -4,25 +4,29 @@ Benchmark script for measuring the performance of parallel processing implementa
 in the BaseGenerator class across different grid sizes.
 """
 
+# Standard library imports
+import logging
 import os
 import sys
 import time
-import logging
-import numpy as np
+
+# Third-party library imports
 import matplotlib.pyplot as plt
+import numpy as np
+
+# Local application imports
+from entities.base_generator import BaseGenerator
 from typing import List, Optional
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to benchmark
-from entities.base_generator import BaseGenerator
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 class BenchmarkResults:
     """Class to store and visualize benchmark results."""
@@ -104,7 +108,6 @@ class BenchmarkResults:
             logging.info(f"Plot saved to {output_file}")
 
         plt.show()
-
 
 def benchmark_cellular_automaton(
     generator: BaseGenerator, grid_sizes: List[int], iterations: int = 1, runs: int = 3
@@ -193,7 +196,6 @@ def benchmark_cellular_automaton(
 
     return results
 
-
 def benchmark_clustering(
     generator: BaseGenerator,
     grid_sizes: List[int],
@@ -280,7 +282,6 @@ def benchmark_clustering(
 
     return results
 
-
 def main():
     """Main function to run the benchmarks."""
     # Create a BaseGenerator instance for benchmarking
@@ -331,7 +332,6 @@ def main():
         title="Clustering Parallel Processing Benchmark",
         output_file="clustering_benchmark_results.png",
     )
-
 
 if __name__ == "__main__":
     main()

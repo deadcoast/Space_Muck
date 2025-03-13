@@ -1,13 +1,18 @@
-import logging
-import pygame
-from typing import List, Dict, Optional, Tuple, Callable
 
-# Import base classes from ascii_base.py
-from ui.ui_base.ascii_base import UIElement, UIStyle, COLOR_TEXT, COLOR_HIGHLIGHT
 
+# Import base classes from ascii_base.py using absolute imports
 
 class ASCIIBox(UIElement):
     """A simple box UI element with customizable borders and content."""
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from typing import List, Dict, Optional, Tuple, Callable
+import pygame
 
     def __init__(
         self,
@@ -235,7 +240,6 @@ class ASCIIBox(UIElement):
 
         return None
 
-
 class ASCIIPanel(UIElement):
     """A panel UI element that can contain other UI elements."""
 
@@ -362,7 +366,6 @@ class ASCIIPanel(UIElement):
             logging.error(f"Error handling input: {e}")
 
         return None
-
 
 class ASCIIButton(UIElement):
     """A clickable button UI element."""
@@ -541,7 +544,6 @@ class ASCIIButton(UIElement):
             logging.error(f"Error handling mouse event: {e}")
 
         return None
-
 
 class ASCIIProgressBar(UIElement):
     """A progress bar UI element."""

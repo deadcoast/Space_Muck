@@ -5,19 +5,23 @@ This module demonstrates how to use the ASCIIBox with the UI event system.
 It provides practical examples of event registration, handling, and emission.
 """
 
+# Standard library imports
 import logging
 import time
-from typing import List, Tuple
 
-from ui.ui_element.ascii_box import ASCIIBox
+# Third-party library imports
+
+# Local application imports
+from typing import List, Tuple
 from ui.ui_base.event_system import UIEventType, UIEventData
+from ui.ui_element.ascii_box import ASCIIBox
 from ui.ui_helpers.ascii_box_event_helper import (
+
     register_ascii_box,
     add_click_handler,
     add_hover_handlers,
     create_interactive_box,
 )
-
 
 def demo_basic_event_integration() -> ASCIIBox:
     """
@@ -59,7 +63,6 @@ def demo_basic_event_integration() -> ASCIIBox:
 
     return box
 
-
 def demo_interactive_box_creation() -> Tuple[ASCIIBox, str]:
     """
     Demonstrate creating an interactive box with event handlers.
@@ -92,7 +95,6 @@ def demo_interactive_box_creation() -> Tuple[ASCIIBox, str]:
 
     print(f"Created interactive box with ID: {box_id}")
     return box, box_id
-
 
 def demo_multiple_boxes() -> List[ASCIIBox]:
     """
@@ -140,7 +142,6 @@ def demo_multiple_boxes() -> List[ASCIIBox]:
 
     return boxes
 
-
 def demo_custom_event_handling() -> ASCIIBox:
     """
     Demonstrate custom event handling with ASCIIBox.
@@ -176,7 +177,6 @@ def demo_custom_event_handling() -> ASCIIBox:
 
     return box
 
-
 def run_demo() -> None:
     """
     Run the full ASCIIBox event system integration demo.
@@ -207,7 +207,6 @@ def run_demo() -> None:
     except Exception as e:
         logging.error(f"Error in demo: {e}")
         print(f"Demo failed with error: {e}")
-
 
 if __name__ == "__main__":
     run_demo()

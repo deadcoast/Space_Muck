@@ -1,38 +1,35 @@
 # Space Muck UI Package
 # Define the public API for the ui module
+# Only include components that are directly imported in this file
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from .game_screen import ASCIIGameScreen
+from src.ui.ui_base.ascii_base import UIStyle
+from src..ui_element.ui_mining_status import MiningStatus
+
 __all__ = [
-    # Base components
+    # Base components - these are directly imported below
     "UIStyle",
     "AnimationStyle",
     "UIElement",
-    # Specialized components
-    "Menu",
-    "FleetDisplay",
-    "AsteroidFieldVisualizer",
-    "SymbioteEvolutionMonitor",
+    # Components that are still imported in this file
     "MiningStatus",
-    "SpaceMuckMainUI",
-    # ASCII UI components
-    "ASCIIBox",
-    "ASCIIPanel",
-    "ASCIIButton",
-    "draw_text",
-    "draw_panel",
+    "ASCIIGameScreen"
+    # Other components should be imported directly where needed
+    # rather than through this __init__ file to avoid circular imports
 ]
 
-# Import specific components instead of using star imports
-# Base components
-from ui.ascii_base import UIStyle, AnimationStyle, UIElement
+# Import only the base components to avoid circular imports
+# Other components should be imported directly where needed
 
-# Specialized components from component_modules
-from ui.component_modules import (
-    Menu,
-    FleetDisplay,
-    AsteroidFieldVisualizer,
-    SymbioteEvolutionMonitor,
-    MiningStatus,
-    SpaceMuckMainUI,
-)
+# Do not import ui_element modules here to avoid circular dependencies
+# These should be imported directly in the files that need them
 
-# ASCII UI components
-from ui.ascii_ui import ASCIIBox, ASCIIPanel, ASCIIButton, draw_text, draw_panel
+# Main UI component
+
+# No need to import ASCII UI components here
+# They should be imported directly where needed to avoid circular imports

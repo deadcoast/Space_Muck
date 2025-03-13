@@ -7,12 +7,22 @@ import itertools
 import logging
 import math
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
-import networkx as nx
 import numpy as np
+
+# Local application imports
+from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+from config import (
+from entities.base_entity import BaseEntity
+from typing import Any, Dict, List, Optional, Set, Tuple
+from utils.logging_setup import log_exception
+import networkx as nx
 import pygame
+
+# Standard library imports
+
+# Third-party library imports
 
 # Optional scipy imports
 try:
@@ -42,10 +52,9 @@ except ImportError:
     print("PerlinNoise package is not available. Using fallback noise generator.")
 
 # Local application imports
-from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
 # Import from config package
-from config import (
+
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -58,16 +67,12 @@ from config import (
     WINDOW_WIDTH,
     CELL_SIZE as GRID_CELL_SIZE,
 )
-from entities.base_entity import BaseEntity
-from utils.logging_setup import log_exception
-
 
 # Forward reference for type hints
 class AsteroidField:
     """Type hint for AsteroidField class."""
 
     pass
-
 
 class MinerEntity(BaseEntity):
     """

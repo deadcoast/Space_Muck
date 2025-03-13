@@ -3,12 +3,16 @@ Complete set of log formatters for structured logging with different output form
 Includes JSON, colored console output, and detailed error formatting.
 """
 
+# Standard library imports
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
+
+# Third-party library imports
+
+# Local application imports
 from pathlib import Path
 from typing import Any, Dict, Optional
-
 
 class ColorFormatter(logging.Formatter):
     """
@@ -51,7 +55,6 @@ class ColorFormatter(logging.Formatter):
             formatted += self.formatException(record.exc_info)
 
         return formatted
-
 
 class DetailedJSONFormatter(logging.Formatter):
     """
@@ -102,7 +105,6 @@ class DetailedJSONFormatter(logging.Formatter):
 
         return json.dumps(log_data)
 
-
 class FileOperationFormatter(logging.Formatter):
     """
     Specialized formatter for logging file operations with detailed stats.
@@ -143,7 +145,6 @@ class FileOperationFormatter(logging.Formatter):
 
         return "\n".join(output)
 
-
 class StructuredFormatter:
     """
     Factory class for creating appropriate formatters based on output type.
@@ -170,7 +171,6 @@ class StructuredFormatter:
             return FileOperationFormatter(**kwargs)
         else:
             return logging.Formatter(**kwargs)
-
 
 # Example usage:
 if __name__ == "__main__":

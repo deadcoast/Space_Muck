@@ -7,14 +7,18 @@ lightweight and optional for UI components while integrating with the
 existing event infrastructure.
 """
 
+# Standard library imports
 import logging
 import time
-from typing import Dict, List, Any, Callable, Set
-from enum import Enum, auto
+
+# Third-party library imports
+
+# Local application imports
 from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Dict, List, Any, Callable, Set
 
-from ui.event_system import EventType
-
+# Use absolute imports for consistency
 
 # Extend the main EventType enum with UI-specific events
 class UIEventType(Enum):
@@ -65,7 +69,6 @@ class UIEventType(Enum):
         # Return mapped event type if available, otherwise use UI_EVENT
         return mapping.get(ui_event_type, EventType.METRIC_UPDATED)
 
-
 @dataclass
 class UIEventData:
     """Container for UI event data."""
@@ -76,10 +79,25 @@ class UIEventData:
     timestamp: float = time.time()
     propagation_stopped: bool = False
 
+    def __init__(self, event_type: UIEventType = None, source_id: str = "", data: Dict[str, Any] = None, timestamp: float = None, propagation_stopped: bool = False):
+        """Initialize the event data with the given parameters.
+        
+        Args:
+            event_type: Type of the event (will be stored in type field)
+            source_id: ID of the component that triggered the event
+            data: Additional event data
+            timestamp: Event timestamp (defaults to current time)
+            propagation_stopped: Whether event propagation is stopped
+        """
+        self.type = event_type if event_type is not None else UIEventType.COMPONENT_CREATED
+        self.source_id = source_id
+        self.data = data if data is not None else {}
+        self.timestamp = timestamp if timestamp is not None else time.time()
+        self.propagation_stopped = propagation_stopped
+    
     def stop_propagation(self) -> None:
         """Stop event propagation to parent components."""
         self.propagation_stopped = True
-
 
 class UIEventSystem:
     """Specialized event system for UI components.

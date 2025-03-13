@@ -3,11 +3,17 @@
 Unit tests for the Fleet Manager class.
 """
 
-import unittest
-import sys
-import os
+# Standard library imports
 import math
+import os
+import sys
+
+# Third-party library imports
+
+# Local application imports
+from systems.fleet_manager import Fleet  # noqa: E402
 from unittest.mock import MagicMock
+import unittest
 
 # No typing imports needed for this file
 
@@ -26,8 +32,6 @@ sys.modules["src.entities.enemy_ship"] = MagicMock()
 sys.modules["src.entities.enemy_ship"].EnemyShip = mock_enemy_ship
 
 # Now import the class to test
-from systems.fleet_manager import Fleet  # noqa: E402
-
 
 class TestFleetManager(unittest.TestCase):
     """Test cases for the Fleet Manager class."""
@@ -644,7 +648,6 @@ class TestFleetManager(unittest.TestCase):
 
             # Restore the original method
             self.fleet._check_for_enemies = original_check_for_enemies
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,14 +6,19 @@ based on mineral consumption, environmental factors, and interactions between
 different colonies. It uses cellular automaton principles for growth simulation.
 """
 
+# Standard library imports
 import itertools
 
-# Standard library imports
+# Third-party library imports
+from numpy.random import Generator, PCG64
+import numpy as np
+
+# Local application imports
 from typing import Tuple, List, cast
 
+# Standard library imports
+
 # Third-party imports
-import numpy as np
-from numpy.random import Generator, PCG64
 
 # Handle optional dependencies gracefully
 try:
@@ -27,7 +32,6 @@ except ImportError:
     logging.warning(
         "scipy not available. Some symbiote evolution features may be limited."
     )
-
 
 class SymbioteEvolutionAlgorithm:
     """

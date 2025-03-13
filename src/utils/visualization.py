@@ -5,11 +5,15 @@ This module provides visualization tools for generator outputs,
 helping developers understand and debug procedural generation.
 """
 
+# Standard library imports
 import logging
 import os
-from typing import List, Optional
 
+# Third-party library imports
 import numpy as np
+
+# Local application imports
+from typing import List, Optional
 
 # Constants
 MATPLOTLIB_NOT_AVAILABLE_MSG = "Cannot visualize: matplotlib not available"
@@ -31,7 +35,6 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
     logging.warning("PIL not available. Image export features will be limited.")
-
 
 class GeneratorVisualizer:
     """Visualization tools for generator outputs."""
@@ -356,7 +359,6 @@ class GeneratorVisualizer:
             save=save,
             filename=filename,
         )
-
 
 def visualize_generator_output(
     generator,

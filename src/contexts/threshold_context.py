@@ -5,13 +5,17 @@ This module provides a context for managing thresholds, triggers,
 and notifications within the game architecture.
 """
 
+# Standard library imports
+from datetime import datetime
 import logging
-from typing import Dict, List, Optional, Set, Callable
+
+# Third-party library imports
+
+# Local application imports
+from .game_context import GameContext, GameEventType, GameEvent
 from dataclasses import dataclass
 from enum import Enum, auto
-from datetime import datetime
-from .game_context import GameContext, GameEventType, GameEvent
-
+from typing import Dict, List, Optional, Set, Callable
 
 # Threshold Types
 class ThresholdType(Enum):
@@ -21,7 +25,6 @@ class ThresholdType(Enum):
     EVENT = auto()  # Event-based thresholds
     COMPOSITE = auto()  # Multiple condition thresholds
 
-
 # Threshold States
 class ThresholdState(Enum):
     INACTIVE = auto()  # Threshold not being monitored
@@ -29,7 +32,6 @@ class ThresholdState(Enum):
     TRIGGERED = auto()  # Threshold condition met
     CLEARED = auto()  # Condition no longer met
     ERROR = auto()  # Error in monitoring
-
 
 @dataclass
 class ThresholdInfo:
@@ -44,7 +46,6 @@ class ThresholdInfo:
     last_check: float = 0.0
     trigger_count: int = 0
     error_count: int = 0
-
 
 class ThresholdContext:
     """

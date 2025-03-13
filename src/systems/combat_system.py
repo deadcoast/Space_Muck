@@ -2,13 +2,16 @@
 Combat system module: Handles combat encounters between the player and enemy ships.
 """
 
+# Standard library imports
 import logging
 import random
-from typing import Dict, Optional, Tuple, Any, List
 
-from entities.player import Player
+# Third-party library imports
+
+# Local application imports
 from entities.enemy_ship import EnemyShip
-
+from entities.player import Player
+from typing import Dict, Optional, Tuple, Any, List
 
 def print_combat_header() -> None:
     print(
@@ -19,7 +22,6 @@ def print_combat_header() -> None:
 │  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
 │                                                              │"""
     )
-
 
 def print_combat_error(error_msg: str, details: List[str] = None) -> None:
     print(
@@ -42,7 +44,6 @@ def print_combat_error(error_msg: str, details: List[str] = None) -> None:
 │                                                              │"""
     )
 
-
 def print_combat_success(message: str, details: List[str] = None) -> None:
     print(
         """
@@ -63,7 +64,6 @@ def print_combat_success(message: str, details: List[str] = None) -> None:
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
 │                                                              │"""
     )
-
 
 def print_combat_suggestions(
     suggestions: List[str], ship_stats: Dict[str, Any] = None
@@ -94,7 +94,6 @@ def print_combat_suggestions(
             )
         )
     print("└──────────────────────────────────────────────────────────────┘")
-
 
 class CombatSystem:
     """

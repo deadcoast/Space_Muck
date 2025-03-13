@@ -7,14 +7,17 @@ either system directly, following strict principles of modularity and
 optional integration.
 """
 
+# Standard library imports
 import logging
-from typing import Dict, Any
-from ui.ui_base.component_event_bridge import connect_systems
 
+# Third-party library imports
+
+# Local application imports
+from typing import Dict, Any
+from src.ui.ui_base.component_event_bridge import connect_systems
 
 # Track initialization status
 _initialization_status = {"initialized": False, "error": None, "timestamp": None}
-
 
 def initialize_ui_systems() -> bool:
     """
@@ -57,7 +60,6 @@ def initialize_ui_systems() -> bool:
         }
         logging.error(f"Error initializing UI systems: {e}")
         return False
-
 
 def get_initialization_status() -> Dict[str, Any]:
     """
