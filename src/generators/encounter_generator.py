@@ -14,6 +14,7 @@ from entities.player import Player
 from systems.combat_system import CombatSystem
 from typing import Dict, Tuple, Any
 
+
 class EncounterGenerator:
     """
     Generates combat and other encounters based on player location and status.

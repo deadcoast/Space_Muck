@@ -17,6 +17,7 @@ from config import WINDOW_HEIGHT, COLOR_TEXT
 from typing import List, Tuple, Dict, Any, Optional
 import pygame
 
+
 class NotificationManager:
     """
     Displays on-screen notifications in a scrollable side panel.

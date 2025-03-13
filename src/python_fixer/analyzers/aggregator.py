@@ -1,4 +1,18 @@
+# Standard library imports
+from collections import defaultdict
+from datetime import datetime, timezone
+from functools import wraps
+import inspect
+import logging as _logging
 
+# Third-party library imports
+import numpy as np
+import pandas as pd
+
+# Local application imports
+from contextlib import suppress
+from typing import Any, Dict, List, TYPE_CHECKING
+import importlib.util
 
 # Check for optional dependencies
 VARIANT_LOGGERS_AVAILABLE = importlib.util.find_spec("variant_loggers") is not None
@@ -22,22 +36,6 @@ if VARIANT_LOGGERS_AVAILABLE:
 class Aggregator:
     """Aggregate log entries for analysis"""
 
-# Standard library imports
-from collections import defaultdict
-from datetime import datetime, timezone
-from functools import wraps
-import inspect
-import logging as _logging
-
-# Third-party library imports
-import numpy as np
-import pandas as pd
-
-# Local application imports
-from contextlib import suppress
-from typing import Any, Dict, List, TYPE_CHECKING
-import importlib.util
-
     def __init__(self, window_size: int = 1000):
         self.window_size = window_size
         self.entries: List[LogRecord] = []
@@ -45,6 +43,7 @@ import importlib.util
         self.error_count = 0
         self.processing_times: List[float] = []
         self.counts_over_time = []
+
 
     def add_entry(self, record: LogRecord):
         """Add new log entry"""
@@ -99,25 +98,25 @@ import importlib.util
             "correlations": self._analyze_correlations(),
         }
 
-    def _analyze_correlations(self) -> Dict[str, Any]:
-        """Analyze correlations between log attributes"""
-        if not self.entries:
-            return {}
-        df = pd.DataFrame(
-            [
-                {
-                    "level": e.getLevelName(),
-                    "pattern": (
-                        e.extra["patterns"]["pattern_id"]
-                        if "patterns" in e.extra
-                        else -1
-                    ),
-                    "has_correlation": 1 if "correlations" in e.extra else 0,
-                }
-                for e in self.entries
-            ]
-        )
-        return {} if df.empty else df.corr().to_dict(orient="dict")
+def _analyze_correlations(self) -> Dict[str, Any]:
+    """Analyze correlations between log attributes"""
+    if not self.entries:
+        return {}
+    df = pd.DataFrame(
+        [
+            {
+                "level": e.getLevelName(),
+                "pattern": (
+                    e.extra["patterns"]["pattern_id"]
+                    if "patterns" in e.extra
+                    else -1
+                ),
+                "has_correlation": 1 if "correlations" in e.extra else 0,
+            }
+            for e in self.entries
+        ]
+    )
+    return {} if df.empty else df.corr().to_dict(orient="dict")
 
 class LogAggregator:
     """Real-time log aggregation and analysis"""

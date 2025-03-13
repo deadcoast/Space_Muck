@@ -13,6 +13,7 @@ import ast
 # These typing imports are used in test code strings that are parsed with ast.parse()
 # The linter may incorrectly mark them as unused since they appear in string literals
 
+
 class TestTypeAnnotationVisitor(TestCase):
     """Test suite for TypeAnnotationVisitor."""
 

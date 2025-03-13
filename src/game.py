@@ -17,6 +17,7 @@ from config import GAME_CONFIG
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Callable
 
+
 @dataclass
 class StateTransition:
     """Represents a state transition with timing information."""
@@ -28,20 +29,24 @@ class StateTransition:
     success: bool
     error: Optional[str] = None
 
+
 class GameStateError(Exception):
     """Base exception for game state errors."""
 
     pass
+
 
 class InvalidStateTransitionError(GameStateError):
     """Raised when an invalid state transition is attempted."""
 
     pass
 
+
 class StateValidationError(GameStateError):
     """Raised when state validation fails."""
 
     pass
+
 
 class Game:
     """Main game class with enhanced state management."""
@@ -151,7 +156,9 @@ class Game:
         try:
             # Validate the transition
             if self._validate_state_transition(new_state):
-                self._perform_state_transition_and_log(new_state, start_time, transition)
+                self._perform_state_transition_and_log(
+                    new_state, start_time, transition
+                )
         except GameStateError as e:
             self._handle_state_transition_error(
                 e, transition, "State transition failed: "

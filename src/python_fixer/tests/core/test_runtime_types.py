@@ -26,6 +26,7 @@ TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
 # For type checking only - these imports are not executed at runtime
 
+
 # Test fixtures
 @pytest.fixture
 def sample_protocol_class():
@@ -47,6 +48,7 @@ def sample_protocol_class():
 
     return SampleProtocol
 
+
 @pytest.fixture
 def valid_implementation():
     """Create a valid implementation of the sample protocol."""
@@ -62,6 +64,7 @@ def valid_implementation():
             return {"status": "ok"}
 
     return ValidImpl()
+
 
 @pytest.fixture
 def invalid_implementation():
@@ -79,6 +82,7 @@ def invalid_implementation():
         # method_c missing entirely to test protocol completeness
 
     return InvalidImpl()
+
 
 # Basic runtime type checking tests
 @pytest.mark.unit
@@ -102,6 +106,7 @@ def test_basic_type_validation():
     assert not result.is_valid
     assert "expected <class 'str'>, got int" in result.errors[0]
 
+
 @pytest.mark.unit
 def test_optional_type_validation():
     """Test runtime validation of Optional types."""
@@ -121,6 +126,7 @@ def test_optional_type_validation():
     assert (
         "expected Union[<class 'int'>, <class 'NoneType'>], got str" in result.errors[0]
     )
+
 
 # Protocol implementation tests
 @pytest.mark.unit
@@ -167,6 +173,7 @@ def test_protocol_implementation(
         "Object does not implement protocol" in result.errors[0]
     ), "Missing or incorrect error message for protocol implementation failure"
 
+
 # Edge cases and error handling
 @pytest.mark.unit
 def test_type_error_messages():
@@ -190,6 +197,7 @@ def test_type_error_messages():
     assert "string_field" in result.errors[0]
     assert "expected <class 'str'>" in result.errors[0]
     assert "got int" in result.errors[0]
+
 
 @pytest.mark.unit
 def test_runtime_type_inference():
@@ -219,6 +227,7 @@ def test_runtime_type_inference():
     # Return type Any should allow any value
     assert obj.get_value() == [1, 2, 3]
 
+
 @pytest.mark.unit
 @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="numpy not available")
 def test_numpy_type_validation():
@@ -244,6 +253,7 @@ def test_numpy_type_validation():
     result = validate_type([1, 2, 3], np.ndarray)
     assert not result.is_valid, "List should not validate as numpy array"
     assert "expected <class 'ndarray'>, got list" in result.errors[0]
+
 
 @pytest.mark.unit
 @pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch not available")
@@ -296,6 +306,7 @@ def test_torch_type_validation():
     assert not result.is_valid, "Invalid model should not validate as nn.Module"
     assert "expected <class 'Module'>, got FakeModel" in result.errors[0]
 
+
 @pytest.mark.unit
 @pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch not available")
 def test_torch_type_inference_fallback():
@@ -328,6 +339,7 @@ def test_torch_type_inference_fallback():
 
     with pytest.raises(AssertionError, match="Expected 3x3 tensor"):
         requires_specific_shape(tensor)
+
 
 # Integration tests
 @pytest.mark.integration

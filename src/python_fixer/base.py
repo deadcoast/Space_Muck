@@ -1,4 +1,17 @@
+# Standard library imports
+from datetime import datetime
+import json
+import sys
+import uuid
 
+# Third-party library imports
+
+# Local application imports
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, AsyncIterator
+import threading
 
 # Base logging levels
 DEBUG = 10
@@ -12,32 +25,30 @@ DEFAULT_DASHBOARD_HOST = "localhost"
 DEFAULT_DASHBOARD_PORT = 8000
 DEFAULT_DASHBOARD_RELOAD = False
 
-def getLevelName(level: int) -> str:
-    """Convert numeric level to string representation."""
+@dataclass
+class LogLevels:
+    DEBUG: str = "DEBUG"
+    INFO: str = "INFO"
+    WARNING: str = "WARNING"
+    ERROR: str = "ERROR"
+    CRITICAL: str = "CRITICAL"
 
-# Standard library imports
-from datetime import datetime
-import json
-import sys
-import uuid
+levels = LogLevels()
 
-# Third-party library imports
-
-# Local application imports
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-import threading
-
-    levels = {
-        DEBUG: "DEBUG",
-        INFO: "INFO",
-        WARNING: "WARNING",
-        ERROR: "ERROR",
-        CRITICAL: "CRITICAL",
-    }
-    return levels.get(level, str(level))
+def get_level_name(level: int) -> str:
+    """Convert a numeric level to its string representation."""
+    if level == DEBUG:
+        return levels.DEBUG
+    elif level == INFO:
+        return levels.INFO
+    elif level == WARNING:
+        return levels.WARNING
+    elif level == ERROR:
+        return levels.ERROR
+    elif level == CRITICAL:
+        return levels.CRITICAL
+    else:
+        return f"Level {level}"
 
 @dataclass
 class LogContext:
@@ -108,11 +119,11 @@ class Handler:
         self.level = INFO
         self.formatter = None
 
-    def setLevel(self, level: int):
+    def set_level(self, level: int):
         """Set the logging level for this handler."""
         self.level = level
 
-    def setFormatter(self, formatter):
+    def set_formatter(self, formatter):
         """Set the formatter for this handler."""
         self.formatter = formatter
 
@@ -175,13 +186,13 @@ class Formatter:
             # Check for level-specific format rules
             if "format_rules" in fmt_config:
                 for rule in fmt_config["format_rules"]:
-                    if getLevelName(record.level) == rule["level"]:
+                    if get_level_name(record.level) == rule["level"]:
                         format_str = rule["format"]
                         break
 
             return format_str.format(
                 timestamp=record.timestamp,
-                level=getLevelName(record.level),
+                level=get_level_name(record.level),
                 module=record.module,
                 function=record.function,
                 line=record.line,
@@ -191,7 +202,7 @@ class Formatter:
             # If fmt is not JSON, use it as a simple format string
             return self.fmt.format(
                 timestamp=record.timestamp,
-                level=getLevelName(record.level),
+                level=get_level_name(record.level),
                 module=record.module,
                 function=record.function,
                 line=record.line,
@@ -208,7 +219,7 @@ class Logger:
         self._context_stack: List[LogContext] = []
 
     @asynccontextmanager
-    async def context(self, **kwargs) -> LogContext:
+    async def context(self, **kwargs) -> AsyncIterator[LogContext]:
         """Create an async logging context with additional metadata.
 
         Args:
@@ -233,11 +244,11 @@ class Logger:
         finally:
             self._context_stack.pop()
 
-    def setLevel(self, level: int):
+    def set_level(self, level: int):
         """Set the logging level for this logger."""
         self.level = level
 
-    def addHandler(self, handler: Handler):
+    def add_handler(self, handler: Handler):
         """Add a handler to this logger."""
         self.handlers.append(handler)
 
@@ -245,7 +256,7 @@ class Logger:
         """Get the current logging context if available."""
         return self._context_stack[-1] if self._context_stack else None
 
-    def removeHandler(self, handler: Handler):
+    def remove_handler(self, handler: Handler):
         """Remove a handler from this logger."""
         if handler in self.handlers:
             self.handlers.remove(handler)
@@ -265,28 +276,28 @@ class Logger:
 # Logger cache to avoid creating multiple loggers with the same name
 _loggers = {}
 
-def getLogger(name: str) -> Logger:
+def get_logger(name: str) -> Logger:
     """Get or create a logger with the specified name."""
     if name not in _loggers:
         _loggers[name] = Logger(name)
     return _loggers[name]
 
-def debug(msg: str, *args, **kwargs):
+def debug(msg: str, **kwargs):
     """Log a debug message."""
-    getLogger("root").log(DEBUG, msg, kwargs.get("extra"))
+    get_logger("root").log(DEBUG, msg, kwargs.get("extra"))
 
-def info(msg: str, *args, **kwargs):
+def info(msg: str, **kwargs):
     """Log an info message."""
-    getLogger("root").log(INFO, msg, kwargs.get("extra"))
+    get_logger("root").log(INFO, msg, kwargs.get("extra"))
 
-def warning(msg: str, *args, **kwargs):
+def warning(msg: str, **kwargs):
     """Log a warning message."""
-    getLogger("root").log(WARNING, msg, kwargs.get("extra"))
+    get_logger("root").log(WARNING, msg, kwargs.get("extra"))
 
-def error(msg: str, *args, **kwargs):
+def error(msg: str, **kwargs):
     """Log an error message."""
-    getLogger("root").log(ERROR, msg, kwargs.get("extra"))
+    get_logger("root").log(ERROR, msg, kwargs.get("extra"))
 
-def critical(msg: str, *args, **kwargs):
+def critical(msg: str, **kwargs):
     """Log a critical message."""
-    getLogger("root").log(CRITICAL, msg, kwargs.get("extra"))
+    get_logger("root").log(CRITICAL, msg, kwargs.get("extra"))

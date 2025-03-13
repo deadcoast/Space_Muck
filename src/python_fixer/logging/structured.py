@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+
 class JSONFormatter(logging.Formatter):
     """Format log records as JSON"""
 
@@ -45,6 +46,7 @@ class JSONFormatter(logging.Formatter):
             }
 
         return json.dumps(log_data)
+
 
 class StructuredLogger:
     """Enhanced logger with structured output and convenience methods"""

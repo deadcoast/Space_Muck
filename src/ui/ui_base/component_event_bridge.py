@@ -19,6 +19,7 @@ import time
 from src.ui.ui_base.component_registry import ComponentRegistry
 from src.ui.ui_base.event_system import UIEventSystem
 
+
 def connect_systems() -> bool:
     """
     Connect component registry with event system.
@@ -45,6 +46,7 @@ def connect_systems() -> bool:
         logging.error(f"Error connecting component registry and event system: {e}")
         return False
 
+
 def _on_component_registered(component_id: str, component_type: str) -> None:
     """
     Forward component registration to event system.
@@ -64,6 +66,7 @@ def _on_component_registered(component_id: str, component_type: str) -> None:
     except Exception as e:
         logging.error(f"Error in component registration event: {e}")
 
+
 def _on_component_unregistered(component_id: str) -> None:
     """
     Clean up component from event system when unregistered.
@@ -82,6 +85,7 @@ def _on_component_unregistered(component_id: str) -> None:
         logging.debug(f"Component unregistered event emitted for {component_id}")
     except Exception as e:
         logging.error(f"Error in component unregistration event: {e}")
+
 
 def _on_parent_changed(child_id: str, parent_id: str) -> None:
     """

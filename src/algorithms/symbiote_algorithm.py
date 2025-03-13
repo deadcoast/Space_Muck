@@ -33,6 +33,7 @@ except ImportError:
         "scipy not available. Some symbiote evolution features may be limited."
     )
 
+
 class SymbioteEvolutionAlgorithm:
     """
     Manages symbiote evolution based on mineral consumption and environmental factors.
@@ -206,14 +207,16 @@ class SymbioteEvolutionAlgorithm:
         """
         height, width = grid.shape
         new_grid = np.zeros_like(grid)
-        
+
         # Process the grid using helper methods to reduce complexity
         self._process_grid_cells(grid, new_grid, birth_set, survival_set, height, width)
         return new_grid
-        
-    def _process_grid_cells(self, grid, new_grid, birth_set, survival_set, height, width):
+
+    def _process_grid_cells(
+        self, grid, new_grid, birth_set, survival_set, height, width
+    ):
         """Process each cell in the grid to apply cellular automaton rules.
-        
+
         Args:
             grid: Original grid
             new_grid: Grid to update
@@ -224,18 +227,20 @@ class SymbioteEvolutionAlgorithm:
         """
         for y, x in itertools.product(range(height), range(width)):
             neighbors = self._count_neighbors(grid, x, y, width, height)
-            self._apply_cell_rules(grid, new_grid, x, y, neighbors, birth_set, survival_set)
-    
+            self._apply_cell_rules(
+                grid, new_grid, x, y, neighbors, birth_set, survival_set
+            )
+
     def _count_neighbors(self, grid, x, y, width, height):
         """Count the number of live neighbors for a cell.
-        
+
         Args:
             grid: Grid to analyze
             x: Cell x coordinate
             y: Cell y coordinate
             width: Grid width
             height: Grid height
-            
+
         Returns:
             Number of live neighbors
         """
@@ -252,10 +257,12 @@ class SymbioteEvolutionAlgorithm:
                 if grid[ny, nx] > 0:
                     neighbors += 1
         return neighbors
-    
-    def _apply_cell_rules(self, grid, new_grid, x, y, neighbors, birth_set, survival_set):
+
+    def _apply_cell_rules(
+        self, grid, new_grid, x, y, neighbors, birth_set, survival_set
+    ):
         """Apply cellular automaton rules to a single cell.
-        
+
         Args:
             grid: Original grid
             new_grid: Grid to update
@@ -266,9 +273,11 @@ class SymbioteEvolutionAlgorithm:
             survival_set: Set of neighbor counts that allow cells to survive
         """
         cell_alive = grid[y, x] > 0
-        
+
         # Apply cellular automaton rules
-        if (cell_alive and neighbors in survival_set) or (not cell_alive and neighbors in birth_set):
+        if (cell_alive and neighbors in survival_set) or (
+            not cell_alive and neighbors in birth_set
+        ):
             new_grid[y, x] = 1
 
     def apply_environmental_effects(self, grid, mineral_map, hostility):
@@ -302,15 +311,15 @@ class SymbioteEvolutionAlgorithm:
             return self._handle_colony_competition(grid, labeled_grid, num_colonies)
         else:
             return self._handle_colony_cooperation(grid, labeled_grid, num_colonies)
-            
+
     def _handle_colony_competition(self, grid, labeled_grid, num_colonies):
         """Handle competition between colonies.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             labeled_grid: Grid with labeled colonies
             num_colonies: Number of colonies
-            
+
         Returns:
             Updated grid after competition
         """
@@ -323,37 +332,37 @@ class SymbioteEvolutionAlgorithm:
             size_ratio = colony_sizes[i - 1] / max_size
             if size_ratio < 0.3:
                 # Small colonies may die off
-                death_mask = (labeled_grid == i) & (
-                    self.rng.random(grid.shape) < 0.3
-                )
+                death_mask = (labeled_grid == i) & (self.rng.random(grid.shape) < 0.3)
                 grid[death_mask] = 0
-                
+
         return grid
-        
+
     def _get_colony_sizes(self, grid, labeled_grid, num_colonies):
         """Get sizes of all colonies.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             labeled_grid: Grid with labeled colonies
             num_colonies: Number of colonies
-            
+
         Returns:
             Array of colony sizes
         """
         if SCIPY_AVAILABLE:
             return ndimage.sum(grid, labeled_grid, range(1, num_colonies + 1))
         else:
-            return self._manual_sum_by_label(grid, labeled_grid, range(1, num_colonies + 1))
-        
+            return self._manual_sum_by_label(
+                grid, labeled_grid, range(1, num_colonies + 1)
+            )
+
     def _handle_colony_cooperation(self, grid, labeled_grid, num_colonies):
         """Handle cooperation between colonies.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             labeled_grid: Grid with labeled colonies
             num_colonies: Number of colonies
-            
+
         Returns:
             Updated grid after cooperation
         """
@@ -364,35 +373,33 @@ class SymbioteEvolutionAlgorithm:
         for i in range(num_colonies):
             for j in range(i + 1, num_colonies):
                 self._connect_colonies_if_close(grid, centers[i], centers[j])
-                
+
         return grid
-        
+
     def _get_colony_centers(self, grid, labeled_grid, num_colonies):
         """Get center coordinates for all colonies.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             labeled_grid: Grid with labeled colonies
             num_colonies: Number of colonies
-            
+
         Returns:
             List of colony center coordinates
         """
         if SCIPY_AVAILABLE:
             return cast(
                 List[Tuple[float, float]],
-                ndimage.center_of_mass(
-                    grid, labeled_grid, range(1, num_colonies + 1)
-                ),
+                ndimage.center_of_mass(grid, labeled_grid, range(1, num_colonies + 1)),
             )
         else:
             return self._manual_center_of_mass(
                 grid, labeled_grid, range(1, num_colonies + 1)
             )
-        
+
     def _connect_colonies_if_close(self, grid, center1, center2):
         """Connect two colonies if they are close enough.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             center1: First colony center coordinates
@@ -406,10 +413,10 @@ class SymbioteEvolutionAlgorithm:
         # If colonies are close enough, create a bridge between them
         if distance < 20:  # Threshold for cooperation
             self._create_bridge_between_colonies(grid, center1, center2, distance)
-            
+
     def _create_bridge_between_colonies(self, grid, center1, center2, distance):
         """Create a bridge between two colony centers.
-        
+
         Args:
             grid: Binary grid representing symbiote presence
             center1: First colony center coordinates
@@ -420,7 +427,7 @@ class SymbioteEvolutionAlgorithm:
         steps = int(distance * 1.5)  # More points for smoother line
         if steps <= 0:
             return
-            
+
         x_points = np.linspace(center1[0], center2[0], steps)
         y_points = np.linspace(center1[1], center2[1], steps)
 

@@ -94,6 +94,7 @@ except ImportError as e:
         def _ring_pattern(self, *args, **kwargs):
             return np.zeros((10, 10))
 
+
 # Check for AsteroidField availability instead of importing it directly
 try:
     ASTEROID_FIELD_AVAILABLE = (
@@ -106,6 +107,7 @@ except ImportError as e:
     print(f"Error checking for AsteroidField: {e}")
     ASTEROID_FIELD_AVAILABLE = False
     ASTEROID_FIELD_IMPORT_SUCCESSFUL = False
+
 
 # Visualization helper for when matplotlib is available
 class GeneratorVisualizer:
@@ -139,7 +141,7 @@ class GeneratorVisualizer:
                 im = axes[i].imshow(
                     grid_data["grid"], cmap=grid_data.get("cmap", "viridis")
                 )
-                axes[i].set_title(grid_data.get("title", f"Grid {i+1}"))
+                axes[i].set_title(grid_data.get("title", f"Grid {i + 1}"))
                 fig.colorbar(im, ax=axes[i], fraction=0.046, pad=0.04)
 
         # Hide any unused subplots
@@ -151,6 +153,7 @@ class GeneratorVisualizer:
             plt.show()
 
         return fig
+
 
 class TestAsteroidGenerator(unittest.TestCase):
     """Comprehensive test cases for the AsteroidGenerator class.
@@ -249,7 +252,6 @@ class TestAsteroidGenerator(unittest.TestCase):
     # TODO Rename this here and in `test_pattern_generation`
     def _extracted_from_test_pattern_generation_10(self):
         # Import the module to patch the functions
-        
 
         from contextlib import suppress
 
@@ -671,7 +673,7 @@ class TestAsteroidGenerator(unittest.TestCase):
 
         # Check if caching improved performance
         if cached_time < original_time:
-            print(f"Cache improved performance by {original_time/cached_time:.2f}x")
+            print(f"Cache improved performance by {original_time / cached_time:.2f}x")
 
         if _ := next(
             (
@@ -916,6 +918,7 @@ class TestAsteroidGenerator(unittest.TestCase):
             if original_noise_method:
                 self.generator._generate_base_noise = original_noise_method
 
+
 def run_comprehensive_tests():
     """Run a comprehensive test suite for the AsteroidGenerator."""
     print("=== AsteroidGenerator Comprehensive Test Suite ===")
@@ -931,6 +934,7 @@ def run_comprehensive_tests():
     # Run the tests
     print("\nRunning tests...")
     unittest.main()
+
 
 if __name__ == "__main__":
     run_comprehensive_tests()

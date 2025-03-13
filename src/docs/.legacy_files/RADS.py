@@ -26,6 +26,7 @@ import scipy.stats as stats
 # Optional dependencies
 try:
     from perlin_noise import PerlinNoise
+
     PERLIN_AVAILABLE = True
 except ImportError:
     PERLIN_AVAILABLE = False
@@ -80,6 +81,7 @@ STATE_SHOP: str = "SHOP"
 STATE_MAP: str = "MAP"
 STATE_SHOP: str = "SHOP"
 STATE_MAP: str = "MAP"
+
 
 # -------------------------------------
 # AsteroidField Class
@@ -912,6 +914,7 @@ class AsteroidField:
                             self.grid[y, x] * self.rare_bonus_multiplier
                         )
 
+
 # -------------------------------------
 # Enhanced Symbiote Evolution System
 # -------------------------------------
@@ -1434,7 +1437,6 @@ class MinerEntity:
 
     def _generate_random_nodes(self, field):
         # Create network-like structures using graph theory concepts
-        
 
         # Generate random nodes
         num_nodes = random.randint(5, 10)
@@ -1613,6 +1615,7 @@ class MinerEntity:
         self.hunger = min(1.0, self.hunger)
 
         return num_colonies, self.population
+
 
 # -------------------------------------
 # Player Class (Mining Ship)
@@ -1859,6 +1862,7 @@ class Player:
         results["minerals_mined"] = reward
 
         return results
+
 
 # -------------------------------------
 # Shop Class (Upgrades)
@@ -2172,6 +2176,7 @@ class Shop:
 
         return False  # Keep shop open
 
+
 # -------------------------------------
 # Notification Manager Class
 # -------------------------------------
@@ -2395,6 +2400,7 @@ class NotificationManager:
                     ),
                 )
 
+
 # -------------------------------------
 # Utility Function: Draw Text
 # -------------------------------------
@@ -2412,6 +2418,7 @@ def draw_text(
         font = pygame.font.Font(None, size)
     text_surface = font.render(text, True, color)
     surface.blit(text_surface, (x, y))
+
 
 # -------------------------------------
 # Game Class (Main Engine)
@@ -3163,6 +3170,7 @@ class Game:
             self.notifier.add(
                 f"Mining reduced by {symbiote_pressure:.0%} due to symbiote activity"
             )
+
 
 # -------------------------------------
 # Main Entry Point

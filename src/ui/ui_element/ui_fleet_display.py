@@ -1,12 +1,12 @@
-
-
 # Define standard colors for UI components
 COLOR_TEXT = (220, 220, 220)  # Standard text color
 COLOR_BG = (20, 20, 30)  # Standard background color
 COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 
+
 class FleetDisplay(UIElement):
     """Displays fleet information with cellular automaton-based animations"""
+
 
 # Standard library imports
 
@@ -19,9 +19,10 @@ from typing import List, Dict, Any
 import contextlib
 import curses
 
-    
+
 # Ship pattern constants
 CAPITAL_SHIP_PATTERN = "<[≡≡≡≡≡]>"
+
 
 def __init__(
     self,
@@ -36,6 +37,7 @@ def __init__(
     self.fleet_data = fleet_data
     self.animation_frame = 0
     self.ship_patterns = self._generate_ship_patterns()
+
 
 def _generate_ship_patterns(self) -> Dict[str, List[str]]:
     """Generate ASCII art patterns for different ship types"""
@@ -60,9 +62,10 @@ def _generate_ship_patterns(self) -> Dict[str, List[str]]:
         ],
     }
 
+
 def draw(self, stdscr, font=None):
     """Draw the fleet display with animated ships
-    
+
     Args:
         stdscr: The curses screen to draw on
         font: Optional font to use for rendering (not used in curses mode)
@@ -97,6 +100,7 @@ def draw(self, stdscr, font=None):
 
     # Update animation frame
     self.animation_frame += 1
+
 
 def update_fleet(self, new_fleet_data: Dict[str, Any]):
     """Update the fleet information"""

@@ -32,6 +32,7 @@ modules_to_mock = [
 for module in modules_to_mock:
     sys.modules[module] = MagicMock()
 
+
 # Create a mock for the SymbioteEvolutionAlgorithm
 class MockSymbioteEvolutionAlgorithm:
     def __init__(self, **kwargs):
@@ -44,6 +45,7 @@ class MockSymbioteEvolutionAlgorithm:
 
     def generate_cellular_automaton_rules(self, *args, **kwargs):
         return {3, 6}, {2, 3}
+
 
 # Replace the actual algorithm with our mock
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()

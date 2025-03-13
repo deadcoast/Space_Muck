@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Callable
 
+
 # Module States
 class ModuleState(Enum):
     UNINITIALIZED = auto()
@@ -24,6 +25,7 @@ class ModuleState(Enum):
     ERROR = auto()
     SHUTTING_DOWN = auto()
     TERMINATED = auto()
+
 
 # Module Categories
 class ModuleCategory(Enum):
@@ -35,6 +37,7 @@ class ModuleCategory(Enum):
     UI = auto()  # User interface modules
     UTILITY = auto()  # Helper and utility modules
 
+
 # Module Dependencies
 @dataclass
 class ModuleDependency:
@@ -45,6 +48,7 @@ class ModuleDependency:
     min_version: Optional[str] = None
     max_version: Optional[str] = None
 
+
 # Module Configuration
 @dataclass
 class ModuleConfig:
@@ -54,6 +58,7 @@ class ModuleConfig:
     auto_start: bool = True
     priority: int = 1
     category: ModuleCategory = ModuleCategory.UTILITY
+
 
 # Module Interface Definition
 class ModuleInterface:
@@ -78,6 +83,7 @@ class ModuleInterface:
     def shutdown(self) -> None:
         """Shutdown the module."""
         raise NotImplementedError
+
 
 class ModuleManager:
     """

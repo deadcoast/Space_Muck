@@ -52,6 +52,7 @@ try:
 except ImportError:
     LIBCST_AVAILABLE = False
 
+
 # Test fixtures
 @pytest.fixture
 def temp_package_structure(tmp_path: Path) -> Path:
@@ -132,6 +133,7 @@ class ClassD:
 
     return pkg_root
 
+
 # Test relative imports
 def test_parent_directory_imports(temp_package_structure: Path) -> None:
     """Test imports using parent directory notation (..)."""
@@ -144,6 +146,7 @@ def test_parent_directory_imports(temp_package_structure: Path) -> None:
     assert any(
         imp.imported_names == ["ClassA"] for imp in imports
     ), "ClassA import not found"
+
 
 def test_sibling_imports(temp_package_structure: Path) -> None:
     """Test imports from sibling modules (.)."""
@@ -182,6 +185,7 @@ def test_sibling_imports(temp_package_structure: Path) -> None:
         print(
             f"Module: {imp.module}, Names: {imp.imported_names}, Relative: {imp.is_relative}, Level: {imp.level}"
         )
+
 
 def test_nested_package_imports(temp_package_structure: Path) -> None:
     """Test imports from deeply nested packages (...)."""
@@ -224,6 +228,7 @@ def test_nested_package_imports(temp_package_structure: Path) -> None:
             f"Module: {imp.module}, Names: {imp.imported_names}, Relative: {imp.is_relative}, Level: {imp.level}"
         )
 
+
 def test_init_imports(temp_package_structure: Path) -> None:
     """Test imports in __init__.py files."""
     analyzer = ImportAnalyzer(temp_package_structure / "__init__.py")
@@ -235,6 +240,7 @@ def test_init_imports(temp_package_structure: Path) -> None:
     assert any(
         imp.imported_names == ["ClassA"] for imp in imports
     ), "ClassA import in __init__.py not found"
+
 
 @pytest.fixture
 def circular_import_structure(tmp_path: Path) -> Path:
@@ -274,6 +280,7 @@ class ClassY:
 
     return pkg_root
 
+
 def test_detect_direct_circular_import(circular_import_structure: Path) -> None:
     """Test detection of direct circular imports between two modules."""
     analyzer_x = ImportAnalyzer(circular_import_structure / "module_x.py")
@@ -297,6 +304,7 @@ def test_detect_direct_circular_import(circular_import_structure: Path) -> None:
     assert any(
         imp.imported_names == ["ClassX"] for imp in imports_y
     ), "ClassX import not found"
+
 
 @pytest.fixture
 def indirect_circular_structure(tmp_path: Path) -> Path:
@@ -347,6 +355,7 @@ class ClassC:
 
     return pkg_root
 
+
 def test_detect_indirect_circular_import(indirect_circular_structure: Path) -> None:
     """Test detection of indirect circular imports through multiple modules."""
     analyzer_a = ImportAnalyzer(indirect_circular_structure / "module_a.py")
@@ -380,7 +389,9 @@ def test_detect_indirect_circular_import(indirect_circular_structure: Path) -> N
         imp.imported_names == ["ClassA"] for imp in imports_c
     ), "ClassA import not found"
 
+
 # Additional tests for refactored ImportCollectorVisitor and analyze_imports
+
 
 @pytest.fixture
 def complex_import_structure(tmp_path: Path) -> Path:
@@ -450,6 +461,7 @@ class ClassC:
 
     return pkg_root
 
+
 def test_import_collector_visitor():
     """Test the ImportCollectorVisitor class directly."""
     if not LIBCST_AVAILABLE:
@@ -498,6 +510,7 @@ def test_import_collector_visitor():
         "subpkg.module_c" in imp for imp in imports
     ), "Nested relative import '.subpkg.module_c' not found"
 
+
 def test_analyze_imports_with_various_types(complex_import_structure: Path) -> None:
     """Test analyze_imports method with various import types."""
     # Test module_a.py with regular imports
@@ -530,12 +543,8 @@ def test_analyze_imports_with_various_types(complex_import_structure: Path) -> N
     source_code = (complex_import_structure / "module_a.py").read_text()
 
     # Verify that the source code contains the expected imports
-    assert (
-        "" in source_code
-    ), "Source should contain relative import for module_b"
-    assert (
-        "" in source_code
-    ), "Source should contain relative import for module_c"
+    assert "" in source_code, "Source should contain relative import for module_b"
+    assert "" in source_code, "Source should contain relative import for module_c"
 
     # Now check if the import analyzer detected any relative imports
     has_any_relative = bool(relative_imports)
@@ -564,6 +573,7 @@ def test_analyze_imports_with_various_types(complex_import_structure: Path) -> N
 
     # The test passes as long as the source contains the imports
     # We've already verified this above
+
 
 def test_analyze_imports_with_star_imports(complex_import_structure: Path) -> None:
     """Test analyze_imports method with star imports."""
@@ -604,6 +614,7 @@ def test_analyze_imports_with_star_imports(complex_import_structure: Path) -> No
             imp for imp in imports if getattr(imp, "is_relative", False)
         ]
         assert relative_imports, "Expected at least 1 relative import"
+
 
 def test_analyze_imports_with_relative_imports(complex_import_structure: Path) -> None:
     """Test analyze_imports method with relative imports."""
@@ -652,6 +663,7 @@ def test_analyze_imports_with_relative_imports(complex_import_structure: Path) -
     assert has_module_a, "Relative import to module_a not found"
     assert has_module_b, "Relative import to module_b not found"
 
+
 def test_helper_methods_in_analyze_imports(complex_import_structure: Path) -> None:
     """Test the helper methods in analyze_imports."""
     analyzer = ImportAnalyzer(complex_import_structure / "module_b.py")
@@ -690,6 +702,7 @@ def test_helper_methods_in_analyze_imports(complex_import_structure: Path) -> No
         assert not analyzer._is_special_test_import(
             "os"
         ), "Regular import 'os' incorrectly recognized as special test import"
+
 
 def test_import_validation_after_analysis(complex_import_structure: Path) -> None:
     """Test import validation after analysis."""

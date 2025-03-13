@@ -33,6 +33,7 @@ sys.modules["src.entities.enemy_ship"].EnemyShip = mock_enemy_ship
 
 # Now import the class to test
 
+
 class TestFleetManager(unittest.TestCase):
     """Test cases for the Fleet Manager class."""
 
@@ -648,6 +649,7 @@ class TestFleetManager(unittest.TestCase):
 
             # Restore the original method
             self.fleet._check_for_enemies = original_check_for_enemies
+
 
 if __name__ == "__main__":
     unittest.main()

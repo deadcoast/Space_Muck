@@ -1,5 +1,3 @@
-
-
 # Use absolute imports for consistency
 
 # Use TYPE_CHECKING to avoid circular imports
@@ -13,8 +11,10 @@ COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 
 # Import at runtime to avoid circular imports
 
+
 class UIMenu(ASCIIBox):
     """Interactive menu with dynamically evolving options"""
+
 
 # Standard library imports
 import random
@@ -28,6 +28,7 @@ import pygame
 
 # For backward compatibility, keep Menu as an alias of UIMenu
 Menu = UIMenu
+
 
 def __init__(
     self,
@@ -49,6 +50,7 @@ def __init__(
     # Mutation rate for menu evolution
     self.mutation_rate = 0.05
 
+
 def draw(
     self,
     surface: pygame.Surface,
@@ -58,14 +60,14 @@ def draw(
     alpha: int = 255,
 ) -> pygame.Rect:
     """Draw menu with options
-    
+
     Args:
         surface: Surface to draw on
         font: Font to use for rendering
         base_color: Base color for drawing
         bg_color: Background color
         alpha: Transparency (0-255)
-        
+
     Returns:
         The rectangle area that was drawn
     """
@@ -74,18 +76,13 @@ def draw(
     # Draw title
     title_x = self.x + (self.width - len(self.title)) // 2
     draw_utils.draw_text(
-        surface,
-        self.title,
-        (title_x, self.y + 1),
-        font,
-        base_color,
-        bold=True
+        surface, self.title, (title_x, self.y + 1), font, base_color, bold=True
     )
-    
+
     # Draw options with evolutionary prominence
     for i, option in enumerate(self.options):
         option_y = self.y + 3 + i
-        
+
         if i == self.selected_index and self.active:
             # Selection indicator for highlighted option
             prefix = "▶ "
@@ -96,7 +93,7 @@ def draw(
                 (self.x + 2, option_y),
                 font,
                 bg_color,  # Swap colors for highlight effect
-                bg_color=base_color
+                bg_color=base_color,
             )
         else:
             # Normal option with prominence-based rendering
@@ -106,7 +103,7 @@ def draw(
 
             if prominence > 0.8:
                 bold = True
-                
+
             # Apply adaptive decoration based on usage
             evolving_chars = ["·", "∘", "○", "◌", "◍", "◎", "●"]
             decoration = evolving_chars[
@@ -114,22 +111,23 @@ def draw(
             ]
 
             prefix = f"{decoration} "
-            
+
             draw_utils.draw_text(
                 surface,
                 prefix + option,
                 (self.x + 2, option_y),
                 font,
                 base_color,
-                bold=bold
+                bold=bold,
             )
+
 
 def handle_input(self, key: int) -> Optional[str]:
     """Handle navigation and selection input
-    
+
     Args:
         key: Pygame key constant
-        
+
     Returns:
         Selected option text or None if no selection was made
     """
@@ -147,6 +145,7 @@ def handle_input(self, key: int) -> Optional[str]:
         return self.options[self.selected_index]
 
     return None
+
 
 def _evolve_menu(self):
     """Simulate evolution of the menu based on usage patterns"""

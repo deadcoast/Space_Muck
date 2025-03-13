@@ -1,13 +1,3 @@
-
-
-or
-
-# Base Transformer Class
-class BaseTransformer:
-    """
-    Abstract base class for all transformers.
-    """
-
 # Standard library imports
 
 # Third-party library imports
@@ -20,12 +10,19 @@ import ast
 import astor
 import variant_loggers
 
+# Base Transformer Class
+class BaseTransformer:
+    """
+    Abstract base class for all transformers.
+    """
+
     def apply(self, analyzer: EnhancedAnalyzer):
         """
         Apply the transformation using the analyzer's data.
         Must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement the apply method.")
+
 
 # RelativeImportTransformer Class
 class RelativeImportTransformer(BaseTransformer):

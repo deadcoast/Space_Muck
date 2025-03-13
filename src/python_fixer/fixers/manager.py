@@ -1,4 +1,19 @@
+# Standard library imports
+import json
+import os
 
+# Third-party library imports
+
+# Local application imports
+from pathlib import Path
+from questionary import prompt
+from typing import Any, Dict, Optional
+from variant_loggers.log_analyzer import report_param
+import aiofiles
+import asyncio
+import patch
+import tempfile
+import variant_loggers
 
 # Configure variant_loggers
 variant_loggers.basicConfig(level=variant_loggers.INFO)
@@ -17,6 +32,7 @@ for file in files:
         except Exception as e:
             logger.error(f"Failed to create example file '{file}': {e}")
 
+
 class FixManager:
     def __init__(self, config_path: Optional[str] = None):
         """
@@ -25,23 +41,6 @@ class FixManager:
         :param config_path: Path to the configuration file.
         :type config_path: Optional[str]
         """
-
-# Standard library imports
-import json
-import os
-
-# Third-party library imports
-
-# Local application imports
-from pathlib import Path
-from questionary import prompt
-from typing import Any, Dict, Optional
-from variant_loggers.log_analyzer import report_param
-import aiofiles
-import asyncio
-import patch
-import tempfile
-import variant_loggers
 
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
@@ -113,7 +112,7 @@ import variant_loggers
         # For example, setting up paths, initializing patch handlers, etc.
 
     async def _generate_report(
-        self, analyzer: Any, param: Dict[str, Any]
+        self, analyzer: Any, param: Dict[str, Any], custom_report_path: Optional[Path] = None
     ) -> Optional[str]:
         """
         Asynchronously generates a report based on the analysis results.
@@ -122,11 +121,14 @@ import variant_loggers
         :type analyzer: Any
         :param param: Additional parameters for report generation.
         :type param: Dict[str, Any]
+        :param custom_report_path: Optional custom path for the report.
+        :type custom_report_path: Optional[Path]
         :return: Path to the generated report file, or None if failed.
         :rtype: Optional[str]
         """
         report_format = param.get("format", "json")  # e.g., 'json', 'txt', 'html'
-        report_path = param.get("report_path", "report.json")
+        # Use custom_report_path if provided, otherwise use the one from param
+        report_path = str(custom_report_path) if custom_report_path else param.get("report_path", "report.json")
 
         try:
             report_data = (
@@ -465,7 +467,7 @@ import variant_loggers
                 logger.error(f"Error reading patched content: {e}")
                 return None
 
-    async def run(self, analyzer: Any, mode: str, report_param: Dict[str, Any]) -> None:
+    async def run(self, analyzer: Any, mode: str, report_param: Dict[str, Any], report_path: Optional[Path] = None) -> None:
         """
         Runs the FixManager based on the specified mode.
 
@@ -475,11 +477,14 @@ import variant_loggers
         :type mode: str
         :param report_param: Parameters for report generation.
         :type report_param: Dict[str, Any]
+        :param report_path: Optional path for saving the report.
+        :type report_path: Optional[Path]
         """
         if mode == "report":
-            report_path = await self._generate_report(analyzer, report_param)
-            if report_path:
-                logger.info(f"Report successfully generated at '{report_path}'.")
+            # Pass the report_path parameter to the _generate_report method
+            output_path = await self._generate_report(analyzer, report_param, report_path)
+            if output_path:
+                logger.info(f"Report successfully generated at '{output_path}'.")
             else:
                 logger.error("Failed to generate report.")
 
@@ -504,15 +509,19 @@ import variant_loggers
 
     # Example Usage
 
-async def main(fix_manager=report_param):
+
+async def main(fix_manager=None):
+    # Use the imported report_param if fix_manager is not provided
+    if fix_manager is None:
+        fix_manager = report_param
     # Path to the configuration file
     config_path = "config.json"
 
-    # Example configuration
-    example_config = {"patches_dir": "patches", "log_level": "DEBUG"}
-
     # Create a configuration file if it doesn't exist
     if not os.path.isfile(config_path):
+        # Example configuration
+        example_config = {"patches_dir": "patches", "log_level": "DEBUG"}
+
         try:
             with open(config_path, "w") as config_file:
                 json.dump(example_config, config_file, indent=4)
@@ -521,23 +530,28 @@ async def main(fix_manager=report_param):
             logger.error(f"Failed to create configuration file: {e}")
             return
 
-    def run(analyzer, mode, report_param, report_path):
-        # Initialize FixManager with configuration
-        fix_manager = FixManager(config_path=config_path)
+def run(analyzer, mode, report_param, report_path):
+    # Path to the configuration file
+    config_path = "config.json"  # Using the same config path as in main()
 
-        # Generate Report
-        fix_manager.run(
-            analyzer, mode="report", report_param=report_param, report_path=Path
-        )
+    # Initialize FixManager with configuration
+    fix_manager = FixManager(config_path=config_path)
 
-        # Apply Automatic Fixes
-        fix_manager.run(analyzer, mode="auto_fix", report_param={}, report_path=Path)
+    # Generate Report
+    asyncio.run(fix_manager.run(
+        analyzer, mode="report", report_param=report_param, report_path=report_path
+    ))
 
-        # Apply Interactive Fixes
-        fix_manager.run(
-            analyzer, mode="interactive_fix", report_param={}, report_path=Path
-        )
-        return None
+    # Apply Automatic Fixes - use mode parameter from function arguments
+    if mode in ["auto_fix", "all"]:
+        asyncio.run(fix_manager.run(analyzer, mode="auto_fix", report_param=report_param, report_path=report_path))
+
+    # Apply Interactive Fixes - use mode parameter from function arguments
+    if mode in ["interactive_fix", "all"]:
+        asyncio.run(fix_manager.run(
+            analyzer, mode="interactive_fix", report_param=report_param, report_path=report_path
+        ))
+    return None
 
 if __name__ == "__main__":
     asyncio.run(main())

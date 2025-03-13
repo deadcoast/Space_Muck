@@ -19,6 +19,7 @@ from src.ui.ui_base.component_event_bridge import connect_systems
 # Track initialization status
 _initialization_status = {"initialized": False, "error": None, "timestamp": None}
 
+
 def initialize_ui_systems() -> bool:
     """
     Initialize all UI subsystems.
@@ -60,6 +61,7 @@ def initialize_ui_systems() -> bool:
         }
         logging.error(f"Error initializing UI systems: {e}")
         return False
+
 
 def get_initialization_status() -> Dict[str, Any]:
     """

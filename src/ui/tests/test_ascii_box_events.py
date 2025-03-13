@@ -27,6 +27,7 @@ from ui.ui_helpers.ascii_box_event_helper import (
     is_registered_with_events,
 )
 
+
 class TestASCIIBoxEventIntegration(unittest.TestCase):
     """Test case for ASCIIBox event integration."""
 
@@ -69,7 +70,7 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         # Register box with a known ID for testing
         test_id = "test_box_id_123"
         self.box.component_id = test_id
-        
+
         # Unregister box
         result = unregister_ascii_box(self.box)
 
@@ -214,7 +215,7 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         # Check that correct box was returned
         self.assertEqual(result, self.box)
         mock_registry.get_component.assert_called_once_with(test_id)
-        
+
     @patch("ui.ui_helpers.ascii_box_event_helper.ComponentRegistry")
     def test_is_registered_with_events(self, mock_registry_class):
         """Test checking if an ASCIIBox is registered with the event system."""
@@ -222,29 +223,30 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         mock_registry = MagicMock()
         mock_registry_class.get_instance.return_value = mock_registry
         mock_registry.is_registered.return_value = True
-        
+
         # Set a known component ID for testing
         test_id = "test_box_id_456"
         self.box.component_id = test_id
-        
+
         # Check if box is registered
         result = is_registered_with_events(self.box)
-        
+
         # Check result
         self.assertTrue(result)
         mock_registry.is_registered.assert_called_once_with(test_id)
-        
+
     def test_is_registered_with_events_no_id(self):
         """Test checking if an ASCIIBox without ID is registered with events."""
         # Create box without ID
         box = ASCIIBox(5, 5, 20, 10, "Test Box")
         box.component_id = None
-        
+
         # Check if box is registered
         result = is_registered_with_events(box)
-        
+
         # Should return False for box without ID
         self.assertFalse(result)
+
 
 if __name__ == "__main__":
     unittest.main()

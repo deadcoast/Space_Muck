@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # No need to import from config as no config variables are used
 
+
 class TestBoundaryConditions(unittest.TestCase):
     """Test edge cases and boundary conditions."""
 
@@ -89,6 +90,7 @@ class TestBoundaryConditions(unittest.TestCase):
         self.assertFalse(result)
         self.assertEqual(self.player.mining_ships, self.player.max_mining_ships)
 
+
 class TestNumericalStability(unittest.TestCase):
     """Test numerical stability and overflow conditions."""
 
@@ -131,6 +133,7 @@ class TestNumericalStability(unittest.TestCase):
         self.entity.update_hunger(0.01)
         self.assertGreaterEqual(self.entity.hunger, 0.0)
 
+
 class TestConcurrencyIssues(unittest.TestCase):
     """Test potential concurrency and state issues."""
 
@@ -157,6 +160,7 @@ class TestConcurrencyIssues(unittest.TestCase):
         self.assertTrue(np.all(self.field.grid >= 0))  # No negative values
         self.assertTrue(self.player.x >= 0 and self.player.x < self.field.width)
         self.assertTrue(self.player.y >= 0 and self.player.y < self.field.height)
+
 
 if __name__ == "__main__":
     unittest.main()

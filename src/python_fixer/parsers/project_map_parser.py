@@ -52,6 +52,7 @@ IMPLEMENTATION_MAP = {
     }
 }
 
+
 class ProjectMapParser:
     """Parser for Space Muck project analysis maps.
 

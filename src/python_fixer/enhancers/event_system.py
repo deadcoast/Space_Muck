@@ -11,9 +11,6 @@
 # EFFECT: Provides event handling for method enhancements
 # NAMING: Event[Type]Handler
 
-class EventType(Enum):
-    """Types of events that can be handled."""
-
 # Standard library imports
 import logging
 
@@ -24,11 +21,16 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
 
+
+class EventType(Enum):
+    """Types of events that can be handled."""
+
     PRE_ENHANCEMENT = auto()
     POST_ENHANCEMENT = auto()
     STATE_CHANGE = auto()
     ENHANCEMENT_ERROR = auto()
     ENHANCEMENT_ROLLBACK = auto()
+
 
 @dataclass
 class Event:

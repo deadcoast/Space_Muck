@@ -102,6 +102,7 @@ sys.modules["generators.asteroid_field"] = MagicMock(
 )
 sys.modules["entities.player"] = MagicMock(Player=MagicMock(return_value=player_mock))
 
+
 class TestGameStateMachine(unittest.TestCase):
     """Test cases for the Game class state management functionality."""
 
@@ -286,6 +287,7 @@ class TestGameStateMachine(unittest.TestCase):
         self.assertIn("avg_fps", perf)
         self.assertIn("frame_counter", perf)
         self.assertIn("game_time", perf)
+
 
 if __name__ == "__main__":
     unittest.main()

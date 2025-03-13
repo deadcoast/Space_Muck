@@ -19,6 +19,7 @@ from contextlib import contextmanager, ExitStack
 from typing import Callable, Dict, List, Optional, Set, NoReturn
 import signal
 
+
 class SignalManager:
     """Manages signal handlers with a stack-based approach for proper cleanup.
 

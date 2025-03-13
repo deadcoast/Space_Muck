@@ -9,7 +9,6 @@ This file defines all constants for the Space Muck game.
 
 # Local application imports
 from .config import (
-
     # Grid and window configuration
     CELL_SIZE,
     GRID_WIDTH,

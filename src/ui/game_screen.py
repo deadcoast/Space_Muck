@@ -18,6 +18,7 @@ from config import COLOR_TEXT
 from typing import Dict, Optional, Any
 import pygame
 
+
 class ASCIIGameScreen:
     """
     A central hub that integrates all UI components with proper layout management.

@@ -20,6 +20,7 @@ from typing import Dict, Tuple, Any
 # These combat constants may be needed in future extensions
 # from config import COMBAT_DIFFICULTY_MULTIPLIER, COMBAT_ENEMY_TYPES
 
+
 class EncounterGenerator:
     """
     Generates combat and other encounters based on player location and status.

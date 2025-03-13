@@ -11,4 +11,3 @@ This package contains all modules for the Space Muck game.
 from .config import *
 
 # Import all constants from config.py to make them available at src.config
-

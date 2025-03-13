@@ -17,7 +17,6 @@ import uuid
 
 # Local application imports
 from typing import (
-
     Dict,
     List,
     Callable,
@@ -34,6 +33,7 @@ EventHandler = Callable[[str, EventData], None]
 EventFilter = Callable[[str, EventData], bool]
 EventPriority = int
 EventId = str
+
 
 class EventSubscription:
     """Represents a subscription to an event bus."""
@@ -91,6 +91,7 @@ class EventSubscription:
             return False
 
         return bool(not self.filter_func or self.filter_func(event_type, data))
+
 
 class EventBus:
     """
@@ -273,6 +274,7 @@ class EventBus:
         """
         return self.event_history[-limit:] if self.event_history else []
 
+
 class EventBatcher:
     """
     Batches events and dispatches them efficiently to multiple event buses.
@@ -352,6 +354,7 @@ class EventBatcher:
         for events in self.batched_events.values():
             events.clear()
 
+
 # Define standard event buses
 module_event_bus = EventBus("ModuleEventBus")
 game_event_bus = EventBus("GameEventBus")
@@ -364,6 +367,7 @@ event_batcher = EventBatcher()
 event_batcher.register_bus("ModuleEventBus", module_event_bus)
 event_batcher.register_bus("GameEventBus", game_event_bus)
 event_batcher.register_bus("ResourceEventBus", resource_event_bus)
+
 
 def get_event_bus(name: str) -> Optional[EventBus]:
     """
@@ -383,6 +387,7 @@ def get_event_bus(name: str) -> Optional[EventBus]:
         return resource_event_bus
     else:
         return None
+
 
 def get_event_batcher() -> EventBatcher:
     """

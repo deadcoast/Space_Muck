@@ -19,6 +19,7 @@ from utils.visualization import GeneratorVisualizer, visualize_generator_output
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def test_visualize_noise_layers():
     """Test visualization of noise layers."""
     print("Testing noise layer visualization...")
@@ -55,6 +56,7 @@ def test_visualize_noise_layers():
     )
 
     print("Noise layer visualization completed.")
+
 
 def test_visualize_cellular_automaton():
     """Test visualization of cellular automaton evolution."""
@@ -110,6 +112,7 @@ def test_visualize_cellular_automaton():
 
     print("Cellular automaton visualization completed.")
 
+
 def test_visualize_clusters():
     """Test visualization of clustering."""
     print("Testing cluster visualization...")
@@ -146,6 +149,7 @@ def test_visualize_clusters():
 
     print("Cluster visualization completed.")
 
+
 def test_convenience_function():
     """Test the convenience function for visualizing generator outputs."""
     print("Testing convenience function...")
@@ -168,6 +172,7 @@ def test_convenience_function():
     )
 
     print("Convenience function test completed.")
+
 
 if __name__ == "__main__":
     # Create output directory if it doesn't exist

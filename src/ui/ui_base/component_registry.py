@@ -21,6 +21,7 @@ import weakref
 # Type variable for generic component types
 T = TypeVar("T", bound=UIElement)
 
+
 class ComponentState(Enum):
     """Possible states of a UI component in the registry."""
 
@@ -30,6 +31,7 @@ class ComponentState(Enum):
     INACTIVE = auto()  # Component exists but is not currently visible
     DISABLED = auto()  # Component exists but is disabled from interaction
     DESTROYED = auto()  # Component is marked for removal
+
 
 class ComponentRegistry:
     """Registry for UI components with lifecycle management.
@@ -128,7 +130,7 @@ class ComponentRegistry:
 
     def _remove_from_type_registry(self, component: UIElement) -> None:
         """Remove a component from the type registry.
-        
+
         Args:
             component: The component to remove
         """
@@ -138,10 +140,10 @@ class ComponentRegistry:
             # Clean up empty type entries
             if not self._components_by_type[component_type]:
                 del self._components_by_type[component_type]
-    
+
     def _handle_relationship_cleanup(self, component_id: str) -> None:
         """Clean up parent-child relationships for a component.
-        
+
         Args:
             component_id: ID of the component being unregistered
         """
@@ -160,10 +162,10 @@ class ComponentRegistry:
         # Remove from parent registry
         if component_id in self._component_parent:
             del self._component_parent[component_id]
-    
+
     def _notify_unregistration(self, component_id: str) -> None:
         """Notify listeners that a component has been unregistered.
-        
+
         Args:
             component_id: ID of the unregistered component
         """
@@ -193,7 +195,7 @@ class ComponentRegistry:
 
             # Remove from main registry
             del self._components[component_id]
-            
+
             # Remove from type registry
             self._remove_from_type_registry(component)
 
@@ -393,7 +395,7 @@ class ComponentRegistry:
                 self.unregister(component_id)
         except Exception as e:
             logging.error(f"Error cleaning up component: {e}")
-            
+
     def is_registered(self, component_id: str) -> bool:
         """Check if a component ID is registered in the registry.
 

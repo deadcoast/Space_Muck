@@ -19,6 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
 
+
 class TestBaseEntity(unittest.TestCase):
     """Test cases for the BaseEntity class."""
 
@@ -306,6 +307,7 @@ class TestBaseEntity(unittest.TestCase):
         self.assertEqual(deserialized[0].entity_id, "entity-0")
         self.assertEqual(deserialized[-1].entity_id, f"entity-{num_entities - 1}")
 
+
 # Inheritance test classes using real implementations
 class MinerEntity(BaseEntity):
     """Test class for inheritance testing."""
@@ -314,6 +316,7 @@ class MinerEntity(BaseEntity):
         super().__init__(entity_id=str(race_id), entity_type="miner", color=color)
         self.race_id = race_id
         self.trait = "standard"
+
 
 class PlayerEntity(MinerEntity):
     """Test class for inheritance testing."""
@@ -324,6 +327,7 @@ class PlayerEntity(MinerEntity):
         self.credits = 1000
         self.ship_level = 1
         self.trait = "adaptive"
+
 
 class TestEntityInheritance(unittest.TestCase):
     """Test cases for the BaseEntity inheritance hierarchy."""
@@ -377,6 +381,7 @@ class TestEntityInheritance(unittest.TestCase):
         self.assertEqual(restored_player.entity_type, "miner")
         self.assertEqual(restored_player.trait, "adaptive")
 
+
 class TestVerificationEquivalence(unittest.TestCase):
     """Test cases that were originally in verify_base_entity.py."""
 
@@ -420,6 +425,7 @@ class TestVerificationEquivalence(unittest.TestCase):
 
         new_entity = BaseEntity.from_dict(data)
         self.assertEqual(new_entity.entity_type, entity.entity_type)
+
 
 if __name__ == "__main__":
     unittest.main()

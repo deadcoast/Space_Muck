@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# Standard library imports
+import unittest
+
+# Third-party library imports
+
+# Local application imports
+from project_map_parser import ProjectMapParser
 
 class TestProjectMapParser(unittest.TestCase):
     """Test suite for the ProjectMapParser class.
@@ -9,14 +16,6 @@ class TestProjectMapParser(unittest.TestCase):
     - Proper type hints and assertions
     - Comprehensive test coverage
     """
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-from project_map_parser import ProjectMapParser
-import unittest
 
     @classmethod
     def setUpClass(cls) -> None:

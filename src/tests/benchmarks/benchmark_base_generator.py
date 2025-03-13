@@ -29,6 +29,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 def time_function(func: Callable, *args, **kwargs) -> float:
     """
     Measure the execution time of a function.
@@ -45,6 +46,7 @@ def time_function(func: Callable, *args, **kwargs) -> float:
     func(*args, **kwargs)
     end_time = time.time()
     return end_time - start_time
+
 
 def benchmark_cellular_automaton(
     generator: BaseGenerator, grid_sizes: List[int], iterations: int = 3
@@ -81,6 +83,7 @@ def benchmark_cellular_automaton(
 
     return results
 
+
 def benchmark_clustering(
     generator: BaseGenerator, grid_sizes: List[int], num_clusters: int = 5
 ) -> Dict[str, List[float]]:
@@ -113,6 +116,7 @@ def benchmark_clustering(
         logging.info(f"Grid size {size}x{size}: {execution_time:.4f} seconds")
 
     return results
+
 
 def print_results(
     results_dict: Dict[str, Dict[str, List[float]]], title: str, ylabel: str
@@ -148,6 +152,7 @@ def print_results(
 
     print("-" * 60)
 
+
 def main():
     """Run the benchmarks."""
     # Create a generator for benchmarking
@@ -176,6 +181,7 @@ def main():
         "Clustering Performance",
         "Execution Time (seconds)",
     )
+
 
 if __name__ == "__main__":
     main()

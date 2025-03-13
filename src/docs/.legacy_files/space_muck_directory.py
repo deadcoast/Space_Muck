@@ -13,6 +13,7 @@ breaking down the monolithic RADS.py into smaller, more maintainable modules.
 # Local application imports
 from pathlib import Path
 
+
 def create_directory_structure():
     """Create the recommended directory structure for the Space_Muck project."""
 
@@ -95,6 +96,7 @@ def create_directory_structure():
         import traceback
 
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     create_directory_structure()

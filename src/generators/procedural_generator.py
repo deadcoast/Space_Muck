@@ -25,7 +25,6 @@ except ImportError:
 from generators.base_generator import BaseGenerator
 from typing import Dict, Tuple, Optional, TYPE_CHECKING
 from utils.dependency_injection import inject
-from utils.logging_setup import (
 from utils.noise_generator import NoiseGenerator
 
 # Type checking imports
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
     from generators.asteroid_field import AsteroidField
 
 # Local imports with correct paths
-
+from utils.logging_setup import (
     log_performance_start,
     log_performance_end,
     log_exception,
@@ -146,7 +145,7 @@ class ProceduralGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.binomial(1, density * 0.5, (self.height, self.width)) * 50
+            return np.random.Generator(1, density * 0.5, (self.height, self.width)) * 50
 
     def generate_multi_layer_asteroid_field(
         self,
@@ -331,7 +330,7 @@ class ProceduralGenerator(BaseGenerator):
         anomaly_mask = (
             (anomaly_noise > anomaly_threshold)
             & asteroid_mask
-            & (np.random.random(asteroid_grid.shape) < anomaly_chance)
+            & (np.random.Generator(asteroid_grid.shape) < anomaly_chance)
         )
 
         # Set rare mineral values based on asteroid values and rare_bonus
@@ -394,11 +393,11 @@ class ProceduralGenerator(BaseGenerator):
 
         for _ in range(count):
             # Random center point
-            cx = np.random.randint(0, self.width)
-            cy = np.random.randint(0, self.height)
+            cx = np.random.Generator(0, self.width)
+            cy = np.random.Generator(0, self.height)
 
             # Random size
-            size = np.random.randint(10, max_size)
+            size = np.random.Generator(10, max_size)
 
             # Create void
             for y in range(max(0, cy - size), min(self.height, cy + size + 1)):
@@ -407,7 +406,7 @@ class ProceduralGenerator(BaseGenerator):
                     dist = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
 
                     # Clear cells within the void radius with some noise at the edges
-                    if dist < size * (0.7 + np.random.random() * 0.3):
+                    if dist < size * (0.7 + np.random.Generator() * 0.3):
                         result_grid[y, x] = 0
 
         return result_grid
@@ -451,9 +450,9 @@ class ProceduralGenerator(BaseGenerator):
         # Apply decay to edges
         for y in range(self.height):
             for x in range(self.width):
-                if edges[y, x] and np.random.random() < decay_factor:
+                if edges[y, x] and np.random.Generator() < decay_factor:
                     result_grid[y, x] = int(
-                        result_grid[y, x] * (0.5 + np.random.random() * 0.3)
+                        result_grid[y, x] * (0.5 + np.random.Generator() * 0.3)
                     )
 
         return result_grid
@@ -483,7 +482,7 @@ class ProceduralGenerator(BaseGenerator):
             log_exception(e)
             # Return simple fallback grids if generation fails
             logging.warning("Using fallback generation due to error")
-            fallback_grid = np.random.binomial(1, 0.2, (self.height, self.width)) * 50
+            fallback_grid = np.random.Generator(1, 0.2, (self.height, self.width)) * 50
             return {
                 "grid": fallback_grid,
                 "rare_grid": np.zeros_like(fallback_grid, dtype=np.int8),
@@ -533,14 +532,14 @@ class ProceduralGenerator(BaseGenerator):
                 asteroid_mask,
                 np.logical_or(
                     energy_noise > (1 - energy_chance),
-                    np.random.random(asteroid_grid.shape) < energy_chance * 0.5,
+                    np.random.Generator(asteroid_grid.shape) < energy_chance * 0.5,
                 ),
             )
 
             # Set energy values
             energy_grid[energy_mask] = (
                 asteroid_grid[energy_mask].astype(np.float32)
-                * np.random.uniform(0.5, energy_value, np.sum(energy_mask))
+                * np.random.Generator(0.5, energy_value, np.sum(energy_mask))
                 / 100.0
             )
 

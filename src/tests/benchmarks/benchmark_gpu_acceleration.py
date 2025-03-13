@@ -18,14 +18,13 @@ import numpy as np
 from typing import Dict, List
 from utils.cellular_automaton_utils import apply_cellular_automaton
 from utils.gpu_utils import (
-
-# Import utilities
-
+    # Import utilities
     is_gpu_available,
     get_available_backends,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
 )
+
 
 def benchmark_cellular_automaton(
     grid_sizes: List[int], iterations: int = 5, repetitions: int = 3
@@ -79,6 +78,7 @@ def benchmark_cellular_automaton(
 
     return results
 
+
 def benchmark_noise_generation(
     grid_sizes: List[int], repetitions: int = 3
 ) -> Dict[str, List[float]]:
@@ -122,6 +122,7 @@ def benchmark_noise_generation(
 
     return results
 
+
 def plot_results(
     grid_sizes: List[int],
     ca_results: Dict[str, List[float]],
@@ -164,6 +165,7 @@ def plot_results(
     plt.tight_layout()
     plt.savefig(output_file)
     print(f"Results saved to {output_file}")
+
 
 def main():
     """Run the benchmark suite."""
@@ -233,6 +235,7 @@ def main():
         if cpu_noise_time > 0:
             noise_speedup = cpu_noise_time / noise_time
             print(f"{backend} noise generation speedup: {noise_speedup:.2f}x")
+
 
 if __name__ == "__main__":
     main()

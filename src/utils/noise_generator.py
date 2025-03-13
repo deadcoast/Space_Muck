@@ -32,6 +32,7 @@ except ImportError:
     PERLIN_AVAILABLE = False
     print("PerlinNoise package is not available. Using fallback noise generator.")
 
+
 class NoiseGenerator(abc.ABC):
     """Abstract base class for noise generators."""
 
@@ -84,6 +85,7 @@ class NoiseGenerator(abc.ABC):
             A 2D numpy array of noise values between 0 and 1
         """
         pass
+
 
 class PerlinNoiseGenerator(NoiseGenerator):
     """Perlin noise generator implementation."""
@@ -187,6 +189,7 @@ class PerlinNoiseGenerator(NoiseGenerator):
 
         return noise_grid
 
+
 # Optional dependencies
 try:
     from scipy.ndimage import zoom
@@ -195,6 +198,7 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
     print("scipy not available, using fallback implementation for noise scaling.")
+
 
 class SimplexNoiseGenerator(NoiseGenerator):
     """
@@ -226,7 +230,7 @@ class SimplexNoiseGenerator(NoiseGenerator):
         """
         # Create random number generator with seed if provided
         rng = Generator(PCG64(seed if seed is not None else 42))
-        
+
         # Generate random noise
         base_noise = rng.random((int(height * scale * 2), int(width * scale * 2)))
 
@@ -301,6 +305,7 @@ class SimplexNoiseGenerator(NoiseGenerator):
         noise_grid = np.clip(noise_grid, 0, 1)
 
         return noise_grid
+
 
 # Factory function to get the appropriate noise generator
 def get_noise_generator() -> NoiseGenerator:

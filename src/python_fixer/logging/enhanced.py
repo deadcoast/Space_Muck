@@ -1,18 +1,3 @@
-
-
-    StreamHandler,
-    FileHandler,
-    DEBUG,
-    WARNING,
-    ERROR,
-    CRITICAL,
-    LogRecord,
-    getLevelName,
-)
-
-class EnhancedLogger:
-    """Enhanced logging system with advanced features."""
-
 # Standard library imports
 from datetime import datetime, timezone
 from logging import INFO
@@ -24,19 +9,36 @@ import uuid
 # Third-party library imports
 
 # Local application imports
+from formatters.json import JsonFormatter
+from variant_loggers import variant_loggers, Path
 from contextlib import asynccontextmanager
 from logger_refactor.logger_analysis import PatternAnalyzer, Correlator, Aggregator
 from logger_refactor.logger_record import (
-from opentelemetry.sdk.trace import Span
-from opentelemetry.trace import SpanContext
-from pathlib import Path
-from rich.console import Console
-from torch.ao.quantization.fx import tracer
-from typing import Any, List, Optional, Union
-import aiofiles
-import asyncio
-import threading
-import variant_loggers
+    Span,
+    SpanContext,
+    Path,
+    Console,
+    tracer,
+    Any,
+    List,
+    Optional,
+    Union,
+    aiofiles,
+    asyncio,
+    threading,
+    StreamHandler,
+    FileHandler,
+    DEBUG,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    LogRecord,
+    getLevelName,
+)
+
+
+class EnhancedLogger:
+    """Enhanced logging system with advanced features."""
 
     def __init__(
         self,
@@ -62,7 +64,7 @@ import variant_loggers
         self.report_path = self.log_dir / "report.html"
 
         # Initialize formatter with JSON config
-        self.formatter = variant_loggers.Formatter(
+        self.formatter = JsonFormatter(
             fmt=json.dumps(
                 {
                     "format": "{timestamp} - {level} - {module}.{function}:{line} - {message}",

@@ -19,7 +19,7 @@ SKILL_LEVELS = {
     2: "Trained",
     3: "Skilled",
     4: "Expert",
-    5: "Master"
+    5: "Master",
 }
 
 # Station types
@@ -29,7 +29,7 @@ STATION_TYPES = [
     "weapons",
     "science",
     "medical",
-    "command"
+    "command",
 ]
 
 # Trait effects on different stations
@@ -40,7 +40,7 @@ TRAIT_EFFECTS = {
         "weapons": 0.2,
         "science": 0.2,
         "medical": 0.0,
-        "command": 0.0
+        "command": 0.0,
     },
     "analytical": {
         "navigation": 0.1,
@@ -48,7 +48,7 @@ TRAIT_EFFECTS = {
         "weapons": 0.0,
         "science": 0.2,
         "medical": 0.1,
-        "command": 0.0
+        "command": 0.0,
     },
     "adaptable": {
         "navigation": 0.1,
@@ -56,7 +56,7 @@ TRAIT_EFFECTS = {
         "weapons": 0.1,
         "science": 0.1,
         "medical": 0.1,
-        "command": 0.1
+        "command": 0.1,
     },
     "intuitive": {
         "navigation": 0.2,
@@ -64,7 +64,7 @@ TRAIT_EFFECTS = {
         "weapons": 0.1,
         "science": 0.0,
         "medical": 0.2,
-        "command": 0.1
+        "command": 0.1,
     },
     "methodical": {
         "navigation": 0.0,
@@ -72,7 +72,7 @@ TRAIT_EFFECTS = {
         "weapons": 0.0,
         "science": 0.2,
         "medical": 0.1,
-        "command": 0.1
+        "command": 0.1,
     },
     "charismatic": {
         "navigation": 0.0,
@@ -80,22 +80,63 @@ TRAIT_EFFECTS = {
         "weapons": 0.0,
         "science": 0.0,
         "medical": 0.1,
-        "command": 0.3
-    }
+        "command": 0.3,
+    },
 }
 
 # Name pools for random generation
 FIRST_NAMES = [
-    "Alex", "Morgan", "Taylor", "Jordan", "Casey", "Riley", "Quinn", "Avery",
-    "Skyler", "Dakota", "Reese", "Finley", "Harley", "Emerson", "Phoenix",
-    "Kai", "Zephyr", "Nova", "Orion", "Vega", "Lyra", "Atlas", "Cygnus", "Rigel"
+    "Alex",
+    "Morgan",
+    "Taylor",
+    "Jordan",
+    "Casey",
+    "Riley",
+    "Quinn",
+    "Avery",
+    "Skyler",
+    "Dakota",
+    "Reese",
+    "Finley",
+    "Harley",
+    "Emerson",
+    "Phoenix",
+    "Kai",
+    "Zephyr",
+    "Nova",
+    "Orion",
+    "Vega",
+    "Lyra",
+    "Atlas",
+    "Cygnus",
+    "Rigel",
 ]
 
 LAST_NAMES = [
-    "Smith", "Chen", "Patel", "Kim", "Nguyen", "Garcia", "Rodriguez", "Johnson",
-    "Williams", "Brown", "Jones", "Miller", "Davis", "Wilson", "Anderson",
-    "Starling", "Voidwalker", "Nebula", "Comet", "Stardust", "Celestial", "Pulsar"
+    "Smith",
+    "Chen",
+    "Patel",
+    "Kim",
+    "Nguyen",
+    "Garcia",
+    "Rodriguez",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Miller",
+    "Davis",
+    "Wilson",
+    "Anderson",
+    "Starling",
+    "Voidwalker",
+    "Nebula",
+    "Comet",
+    "Stardust",
+    "Celestial",
+    "Pulsar",
 ]
+
 
 class CrewMember:
     """Represents a crew member that can be assigned to ship functions."""
@@ -107,7 +148,7 @@ class CrewMember:
         traits: Optional[List[str]] = None,
         experience: int = 0,
         current_station: Optional[str] = None,
-        id: Optional[str] = None
+        id: Optional[str] = None,
     ):
         """Initialize a crew member.
 
@@ -121,7 +162,7 @@ class CrewMember:
         """
         self.id = id or str(uuid.uuid4())
         self.name = name or self._generate_random_name()
-        
+
         # Initialize skills (0-5 scale)
         self.skills = {
             "navigation": 0,
@@ -129,34 +170,34 @@ class CrewMember:
             "weapons": 0,
             "science": 0,
             "medical": 0,
-            "command": 0
+            "command": 0,
         }
-        
+
         # If skills are provided, update the default skills
         if skills:
             for skill, level in skills.items():
                 if skill in self.skills:
                     self.skills[skill] = max(0, min(5, level))  # Clamp to 0-5
-        
+
         # Generate random skills if none provided
         if not skills:
             self._generate_random_skills()
-        
+
         # Initialize traits
         self.traits = traits or self._generate_random_traits()
-        
+
         # Experience and level
         self.experience = experience
         self.level = self._calculate_level()
-        
+
         # Current assignment
         self.current_station = current_station
         self.fatigue = 0  # 0-100 scale, increases with continuous work
         self.morale = 100  # 0-100 scale, affects performance
-        
+
         # Status
         self.status = "available"  # available, working, resting, injured, etc.
-        
+
         logging.info(f"Crew member {self.name} initialized with ID {self.id}")
 
     def _generate_random_name(self) -> str:
@@ -173,7 +214,7 @@ class CrewMember:
         """Generate random skill levels for the crew member."""
         # Determine primary skill
         primary_skill = random.choice(list(self.skills.keys()))
-        
+
         # Assign skill levels
         for skill in self.skills:
             if skill == primary_skill:
@@ -214,27 +255,25 @@ class CrewMember:
         """
         try:
             if station not in STATION_TYPES and station is not None:
-                return {
-                    "success": False,
-                    "message": f"Invalid station: {station}"
-                }
-            
+                return {"success": False, "message": f"Invalid station: {station}"}
+
             old_station = self.current_station
             self.current_station = station
             self.status = "working" if station else "available"
-            
+
             return {
                 "success": True,
-                "message": f"Assigned {self.name} to {station}" if station else f"Unassigned {self.name}",
+                "message": (
+                    f"Assigned {self.name} to {station}"
+                    if station
+                    else f"Unassigned {self.name}"
+                ),
                 "old_station": old_station,
-                "new_station": station
+                "new_station": station,
             }
         except Exception as e:
             logging.error(f"Error assigning crew member to station: {e}")
-            return {
-                "success": False,
-                "message": f"Error: {str(e)}"
-            }
+            return {"success": False, "message": f"Error: {str(e)}"}
 
     def get_skill_level_name(self, skill: str) -> str:
         """Get the name of the skill level.
@@ -247,7 +286,7 @@ class CrewMember:
         """
         if skill not in self.skills:
             return "Unknown"
-        
+
         level = self.skills.get(skill, 0)
         return SKILL_LEVELS.get(level, "Unknown")
 
@@ -262,21 +301,23 @@ class CrewMember:
         """
         if station not in self.skills:
             return 0.0
-        
+
         base_skill = self.skills.get(station, 0)
-        
+
         # Apply trait bonuses
         trait_bonus = 0.0
         for trait in self.traits:
             if trait in TRAIT_EFFECTS:
                 trait_bonus += TRAIT_EFFECTS[trait].get(station, 0.0)
-        
+
         # Apply morale and fatigue effects
         morale_factor = self.morale / 100.0  # 0.0 to 1.0
         fatigue_penalty = self.fatigue / 200.0  # 0.0 to 0.5 at max fatigue
-        
-        effective_skill = base_skill * (1.0 + trait_bonus) * morale_factor * (1.0 - fatigue_penalty)
-        
+
+        effective_skill = (
+            base_skill * (1.0 + trait_bonus) * morale_factor * (1.0 - fatigue_penalty)
+        )
+
         return round(effective_skill, 1)
 
     def rest(self, hours: int = 8) -> Dict[str, Any]:
@@ -311,7 +352,7 @@ class CrewMember:
             "old_fatigue": old_fatigue,
             "new_fatigue": self.fatigue,
             "old_morale": old_morale,
-            "new_morale": self.morale
+            "new_morale": self.morale,
         }
 
     def work_shift(self, hours: int = 8) -> Dict[str, Any]:
@@ -326,13 +367,13 @@ class CrewMember:
         if not self.current_station:
             return {
                 "success": False,
-                "message": f"{self.name} is not assigned to a station"
+                "message": f"{self.name} is not assigned to a station",
             }
 
         if self.status == "injured":
             return {
                 "success": False,
-                "message": f"{self.name} is injured and cannot work"
+                "message": f"{self.name} is injured and cannot work",
             }
 
         # Increase fatigue
@@ -369,7 +410,7 @@ class CrewMember:
             "new_experience": self.experience,
             "old_level": old_level,
             "new_level": self.level,
-            "leveled_up": leveled_up
+            "leveled_up": leveled_up,
         }
 
     def train_skill(self, skill: str, hours: int = 4) -> Dict[str, Any]:
@@ -383,10 +424,7 @@ class CrewMember:
             Dict with training results
         """
         if skill not in self.skills:
-            return {
-                "success": False,
-                "message": f"Invalid skill: {skill}"
-            }
+            return {"success": False, "message": f"Invalid skill: {skill}"}
 
         old_skill = self.skills[skill]
 
@@ -394,7 +432,7 @@ class CrewMember:
         if old_skill >= 5:
             return {
                 "success": False,
-                "message": f"{self.name} is already a Master in {skill}"
+                "message": f"{self.name} is already a Master in {skill}",
             }
 
         # Calculate skill increase based on hours and current level
@@ -426,15 +464,15 @@ class CrewMember:
             "experience_gained": experience_gain,
             "old_level": old_level,
             "new_level": self.level,
-            "leveled_up": self.level > old_level
+            "leveled_up": self.level > old_level,
         }
 
     def _update_experience_and_level(self, experience_gain):
         """Update crew member's experience and recalculate level.
-        
+
         Args:
             experience_gain: Amount of experience to add
-            
+
         Returns:
             Previous level before update
         """
@@ -459,11 +497,11 @@ class CrewMember:
             "current_station": self.current_station,
             "fatigue": self.fatigue,
             "morale": self.morale,
-            "status": self.status
+            "status": self.status,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'CrewMember':
+    def from_dict(cls, data: Dict[str, Any]) -> "CrewMember":
         """Create a crew member from a dictionary.
 
         Args:
@@ -478,5 +516,5 @@ class CrewMember:
             traits=data.get("traits"),
             experience=data.get("experience", 0),
             current_station=data.get("current_station"),
-            id=data.get("id")
+            id=data.get("id"),
         )

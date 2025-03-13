@@ -117,6 +117,7 @@ except ImportError:
             self.entity_grid = np.zeros((height, width), dtype=np.int8)
             self.races = []
 
+
 class TestAsteroidField(AsteroidField):
     """Test implementation of AsteroidField for testing MinerEntity.
 
@@ -218,6 +219,7 @@ class TestAsteroidField(AsteroidField):
         self.avg_resource_value = self.total_resources / max(1, self.resource_count)
         self.resource_density = self.resource_count / (self.width * self.height)
         self.rare_density = self.rare_count / (self.width * self.height)
+
 
 class TestMinerEntity(unittest.TestCase):
     """Test cases for the MinerEntity class."""
@@ -587,7 +589,9 @@ class TestMinerEntity(unittest.TestCase):
         self.assertTrue(self.miner.fed_this_turn, fed_message)
 
         # Verify population increase due to feeding
-        self.assertGreater(self.miner.population, initial_population, population_message)
+        self.assertGreater(
+            self.miner.population, initial_population, population_message
+        )
 
     def test_apply_mutations(self):
         """Test the apply_mutations method."""
@@ -902,14 +906,13 @@ class TestMinerEntity(unittest.TestCase):
             print(f"Exception with out-of-bounds territory_center: {e}")
 
     def _test_with_population_and_behavior(self, population_value, behavior_type):
-        self._set_and_verify_population_and_behavior(
-            population_value, behavior_type
-        )
+        self._set_and_verify_population_and_behavior(population_value, behavior_type)
 
     def _set_and_verify_population_and_behavior(self, population_value, behavior_type):
         self.miner.population = population_value
         self.miner.current_behavior = behavior_type
         self.assertEqual(self.miner.current_behavior, behavior_type)
+
 
 if __name__ == "__main__":
     unittest.main()

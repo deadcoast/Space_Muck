@@ -46,6 +46,7 @@ try:
 except ImportError:
     CUPY_AVAILABLE = False
 
+
 def generate_value_distribution_gpu(
     grid: np.ndarray,
     base_grid: np.ndarray,
@@ -142,6 +143,7 @@ def generate_value_distribution_gpu(
             grid, base_grid, value_mean, value_stddev, min_value
         )
 
+
 def add_value_clusters_gpu(
     value_grid: np.ndarray,
     num_clusters: int = 5,
@@ -193,9 +195,7 @@ def add_value_clusters_gpu(
     if len(entity_cells) < num_clusters:
         num_clusters = len(entity_cells)
 
-    center_indices = rng.choice(
-        len(entity_cells), size=num_clusters, replace=False
-    )
+    center_indices = rng.choice(len(entity_cells), size=num_clusters, replace=False)
     cluster_centers = entity_cells[center_indices]
 
     # GPU implementation

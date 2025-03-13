@@ -40,6 +40,7 @@ import networkx as nx
 import rope.base.project
 import yaml
 
+
 @dataclass
 class FixOperation:
     """Represents a single fix operation"""
@@ -52,6 +53,7 @@ class FixOperation:
     impact_score: float
     dependencies_affected: Set[str] = field(default_factory=set)
 
+
 @dataclass
 class FixStrategy:
     """Strategy for fixing specific import issues"""
@@ -62,6 +64,7 @@ class FixStrategy:
     requires_manual_review: bool
     description: str
     fix_function: callable
+
 
 class SmartFixer:
     """Advanced Python code fixer with intelligent refactoring capabilities"""
@@ -554,6 +557,7 @@ class SmartFixer:
         except Exception as e:
             console.print(f"[red]Error applying fix to {file_path}: {str(e)}")
 
+
 class RelativeImportTransformer(cst.CSTTransformer):
     """Transform relative imports to absolute imports"""
 
@@ -597,6 +601,7 @@ class RelativeImportTransformer(cst.CSTTransformer):
             parts.append(module)
 
         return ".".join(parts)
+
 
 class CircularDependencyTransformer(cst.CSTTransformer):
     """Transform code to break circular dependencies."""
@@ -653,6 +658,7 @@ class CircularDependencyTransformer(cst.CSTTransformer):
         except nx.NetworkXNoCycle:
             return False
 
+
 class ImportAnalyzer(cst.CSTVisitor):
     """
     Analyzes imports in a Python module using libcst.
@@ -676,6 +682,7 @@ class ImportAnalyzer(cst.CSTVisitor):
             for alias in node.names:
                 if isinstance(alias.name, cst.Name):
                     self.imports.add(f"{module_name}.{alias.name.value}")
+
 
 class ImportOptimizer(cst.CSTTransformer):
     """Optimize import structure based on dependency analysis"""

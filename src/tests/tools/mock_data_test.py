@@ -12,6 +12,7 @@ import numpy as np
 # Local application imports
 from typing import Dict
 
+
 def create_mock_field_data(width: int = 100, height: int = 80) -> Dict[str, np.ndarray]:
     """
     Create mock field data for testing.
@@ -70,6 +71,7 @@ def create_mock_field_data(width: int = 100, height: int = 80) -> Dict[str, np.n
         "entity_grid": entity_grid,
     }
 
+
 def create_mock_race() -> dict:
     """
     Create a mock race entity with sensible defaults.
@@ -94,6 +96,7 @@ def create_mock_race() -> dict:
         "evolution_points": np.random.randint(0, 100),
         "mining_efficiency": 0.5 + np.random.random() * 0.3,
     }
+
 
 def create_mock_shop_upgrade() -> dict:
     """

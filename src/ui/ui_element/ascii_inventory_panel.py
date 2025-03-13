@@ -21,6 +21,7 @@ Color = Tuple[int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIInventoryPanel:
     """Display and manage player inventory with sorting and filtering."""
 
@@ -40,12 +41,12 @@ class ASCIIInventoryPanel:
         self.rect = rect
         self.title = title
         self.style = style
-        
+
         # Inventory data
         self.inventory: Dict[str, int] = {}  # item_id -> quantity
         self.cargo_capacity: int = 100  # Default cargo capacity
         self.used_capacity: int = 0  # Used cargo space
-        
+
         # Display settings
         self.items_per_page = 10
         self.current_page = 0
@@ -54,10 +55,10 @@ class ASCIIInventoryPanel:
         self.sort_ascending = True
         self.filter_text = ""
         self.filter_type = "all"  # Options: "all", "resource", "equipment", "misc"
-        
+
         # Item details
         self.item_details: Dict[str, Dict] = {}  # Cache for item details
-        
+
         # Colors for different item types
         self.type_colors = {
             "resource": (100, 255, 100),  # Green
@@ -66,7 +67,7 @@ class ASCIIInventoryPanel:
             "quest": (255, 255, 100),  # Yellow
             "misc": (200, 200, 200),  # Light gray
         }
-        
+
         # Buttons
         self.buttons = []
         self._create_buttons()
@@ -77,10 +78,10 @@ class ASCIIInventoryPanel:
             button_width = 12
             button_height = 3
             margin = 2
-            
+
             # Calculate button positions
             button_y = self.rect.bottom - button_height - margin
-            
+
             # Sort button
             sort_button = ASCIIButton(
                 self.rect.x + margin,
@@ -91,7 +92,7 @@ class ASCIIInventoryPanel:
                 "Sort",
                 self._toggle_sort,
             )
-            
+
             # Filter button
             filter_button = ASCIIButton(
                 self.rect.x + margin + button_width + margin,
@@ -102,7 +103,7 @@ class ASCIIInventoryPanel:
                 "Filter",
                 self._toggle_filter,
             )
-            
+
             # Previous page button
             prev_button = ASCIIButton(
                 self.rect.right - button_width * 2 - margin * 3,
@@ -113,7 +114,7 @@ class ASCIIInventoryPanel:
                 "Previous",
                 self._prev_page,
             )
-            
+
             # Next page button
             next_button = ASCIIButton(
                 self.rect.right - button_width - margin,
@@ -124,12 +125,14 @@ class ASCIIInventoryPanel:
                 "Next",
                 self._next_page,
             )
-            
+
             self.buttons = [sort_button, filter_button, prev_button, next_button]
         except Exception as e:
             logging.error(f"Error creating inventory buttons: {e}")
 
-    def update_inventory(self, inventory: Dict[str, int], cargo_capacity: int = None) -> None:
+    def update_inventory(
+        self, inventory: Dict[str, int], cargo_capacity: int = None
+    ) -> None:
         """Update the inventory data.
 
         Args:
@@ -138,15 +141,19 @@ class ASCIIInventoryPanel:
         """
         try:
             self.inventory = inventory.copy()
-            
+
             if cargo_capacity is not None:
                 self.cargo_capacity = cargo_capacity
-            
+
             # Calculate used capacity (assuming 1 unit per item for now)
             self.used_capacity = sum(inventory.values())
-            
+
             # Reset page if inventory is now smaller
-            max_pages = max(1, (len(self._get_filtered_items()) + self.items_per_page - 1) // self.items_per_page)
+            max_pages = max(
+                1,
+                (len(self._get_filtered_items()) + self.items_per_page - 1)
+                // self.items_per_page,
+            )
             if self.current_page >= max_pages:
                 self.current_page = max(0, max_pages - 1)
         except Exception as e:
@@ -172,31 +179,34 @@ class ASCIIInventoryPanel:
         try:
             # Start with all items
             items = list(self.inventory.items())
-            
+
             # Apply type filter
             if self.filter_type != "all":
                 items = [
-                    (item_id, qty) 
-                    for item_id, qty in items 
+                    (item_id, qty)
+                    for item_id, qty in items
                     if self._get_item_type(item_id) == self.filter_type
                 ]
-            
+
             # Apply text filter
             if self.filter_text:
                 items = [
-                    (item_id, qty) 
-                    for item_id, qty in items 
+                    (item_id, qty)
+                    for item_id, qty in items
                     if self.filter_text.lower() in item_id.lower()
                 ]
-            
+
             # Apply sorting
             if self.sort_by == "name":
                 items.sort(key=lambda x: x[0], reverse=not self.sort_ascending)
             elif self.sort_by == "quantity":
                 items.sort(key=lambda x: x[1], reverse=not self.sort_ascending)
             elif self.sort_by == "type":
-                items.sort(key=lambda x: self._get_item_type(x[0]), reverse=not self.sort_ascending)
-            
+                items.sort(
+                    key=lambda x: self._get_item_type(x[0]),
+                    reverse=not self.sort_ascending,
+                )
+
             return items
         except Exception as e:
             logging.error(f"Error filtering inventory items: {e}")
@@ -214,7 +224,7 @@ class ASCIIInventoryPanel:
         # Check item details first
         if item_id in self.item_details and "type" in self.item_details[item_id]:
             return self.item_details[item_id]["type"]
-        
+
         # Fallback to guessing based on item_id
         if "ore" in item_id or "material" in item_id or "gas" in item_id:
             return "resource"
@@ -244,11 +254,11 @@ class ASCIIInventoryPanel:
         sort_options = ["name", "quantity", "type"]
         current_index = sort_options.index(self.sort_by)
         next_index = (current_index + 1) % len(sort_options)
-        
+
         # If we're cycling back to the first option, toggle direction
         if next_index == 0:
             self.sort_ascending = not self.sort_ascending
-            
+
         self.sort_by = sort_options[next_index]
 
     def _toggle_filter(self) -> None:
@@ -257,7 +267,7 @@ class ASCIIInventoryPanel:
         current_index = filter_options.index(self.filter_type)
         next_index = (current_index + 1) % len(filter_options)
         self.filter_type = filter_options[next_index]
-        
+
         # Reset to first page when filter changes
         self.current_page = 0
 
@@ -269,8 +279,10 @@ class ASCIIInventoryPanel:
     def _next_page(self) -> None:
         """Go to next page."""
         filtered_items = self._get_filtered_items()
-        max_pages = max(1, (len(filtered_items) + self.items_per_page - 1) // self.items_per_page)
-        
+        max_pages = max(
+            1, (len(filtered_items) + self.items_per_page - 1) // self.items_per_page
+        )
+
         if self.current_page < max_pages - 1:
             self.current_page += 1
 
@@ -286,14 +298,16 @@ class ASCIIInventoryPanel:
                 self.selected_item_index = max(0, self.selected_item_index - 1)
             elif key == pygame.K_DOWN:
                 items_on_page = self._get_items_on_current_page()
-                self.selected_item_index = min(len(items_on_page) - 1, self.selected_item_index + 1)
+                self.selected_item_index = min(
+                    len(items_on_page) - 1, self.selected_item_index + 1
+                )
             elif key == pygame.K_PAGEUP:
                 self._prev_page()
                 self.selected_item_index = 0
             elif key == pygame.K_PAGEDOWN:
                 self._next_page()
                 self.selected_item_index = 0
-            
+
             # Pass input to buttons
             for button in self.buttons:
                 button.handle_input(key)
@@ -311,21 +325,24 @@ class ASCIIInventoryPanel:
             # Check if any button was clicked
             for button in self.buttons:
                 button.handle_mouse_event(event_type, pos)
-                
+
             # Check if an inventory item was clicked
             if event_type == pygame.MOUSEBUTTONDOWN:
                 # Calculate item area
                 item_area_start_y = self.rect.y + 40  # Approximate start of items list
                 item_height = 20  # Approximate height per item
-                
+
                 # Check if click is in item area
-                if (self.rect.x <= pos[0] <= self.rect.right and 
-                    item_area_start_y <= pos[1] <= item_area_start_y + self.items_per_page * item_height):
-                    
+                if (
+                    self.rect.x <= pos[0] <= self.rect.right
+                    and item_area_start_y
+                    <= pos[1]
+                    <= item_area_start_y + self.items_per_page * item_height
+                ):
                     # Calculate which item was clicked
                     item_index = (pos[1] - item_area_start_y) // item_height
                     items_on_page = self._get_items_on_current_page()
-                    
+
                     if 0 <= item_index < len(items_on_page):
                         self.selected_item_index = item_index
         except Exception as e:
@@ -340,7 +357,7 @@ class ASCIIInventoryPanel:
         filtered_items = self._get_filtered_items()
         start_idx = self.current_page * self.items_per_page
         end_idx = start_idx + self.items_per_page
-        
+
         return filtered_items[start_idx:end_idx]
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
@@ -356,8 +373,12 @@ class ASCIIInventoryPanel:
         try:
             # Draw panel background and border
             panel = ASCIIPanel(
-                self.rect.x, self.rect.y, self.rect.width, self.rect.height, 
-                self.style, self.title
+                self.rect.x,
+                self.rect.y,
+                self.rect.width,
+                self.rect.height,
+                self.style,
+                self.title,
             )
             panel_rect = panel.draw(surface, font)
 
@@ -368,9 +389,7 @@ class ASCIIInventoryPanel:
             content_width = self.rect.width - margin * 2
 
             # Draw capacity indicator
-            self._draw_capacity_bar(
-                surface, font, content_x, content_y, content_width
-            )
+            self._draw_capacity_bar(surface, font, content_x, content_y, content_width)
             content_y += font.get_height() + margin
 
             # Draw sort and filter info
@@ -379,8 +398,7 @@ class ASCIIInventoryPanel:
             info_text = f"{sort_text}  |  {filter_text}"
 
             surface.blit(
-                font.render(info_text, True, COLOR_TEXT),
-                (content_x, content_y)
+                font.render(info_text, True, COLOR_TEXT), (content_x, content_y)
             )
             content_y += font.get_height() + margin
 
@@ -391,20 +409,20 @@ class ASCIIInventoryPanel:
 
                 surface.blit(
                     font.render(header_item, True, COLOR_HIGHLIGHT),
-                    (content_x, content_y)
+                    (content_x, content_y),
                 )
 
-                type_x = content_x + content_width - font.size(header_type)[0] - margin * 4
+                type_x = (
+                    content_x + content_width - font.size(header_type)[0] - margin * 4
+                )
                 surface.blit(
-                    font.render(header_type, True, COLOR_HIGHLIGHT),
-                    (type_x, content_y)
+                    font.render(header_type, True, COLOR_HIGHLIGHT), (type_x, content_y)
                 )
 
                 header_qty = "Qty"
                 qty_x = type_x - font.size(header_qty)[0] - margin * 4
                 surface.blit(
-                    font.render(header_qty, True, COLOR_HIGHLIGHT),
-                    (qty_x, content_y)
+                    font.render(header_qty, True, COLOR_HIGHLIGHT), (qty_x, content_y)
                 )
 
                 content_y += font.get_height() + margin
@@ -420,7 +438,7 @@ class ASCIIInventoryPanel:
                             content_x - margin // 2,
                             content_y - margin // 2,
                             content_width + margin,
-                            font.get_height() + margin
+                            font.get_height() + margin,
                         )
                         pygame.draw.rect(surface, (50, 50, 70), highlight_rect)
 
@@ -437,22 +455,19 @@ class ASCIIInventoryPanel:
                         item_name += "..."
 
                     surface.blit(
-                        font.render(item_name, True, item_color),
-                        (content_x, content_y)
+                        font.render(item_name, True, item_color), (content_x, content_y)
                     )
 
                     # Draw quantity
                     qty_text = str(quantity)
                     surface.blit(
-                        font.render(qty_text, True, item_color),
-                        (qty_x, content_y)
+                        font.render(qty_text, True, item_color), (qty_x, content_y)
                     )
 
                     # Draw type
                     type_text = item_type.capitalize()
                     surface.blit(
-                        font.render(type_text, True, item_color),
-                        (type_x, content_y)
+                        font.render(type_text, True, item_color), (type_x, content_y)
                     )
 
                     content_y += font.get_height() + margin
@@ -465,19 +480,25 @@ class ASCIIInventoryPanel:
 
                 surface.blit(
                     font.render(empty_text, True, COLOR_TEXT),
-                    (content_x + content_width // 2 - font.size(empty_text)[0] // 2, 
-                     content_y + margin * 3)
+                    (
+                        content_x + content_width // 2 - font.size(empty_text)[0] // 2,
+                        content_y + margin * 3,
+                    ),
                 )
             # Draw page indicator
             items = self._get_filtered_items()
-            max_pages = max(1, (len(items) + self.items_per_page - 1) // self.items_per_page)
+            max_pages = max(
+                1, (len(items) + self.items_per_page - 1) // self.items_per_page
+            )
             page_text = f"Page {self.current_page + 1}/{max_pages}"
 
             page_text_width = font.size(page_text)[0]
             surface.blit(
                 font.render(page_text, True, COLOR_TEXT),
-                (self.rect.x + self.rect.width // 2 - page_text_width // 2, 
-                 self.rect.bottom - font.get_height() * 2 - margin)
+                (
+                    self.rect.x + self.rect.width // 2 - page_text_width // 2,
+                    self.rect.bottom - font.get_height() * 2 - margin,
+                ),
             )
 
             # Draw buttons
@@ -490,7 +511,12 @@ class ASCIIInventoryPanel:
             return self.rect
 
     def _draw_capacity_bar(
-        self, surface: pygame.Surface, font: pygame.font.Font, x: int, y: int, width: int
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
     ) -> None:
         """Draw cargo capacity bar.
 
@@ -503,9 +529,13 @@ class ASCIIInventoryPanel:
         """
         try:
             # Calculate percentage and bar width
-            percentage = min(100.0, (self.used_capacity / self.cargo_capacity) * 100.0) if self.cargo_capacity > 0 else 0
+            percentage = (
+                min(100.0, (self.used_capacity / self.cargo_capacity) * 100.0)
+                if self.cargo_capacity > 0
+                else 0
+            )
             bar_width = int((width - 20) * (percentage / 100.0))
-            
+
             # Determine color based on capacity usage
             if percentage < 70:
                 color = (100, 255, 100)  # Green
@@ -513,21 +543,25 @@ class ASCIIInventoryPanel:
                 color = (255, 255, 100)  # Yellow
             else:
                 color = (255, 100, 100)  # Red
-            
+
             # Draw label
             label = "Cargo: "
             label_width = font.size(label)[0]
             surface.blit(font.render(label, True, COLOR_TEXT), (x, y))
-            
+
             # Draw bar background
-            bar_bg_rect = pygame.Rect(x + label_width, y, width - label_width - 80, font.get_height())
+            bar_bg_rect = pygame.Rect(
+                x + label_width, y, width - label_width - 80, font.get_height()
+            )
             pygame.draw.rect(surface, (50, 50, 50), bar_bg_rect)
-            
+
             # Draw bar fill
             if bar_width > 0:
-                bar_fill_rect = pygame.Rect(x + label_width, y, bar_width, font.get_height())
+                bar_fill_rect = pygame.Rect(
+                    x + label_width, y, bar_width, font.get_height()
+                )
                 pygame.draw.rect(surface, color, bar_fill_rect)
-            
+
             # Draw capacity text
             capacity_text = f"{self.used_capacity}/{self.cargo_capacity} units"
             capacity_pos = (x + width - font.size(capacity_text)[0], y)

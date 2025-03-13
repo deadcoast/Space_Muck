@@ -46,7 +46,6 @@ except ImportError as e:
 
     try:
         # Try direct import
-        
 
         sys.path.append("/Users/deadcoast/PycharmProjects/Space_Muck")
         from generators.symbiote_evolution_generator import (
@@ -60,6 +59,7 @@ except ImportError as e:
         print(f"All import attempts failed. Error: {e2}")
         print("Please check your installation and import paths.")
         sys.exit(1)
+
 
 def create_text_visualization(grid, title="Grid"):
     """Create a text-based visualization of a grid."""
@@ -82,94 +82,106 @@ def create_text_visualization(grid, title="Grid"):
             line += symbols[idx]
         print(line)
 
+
 def fallback_grid(size=10):
     """Create a fallback grid if numpy is not available."""
     return [[random.random() for _ in range(size)] for _ in range(size)]
 
+
 def initialize_generator(seed=42):
     """Initialize the SymbioteEvolutionGenerator with parameters.
-    
+
     Args:
         seed: Random seed for reproducibility
-        
+
     Returns:
         Configured SymbioteEvolutionGenerator instance
     """
     print(f"Using seed: {seed}")
     generator = SymbioteEvolutionGenerator(seed=seed)
-    
+
     # Set parameters
     generator.set_parameter("grid_size", 20)
     generator.set_parameter("initial_colony_count", 3)
     generator.set_parameter("mineral_richness", 0.7)
     generator.set_parameter("evolution_rate", 0.3)
     generator.set_parameter("mutation_rate", 0.1)
-    
+
     print("\nGenerator parameters:")
     pprint(generator.parameters)
-    
+
     return generator
+
 
 def generate_initial_state(generator):
     """Generate initial colony and mineral grids.
-    
+
     Args:
         generator: Configured SymbioteEvolutionGenerator
-        
+
     Returns:
         Tuple of (colony_grid, mineral_grid)
     """
     print("\nGenerating initial state...")
     start_time = time.time()
-    
+
     if NUMPY_AVAILABLE:
         # The generator may return a tuple with metadata
         colony_result = generator.generate_initial_colonies()
-        colony_grid = colony_result[0] if isinstance(colony_result, tuple) else colony_result
+        colony_grid = (
+            colony_result[0] if isinstance(colony_result, tuple) else colony_result
+        )
         mineral_grid = generator.generate_mineral_distribution()
     else:
         print("Using fallback random grids...")
         colony_grid = fallback_grid(generator.parameters["grid_size"])
         mineral_grid = fallback_grid(generator.parameters["grid_size"])
-    
+
     print(f"Generation completed in {time.time() - start_time:.2f} seconds")
     return colony_grid, mineral_grid
 
+
 def print_grid_info(colony_grid):
     """Print debug information about the colony grid.
-    
+
     Args:
         colony_grid: The colony grid to analyze
     """
     print(f"Colony grid type: {type(colony_grid)}")
-    
+
     if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
         print(f"Colony grid shape: {colony_grid.shape}")
     else:
-        print(f"Colony grid dimensions: {len(colony_grid)}x{len(colony_grid[0]) if colony_grid else 0}")
+        print(
+            f"Colony grid dimensions: {len(colony_grid)}x{len(colony_grid[0]) if colony_grid else 0}"
+        )
+
 
 def create_empty_mutation_map(colony_grid):
     """Create an empty mutation map based on colony grid dimensions.
-    
+
     Args:
         colony_grid: The colony grid to match dimensions with
-        
+
     Returns:
         Empty mutation map with same dimensions as colony_grid
     """
     if NUMPY_AVAILABLE and np is not None and isinstance(colony_grid, np.ndarray):
         return np.zeros_like(colony_grid)
     else:
-        return [[0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))]
+        return [
+            [0.0 for _ in range(len(colony_grid[0]))] for _ in range(len(colony_grid))
+        ]
+
 
 def simulate_evolution_with_numpy(generator, colony_grid, mineral_grid):
     """Simulate evolution using numpy implementation.
-    
+
     Args:
         generator: Configured SymbioteEvolutionGenerator
         colony_grid: Initial colony grid
         mineral_grid: Mineral distribution grid
-        
+
     Returns:
         Tuple of (evolved_grid, evolution_history, mutation_map)
     """
@@ -178,10 +190,12 @@ def simulate_evolution_with_numpy(generator, colony_grid, mineral_grid):
         evolved_grid, evolution_history = generator.simulate_evolution(
             colony_grid, mineral_grid, iterations=5
         )
-        
+
         # Generate mutation map if available
         try:
-            mutation_map = generator.generate_mutation_map(colony_grid, evolution_history)
+            mutation_map = generator.generate_mutation_map(
+                colony_grid, evolution_history
+            )
         except TypeError:
             try:
                 # Alternative signature
@@ -189,7 +203,7 @@ def simulate_evolution_with_numpy(generator, colony_grid, mineral_grid):
             except Exception as e:
                 print(f"Could not generate mutation map: {e}")
                 mutation_map = create_empty_mutation_map(colony_grid)
-                
+
     except Exception as e:
         print(f"Error during evolution simulation: {e}")
         # Handle both numpy arrays and regular lists
@@ -200,61 +214,68 @@ def simulate_evolution_with_numpy(generator, colony_grid, mineral_grid):
             # Deep copy for regular lists
             evolved_grid = [row[:] for row in colony_grid]
             evolution_history = [[row[:] for row in colony_grid]]
-            
+
         mutation_map = create_empty_mutation_map(colony_grid)
-        
+
     return evolved_grid, evolution_history, mutation_map
+
 
 def simulate_evolution_fallback(generator):
     """Simulate evolution using fallback implementation when numpy is not available.
-    
+
     Args:
         generator: Configured SymbioteEvolutionGenerator
-        
+
     Returns:
         Tuple of (evolved_grid, evolution_history, mutation_map)
     """
     print("Using fallback evolution simulation...")
     grid_size = generator.parameters["grid_size"]
-    
+
     evolved_grid = fallback_grid(grid_size)
     evolution_history = [fallback_grid(grid_size) for _ in range(5)]
     mutation_map = fallback_grid(grid_size)
-    
+
     return evolved_grid, evolution_history, mutation_map
+
 
 def display_evolution_statistics(evolution_history):
     """Display statistics from the evolution history.
-    
+
     Args:
         evolution_history: List of evolution history entries
     """
     if not NUMPY_AVAILABLE:
         return
-        
+
     print("\nEvolution Statistics:")
     try:
         if not isinstance(evolution_history, list):
-            print(f"Evolution history type {type(evolution_history)} not compatible with statistics calculation")
+            print(
+                f"Evolution history type {type(evolution_history)} not compatible with statistics calculation"
+            )
             return
-            
+
         for i, entry in enumerate(evolution_history):
             display_history_entry(i, entry)
-                
+
     except Exception as e:
         print(f"Error displaying evolution statistics: {e}")
 
+
 def display_history_entry(index, history_entry):
     """Display a single evolution history entry.
-    
+
     Args:
         index: Iteration index
         history_entry: Evolution history entry data
     """
     if not isinstance(history_entry, dict):
-        print(f"Iteration {index}: Entry type {type(history_entry)} not compatible with statistics display")
+        print(
+            f"Iteration {index}: Entry type {type(history_entry)} not compatible with statistics display"
+        )
         return
-        
+
     # Extract information from the history entry dictionary
     population = history_entry.get("population", "N/A")
     aggression = history_entry.get("aggression", "N/A")
@@ -263,12 +284,12 @@ def display_history_entry(index, history_entry):
 
     print(f"Iteration {index}:")
     print(f"  Population: {population}")
-    
+
     if isinstance(aggression, (int, float)):
         print(f"  Aggression: {aggression:.4f}")
     else:
         print(f"  Aggression: {aggression}")
-        
+
     print(f"  Mutations: {len(mutations)}")
 
     # Display mineral consumption if available
@@ -277,12 +298,13 @@ def display_history_entry(index, history_entry):
         for mineral, amount in mineral_consumption.items():
             print(f"    {mineral}: {amount:.4f}")
 
+
 def _format_colony_row(row):
     """Format a single row of colony data for visualization.
-    
+
     Args:
         row: A row of colony data
-        
+
     Returns:
         Formatted string representation of the row
     """
@@ -294,10 +316,10 @@ def _format_colony_row(row):
 
 def _format_mineral_row(row):
     """Format a single row of mineral data for visualization.
-    
+
     Args:
         row: A row of mineral data
-        
+
     Returns:
         Formatted string representation of the row
     """
@@ -309,7 +331,7 @@ def _format_mineral_row(row):
 
 def _visualize_state_handler(title1, grid1, title2, grid2):
     """Visualize two grids with titles in text format.
-    
+
     Args:
         title1: Title for the first grid
         grid1: First grid data (colony)
@@ -326,17 +348,18 @@ def _visualize_state_handler(title1, grid1, title2, grid2):
     for row in grid2:
         print(_format_mineral_row(row))
 
+
 def run_demo():
     """Run a simple demonstration of the SymbioteEvolutionGenerator."""
     print("=== SymbioteEvolutionGenerator Demo ===\n")
 
     # Initialize generator
     generator = initialize_generator(seed=42)
-    
+
     # Generate initial state
     colony_grid, mineral_grid = generate_initial_state(generator)
     print_grid_info(colony_grid)
-    
+
     # Visualize initial state
     _visualize_state_handler(
         "\nInitial Colony Grid (text representation):",
@@ -344,27 +367,29 @@ def run_demo():
         "\nMineral Distribution Grid (text representation):",
         mineral_grid,
     )
-    
+
     # Simulate evolution
     print("\nSimulating evolution...")
     start_time = time.time()
-    
+
     if NUMPY_AVAILABLE:
         evolved_grid, evolution_history, mutation_map = simulate_evolution_with_numpy(
             generator, colony_grid, mineral_grid
         )
     else:
-        evolved_grid, evolution_history, mutation_map = simulate_evolution_fallback(generator)
-    
+        evolved_grid, evolution_history, mutation_map = simulate_evolution_fallback(
+            generator
+        )
+
     print(f"Evolution simulation completed in {time.time() - start_time:.2f} seconds")
-    
+
     if NUMPY_AVAILABLE:
         print(f"Evolution history type: {type(evolution_history)}")
         if isinstance(evolution_history, list):
             print(f"Evolution history length: {len(evolution_history)}")
         else:
             print("Evolution history length: N/A")
-    
+
     # Visualize evolved state
     _visualize_state_handler(
         "\nEvolved Colony Grid (text representation):",
@@ -372,12 +397,15 @@ def run_demo():
         "\nMutation Intensity Map (text representation):",
         mutation_map,
     )
-    
+
     # Display evolution statistics
     display_evolution_statistics(evolution_history)
 
     print("\nDemo completed successfully!")
-    print("For full functionality with visualizations, install numpy, scipy, and matplotlib.")
+    print(
+        "For full functionality with visualizations, install numpy, scipy, and matplotlib."
+    )
+
 
 if __name__ == "__main__":
     run_demo()

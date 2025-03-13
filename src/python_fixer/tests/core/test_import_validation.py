@@ -27,6 +27,7 @@ from python_fixer.core.types import ImportInfo
 from typing import List, Optional
 import nonexistent_package
 
+
 # Test fixtures
 @pytest.fixture
 def invalid_import_structure(tmp_path: Path) -> Path:
@@ -74,6 +75,7 @@ def func_c():
 
     return pkg_root
 
+
 def test_valid_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of valid imports."""
     analyzer = ImportAnalyzer(invalid_import_structure / "module_a.py")
@@ -87,6 +89,7 @@ def test_valid_import_validation(invalid_import_structure: Path) -> None:
         len(analyzer.get_invalid_imports()) == 0
     ), "There should be no invalid imports"
     assert len(analyzer.get_import_errors()) == 0, "There should be no import errors"
+
 
 def test_invalid_relative_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of invalid relative imports."""
@@ -114,6 +117,7 @@ def test_invalid_relative_import_validation(invalid_import_structure: Path) -> N
         assert not imp.is_valid, "Import should be marked as invalid"
         assert imp.error_message is not None, "Import should have an error message"
 
+
 def test_invalid_absolute_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of invalid absolute imports."""
     analyzer = ImportAnalyzer(invalid_import_structure / "module_c.py")
@@ -139,6 +143,7 @@ def test_invalid_absolute_import_validation(invalid_import_structure: Path) -> N
     for imp in invalid_imports:
         assert not imp.is_valid, "Import should be marked as invalid"
         assert imp.error_message is not None, "Import should have an error message"
+
 
 def test_package_path_resolution(invalid_import_structure: Path) -> None:
     """Test package path resolution for import validation."""
@@ -173,6 +178,7 @@ def test_package_path_resolution(invalid_import_structure: Path) -> None:
     assert any(
         "invalid_pkg" in msg for msg in error_messages
     ), "Error for invalid_pkg not found"
+
 
 def test_direct_import_info_validation() -> None:
     """Test direct validation of ImportInfo objects."""

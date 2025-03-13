@@ -36,6 +36,7 @@ except ImportError:
     PIL_AVAILABLE = False
     logging.warning("PIL not available. Image export features will be limited.")
 
+
 class GeneratorVisualizer:
     """Visualization tools for generator outputs."""
 
@@ -297,9 +298,7 @@ class GeneratorVisualizer:
             logging.error(f"Failed to export grid: {str(e)}")
             return False
 
-    def _process_and_save_grid_as_image(
-        self, normalize, grid, colormap, filename
-    ):
+    def _process_and_save_grid_as_image(self, normalize, grid, colormap, filename):
         # Normalize grid values if requested
         if normalize:
             min_val = np.min(grid)
@@ -359,6 +358,7 @@ class GeneratorVisualizer:
             save=save,
             filename=filename,
         )
+
 
 def visualize_generator_output(
     generator,

@@ -20,6 +20,7 @@ from typing import Dict, List, Tuple, Any, Optional
 
 # Local application imports
 
+
 class TradingSystem:
     """
     Core class that manages the trading system, including market mechanics,
@@ -680,7 +681,11 @@ class TradingSystem:
         """Generate a delivery quest: Transport goods from one station to another."""
         # Calculate quantity and reward
         quantity, reward = self._calculate_quantity_and_reward(
-            base_value, difficulty_multiplier, 5, 20, 0.3  # 30% profit margin
+            base_value,
+            difficulty_multiplier,
+            5,
+            20,
+            0.3,  # 30% profit margin
         )
 
         # Select random source and destination stations
@@ -728,7 +733,11 @@ class TradingSystem:
         """Generate a procurement quest: Acquire specific goods for a faction."""
         # Calculate quantity and reward
         quantity, reward = self._calculate_quantity_and_reward(
-            base_value, difficulty_multiplier, 3, 15, 0.5  # 50% profit margin
+            base_value,
+            difficulty_multiplier,
+            3,
+            15,
+            0.5,  # 50% profit margin
         )
 
         # Select destination station
@@ -758,7 +767,11 @@ class TradingSystem:
         """Generate a market manipulation quest: Buy low, sell high by exploiting market events."""
         # Calculate quantity and reward
         quantity, reward = self._calculate_quantity_and_reward(
-            base_value, difficulty_multiplier, 2, 10, 0.8  # 80% profit margin
+            base_value,
+            difficulty_multiplier,
+            2,
+            10,
+            0.8,  # 80% profit margin
         )
 
         return {
@@ -787,7 +800,11 @@ class TradingSystem:
         """Generate a rare commodity quest: Find and deliver a very rare and valuable item."""
         # Calculate quantity and reward
         quantity, reward = self._calculate_quantity_and_reward(
-            base_value, difficulty_multiplier, 1, 5, 1.2  # 120% profit margin
+            base_value,
+            difficulty_multiplier,
+            1,
+            5,
+            1.2,  # 120% profit margin
         )
 
         # Select destination station

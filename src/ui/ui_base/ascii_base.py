@@ -1,12 +1,12 @@
-
-
 # Define color constants
 COLOR_TEXT = (200, 200, 200)  # Light gray
 COLOR_BG = (10, 10, 10)  # Near black
 COLOR_HIGHLIGHT = (255, 255, 100)  # Yellow-ish highlight
 
+
 class UIStyle(Enum):
     """Enum for UI visual styles."""
+
 
 # Standard library imports
 import logging
@@ -25,6 +25,7 @@ ASTEROID = auto()  # Rocky, rough style
 MECHANICAL = auto()  # Industrial, mechanical style
 QUANTUM = auto()  # High-tech, digital style
 FLEET = auto()  # Military, utilitarian style
+
 
 @classmethod
 def get_border_chars(cls, style: "UIStyle") -> Dict[str, str]:
@@ -90,6 +91,7 @@ def get_border_chars(cls, style: "UIStyle") -> Dict[str, str]:
             "vertical": "|",
         }
 
+
 class AnimationStyle(Enum):
     """Enum for animation styles."""
 
@@ -120,6 +122,7 @@ class AnimationStyle(Enum):
         except Exception as e:
             logging.error(f"Error getting animation style: {e}")
             return AnimationStyle.NONE
+
 
 class UIElement:
     """Base class for all UI elements."""
@@ -264,7 +267,7 @@ class UIElement:
             title = self.title
 
             if len(title) > max_title_width:
-                title = f"{title[:max_title_width - 3]}..."
+                title = f"{title[: max_title_width - 3]}..."
 
             # Calculate title position (centered)
             title_x = self.x + (self.width // 2) - (len(title) // 2)
@@ -304,18 +307,35 @@ class UIElement:
             # These are guaranteed to work with any font
             direct_mapping = {
                 # Box drawing characters (single line)
-                "┌": "+", "┐": "+", "└": "+", "┘": "+",  # Corners
-                "─": "-", "│": "|",  # Lines
+                "┌": "+",
+                "┐": "+",
+                "└": "+",
+                "┘": "+",  # Corners
+                "─": "-",
+                "│": "|",  # Lines
                 # Box drawing characters (double line)
-                "╔": "+", "╗": "+", "╚": "+", "╝": "+",  # Double corners
-                "═": "=", "║": "|",  # Double lines
+                "╔": "+",
+                "╗": "+",
+                "╚": "+",
+                "╝": "+",  # Double corners
+                "═": "=",
+                "║": "|",  # Double lines
                 # Box drawing characters (rounded)
-                "╭": "+", "╮": "+", "╯": "+", "╰": "+",  # Rounded corners
+                "╭": "+",
+                "╮": "+",
+                "╯": "+",
+                "╰": "+",  # Rounded corners
                 # Additional box drawing characters
-                "┬": "+", "┴": "+", "┤": "+", "├": "+",  # T-junctions
+                "┬": "+",
+                "┴": "+",
+                "┤": "+",
+                "├": "+",  # T-junctions
                 "┼": "+",  # Cross
                 # Double line variants
-                "╦": "+", "╩": "+", "╣": "+", "╠": "+",  # Double T-junctions
+                "╦": "+",
+                "╩": "+",
+                "╣": "+",
+                "╠": "+",  # Double T-junctions
                 "╬": "+",  # Double cross
             }
 
@@ -403,7 +423,7 @@ class UIElement:
 
     def handle_input(self) -> Optional[str]:
         """Handle input for the UI element.
-        
+
         Returns:
             Optional[str]: Response from handling input, if any
         """

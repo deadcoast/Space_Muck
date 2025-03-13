@@ -1000,14 +1000,14 @@ def _draw_content(
     # This method is called in draw() at line 643
 
 
-    def _draw_interaction_indicators(
-        self,
-        surface: pygame.Surface,
-        font: pygame.font.Font,
-        base_color: Tuple[int, int, int],
-        char_width: int,
-        char_height: int,
-    ) -> None:
+def _draw_interaction_indicators(
+    self,
+    surface: pygame.Surface,
+    font: pygame.font.Font,
+    base_color: Tuple[int, int, int],
+    char_width: int,
+    char_height: int,
+) -> None:
     """Draw hover and focus indicators.
 
     Args:
@@ -1016,29 +1016,29 @@ def _draw_content(
         base_color: Base color to derive interaction colors from
         char_width: Width of a character in pixels
         char_height: Height of a character in pixels
-"""
-try:
-    # Handle focus and hover indicators
-    if self.is_focused:
-        self._draw_focus_indicator(
-            surface, font, base_color, char_width, char_height
-        )
-    elif self.is_hovered and self.is_clickable:
-        self._draw_hover_indicator(
-            surface, font, base_color, char_width, char_height
-        )
-except Exception as e:
-    logging.error(f"Error drawing interaction indicators: {e}")
+    """
+    try:
+        # Handle focus and hover indicators
+        if self.is_focused:
+            self._draw_focus_indicator(
+                surface, font, base_color, char_width, char_height
+            )
+        elif self.is_hovered and self.is_clickable:
+            self._draw_hover_indicator(
+                surface, font, base_color, char_width, char_height
+            )
+    except Exception as e:
+        logging.error(f"Error drawing interaction indicators: {e}")
 
 
-    def _draw_focus_indicator(
-        self,
-        surface: pygame.Surface,
-        font: pygame.font.Font,
-        base_color: Tuple[int, int, int],
-        char_width: int,
-        char_height: int,
-    ) -> None:
+def _draw_focus_indicator(
+    self,
+    surface: pygame.Surface,
+    font: pygame.font.Font,
+    base_color: Tuple[int, int, int],
+    char_width: int,
+    char_height: int,
+) -> None:
     """Draw the appropriate focus indicator based on UI style.
 
     Args:
@@ -1110,6 +1110,32 @@ def _get_hover_color(self, base_color: Tuple[int, int, int]) -> Tuple[int, int, 
         return self._enhance_color(base_color, green_boost=60)
     else:
         return self._enhance_color(base_color, red_boost=30, green_boost=30)
+
+
+def _enhance_color(
+    self,
+    base_color: Tuple[int, int, int],
+    red_boost: int = 0,
+    green_boost: int = 0,
+    blue_boost: int = 0,
+) -> Tuple[int, int, int]:
+    """Enhance a color by boosting specific components.
+
+    Args:
+        base_color: The base color to enhance
+        red_boost: Amount to boost the red component
+        green_boost: Amount to boost the green component
+        blue_boost: Amount to boost the blue component
+
+    Returns:
+        Enhanced color tuple
+    """
+    r, g, b = base_color
+    return (
+        min(255, r + red_boost),
+        min(255, g + green_boost),
+        min(255, b + blue_boost),
+    )
 
 
 def _enhance_color(
@@ -1357,23 +1383,24 @@ def _draw_corners(
     except Exception as e:
         logging.error(f"Error drawing corners: {e}")
 
-    def _ensure_methods_used(self) -> None:
-        """Special method to ensure all helper methods are recognized by linters.
 
-        This method is called during initialization to ensure that
-        static analysis tools recognize that all methods are intentionally
-        defined and not unused. This helps prevent false positives in linters
-        like SonarLint while maintaining all methods for future use.
+def _ensure_methods_used(self) -> None:
+    """Special method to ensure all helper methods are recognized by linters.
 
-        The method uses runtime conditions to prevent actual execution of the code.
-        """
-        # This condition is recognized by static analyzers but never evaluates to True
-        # Using a dynamic condition that can be statically analyzed
-        if os.environ.get("DEVELOPMENT_MODE") == "LINTER_CHECK_NEVER_TRUE":
-            # Reference all potentially "unused" methods
-            dummy_surface = pygame.Surface((1, 1))
-            dummy_font = pygame.font.Font(None, 12)
-            dummy_color = (128, 128, 128)
+    This method is called during initialization to ensure that
+    static analysis tools recognize that all methods are intentionally
+    defined and not unused. This helps prevent false positives in linters
+    like SonarLint while maintaining all methods for future use.
 
-            # Reference the _draw_content method
-            self._draw_content(dummy_surface, dummy_font, dummy_color, 8, 16)
+    The method uses runtime conditions to prevent actual execution of the code.
+    """
+    # This condition is recognized by static analyzers but never evaluates to True
+    # Using a dynamic condition that can be statically analyzed
+    if os.environ.get("DEVELOPMENT_MODE") == "LINTER_CHECK_NEVER_TRUE":
+        # Reference all potentially "unused" methods
+        dummy_surface = pygame.Surface((1, 1))
+        dummy_font = pygame.font.Font(None, 12)
+        dummy_color = (128, 128, 128)
+
+        # Reference the _draw_content method
+        self._draw_content(dummy_surface, dummy_font, dummy_color, 8, 16)

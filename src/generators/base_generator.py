@@ -46,6 +46,7 @@ except ImportError:
 
 # Local application imports
 
+
 @inject
 class BaseGenerator(BaseEntity):
     """

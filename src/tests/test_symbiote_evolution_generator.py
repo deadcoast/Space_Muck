@@ -113,6 +113,7 @@ except ImportError:
             logger.debug(f"Exiting context: {self.context_name}")
             return False
 
+
 # Import the classes to test
 try:
     from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
@@ -125,6 +126,7 @@ try:
 except ImportError as e:
     logger.error(f"Could not import required classes: {str(e)}")
     ALGORITHM_AVAILABLE = False
+
 
 class TestSymbioteEvolutionGenerator(unittest.TestCase):
     """Test cases for the SymbioteEvolutionGenerator class.
@@ -726,6 +728,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         # Close the figure and add to our tracking list
         plt.close(fig)
 
+
 def run_comprehensive_tests():
     """Run all tests for the SymbioteEvolutionGenerator class.
 
@@ -776,16 +779,17 @@ def run_comprehensive_tests():
         if test_result.failures:
             print("\nFailure details:")
             for i, (test, traceback) in enumerate(test_result.failures):
-                print(f"\nFailure {i+1}: {test}")
+                print(f"\nFailure {i + 1}: {test}")
                 print(f"{traceback}")
 
         if test_result.errors:
             print("\nError details:")
             for i, (test, traceback) in enumerate(test_result.errors):
-                print(f"\nError {i+1}: {test}")
+                print(f"\nError {i + 1}: {test}")
                 print(f"{traceback}")
 
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(run_comprehensive_tests())

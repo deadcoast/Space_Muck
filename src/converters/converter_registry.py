@@ -7,13 +7,12 @@ throughout the game.
 
 # Standard library imports
 import uuid
+from typing import Dict, List, Optional
 
 # Third-party library imports
 
 # Local application imports
 from converters.converter_models import (
-from typing import Dict, List, Optional
-
     Converter,
     Recipe,
     ConverterType,

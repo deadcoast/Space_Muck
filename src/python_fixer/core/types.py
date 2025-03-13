@@ -14,6 +14,7 @@ import importlib.util
 # Dictionary to store optional dependencies
 OPTIONAL_DEPS: Dict[str, Any] = {}
 
+
 # Import optional dependencies
 def import_optional_dep(name: str) -> Optional[Any]:
     """Import an optional dependency.
@@ -29,6 +30,7 @@ def import_optional_dep(name: str) -> Optional[Any]:
             return importlib.import_module(name)
     return None
 
+
 def check_dependency_available(name: str) -> bool:
     """Check if a dependency is available without importing it.
 
@@ -39,6 +41,7 @@ def check_dependency_available(name: str) -> bool:
         True if the dependency is available, False otherwise
     """
     return importlib.util.find_spec(name) is not None
+
 
 # Initialize optional dependencies
 OPTIONAL_DEPS.update(
@@ -52,11 +55,13 @@ OPTIONAL_DEPS.update(
     }
 )
 
+
 @runtime_checkable
 class TypeCheckable(Protocol):
     """Protocol for objects that support runtime type checking."""
 
     __annotations__: Dict[str, Any]
+
 
 @dataclass
 class TypeCheckResult:
@@ -71,6 +76,7 @@ class TypeCheckResult:
     is_valid: bool
     errors: List[str] = field(default_factory=list)
     context: Optional[str] = None
+
 
 @typechecked
 def validate_type(
@@ -97,7 +103,7 @@ def validate_type(
             args = expected_type.__args__
             if origin is Union:
                 type_str = (
-                    f"Union[{', '.join(f'<class \'{arg.__name__}\'' for arg in args)}]"
+                    f"Union[{', '.join(f"<class '{arg.__name__}'" for arg in args)}]"
                 )
             elif origin is list:
                 type_str = f"<class 'list[{', '.join(str(args[0]))}]'>"
@@ -120,6 +126,7 @@ def validate_type(
         if context:
             error_msg = f"{context}: {error_msg}"
         return TypeCheckResult(is_valid=False, errors=[error_msg], context=context)
+
 
 @typechecked
 def _get_type_str(type_obj: Any) -> str:
@@ -154,6 +161,7 @@ def _get_type_str(type_obj: Any) -> str:
     if hasattr(type_obj, "__module__") and type_obj.__module__ != "builtins":
         return f"<class '{type_obj.__module__}.{type_obj.__name__}'>"
     return f"<class '{type_obj.__name__}'>"
+
 
 @typechecked
 def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
@@ -298,6 +306,7 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
             is_valid=False,
             errors=[f"Error validating protocol implementation: {str(e)}"],
         )
+
 
 @dataclass
 class ImportInfo:
