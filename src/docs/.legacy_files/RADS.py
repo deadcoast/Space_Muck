@@ -8,25 +8,36 @@ Theme:
   that not only improve your ship but also let you influence the procedural generation.
 """
 
+# Standard library imports
 import itertools
+import logging
 import math
-import numpy as np
-import pygame
 import random
 import sys
 import time
-import logging
-from typing import List, Tuple, Dict, Any
 
-# Additional imports for advanced mathematical modeling
-import scipy.stats as stats
+# Third-party library imports
+from perlin_noise import PerlinNoise
+import numpy as np
 import scipy.ndimage as ndimage
 import scipy.signal as signal
-from sklearn.cluster import KMeans
-import networkx as nx
-from perlin_noise import PerlinNoise
+import scipy.stats as stats
 
-from src.symbiote_algorithm import SymbioteEvolutionAlgorithm
+# Optional dependencies
+try:
+    from perlin_noise import PerlinNoise
+    PERLIN_AVAILABLE = True
+except ImportError:
+    PERLIN_AVAILABLE = False
+    print("PerlinNoise package is not available. Using fallback noise generator.")
+
+# Local application imports
+from sklearn.cluster import KMeans
+from typing import List, Tuple, Dict, Any
+import networkx as nx
+import pygame
+
+# Additional imports for advanced mathematical modeling
 
 # -------------------------------------
 # Logging Configuration
@@ -69,7 +80,6 @@ STATE_SHOP: str = "SHOP"
 STATE_MAP: str = "MAP"
 STATE_SHOP: str = "SHOP"
 STATE_MAP: str = "MAP"
-
 
 # -------------------------------------
 # AsteroidField Class
@@ -902,7 +912,6 @@ class AsteroidField:
                             self.grid[y, x] * self.rare_bonus_multiplier
                         )
 
-
 # -------------------------------------
 # Enhanced Symbiote Evolution System
 # -------------------------------------
@@ -1425,7 +1434,7 @@ class MinerEntity:
 
     def _generate_random_nodes(self, field):
         # Create network-like structures using graph theory concepts
-        import networkx as nx
+        
 
         # Generate random nodes
         num_nodes = random.randint(5, 10)
@@ -1604,7 +1613,6 @@ class MinerEntity:
         self.hunger = min(1.0, self.hunger)
 
         return num_colonies, self.population
-
 
 # -------------------------------------
 # Player Class (Mining Ship)
@@ -1851,7 +1859,6 @@ class Player:
         results["minerals_mined"] = reward
 
         return results
-
 
 # -------------------------------------
 # Shop Class (Upgrades)
@@ -2165,7 +2172,6 @@ class Shop:
 
         return False  # Keep shop open
 
-
 # -------------------------------------
 # Notification Manager Class
 # -------------------------------------
@@ -2389,7 +2395,6 @@ class NotificationManager:
                     ),
                 )
 
-
 # -------------------------------------
 # Utility Function: Draw Text
 # -------------------------------------
@@ -2407,7 +2412,6 @@ def draw_text(
         font = pygame.font.Font(None, size)
     text_surface = font.render(text, True, color)
     surface.blit(text_surface, (x, y))
-
 
 # -------------------------------------
 # Game Class (Main Engine)
@@ -3159,7 +3163,6 @@ class Game:
             self.notifier.add(
                 f"Mining reduced by {symbiote_pressure:.0%} due to symbiote activity"
             )
-
 
 # -------------------------------------
 # Main Entry Point

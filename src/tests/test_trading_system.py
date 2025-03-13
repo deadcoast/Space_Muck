@@ -2,11 +2,14 @@
 Test suite for the trading system functionality.
 """
 
-import unittest
+# Standard library imports
 import random
 
-from systems.trading_system import TradingSystem
+# Third-party library imports
 
+# Local application imports
+from systems.trading_system import TradingSystem
+import unittest
 
 class MockPlayer:
     """Mock player class for testing trading system."""
@@ -40,7 +43,6 @@ class MockPlayer:
             self.faction_reputation[faction_id] = max(
                 -100, min(100, self.faction_reputation[faction_id])
             )
-
 
 class TestTradingSystem(unittest.TestCase):
     """Test cases for the trading system."""
@@ -313,7 +315,6 @@ class TestTradingSystem(unittest.TestCase):
 
         # Check inventory was reduced
         self.assertEqual(self.player.inventory["common_minerals"], 5)  # 10 - 5
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,11 +6,14 @@ This module provides a simple dependency injection container and decorators
 to facilitate better testability and decoupling of components.
 """
 
-
-import contextlib
+# Standard library imports
 import inspect
-from typing import Any, Type, get_type_hints
 
+# Third-party library imports
+
+# Local application imports
+from typing import Any, Type, get_type_hints
+import contextlib
 
 class DependencyContainer:
     """
@@ -122,10 +125,8 @@ class DependencyContainer:
         # Instantiate the class with resolved dependencies
         return cls(**kwargs)
 
-
 # Create a global container instance
 container = DependencyContainer()
-
 
 def inject(cls: Type) -> Type:
     """
@@ -183,7 +184,6 @@ def inject(cls: Type) -> Type:
     cls.__init__ = new_init
 
     return cls
-
 
 def provides(interface: Type, singleton: bool = False):
     """

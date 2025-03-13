@@ -1,15 +1,20 @@
-from typing import Any, Dict
 
-from variant_loggers import LogRecord
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 console = Console()
 
-
 class ConsoleFormatter:
     """Rich console output formatter"""
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from typing import Any, Dict
+from variant_loggers import LogRecord
 
     def format(self, record: LogRecord) -> str:
         message_panel = Panel(

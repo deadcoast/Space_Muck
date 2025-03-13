@@ -9,6 +9,11 @@ The settings in this file control how optional dependencies are handled and
 which implementations are used when multiple options are available.
 """
 
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
 from typing import Dict, Any, Literal
 
 # Noise generator configuration

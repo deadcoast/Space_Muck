@@ -5,19 +5,26 @@ This module contains classes and functions for rendering different game elements
 in a consistent and optimized way, separating the rendering logic from the game objects.
 """
 
-import itertools
-
 # Standard library imports
+import itertools
 import math
 import random
-from typing import List, Tuple
 
 # Third-party library imports
 import numpy as np
-import pygame
 
 # Local application imports
+from .draw_utils import draw_text, draw_minimap
 from config import (
+from typing import List, Tuple
+import pygame
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+
     COLOR_ASTEROID_RARE,
     COLOR_BG,
     COLOR_GRID,
@@ -25,8 +32,6 @@ from config import (
     COLOR_RACE_2,
     COLOR_RACE_3,
 )
-from .draw_utils import draw_text, draw_minimap
-
 
 class AsteroidFieldRenderer:
     """Handles rendering of the asteroid field with optimized performance."""
@@ -517,7 +522,6 @@ class AsteroidFieldRenderer:
             surface, color, (screen_x, screen_y, cell_size, cell_size)
         )
 
-
 class PlayerRenderer:
     """Handles rendering of the player and player-related UI elements."""
 
@@ -734,7 +738,6 @@ class PlayerRenderer:
                         ),
                     )
 
-
 class EffectsRenderer:
     """Handles rendering of special effects like explosions, particles, etc."""
 
@@ -946,7 +949,6 @@ class EffectsRenderer:
                             int(screen_y - particle_size / 2),
                         ),
                     )
-
 
 class UIStateRenderer:
     """Handles rendering of UI state overlays and transitions."""

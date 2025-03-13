@@ -8,12 +8,16 @@ This module provides a robust signal handling system that supports:
 4. Proper cleanup and resource management
 """
 
+# Standard library imports
 import logging
-import signal
 import sys
+
+# Third-party library imports
+
+# Local application imports
 from contextlib import contextmanager, ExitStack
 from typing import Callable, Dict, List, Optional, Set, NoReturn
-
+import signal
 
 class SignalManager:
     """Manages signal handlers with a stack-based approach for proper cleanup.

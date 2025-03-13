@@ -1,11 +1,4 @@
-from typing import Tuple, List, Dict, Optional, Any, TypeVar
-import pygame
 
-from ui.draw_utils import draw_text
-from ui.ascii_base import UIStyle
-from ui.ui_element.ascii_button import ASCIIButton
-from ui.ui_element.ascii_panel import ASCIIPanel
-from config import COLOR_TEXT
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -14,9 +7,21 @@ ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
-
 class ASCIIChainBuilder:
     """Interface for step-by-step creation of converter chains."""
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from config import COLOR_TEXT
+from typing import Tuple, List, Dict, Optional, Any, TypeVar
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_ui import ASCIIButton
+from src.ui.ui_base.ascii_ui import ASCIIPanel
+import pygame
 
     def __init__(
         self,

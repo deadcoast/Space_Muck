@@ -3,29 +3,32 @@
 Unit tests for the BaseGenerator class.
 """
 
-
+# Standard library imports
 import itertools
-import unittest
-import sys
 import os
+import sys
+
+# Third-party library imports
 import numpy as np
+
+# Local application imports
+from generators.base_generator import BaseGenerator
 from unittest.mock import patch, MagicMock
+from utils.dependency_injection import DependencyContainer
+from utils.noise_generator import NoiseGenerator
 import importlib.util
+import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from generators.base_generator import BaseGenerator
-from utils.noise_generator import NoiseGenerator
-from utils.dependency_injection import DependencyContainer
 
 # Check for utility modules availability using importlib.util.find_spec
 CA_UTILS_AVAILABLE = (
     importlib.util.find_spec("src.utils.cellular_automaton_utils") is not None
 )
 VALUE_GEN_AVAILABLE = importlib.util.find_spec("src.utils.value_generator") is not None
-
 
 class MockNoiseGenerator(NoiseGenerator):
     """Mock implementation of NoiseGenerator for testing."""
@@ -53,7 +56,6 @@ class MockNoiseGenerator(NoiseGenerator):
             )
         )
         return np.full((height, width), self.return_value)
-
 
 class TestBaseGenerator(unittest.TestCase):
     """Test cases for the BaseGenerator class."""
@@ -582,7 +584,6 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Verify the result has the expected shape
         self.assertEqual(result.shape, (250, 250))
-
 
 if __name__ == "__main__":
     unittest.main()

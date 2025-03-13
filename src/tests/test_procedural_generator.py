@@ -3,32 +3,38 @@
 Unit tests for the ProceduralGenerator class.
 """
 
-import unittest
-import sys
+# Standard library imports
 import os
-import numpy as np
+import sys
+
+# Third-party library imports
 import matplotlib
+import numpy as np
+
+# Local application imports
+from generators.asteroid_field import AsteroidField
+from generators.base_generator import BaseGenerator
+from generators.procedural_generator import (
+from typing import List, Optional
+from utils.noise_generator import (
+import unittest
 
 matplotlib.use("Agg")  # Use non-interactive backend for testing
-# import matplotlib.pyplot as plt  # Commented out - not used in this file
+# .pyplot as plt  # Commented out - not used in this file
 # import random  # Commented out - not used in this file
-from typing import List, Optional
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the classes to test
-from generators.procedural_generator import (
+
     ProceduralGenerator,
     # Imported but redefined below for testing purposes
     create_field_with_multiple_algorithms as original_create_field,
 )
-from generators.base_generator import BaseGenerator
-from generators.asteroid_field import AsteroidField
-from utils.noise_generator import (
+
     SimplexNoiseGenerator,
 )  # NoiseGenerator is not used directly
-
 
 class TestNoiseGenerator(SimplexNoiseGenerator):
     """
@@ -103,7 +109,6 @@ class TestNoiseGenerator(SimplexNoiseGenerator):
         )
 
         return 0.9 + (base_noise * 0.1)
-
 
 class TestProceduralGenerator(unittest.TestCase):
     """Test cases for the ProceduralGenerator class."""
@@ -341,7 +346,6 @@ class TestProceduralGenerator(unittest.TestCase):
             # Restore original method
             ProceduralGenerator.__init__ = original_init
 
-
 # This is a test implementation for local testing
 # Adding a more descriptive comment to explain why we have a local implementation
 # for testing purposes
@@ -372,7 +376,7 @@ def create_field_with_multiple_algorithms(
     """
     # Create the asteroid field
     # Import here to avoid circular imports
-    from generators.asteroid_field import AsteroidField
+    
 
     # Create the field
     field = AsteroidField(width=width, height=height)
@@ -402,7 +406,6 @@ def create_field_with_multiple_algorithms(
     )
 
     return field
-
 
 class TestProceduralGeneratorVerification(unittest.TestCase):
     """Verification tests for the ProceduralGenerator class that were previously in verify_procedural_generator.py."""
@@ -709,7 +712,7 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
         """Test that the generator can create visualizations."""
         # Skip this test if matplotlib is not available
         try:
-            import matplotlib.pyplot as plt
+            .pyplot as plt
         except ImportError:
             self.skipTest("Matplotlib is not available")
 
@@ -771,7 +774,6 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
             unique_values_2tiers,
             "More tiers should result in more unique mineral values",
         )
-
 
 if __name__ == "__main__":
     unittest.main()

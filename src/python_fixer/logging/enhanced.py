@@ -1,23 +1,5 @@
-import json
-import os
-import sys
-import threading
-import uuid
-import asyncio
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from logging import INFO
-from pathlib import Path
-from typing import Any, List, Optional, Union
-import aiofiles
-from opentelemetry.sdk.trace import Span
-from opentelemetry.trace import SpanContext
-from rich.console import Console
-from torch.ao.quantization.fx import tracer
 
-import variant_loggers
-from logger_refactor.logger_analysis import PatternAnalyzer, Correlator, Aggregator
-from logger_refactor.logger_record import (
+
     StreamHandler,
     FileHandler,
     DEBUG,
@@ -28,9 +10,33 @@ from logger_refactor.logger_record import (
     getLevelName,
 )
 
-
 class EnhancedLogger:
     """Enhanced logging system with advanced features."""
+
+# Standard library imports
+from datetime import datetime, timezone
+from logging import INFO
+import json
+import os
+import sys
+import uuid
+
+# Third-party library imports
+
+# Local application imports
+from contextlib import asynccontextmanager
+from logger_refactor.logger_analysis import PatternAnalyzer, Correlator, Aggregator
+from logger_refactor.logger_record import (
+from opentelemetry.sdk.trace import Span
+from opentelemetry.trace import SpanContext
+from pathlib import Path
+from rich.console import Console
+from torch.ao.quantization.fx import tracer
+from typing import Any, List, Optional, Union
+import aiofiles
+import asyncio
+import threading
+import variant_loggers
 
     def __init__(
         self,
@@ -298,7 +304,6 @@ class EnhancedLogger:
         for handler in self.logger.handlers:
             handler.close()
             self.logger.removeHandler(handler)
-
 
 if __name__ == "__main__":
 

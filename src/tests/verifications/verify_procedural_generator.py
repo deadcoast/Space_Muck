@@ -5,20 +5,24 @@ Tests the functionality of the ProceduralGenerator and ensures it correctly
 inherits from BaseGenerator while maintaining all required functionality.
 """
 
-import sys
+# Standard library imports
 import os
-import numpy as np
+import sys
+
+# Third-party library imports
 import matplotlib.pyplot as plt
+import numpy as np
+
+# Local application imports
+from generators.procedural_generator import (
+from world.asteroid_field import AsteroidField
 
 # Add the src directory to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from generators.procedural_generator import (
     ProceduralGenerator,
     create_field_with_multiple_algorithms,
 )
-from world.asteroid_field import AsteroidField
-
 
 def test_procedural_generator():
     """Test the basic functionality of the ProceduralGenerator class."""
@@ -60,7 +64,6 @@ def test_procedural_generator():
     print("All basic tests passed!")
     return generator, asteroid_grid, rare_grid
 
-
 def test_create_field_function():
     """Test the create_field_with_multiple_algorithms function."""
     print("\nTesting create_field_with_multiple_algorithms function...")
@@ -95,7 +98,6 @@ def test_create_field_function():
 
     print("Field creation test passed!")
     return field
-
 
 def visualize_results(generator, asteroid_grid, rare_grid, field):
     """Visualize the results of the tests."""
@@ -143,7 +145,6 @@ def visualize_results(generator, asteroid_grid, rare_grid, field):
     plt.tight_layout()
     plt.savefig("procedural_generator_test.png")
     print("Visualization saved as 'procedural_generator_test.png'")
-
 
 if __name__ == "__main__":
     print("=== ProceduralGenerator Verification ===")

@@ -1,11 +1,4 @@
-import logging
-from typing import Tuple, Optional, TypeVar
-import pygame
-import time
-import math
 
-from ui.draw_utils import draw_text
-from ui.ascii_base import UIStyle, UIElement
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -13,7 +6,6 @@ Color = Tuple[int, int, int]
 ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
-
 
 class ASCIIProgressBar(UIElement):
     """ASCII-style progress bar with animation support.
@@ -24,6 +16,19 @@ class ASCIIProgressBar(UIElement):
 
     Inherits from UIElement to leverage standardized animation framework and styling.
     """
+
+# Standard library imports
+import logging
+import math
+import time
+
+# Third-party library imports
+
+# Local application imports
+from typing import Tuple, Optional, TypeVar
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.draw_utils import draw_text
+import pygame
 
     def __init__(
         self,

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-import unittest
-from enhancement_system import EnhancementSystem
-from event_system import EventSystem, EventType, Event
-
-
 class TestShip:
     """Test class for enhancement demonstration."""
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from enhancement_system import EnhancementSystem
+from event_system import EventSystem, EventType, Event
+import unittest
 
     def __init__(self):
         self.shields = 100
@@ -20,7 +24,6 @@ class TestShip:
         """Take damage to shields."""
         self.shields -= amount
         return self.shields
-
 
 class TestEnhancementSystem(unittest.TestCase):
     """Test cases for the enhancement system."""
@@ -113,7 +116,6 @@ class TestEnhancementSystem(unittest.TestCase):
         self.assertEqual(enhancement["class_name"], "TestShip")
         self.assertEqual(enhancement["method_name"], "take_damage")
         self.assertTrue(enhancement["active"])
-
 
 if __name__ == "__main__":
     unittest.main()

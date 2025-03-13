@@ -2,13 +2,17 @@
 Complete, working structured logger with JSON formatting and file output.
 """
 
+# Standard library imports
+from datetime import datetime
 import json
 import logging
 import sys
-from datetime import datetime
+
+# Third-party library imports
+
+# Local application imports
 from pathlib import Path
 from typing import Any, Dict, Optional
-
 
 class JSONFormatter(logging.Formatter):
     """Format log records as JSON"""
@@ -41,7 +45,6 @@ class JSONFormatter(logging.Formatter):
             }
 
         return json.dumps(log_data)
-
 
 class StructuredLogger:
     """Enhanced logger with structured output and convenience methods"""

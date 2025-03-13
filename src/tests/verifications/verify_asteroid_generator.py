@@ -13,9 +13,14 @@ This script focuses on:
 4. Visualization of generator outputs
 """
 
+# Standard library imports
+import random
 import sys
 import time
-import random
+
+# Third-party library imports
+
+# Local application imports
 
 # Try to import required packages, but don't fail if they're not available
 try:
@@ -42,7 +47,6 @@ try:
 except ImportError:
     print("scipy not available. Some optimizations will be skipped.")
     SCIPY_AVAILABLE = False
-
 
 # Implement a simplified BaseGenerator with caching
 class BaseGenerator:
@@ -275,7 +279,6 @@ class BaseGenerator:
 
         return result
 
-
 # Define a minimal AsteroidGenerator for testing
 class AsteroidGenerator(BaseGenerator):
     """A simplified AsteroidGenerator class for testing purposes."""
@@ -341,7 +344,6 @@ class AsteroidGenerator(BaseGenerator):
 
         return grid
 
-
 # Import visualization module
 try:
     from utils.visualization import GeneratorVisualizer
@@ -359,7 +361,6 @@ except ImportError:
                 plt.colorbar(im, ax=ax)
 
             return fig
-
 
 try:
     import scipy.ndimage as ndimage
@@ -383,7 +384,6 @@ except ImportError:
 if not NUMPY_AVAILABLE:
     print("numpy is required for this test.")
     sys.exit(1)
-
 
 def test_asteroid_generator():
     """Test the basic functionality and performance of the AsteroidGenerator class."""
@@ -446,14 +446,12 @@ def test_asteroid_generator():
     print("All basic tests passed!")
     return generator, asteroid_grid, value_grid, rare_grid
 
-
 def _test_asteroid_generator_handler(start_time, arg1, arg2):
     result = time.time() - start_time
     print(f"{arg1}{result:.4f} seconds")
     assert arg2.shape == (100, 100), f"Expected shape (100, 100), got {arg2.shape}"
 
     return result
-
 
 def test_pattern_generation():
     """Test the pattern generation functionality and performance."""
@@ -508,7 +506,6 @@ def test_pattern_generation():
     print("Pattern generation tests passed!")
     return asteroid_grid, spiral, rings
 
-
 def visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_data):
     """Visualize the results of the tests using the new visualization module."""
     if not MATPLOTLIB_AVAILABLE:
@@ -542,7 +539,6 @@ def visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_d
     plt.tight_layout()
     plt.savefig("asteroid_generator_test.png")
     print("Visualization saved as 'asteroid_generator_test.png'")
-
 
 def verify_file_structure():
     """Verify the file structure and inheritance of AsteroidGenerator."""
@@ -632,7 +628,6 @@ def verify_file_structure():
 
     print(f"File structure verification {'successful' if success else 'failed'}")
     return success
-
 
 if __name__ == "__main__":
     print("=== AsteroidGenerator Comprehensive Verification ===")

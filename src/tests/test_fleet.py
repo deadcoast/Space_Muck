@@ -3,9 +3,16 @@
 Unit tests for the Fleet class.
 """
 
-import unittest
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+
+# Local application imports
+from entities.base_entity import BaseEntity
+from entities.fleet import Fleet
+import unittest
 
 # Removed unused mock imports
 
@@ -13,9 +20,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from entities.fleet import Fleet
-from entities.base_entity import BaseEntity
-
 
 class TestFleet(unittest.TestCase):
     """Test cases for the Fleet class."""
@@ -317,7 +321,6 @@ class TestFleet(unittest.TestCase):
         self.assertIsNone(fleet.destination)
         self.assertEqual(fleet.fuel, 100)
         self.assertEqual(fleet.max_fuel, 100)
-
 
 if __name__ == "__main__":
     unittest.main()

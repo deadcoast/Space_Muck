@@ -3,18 +3,23 @@
 Unit tests for the MinerEntity class.
 """
 
-import unittest
-import sys
+# Standard library imports
+import logging
 import os
 import random
+import sys
+
+# Third-party library imports
 import numpy as np
-import logging
+
+# Local application imports
+from entities.miner_entity import MinerEntity
+import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the class to test
-from entities.miner_entity import MinerEntity
 
 # Removed unused import: from contextlib import suppress
 
@@ -111,7 +116,6 @@ except ImportError:
             self.energy_grid = np.zeros((height, width), dtype=np.float32)
             self.entity_grid = np.zeros((height, width), dtype=np.int8)
             self.races = []
-
 
 class TestAsteroidField(AsteroidField):
     """Test implementation of AsteroidField for testing MinerEntity.
@@ -214,7 +218,6 @@ class TestAsteroidField(AsteroidField):
         self.avg_resource_value = self.total_resources / max(1, self.resource_count)
         self.resource_density = self.resource_count / (self.width * self.height)
         self.rare_density = self.rare_count / (self.width * self.height)
-
 
 class TestMinerEntity(unittest.TestCase):
     """Test cases for the MinerEntity class."""
@@ -907,7 +910,6 @@ class TestMinerEntity(unittest.TestCase):
         self.miner.population = population_value
         self.miner.current_behavior = behavior_type
         self.assertEqual(self.miner.current_behavior, behavior_type)
-
 
 if __name__ == "__main__":
     unittest.main()

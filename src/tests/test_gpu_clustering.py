@@ -11,12 +11,20 @@ Unit tests for GPU-based clustering algorithms.
 # sourcery skip: no-loop-in-tests, no-conditionals-in-tests
 """
 
-import unittest
-import numpy as np
-from pathlib import Path
+# Standard library imports
 import logging
 import sys
-import importlib.util  # Used for package availability checking
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from pathlib import Path
+from utils.gpu_utils import (  # noqa: E402
+import importlib.util
+import unittest
+
+  # Used for package availability checking
 
 # Configure logging for GPU clustering tests
 logger = logging.getLogger(__name__)
@@ -33,7 +41,7 @@ for module_name in list(sys.modules.keys()):
         del sys.modules[module_name]
 
 # Import from project modules
-from utils.gpu_utils import (  # noqa: E402
+
     apply_kmeans_clustering_gpu,
     apply_dbscan_clustering_gpu,
     is_gpu_available,
@@ -54,7 +62,6 @@ except ImportError:
 SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
 if not SKLEARN_AVAILABLE:
     logger.warning("scikit-learn not available - some tests will be skipped")
-
 
 class TestGPUClustering(unittest.TestCase):
     """Tests for GPU-based clustering algorithms."""
@@ -426,7 +433,6 @@ class TestGPUClustering(unittest.TestCase):
             inertia += np.sum(distances)
 
         return inertia
-
 
 if __name__ == "__main__":
     unittest.main()

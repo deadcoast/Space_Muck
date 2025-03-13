@@ -4,15 +4,18 @@ ASCII Minimap Panel for Space Muck.
 This module provides a minimap component showing the player's position in the game world.
 """
 
-from typing import Dict, List, Tuple, Any
-import pygame
-import time
+# Standard library imports
 import math
 import random
+import time
 
-from ui.ascii_ui import UIStyle, ASCIIPanel
+# Third-party library imports
+
+# Local application imports
 from config import COLOR_TEXT
-
+from typing import Dict, List, Tuple, Any
+from src.ui.ui_base.ascii_base import UIStyle
+import pygame
 
 class ASCIIMinimapPanel:
     """

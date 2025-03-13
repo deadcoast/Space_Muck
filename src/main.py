@@ -11,9 +11,7 @@ A space mining game featuring:
 - Advanced procedural generation with multiple algorithms
 """
 
-
 # Standard library imports
-import gc
 import itertools
 import logging
 import math
@@ -21,7 +19,30 @@ import os
 import random
 import sys
 import time
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from config import (  # noqa: E402
+from entities.miner_entity import MinerEntity  # noqa: E402
+from entities.player import Player  # noqa: E402
+from events.event_bus import get_event_bus  # noqa: E402
+from generators.asteroid_field import AsteroidField  # noqa: E402
+from systems.combat_system import CombatSystem  # noqa: E402
+from systems.encounter_generator import EncounterGenerator  # noqa: E402
+from systems.event_system import get_event_batcher  # noqa: E402
+from systems.game_loop import get_game_loop  # noqa: E402
 from typing import Dict, List, Tuple, Any, Optional
+from ui.draw_utils import (  # noqa: E402
+from ui.notification import NotificationManager  # noqa: E402
+from ui.renderers import AsteroidFieldRenderer  # noqa: E402
+from ui.shop import Shop  # noqa: E402
+from utils.logging_setup import (  # noqa: E402
+import gc
+import pygame
+
+# Standard library imports
 
 # Add the current directory to path to ensure proper importing
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,12 +50,12 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, current_dir)
 
 # Third-party library imports
-import numpy as np  # noqa: E402
-import pygame  # noqa: E402
+  # noqa: E402
+  # noqa: E402
 
 # Local application imports
 # Game constants and configuration
-from config import (  # noqa: E402
+
     # Window and display settings
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
@@ -98,40 +119,29 @@ GAME_CONFIG = {
     },
 }
 
-
 # State machine error types
 class GameStateError(Exception):
     """Base class for game state related errors."""
 
     pass
 
-
 class InvalidStateTransitionError(GameStateError):
     """Raised when attempting an invalid state transition."""
 
     pass
-
 
 class StateValidationError(GameStateError):
     """Raised when state validation fails."""
 
     pass
 
-
 class GameInitializationError(GameStateError):
     """Raised when game initialization fails."""
 
     pass
 
-
 # Game components
-from generators.asteroid_field import AsteroidField  # noqa: E402
-from entities.player import Player  # noqa: E402
-from entities.miner_entity import MinerEntity  # noqa: E402
-from ui.shop import Shop  # noqa: E402
-from ui.notification import NotificationManager  # noqa: E402
-from ui.renderers import AsteroidFieldRenderer  # noqa: E402
-from ui.draw_utils import (  # noqa: E402
+
     draw_text,
     draw_panel,
     # draw_minimap removed - unused import
@@ -140,12 +150,7 @@ from ui.draw_utils import (  # noqa: E402
 )
 
 # Game systems
-from systems.combat_system import CombatSystem  # noqa: E402
-from systems.encounter_generator import EncounterGenerator  # noqa: E402
-from systems.game_loop import get_game_loop  # noqa: E402
-from events.event_bus import get_event_bus  # noqa: E402
-from systems.event_system import get_event_batcher  # noqa: E402
-from utils.logging_setup import (  # noqa: E402
+
     log_exception,
     log_performance_start,
     log_performance_end,
@@ -154,7 +159,6 @@ from utils.logging_setup import (  # noqa: E402
     # Add missing function
     log_performance_metric,
 )
-
 
 class Game:
     """Main game class that orchestrates all game components.
@@ -3117,7 +3121,6 @@ class Game:
         # End event batching and dispatch all events
         event_batcher.dispatch_batch()
 
-
 def run_game_loop(game):
     """Run the main game loop.
 
@@ -3156,7 +3159,6 @@ def run_game_loop(game):
         log_exception("Unhandled exception in main game loop", e)
         return False
 
-
 def main():
     """Main entry point for the game."""
     try:
@@ -3168,7 +3170,6 @@ def main():
         # Ensure pygame is properly shut down
         pygame.quit()
         logging.info("Game shutdown complete")
-
 
 def _initialize_game_and_run():
     # Configure logging
@@ -3195,7 +3196,6 @@ def _initialize_game_and_run():
         logging.info("Game completed successfully")
     else:
         logging.warning("Game loop terminated with errors")
-
 
 if __name__ == "__main__":
     main()

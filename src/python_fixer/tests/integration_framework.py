@@ -11,14 +11,18 @@
 # EFFECT: Provides integration testing capabilities for enhanced methods
 # NAMING: Integration[Type]Test
 
-import logging
-from typing import Any, Dict, List, Optional, Type, Callable
-from dataclasses import dataclass, field
-
-
 @dataclass
 class IntegrationTest:
     """Container for integration test data."""
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Type, Callable
 
     name: str
     components: List[Type]
@@ -26,7 +30,6 @@ class IntegrationTest:
     teardown: Optional[Callable] = None
     dependencies: List[str] = field(default_factory=list)
     expected_state: Dict[str, Any] = field(default_factory=dict)
-
 
 class IntegrationFramework:
     """Framework for testing enhanced method integrations.

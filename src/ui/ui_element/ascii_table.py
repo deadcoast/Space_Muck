@@ -1,12 +1,4 @@
-import logging
-from typing import Tuple, List, Optional, Any, TypeVar
-import pygame
-import time
 
-from ui.draw_utils import draw_text
-from ui.ascii_base import UIStyle
-from ui.ui_element.ascii_panel import ASCIIPanel
-from config import COLOR_TEXT
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -14,7 +6,6 @@ Color = Tuple[int, int, int]
 ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
-
 
 class ASCIITable:
     def __init__(
@@ -40,6 +31,21 @@ class ASCIITable:
             selectable: Whether rows can be selected
             sortable: Whether columns can be sorted
         """
+
+# Standard library imports
+import logging
+import time
+
+# Third-party library imports
+
+# Local application imports
+from config import COLOR_TEXT
+from typing import Tuple, List, Optional, Any, TypeVar
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_ui import ASCIIPanel
+import pygame
+
         self.rect = rect
         self.headers = headers
         self.data = data

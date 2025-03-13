@@ -2,17 +2,25 @@
 Demo script showcasing Space Muck's ASCII UI components.
 """
 
-import sys
-import os
-import pygame
-import random
-import time
+# Standard library imports
 import math
+import os
+import random
+import sys
+import time
+
+# Third-party library imports
+
+# Local application imports
+from config import COLOR_BG
+from ui.ascii_ui import (
+from ui.game_screen import ASCIIGameScreen
+from ui.minimap_panel import ASCIIMinimapPanel
+import pygame
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from ui.ascii_ui import (
     ASCIIBox,
     ASCIIPanel,
     ASCIIProgressBar,
@@ -23,10 +31,6 @@ from ui.ascii_ui import (
     ASCIIEfficiencyMonitor,
     UIStyle,
 )
-from ui.game_screen import ASCIIGameScreen
-from ui.minimap_panel import ASCIIMinimapPanel
-from config import COLOR_BG
-
 
 class ASCIIUIDemo:
     def __init__(self):
@@ -550,7 +554,6 @@ class ASCIIUIDemo:
             self.running = False
         finally:
             pygame.quit()
-
 
 if __name__ == "__main__":
     demo = ASCIIUIDemo()

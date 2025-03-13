@@ -7,13 +7,21 @@ and customizable upgrade options that affect different aspects of gameplay.
 
 # Standard library imports
 import random
-from typing import Any, Dict, List, Tuple
 
 # Third-party library imports
-import pygame
 
 # Local application imports
+from .draw_utils import draw_button, draw_panel, draw_text
 from config import (
+from typing import Any, Dict, List, Tuple
+import pygame
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
@@ -23,8 +31,6 @@ from config import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
 )
-from .draw_utils import draw_button, draw_panel, draw_text
-
 
 # Forward references for type hints
 class AsteroidField:
@@ -32,18 +38,15 @@ class AsteroidField:
 
     pass
 
-
 class NotificationManager:
     """Type hint for NotificationManager class."""
 
     pass
 
-
 class Player:
     """Type hint for Player class."""
 
     pass
-
 
 class Shop:
     """
@@ -1188,19 +1191,16 @@ class Shop:
         self.update_selected_item()
         self.update_hover_item()
 
-
 # Forward references for type hints
 class AsteroidField:
     """Type hint for AsteroidField class."""
 
     pass
 
-
 class NotificationManager:
     """Type hint for NotificationManager class."""
 
     pass
-
 
 class Player:
     """Type hint for Player class."""

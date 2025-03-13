@@ -1,11 +1,4 @@
-import numpy as np
-import random
-import math
-from scipy import stats
-from scipy import ndimage
-from typing import Dict, Tuple, List, Set, Optional
-from collections import deque
-import logging
+
 
 # Configure logging
 logging.basicConfig(
@@ -16,12 +9,40 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 class SymbioteEvolutionAlgorithm:
     """
     Advanced algorithm for symbiote evolution and behavior, implementing the mathematical models
     described in algorithm_design.md.
     """
+
+# Standard library imports
+from collections import deque
+import logging
+import math
+import random
+
+# Third-party library imports
+from scipy import ndimage
+from scipy import stats
+import numpy as np
+
+# Optional dependencies
+try:
+    import scipy.ndimage as ndimage
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("scipy not available, using fallback implementation.")
+
+try:
+    import scipy.ndimage as ndimage
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("scipy not available, using fallback implementation.")
+
+# Local application imports
+from typing import Dict, Tuple, List, Set, Optional
 
     def __init__(
         self,

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-import unittest
-
-from project_map_parser import ProjectMapParser
-
-
 class TestProjectMapParser(unittest.TestCase):
     """Test suite for the ProjectMapParser class.
 
@@ -14,6 +9,14 @@ class TestProjectMapParser(unittest.TestCase):
     - Proper type hints and assertions
     - Comprehensive test coverage
     """
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from project_map_parser import ProjectMapParser
+import unittest
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -110,7 +113,6 @@ Dependencies Found:
         self.assertIn("Add resource distribution patterns", generated_map)
         self.assertIn("numpy", generated_map)
         self.assertIn("logging", generated_map)
-
 
 if __name__ == "__main__":
     unittest.main()

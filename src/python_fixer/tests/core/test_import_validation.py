@@ -8,13 +8,24 @@ This test suite covers:
 4. Invalid import detection
 """
 
-from pathlib import Path
+# Standard library imports
+import os
+import sys
 
+# Third-party library imports
 import pytest
 
+# Local application imports
+from ...invalid_pkg import AnotherClass
+from ..parent_pkg.nonexistent import AnotherClass
+from ..pkg import SomeClass
+from .nonexistent_module import NonexistentClass
+from another_nonexistent_package import SomeClass
+from pathlib import Path
 from python_fixer.core.analyzer import ImportAnalyzer
 from python_fixer.core.types import ImportInfo
-
+from typing import List, Optional
+import nonexistent_package
 
 # Test fixtures
 @pytest.fixture
@@ -37,9 +48,6 @@ def invalid_import_structure(tmp_path: Path) -> Path:
     # Create module_a.py with valid imports
     (pkg_root / "module_a.py").write_text(
         """
-import os
-import sys
-from typing import List, Optional
 
 def func_a():
     pass
@@ -49,8 +57,6 @@ def func_a():
     # Create module_b.py with invalid relative import
     (pkg_root / "module_b.py").write_text(
         """
-from .nonexistent_module import NonexistentClass
-from ..parent_pkg.nonexistent import AnotherClass
 
 def func_b():
     pass
@@ -60,8 +66,6 @@ def func_b():
     # Create module_c.py with invalid absolute import
     (pkg_root / "module_c.py").write_text(
         """
-import nonexistent_package
-from another_nonexistent_package import SomeClass
 
 def func_c():
     pass
@@ -69,7 +73,6 @@ def func_c():
     )
 
     return pkg_root
-
 
 def test_valid_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of valid imports."""
@@ -84,7 +87,6 @@ def test_valid_import_validation(invalid_import_structure: Path) -> None:
         len(analyzer.get_invalid_imports()) == 0
     ), "There should be no invalid imports"
     assert len(analyzer.get_import_errors()) == 0, "There should be no import errors"
-
 
 def test_invalid_relative_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of invalid relative imports."""
@@ -112,7 +114,6 @@ def test_invalid_relative_import_validation(invalid_import_structure: Path) -> N
         assert not imp.is_valid, "Import should be marked as invalid"
         assert imp.error_message is not None, "Import should have an error message"
 
-
 def test_invalid_absolute_import_validation(invalid_import_structure: Path) -> None:
     """Test validation of invalid absolute imports."""
     analyzer = ImportAnalyzer(invalid_import_structure / "module_c.py")
@@ -139,7 +140,6 @@ def test_invalid_absolute_import_validation(invalid_import_structure: Path) -> N
         assert not imp.is_valid, "Import should be marked as invalid"
         assert imp.error_message is not None, "Import should have an error message"
 
-
 def test_package_path_resolution(invalid_import_structure: Path) -> None:
     """Test package path resolution for import validation."""
     # Create a nested package structure
@@ -151,8 +151,7 @@ def test_package_path_resolution(invalid_import_structure: Path) -> None:
     # Create a module with relative imports
     (nested_pkg / "module_d.py").write_text(
         """
-from ..pkg import SomeClass
-from ...invalid_pkg import AnotherClass
+
 """
     )
 
@@ -174,7 +173,6 @@ from ...invalid_pkg import AnotherClass
     assert any(
         "invalid_pkg" in msg for msg in error_messages
     ), "Error for invalid_pkg not found"
-
 
 def test_direct_import_info_validation() -> None:
     """Test direct validation of ImportInfo objects."""

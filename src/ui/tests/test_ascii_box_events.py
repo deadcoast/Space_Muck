@@ -5,14 +5,17 @@ This module provides tests to verify that ASCIIBox components
 properly integrate with the UI event system.
 """
 
-import unittest
-from unittest.mock import MagicMock, patch
+# Standard library imports
 import time
+
+# Third-party library imports
+
+# Local application imports
+from unittest.mock import MagicMock, patch
+import unittest
 
 # No typing imports needed
 
-from ui.ui_element.ascii_box import ASCIIBox
-from ui.ui_base.event_system import UIEventType, UIEventData
 from ui.ui_helpers.ascii_box_event_helper import (
     register_ascii_box,
     unregister_ascii_box,
@@ -21,8 +24,8 @@ from ui.ui_helpers.ascii_box_event_helper import (
     create_interactive_box,
     handle_mouse_events,
     get_box_by_id,
+    is_registered_with_events,
 )
-
 
 class TestASCIIBoxEventIntegration(unittest.TestCase):
     """Test case for ASCIIBox event integration."""
@@ -44,7 +47,7 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
 
         # Check that box was registered
         self.assertIsNotNone(box_id)
-        self.assertTrue(len(box_id) > 0)
+        self.assertGreater(len(box_id), 0)
         self.assertEqual(self.box.component_id, box_id)
 
     def test_register_with_custom_id(self):
@@ -63,13 +66,16 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         # Set up mock
         mock_unregister.return_value = True
 
-        # Register and then unregister box
-        box_id = register_ascii_box(self.box)
+        # Register box with a known ID for testing
+        test_id = "test_box_id_123"
+        self.box.component_id = test_id
+        
+        # Unregister box
         result = unregister_ascii_box(self.box)
 
         # Check that box was unregistered
         self.assertTrue(result)
-        mock_unregister.assert_called_once_with(box_id)
+        mock_unregister.assert_called_once_with(test_id)
 
     def test_add_click_handler(self):
         """Test adding a click handler to an ASCIIBox."""
@@ -154,9 +160,9 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
 
         # Check that handlers were registered
         self.assertTrue(box.is_clickable)
-        self.assertTrue(UIEventType.MOUSE_CLICK in box._event_handlers)
-        self.assertTrue(UIEventType.MOUSE_ENTER in box._event_handlers)
-        self.assertTrue(UIEventType.MOUSE_LEAVE in box._event_handlers)
+        self.assertIn(UIEventType.MOUSE_CLICK, box._event_handlers)
+        self.assertIn(UIEventType.MOUSE_ENTER, box._event_handlers)
+        self.assertIn(UIEventType.MOUSE_LEAVE, box._event_handlers)
 
     def test_handle_mouse_events(self):
         """Test handling mouse events for multiple boxes."""
@@ -202,12 +208,43 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         mock_registry.get_component.return_value = self.box
 
         # Get box by ID
-        result = get_box_by_id("test_box_id")
+        test_id = "test_box_id"
+        result = get_box_by_id(test_id)
 
         # Check that correct box was returned
         self.assertEqual(result, self.box)
-        mock_registry.get_component.assert_called_once_with("test_box_id")
-
+        mock_registry.get_component.assert_called_once_with(test_id)
+        
+    @patch("ui.ui_helpers.ascii_box_event_helper.ComponentRegistry")
+    def test_is_registered_with_events(self, mock_registry_class):
+        """Test checking if an ASCIIBox is registered with the event system."""
+        # Set up mock
+        mock_registry = MagicMock()
+        mock_registry_class.get_instance.return_value = mock_registry
+        mock_registry.is_registered.return_value = True
+        
+        # Set a known component ID for testing
+        test_id = "test_box_id_456"
+        self.box.component_id = test_id
+        
+        # Check if box is registered
+        result = is_registered_with_events(self.box)
+        
+        # Check result
+        self.assertTrue(result)
+        mock_registry.is_registered.assert_called_once_with(test_id)
+        
+    def test_is_registered_with_events_no_id(self):
+        """Test checking if an ASCIIBox without ID is registered with events."""
+        # Create box without ID
+        box = ASCIIBox(5, 5, 20, 10, "Test Box")
+        box.component_id = None
+        
+        # Check if box is registered
+        result = is_registered_with_events(box)
+        
+        # Should return False for box without ID
+        self.assertFalse(result)
 
 if __name__ == "__main__":
     unittest.main()

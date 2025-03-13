@@ -1,16 +1,21 @@
-import json
-from datetime import datetime
-from typing import Any, Dict
 
-import variant_loggers
-from variant_loggers import LogRecord
-from rich.console import Console
 
 console = Console()
 
-
 class JsonFormatter:
     """JSON output formatter for structured variant_loggers"""
+
+# Standard library imports
+from datetime import datetime
+import json
+
+# Third-party library imports
+
+# Local application imports
+from rich.console import Console
+from typing import Any, Dict
+from variant_loggers import LogRecord
+import variant_loggers
 
     def format(self, record: LogRecord) -> str:
         """Format record as JSON string"""
@@ -45,16 +50,13 @@ class JsonFormatter:
         """
         return "".join(variant_loggers.Formatter.formatException(self, exc_info))
 
-
 def getLevelName(self) -> str:
     """Returns the name of the variant_loggers level."""
     return variant_loggers.getLevelName(self.level)
 
-
 def getMessage(self) -> str:
     """Returns the log message."""
     return self.message
-
 
 @classmethod
 def from_dict(cls, record_data: Dict[str, Any]) -> "LogRecord":

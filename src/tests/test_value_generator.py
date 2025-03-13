@@ -4,20 +4,24 @@ Unit tests for value_generator module.
 This module contains comprehensive tests for the value generation utilities.
 """
 
-import unittest
-import numpy as np
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from utils.value_generator import (
+import unittest
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.value_generator import (
     generate_value_distribution,
     add_value_clusters,
     generate_rare_resource_distribution,
 )
-
 
 class TestValueGenerator(unittest.TestCase):
     """Test cases for value_generator module."""
@@ -164,7 +168,6 @@ class TestValueGenerator(unittest.TestCase):
         self.assertLess(abs(rare_freq - rare_chance), 0.2)
         self.assertLess(abs(precious_freq - (rare_chance * precious_factor)), 0.2)
         self.assertLess(abs(anomaly_freq - (rare_chance * anomaly_factor)), 0.2)
-
 
 if __name__ == "__main__":
     unittest.main()

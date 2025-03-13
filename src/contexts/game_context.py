@@ -5,12 +5,16 @@ This module provides the core game context that manages game state,
 coordinates between different managers, and handles event propagation.
 """
 
+# Standard library imports
+from datetime import datetime
 import logging
-from typing import Dict, List, Optional, Set, Callable, Tuple
+
+# Third-party library imports
+
+# Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-from datetime import datetime
-
+from typing import Dict, List, Optional, Set, Callable, Tuple
 
 # Game States
 class GameState(Enum):
@@ -21,7 +25,6 @@ class GameState(Enum):
     LOADING = auto()
     ERROR = auto()
     SHUTTING_DOWN = auto()
-
 
 # Event Types
 class GameEventType(Enum):
@@ -44,7 +47,6 @@ class GameEventType(Enum):
     THRESHOLD_TRIGGERED = auto()
     THRESHOLD_CLEARED = auto()
 
-
 @dataclass
 class GameEvent:
     """Represents a game event."""
@@ -54,7 +56,6 @@ class GameEvent:
     data: Dict[str, any]
     timestamp: float
     priority: int = 1
-
 
 class GameContext:
     """

@@ -3,7 +3,7 @@
 Comprehensive test script to verify imports across the Space Muck codebase.
 
 This test file serves as the primary import verification tool, combining functionality
-from multiple import test files. It verifies that imports are working correctly and tests
+
 basic functionality of key components across the codebase.
 
 The test suite includes:
@@ -13,20 +13,25 @@ The test suite includes:
 4. Optional dependency detection and reporting
 """
 
-import unittest
+# Standard library imports
 import sys
 
-# import os  # Commented out unused import
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from multiple import test files. It verifies that imports are working correctly and tests
+from pathlib import Path
 import importlib
+import unittest
+
+# import os  # Commented out unused import
 
 # import traceback  # Commented out unused import
-from pathlib import Path
 
 # Typing imports removed as they were unused
 # If needed in the future, uncomment the following:
 # from typing import Dict, List, Tuple, Optional, Any
-
-import numpy as np
 
 # Add project root to path if needed
 project_root = Path(__file__).parent.parent
@@ -39,7 +44,6 @@ if str(project_root) not in sys.path:
 # from generators.asteroid_field import AsteroidField  # noqa: E402, F401
 # from entities.player import Player  # noqa: E402, F401
 # from config import GRID_WIDTH, GRID_HEIGHT  # noqa: E402, F401
-
 
 class TestImports(unittest.TestCase):
     """Test class to verify imports are working correctly."""
@@ -204,7 +208,6 @@ class TestImports(unittest.TestCase):
             except Exception as e:
                 self.fail(f"Failed to import advanced module '{module}': {e}")
 
-
 def run_tests():
     """Run the import tests and print results."""
     print("\n==== SPACE MUCK IMPORT VERIFICATION TOOL ====\n")
@@ -228,7 +231,6 @@ def run_tests():
     # Run the unittest tests
     unittest.main(verbosity=2)
 
-
 def display_import_error(e):
     """Display helpful error message for import failures."""
     print(f"✗ Basic imports are failing: {e}")
@@ -237,7 +239,6 @@ def display_import_error(e):
     print("2. Check if 'src' directory is in your Python path")
     print("3. Try running with: PYTHONPATH=. python src/tests/test_imports.py")
     sys.exit(1)
-
 
 if __name__ == "__main__":
     run_tests()

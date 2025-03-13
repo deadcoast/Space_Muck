@@ -6,12 +6,18 @@ These tests verify the functionality of the GPU acceleration utilities,
 with appropriate fallbacks for systems without GPU support.
 """
 
-import unittest
+# Standard library imports
+
+# Third-party library imports
 import numpy as np
+
+# Local application imports
 from unittest.mock import patch
+from utils.gpu_utils import (
+import unittest
 
 # Import the module to test
-from utils.gpu_utils import (
+
     is_gpu_available,
     get_available_backends,
     to_gpu,
@@ -21,7 +27,6 @@ from utils.gpu_utils import (
     CUDA_AVAILABLE,
     CUPY_AVAILABLE,
 )
-
 
 class TestGPUUtils(unittest.TestCase):
     """Test cases for GPU utilities."""
@@ -176,7 +181,6 @@ class TestGPUUtils(unittest.TestCase):
 
             # Verify that the CPU function was called
             mock_cpu_fn.assert_called_once()
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from header_map_parser import HeaderMapParser
-
-
 def main():
     """Test the header map parser implementation."""
+
+# Standard library imports
+import logging
+import random
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
+from header_map_parser import HeaderMapParser
+from pathlib import Path
+
     # Initialize parser
     parser = HeaderMapParser()
 
@@ -21,10 +29,6 @@ def main():
 # MAP: /project_root/generators
 # EFFECT: Generates asteroid fields and distributions
 # NAMING: Generator[Type]
-
-import numpy as np
-import random
-import logging
 
 def generate_asteroid():
     pass
@@ -73,7 +77,6 @@ def generate_asteroid():
                     print(f"  - {item}")
             else:
                 print(f"\n{key}: {value}")
-
 
 if __name__ == "__main__":
     main()

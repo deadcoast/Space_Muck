@@ -5,14 +5,17 @@ This module implements the core Game class with enhanced state management,
 including state transitions, validation, and history tracking.
 """
 
+# Standard library imports
+from datetime import datetime
 import logging
 import time
-from typing import List, Dict, Any, Optional, Callable
-from dataclasses import dataclass
-from datetime import datetime
 
+# Third-party library imports
+
+# Local application imports
 from config import GAME_CONFIG
-
+from dataclasses import dataclass
+from typing import List, Dict, Any, Optional, Callable
 
 @dataclass
 class StateTransition:
@@ -25,24 +28,20 @@ class StateTransition:
     success: bool
     error: Optional[str] = None
 
-
 class GameStateError(Exception):
     """Base exception for game state errors."""
 
     pass
-
 
 class InvalidStateTransitionError(GameStateError):
     """Raised when an invalid state transition is attempted."""
 
     pass
 
-
 class StateValidationError(GameStateError):
     """Raised when state validation fails."""
 
     pass
-
 
 class Game:
     """Main game class with enhanced state management."""

@@ -2,14 +2,17 @@
 Encounter generator module: Generates combat and other encounters based on player location and status.
 """
 
+# Standard library imports
 import logging
 import random
-from typing import Dict, Tuple, Any
 
+# Third-party library imports
+
+# Local application imports
+from config import GAME_MAP_SIZE
 from entities.player import Player
 from systems.combat_system import CombatSystem
-from config import GAME_MAP_SIZE
-
+from typing import Dict, Tuple, Any
 
 class EncounterGenerator:
     """

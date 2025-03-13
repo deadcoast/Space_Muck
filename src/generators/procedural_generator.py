@@ -6,26 +6,38 @@ and provides specialized functionality for generating asteroid fields using mult
 noise algorithms and cellular automaton rules.
 """
 
+# Standard library imports
 import logging
+
+# Third-party library imports
+from scipy import stats
+import numpy as np
+
+# Optional dependencies
+try:
+    import scipy.ndimage as ndimage
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("scipy not available, using fallback implementation.")
+
+# Local application imports
+from generators.base_generator import BaseGenerator
 from typing import Dict, Tuple, Optional, TYPE_CHECKING
+from utils.dependency_injection import inject
+from utils.logging_setup import (
+from utils.noise_generator import NoiseGenerator
 
 # Type checking imports
 if TYPE_CHECKING:
     from generators.asteroid_field import AsteroidField
 
-import numpy as np
-from scipy import stats
-
 # Local imports with correct paths
-from generators.base_generator import BaseGenerator
-from utils.noise_generator import NoiseGenerator
-from utils.dependency_injection import inject
-from utils.logging_setup import (
+
     log_performance_start,
     log_performance_end,
     log_exception,
 )
-
 
 @inject
 class ProceduralGenerator(BaseGenerator):
@@ -586,7 +598,6 @@ class ProceduralGenerator(BaseGenerator):
         rare_grid = self.generate_rare_minerals(grid, rare_chance=rare_chance)
 
         return grid, rare_grid
-
 
 def create_field_with_multiple_algorithms(
     width: int = 100,

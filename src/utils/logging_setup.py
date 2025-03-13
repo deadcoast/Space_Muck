@@ -9,15 +9,22 @@ This module provides advanced logging capabilities including:
 - Memory usage monitoring
 """
 
-import contextlib
+# Standard library imports
+from datetime import datetime
 import logging
 import logging.handlers
 import os
 import time
-import traceback
-import gc
-from datetime import datetime
+
+# Third-party library imports
+
+# Local application imports
 from typing import Optional
+import contextlib
+import gc
+import traceback
+
+.handlers
 
 # Try to import colorama for cross-platform colored console output
 try:
@@ -28,7 +35,6 @@ try:
     COLORAMA_AVAILABLE = True
 except ImportError:
     COLORAMA_AVAILABLE = False
-
 
 class MemoryHandler(logging.Handler):
     """Custom handler that keeps recent log records in memory for in-game display."""
@@ -48,7 +54,6 @@ class MemoryHandler(logging.Handler):
     def get_records(self):
         """Return all stored records."""
         return self.records
-
 
 class ColoredFormatter(logging.Formatter):
     """Custom formatter that adds color to console output."""
@@ -75,7 +80,6 @@ class ColoredFormatter(logging.Formatter):
         if COLORAMA_AVAILABLE:
             return f"{self.colors.get(levelname, '')}{message}{self.colors['RESET']}"
         return message
-
 
 class PerformanceLogFilter(logging.Filter):
     """Filter that adds performance metrics to log records."""
@@ -107,7 +111,6 @@ class PerformanceLogFilter(logging.Filter):
             record.memory = 0
 
         return True
-
 
 def setup_logging(
     log_to_file: bool = True, log_level: int = logging.INFO
@@ -168,7 +171,6 @@ def setup_logging(
 
     return logger
 
-
 def _create_file_handler(logging, log_level, logger):
     # Create timestamped log filename
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -193,7 +195,6 @@ def _create_file_handler(logging, log_level, logger):
     logger.info(f"Logging started, saving to {log_file}")
 
     return result
-
 
 def log_exception(e: Exception, critical: bool = True) -> None:
     """
@@ -225,7 +226,6 @@ def log_exception(e: Exception, critical: bool = True) -> None:
         with contextlib.suppress(ImportError):
             _log_memory_usage_details(logger)
 
-
 def _log_memory_usage_details(logger):
     import psutil
 
@@ -239,7 +239,6 @@ def _log_memory_usage_details(logger):
     logger.debug(
         f"Memory after gc.collect(): {memory_after:.2f} MB, delta: {memory_after - memory:.2f} MB"
     )
-
 
 def get_in_memory_logs() -> list:
     """
@@ -259,7 +258,6 @@ def get_in_memory_logs() -> list:
         [],
     )
 
-
 def log_performance_start(tag: str) -> float:
     """
     Start timing a code section.
@@ -274,7 +272,6 @@ def log_performance_start(tag: str) -> float:
     if logging.getLogger("space_muck").level <= logging.DEBUG:
         logging.debug(f"Performance '{tag}' started")
     return start_time
-
 
 def log_performance_end(tag: str, start_time: float) -> float:
     """
@@ -292,7 +289,6 @@ def log_performance_end(tag: str, start_time: float) -> float:
         logging.debug(f"Performance '{tag}' completed in {duration * 1000:.2f}ms")
     return duration
 
-
 def log_performance_metric(metric_name: str, value: float) -> None:
     """
     Log a performance metric with a specific value.
@@ -303,7 +299,6 @@ def log_performance_metric(metric_name: str, value: float) -> None:
     """
     if logging.getLogger("space_muck").level <= logging.DEBUG:
         logging.debug(f"Performance metric '{metric_name}': {value:.2f}")
-
 
 def log_memory_usage(tag: str = "Memory check") -> Optional[float]:
     """
@@ -325,7 +320,6 @@ def log_memory_usage(tag: str = "Memory check") -> Optional[float]:
     except ImportError:
         logging.debug(f"{tag}: psutil not available")
         return None
-
 
 class LogContext:
     """Context manager for tracking performance and logging exceptions."""

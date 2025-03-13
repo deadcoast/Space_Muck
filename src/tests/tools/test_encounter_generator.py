@@ -2,17 +2,20 @@
 Tests for the encounter generator module.
 """
 
+# Standard library imports
+import random
+
+# Third-party library imports
+
+# Local application imports
+from entities.player import Player
+from systems.combat_system import CombatSystem
+from systems.encounter_generator import EncounterGenerator
 import unittest
 
 # No mocking needed in this test
-import random
-
-from entities.player import Player
 
 # EnemyShip is created by the EncounterGenerator, no need to import it directly
-from systems.combat_system import CombatSystem
-from systems.encounter_generator import EncounterGenerator
-
 
 class TestEncounterGenerator(unittest.TestCase):
     """Test cases for the encounter generator."""
@@ -215,7 +218,6 @@ class TestEncounterGenerator(unittest.TestCase):
         # Verify no encounter
         self.assertFalse(result["encounter"])
         self.assertEqual(result["reason"], "Unknown quest type: unknown_type")
-
 
 if __name__ == "__main__":
     unittest.main()

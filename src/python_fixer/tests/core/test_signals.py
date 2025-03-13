@@ -2,12 +2,15 @@
 Tests for the signal handling utilities.
 """
 
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from python_fixer.core.signals import SignalManager
+from unittest.mock import patch, MagicMock
 import signal
 import unittest
-from unittest.mock import patch, MagicMock
-
-from python_fixer.core.signals import SignalManager
-
 
 class TestSignalManager(unittest.TestCase):
     """Test cases for the SignalManager class."""
@@ -215,7 +218,6 @@ class TestSignalManager(unittest.TestCase):
             self.assertEqual(self.signal_manager._active_signals, set())
             mock_signal.assert_called()
             self.signal_manager.logger.debug.assert_called()
-
 
 if __name__ == "__main__":
     unittest.main()

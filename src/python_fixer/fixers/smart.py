@@ -1,18 +1,6 @@
-import argparse
-import asyncio
-import json
-import logging
-import os
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import aiofiles
-import variant_loggers
-import patch  # Ensure you have a python-patch installed: pip install python-patch
-from core import analyzer
-from fixers import fix_manager
-from questionary import prompt
+
+  # Ensure you have a python-patch installed: pip install python-patch
 
 # Configure variant_loggers
 variant_loggers.basicConfig(
@@ -22,7 +10,6 @@ variant_loggers.basicConfig(
 )
 logger = variant_loggers.getLogger(__name__)
 
-
 class FixManager:
     def __init__(self, config_path: Optional[str] = None):
         """
@@ -31,6 +18,27 @@ class FixManager:
         :param config_path: Path to the configuration file.
         :type config_path: Optional[str]
         """
+
+# Standard library imports
+import argparse
+import json
+import logging
+import os
+
+# Third-party library imports
+
+# Local application imports
+from core import analyzer
+from fixers import fix_manager
+from pathlib import Path
+from questionary import prompt
+from typing import Any, Dict, List, Optional
+import aiofiles
+import asyncio
+import patch
+import tempfile
+import variant_loggers
+
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
 
@@ -478,7 +486,6 @@ class FixManager:
                 f"Unknown mode '{mode}'. Supported modes are 'report', 'auto_fix', 'interactive_fix'."
             )
 
-
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -493,7 +500,6 @@ fix_formatter = logging.Formatter(
 fix_handler.setFormatter(fix_formatter)
 fix_logger.addHandler(fix_handler)
 
-
 class Fix:
     """
     Base class for fixes.
@@ -504,7 +510,6 @@ class Fix:
         Apply the fix using the analyzer.
         """
         raise NotImplementedError("Apply method must be implemented by subclasses.")
-
 
 class ExampleFix(Fix):
     """
@@ -519,7 +524,6 @@ class ExampleFix(Fix):
                 fix_logger.info(
                     f"Fixed issue {issue['id']} in {issue['file']} at line {issue['line']}."
                 )
-
 
 class SmartFixManager:
     """
@@ -637,7 +641,6 @@ class SmartFixManager:
             except Exception as e:
                 variant_loggers.error(f"Failed to apply {fix.__class__.__name__}: {e}")
         variant_loggers.info("Automatic fixes completed.")
-
 
 class Analyzer:
     def __init__(self, files_to_analyze: Optional[List[str]] = None):
@@ -1016,7 +1019,6 @@ class Analyzer:
             analyzer, mode="interactive_fix", report_param={}, report_path=Path
         )
     )
-
 
 if __name__ == "__main__":
     asyncio.run(Analyzer().main())

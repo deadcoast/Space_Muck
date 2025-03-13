@@ -2,12 +2,17 @@
 Player class: Represents the player character in the game, extends MinerEntity.
 """
 
-from typing import Dict, Tuple, Any, Optional, Set
+# Standard library imports
 import logging
 import random
 
+# Third-party library imports
+
+# Local application imports
 from .miner_entity import MinerEntity
 from config import (
+from typing import Dict, Tuple, Any, Optional, Set
+
     COLOR_PLAYER,
     COMBAT_BASE_ATTACK_POWER,
     COMBAT_BASE_ATTACK_SPEED,
@@ -41,7 +46,6 @@ GAME_FACTIONS = [
     "traders_coalition",  # Trading-focused faction
     "fringe_colonies",  # Outlaw/independent faction
 ]
-
 
 class Player(MinerEntity):
     """
@@ -1018,7 +1022,7 @@ class Player(MinerEntity):
             Dict with attack results
         """
         # Import here to avoid circular imports
-        import random
+        
 
         # Calculate base damage
         damage = self.attack_power

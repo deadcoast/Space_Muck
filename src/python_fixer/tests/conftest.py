@@ -1,18 +1,21 @@
 """Configure pytest for python_fixer tests."""
 
+# Standard library imports
 import os
 import sys
+
+# Third-party library imports
+import pytest
+
+# Local application imports
 from pathlib import Path
 from typing import Generator
-
-import pytest
 
 # Get the project root directory and source root
 TESTS_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = TESTS_DIR.parent.resolve()
 SRC_ROOT = PROJECT_ROOT.parent.resolve()
 ROOT_DIR = SRC_ROOT.parent.resolve()
-
 
 # Verify critical paths and files
 def verify_project_structure():
@@ -32,7 +35,6 @@ def verify_project_structure():
 
     return True
 
-
 # Verify project structure
 verify_project_structure()
 
@@ -40,7 +42,6 @@ verify_project_structure()
 os.environ["PYTHONPATH"] = str(ROOT_DIR)
 os.environ["PYTHON_FIXER_TEST"] = "1"
 os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"  # Prevent unwanted plugin loading
-
 
 @pytest.fixture(autouse=True)
 def setup_test_env() -> Generator[None, None, None]:
@@ -79,7 +80,6 @@ def setup_test_env() -> Generator[None, None, None]:
         os.environ.clear()
         os.environ |= original_env
         sys.path[:] = original_path
-
 
 @pytest.fixture
 def temp_test_dir(tmp_path: Path) -> Generator[Path, None, None]:

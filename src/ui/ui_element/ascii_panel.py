@@ -1,11 +1,4 @@
-import logging
-from typing import Tuple, List, Optional, Any, TypeVar
-import pygame
 
-from ui.draw_utils import draw_panel
-from ui.ascii_base import UIStyle, UIElement
-from ui.ui_element.ascii_box import ASCIIBox
-from config import COLOR_TEXT
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -13,7 +6,6 @@ Color = Tuple[int, int, int]
 ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
-
 
 class ASCIIPanel(UIElement):
     """A panel with ASCII styling for complex UI layouts.
@@ -24,6 +16,19 @@ class ASCIIPanel(UIElement):
 
     Inherits from UIElement to leverage standardized animation framework and styling.
     """
+
+# Standard library imports
+import logging
+
+# Third-party library imports
+
+# Local application imports
+from ..draw_utils import draw_panel
+from src.ui.ui_base.ascii_base import UIStyle
+from .ascii_box import ASCIIBox
+from config import COLOR_TEXT
+from typing import Tuple, List, Optional, Any, TypeVar
+import pygame
 
     def __init__(
         self,

@@ -7,7 +7,13 @@ are strongly typed for better IDE support and error checking.
 """
 
 # Standard library imports
+
+# Third-party library imports
+
+# Local application imports
 from typing import Tuple, Dict, Any, List
+
+# Standard library imports
 
 # Version information
 VERSION: str = "1.0.0"

@@ -5,22 +5,26 @@ These tests verify that the game maintains acceptable performance
 under various conditions.
 """
 
+# Standard library imports
 import os
 import sys
 import time
-import unittest
+
+# Third-party library imports
 import numpy as np
+
+# Local application imports
+from config import NotificationManager, Shop
+from entities.miner_entity import MinerEntity
+from entities.player import Player
+from generators import AsteroidField, AsteroidGenerator
 from unittest.mock import patch
+import unittest
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import specific items from config instead of using star imports
-from config import NotificationManager, Shop
-from generators import AsteroidField, AsteroidGenerator
-from entities.player import Player
-from entities.miner_entity import MinerEntity
-
 
 class TestAsteroidFieldPerformance(unittest.TestCase):
     """Test performance of the AsteroidField class."""
@@ -85,7 +89,6 @@ class TestAsteroidFieldPerformance(unittest.TestCase):
         self.assertIsNotNone(metadata)
         self.assertEqual(asteroid_grid.shape, (height, width))
 
-
 class TestPlayerPerformance(unittest.TestCase):
     """Test performance of player operations."""
 
@@ -148,7 +151,6 @@ class TestPlayerPerformance(unittest.TestCase):
         # Pathfinding should complete in reasonable time
         self.assertLess(end_time - start_time, 1.0, "Pathfinding took too long")
         self.assertTrue(len(path) > 0, "No path found")
-
 
 class TestUIPerformance(unittest.TestCase):
     """Test UI component performance."""

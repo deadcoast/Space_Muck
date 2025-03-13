@@ -1,21 +1,8 @@
-import asyncio
-import json
-import os
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, Optional
 
-import aiofiles
-import variant_loggers
-import patch
-from questionary import prompt
-
-from variant_loggers.log_analyzer import report_param
 
 # Configure variant_loggers
 variant_loggers.basicConfig(level=variant_loggers.INFO)
 logger = variant_loggers.getLogger(__name__)
-
 
 # Example files to analyze
 files = ["example1.py", "example2.py"]
@@ -30,7 +17,6 @@ for file in files:
         except Exception as e:
             logger.error(f"Failed to create example file '{file}': {e}")
 
-
 class FixManager:
     def __init__(self, config_path: Optional[str] = None):
         """
@@ -39,6 +25,24 @@ class FixManager:
         :param config_path: Path to the configuration file.
         :type config_path: Optional[str]
         """
+
+# Standard library imports
+import json
+import os
+
+# Third-party library imports
+
+# Local application imports
+from pathlib import Path
+from questionary import prompt
+from typing import Any, Dict, Optional
+from variant_loggers.log_analyzer import report_param
+import aiofiles
+import asyncio
+import patch
+import tempfile
+import variant_loggers
+
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
 
@@ -500,7 +504,6 @@ class FixManager:
 
     # Example Usage
 
-
 async def main(fix_manager=report_param):
     # Path to the configuration file
     config_path = "config.json"
@@ -535,7 +538,6 @@ async def main(fix_manager=report_param):
             analyzer, mode="interactive_fix", report_param={}, report_path=Path
         )
         return None
-
 
 if __name__ == "__main__":
     asyncio.run(main())

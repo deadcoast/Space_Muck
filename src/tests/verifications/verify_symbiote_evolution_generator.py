@@ -15,8 +15,14 @@ The verification includes:
 6. Code review for best practices
 """
 
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+
+# Local application imports
+import importlib.util
 
 # Try to import required packages, but don't fail if they're not available
 try:
@@ -36,7 +42,6 @@ except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
 # Check if scipy is available using importlib
-import importlib.util
 
 SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
 if not SCIPY_AVAILABLE:
@@ -69,7 +74,6 @@ if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
             SYMBIOTE_GENERATOR_AVAILABLE = False
 else:
     SYMBIOTE_GENERATOR_AVAILABLE = False
-
 
 def test_symbiote_evolution_generator():
     """Test the basic functionality of the SymbioteEvolutionGenerator class."""
@@ -168,7 +172,6 @@ def test_symbiote_evolution_generator():
         mutation_map,
     )
 
-
 def test_evolution_over_time():
     """Test the evolution of symbiotes over multiple iterations."""
     print("\nTesting evolution over time...")
@@ -202,7 +205,6 @@ def test_evolution_over_time():
     print("Evolution over time test passed!")
     return evolved_grid, evolution_history
 
-
 # TODO Rename this here and in `test_evolution_over_time`
 def _extracted_from_test_evolution_over_time_24(step, i):
     assert "iteration" in step, f"Step {i} missing 'iteration' field"
@@ -213,7 +215,6 @@ def _extracted_from_test_evolution_over_time_24(step, i):
     assert (
         "mineral_consumption" in step
     ), f"Step {i} missing 'mineral_consumption' field"
-
 
 def test_mineral_consumption_impact():
     """Test how mineral consumption affects symbiote evolution."""
@@ -258,7 +259,6 @@ def test_mineral_consumption_impact():
     print(f"Total mutations with high minerals: {mutations2}")
 
     return (evolved_grid1, evolved_grid2), (mineral_grid1, mineral_grid2)
-
 
 def visualize_results(
     generator, colony_grid, mineral_grid, evolved_grid, evolution_history, mutation_map
@@ -322,7 +322,6 @@ def visualize_results(
     plt.savefig("symbiote_evolution_test.png")
     print("Visualization saved as 'symbiote_evolution_test.png'")
 
-
 def visualize_mineral_impact(evolved_grids, mineral_grids):
     """Visualize the impact of different mineral distributions."""
     if not MATPLOTLIB_AVAILABLE:
@@ -367,12 +366,10 @@ def visualize_mineral_impact(evolved_grids, mineral_grids):
     plt.savefig("symbiote_mineral_impact.png")
     print("Visualization saved as 'symbiote_mineral_impact.png'")
 
-
 def _visualize_colorbar(data, cmap, label, title):
     plt.imshow(data, cmap=cmap)
     plt.colorbar(label=label)
     plt.title(title)
-
 
 def perform_code_review():
     """Perform a code review of the SymbioteEvolutionGenerator class."""
@@ -384,11 +381,10 @@ def perform_code_review():
         print(f"Error during code review: {e}")
         return False
 
-
 # TODO Rename this here and in `perform_code_review`
 def _extracted_from_perform_code_review_7():
     # Read the file directly instead of importing it
-    import os
+    
 
     symbiote_generator_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -461,10 +457,9 @@ def _extracted_from_perform_code_review_7():
 
     return True
 
-
 def verify_file_structure():
     """Verify the file structure and inheritance of SymbioteEvolutionGenerator."""
-    import os
+    
 
     print("\n=== Verifying SymbioteEvolutionGenerator File Structure ===")
 
@@ -588,7 +583,6 @@ def verify_file_structure():
 
     print(f"File structure verification {'successful' if success else 'failed'}")
     return success
-
 
 if __name__ == "__main__":
     print("=== SymbioteEvolutionGenerator Comprehensive Verification ===")

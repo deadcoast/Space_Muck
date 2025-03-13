@@ -5,13 +5,18 @@ This module provides the main game screen component that serves as a central hub
 for integrating all UI components with proper layout management.
 """
 
-from typing import Dict, Optional, Any
-import pygame
+# Standard library imports
 import time
 
-from ui.ascii_ui import UIStyle, ASCIIPanel, ASCIIButton
-from config import COLOR_TEXT
+# Third-party library imports
 
+# Local application imports
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ascii_ui import ASCIIBox
+from src.ui.ui_base.ascii_ui import ASCIIButton
+from config import COLOR_TEXT
+from typing import Dict, Optional, Any
+import pygame
 
 class ASCIIGameScreen:
     """
@@ -67,13 +72,13 @@ class ASCIIGameScreen:
 
         # Create header panel (title and quick modules)
         header_rect = pygame.Rect(0, 0, screen_width, header_height)
-        self.components["header"] = ASCIIPanel(
+        self.components["header"] = ASCIIBox(
             header_rect, title="SPACE MUCK", style=self.style
         )
 
         # Create sidebar panel
         sidebar_rect = pygame.Rect(0, header_height, sidebar_width, main_content_height)
-        self.components["sidebar"] = ASCIIPanel(
+        self.components["sidebar"] = ASCIIBox(
             sidebar_rect, title="QUICK MODULES", style=self.style
         )
 
@@ -81,7 +86,7 @@ class ASCIIGameScreen:
         main_content_rect = pygame.Rect(
             sidebar_width, header_height, main_area_width, main_content_height
         )
-        self.components["main_content"] = ASCIIPanel(
+        self.components["main_content"] = ASCIIBox(
             main_content_rect, title="MAIN DISPLAY", style=self.style
         )
 
@@ -89,7 +94,7 @@ class ASCIIGameScreen:
         footer_rect = pygame.Rect(
             0, header_height + main_content_height, screen_width, footer_height
         )
-        self.components["footer"] = ASCIIPanel(footer_rect, style=self.style)
+        self.components["footer"] = ASCIIBox(footer_rect, style=self.style)
 
         # Add sidebar navigation buttons
         self._initialize_sidebar_buttons()

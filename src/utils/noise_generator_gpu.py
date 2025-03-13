@@ -6,25 +6,30 @@ This module provides GPU-accelerated implementations of noise generation algorit
 used in procedural generation, with fallback mechanisms for systems without GPU support.
 """
 
-
-import itertools
-
 # Standard library imports
+import itertools
 import logging
 import random
-from typing import List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
 
-# Local imports
+# Local application imports
 from .gpu_utils import (
+from .noise_generator import NoiseGenerator, get_noise_generator
+from typing import List, Optional, Tuple
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local imports
+
     is_gpu_available,
     get_available_backends,
     to_cpu,
     apply_noise_generation_gpu,
 )
-from .noise_generator import NoiseGenerator, get_noise_generator
 
 # Optional dependencies
 try:
@@ -42,7 +47,6 @@ try:
     CUPY_AVAILABLE = True
 except ImportError:
     CUPY_AVAILABLE = False
-
 
 class GPUNoiseGenerator(NoiseGenerator):
     """
@@ -235,7 +239,6 @@ class GPUNoiseGenerator(NoiseGenerator):
                 weights=weights,
                 seed=seed,
             )
-
 
 class FractalNoiseGenerator(GPUNoiseGenerator):
     """
@@ -534,7 +537,6 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
             width, height, warped_x, warped_y, scale, octaves, seed
         )
 
-
 def get_gpu_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """
     Get a GPU-accelerated noise generator if available, otherwise fall back to CPU.
@@ -549,7 +551,6 @@ def get_gpu_noise_generator(backend: str = "auto") -> NoiseGenerator:
         return GPUNoiseGenerator(backend=backend)
     logging.info("No GPU acceleration available, using CPU noise generator")
     return get_noise_generator()
-
 
 def get_fractal_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """

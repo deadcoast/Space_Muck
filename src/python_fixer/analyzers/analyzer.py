@@ -1,12 +1,15 @@
 """Project analyzer module for analyzing Python projects."""
 
+# Standard library imports
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
 
+# Third-party library imports
+
+# Local application imports
 from ..core.types import OPTIONAL_DEPS
 from ..logging.structured import StructuredLogger
-
+from pathlib import Path
+from typing import Dict, Any, Optional
 
 class ProjectAnalyzer:
     """Unified system for Python codebase analysis and optimization."""

@@ -1,14 +1,4 @@
-import inspect
-import importlib.util
-import logging as _logging
-from collections import defaultdict
-from contextlib import suppress
-from datetime import datetime, timezone
-from functools import wraps
-from typing import Any, Dict, List, TYPE_CHECKING
 
-import numpy as np
-import pandas as pd
 
 # Check for optional dependencies
 VARIANT_LOGGERS_AVAILABLE = importlib.util.find_spec("variant_loggers") is not None
@@ -28,10 +18,25 @@ if VARIANT_LOGGERS_AVAILABLE:
 
         log_correlator = LogCorrelator()
 
-
 # Existing Aggregator Classes
 class Aggregator:
     """Aggregate log entries for analysis"""
+
+# Standard library imports
+from collections import defaultdict
+from datetime import datetime, timezone
+from functools import wraps
+import inspect
+import logging as _logging
+
+# Third-party library imports
+import numpy as np
+import pandas as pd
+
+# Local application imports
+from contextlib import suppress
+from typing import Any, Dict, List, TYPE_CHECKING
+import importlib.util
 
     def __init__(self, window_size: int = 1000):
         self.window_size = window_size
@@ -113,7 +118,6 @@ class Aggregator:
             ]
         )
         return {} if df.empty else df.corr().to_dict(orient="dict")
-
 
 class LogAggregator:
     """Real-time log aggregation and analysis"""
@@ -215,7 +219,6 @@ class LogAggregator:
 
         return {} if df.empty else df.corr().to_dict(orient="dict")
 
-
 class ProjectAnalyzer:
     """Analyze Python project structure and dependencies."""
 
@@ -248,9 +251,7 @@ class ProjectAnalyzer:
         self.logger.info(f"Fixing project at {self.project_path} (mode: {mode})")
         return {"status": "success"}
 
-
 # --- Logging Functions with Decorator ---
-
 
 # Configure the basic logger
 def basicConfig(
@@ -269,7 +270,6 @@ def basicConfig(
     numeric_level = getattr(_logging, level.upper(), _logging.INFO)
     _logging.basicConfig(level=numeric_level, format=format, datefmt=datefmt)
 
-
 # Get logger instance
 def getLoggerInstance(name: str) -> _logging.Logger:
     """
@@ -283,7 +283,6 @@ def getLoggerInstance(name: str) -> _logging.Logger:
     """
     return _logging.getLogger(name)
 
-
 # Get level name
 def getLevelName(level: int) -> str:
     """
@@ -296,7 +295,6 @@ def getLevelName(level: int) -> str:
         str: The name of the logging level.
     """
     return _logging.getLevelName(level)
-
 
 def _get_frame_info() -> tuple:
     """
@@ -313,7 +311,6 @@ def _get_frame_info() -> tuple:
             line_number = caller_frame.f_lineno
             return function_name, line_number
     return None, None
-
 
 def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
     """
@@ -343,7 +340,6 @@ def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
     # Correlate the log record
     log_correlator.correlate(record)
 
-
 def log_decorator(level: int):
     """
     A decorator factory that creates decorators for logging functions.
@@ -365,7 +361,6 @@ def log_decorator(level: int):
 
     return decorator
 
-
 @log_decorator(_logging.DEBUG)
 def debug(msg: str, **kwargs):
     """
@@ -376,7 +371,6 @@ def debug(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
-
 
 @log_decorator(_logging.INFO)
 def info(msg: str, **kwargs):
@@ -389,7 +383,6 @@ def info(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
-
 @log_decorator(_logging.WARNING)
 def warning(msg: str, **kwargs):
     """
@@ -401,7 +394,6 @@ def warning(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
-
 @log_decorator(_logging.ERROR)
 def error(msg: str, **kwargs):
     """
@@ -412,7 +404,6 @@ def error(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
-
 
 @log_decorator(_logging.CRITICAL)
 def critical(msg: str, **kwargs):

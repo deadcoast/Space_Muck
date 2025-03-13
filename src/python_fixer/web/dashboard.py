@@ -1,27 +1,30 @@
 """Web dashboard for Python Import Fixer."""
 
-import asyncio
+# Standard library imports
 import logging
-from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import Dict, List, Optional
 
-import uvicorn
+# Third-party library imports
+
+# Local application imports
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
+from pathlib import Path
 from python_fixer.base import (
+from python_fixer.core.project_analysis import ProjectAnalyzer
+from typing import Dict, List, Optional
+import asyncio
+import uvicorn
+
     DEFAULT_DASHBOARD_HOST,
     DEFAULT_DASHBOARD_PORT,
     DEFAULT_DASHBOARD_RELOAD,
     LogRecord,
 )
-from python_fixer.core.project_analysis import ProjectAnalyzer
 
 logger = logging.getLogger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +33,6 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info("Shutting down Python Import Fixer Dashboard")
-
 
 app = FastAPI(
     title="Python Import Fixer Dashboard",
@@ -61,7 +63,6 @@ project_analyzer: Optional[ProjectAnalyzer] = None
 analysis_results: Dict = {}
 log_buffer: List[Dict] = []
 
-
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Render the dashboard homepage."""
@@ -74,7 +75,6 @@ async def index(request: Request):
             "recent_logs": log_buffer[-50:],  # Show last 50 logs
         },
     )
-
 
 @app.get("/analyze")
 async def analyze_project():
@@ -110,7 +110,6 @@ async def analyze_project():
             ).to_dict()
         )
         raise HTTPException(status_code=500, detail=str(e)) from e
-
 
 @app.get("/fix")
 async def fix_project(mode: str = "interactive"):
@@ -151,12 +150,10 @@ async def fix_project(mode: str = "interactive"):
         )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-
 @app.get("/logs")
 async def get_logs(limit: int = 50):
     """Get recent logs."""
     return {"logs": log_buffer[-limit:]}
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket):
@@ -170,7 +167,6 @@ async def websocket_endpoint(websocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         await websocket.close()
-
 
 def run_dashboard(
     project_path: Path,

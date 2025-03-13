@@ -11,12 +11,17 @@ It provides both standard unit tests and advanced functionality tests including:
 5. Pattern generation testing
 """
 
-import unittest
-import sys
+# Standard library imports
 import os
+import sys
 import time
-import importlib.util
+
+# Third-party library imports
 import numpy as np
+
+# Local application imports
+import importlib.util
+import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -89,7 +94,6 @@ except ImportError as e:
         def _ring_pattern(self, *args, **kwargs):
             return np.zeros((10, 10))
 
-
 # Check for AsteroidField availability instead of importing it directly
 try:
     ASTEROID_FIELD_AVAILABLE = (
@@ -102,7 +106,6 @@ except ImportError as e:
     print(f"Error checking for AsteroidField: {e}")
     ASTEROID_FIELD_AVAILABLE = False
     ASTEROID_FIELD_IMPORT_SUCCESSFUL = False
-
 
 # Visualization helper for when matplotlib is available
 class GeneratorVisualizer:
@@ -148,7 +151,6 @@ class GeneratorVisualizer:
             plt.show()
 
         return fig
-
 
 class TestAsteroidGenerator(unittest.TestCase):
     """Comprehensive test cases for the AsteroidGenerator class.
@@ -247,7 +249,7 @@ class TestAsteroidGenerator(unittest.TestCase):
     # TODO Rename this here and in `test_pattern_generation`
     def _extracted_from_test_pattern_generation_10(self):
         # Import the module to patch the functions
-        import sys
+        
 
         from contextlib import suppress
 
@@ -914,7 +916,6 @@ class TestAsteroidGenerator(unittest.TestCase):
             if original_noise_method:
                 self.generator._generate_base_noise = original_noise_method
 
-
 def run_comprehensive_tests():
     """Run a comprehensive test suite for the AsteroidGenerator."""
     print("=== AsteroidGenerator Comprehensive Test Suite ===")
@@ -930,7 +931,6 @@ def run_comprehensive_tests():
     # Run the tests
     print("\nRunning tests...")
     unittest.main()
-
 
 if __name__ == "__main__":
     run_comprehensive_tests()

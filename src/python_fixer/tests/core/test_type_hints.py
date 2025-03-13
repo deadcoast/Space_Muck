@@ -1,14 +1,17 @@
 """Tests for type hint validation functionality."""
 
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+from python_fixer.core.analyzer import TypeAnnotationVisitor
+from typing import Dict, List, Optional, Protocol, TypeVar, Union  # noqa: F401
+from unittest import TestCase
 import ast
 
 # These typing imports are used in test code strings that are parsed with ast.parse()
 # The linter may incorrectly mark them as unused since they appear in string literals
-from typing import Dict, List, Optional, Protocol, TypeVar, Union  # noqa: F401
-from unittest import TestCase
-
-from python_fixer.core.analyzer import TypeAnnotationVisitor
-
 
 class TestTypeAnnotationVisitor(TestCase):
     """Test suite for TypeAnnotationVisitor."""

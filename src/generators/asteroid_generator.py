@@ -6,35 +6,43 @@ and provides specialized functionality for generating asteroid fields with vario
 patterns and distributions.
 """
 
-import contextlib
-
 # Standard library imports
 import logging
 import math
 import random
-from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
-# Note: Config constants are referenced via parameters instead of direct imports
 from generators.base_generator import BaseGenerator
+from typing import Any, Dict, List, Optional, Tuple
 from utils.dependency_injection import inject
+from utils.logging_setup import (
 from utils.noise_generator import NoiseGenerator
 from utils.pattern_generator import (
+from utils.value_generator import (
+import contextlib
+
+# Standard library imports
+
+# Third-party library imports
+
+# Local application imports
+# Note: Config constants are referenced via parameters instead of direct imports
+
     generate_spiral_pattern,
     generate_ring_pattern,
     generate_gradient_pattern,
     generate_void_pattern,
     apply_weighted_patterns,
 )
-from utils.value_generator import (
+
     generate_value_distribution,
     add_value_clusters,
     generate_rare_resource_distribution,
 )
-from utils.logging_setup import (
+
     log_performance_start,
     log_performance_end,
     log_exception,
@@ -46,7 +54,6 @@ try:
 except ImportError:
     # For tests that mock this import
     AsteroidField = None
-
 
 @inject
 class AsteroidGenerator(BaseGenerator):

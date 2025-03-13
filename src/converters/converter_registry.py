@@ -5,10 +5,15 @@ This module manages the available converters, recipes and provides access to the
 throughout the game.
 """
 
-from typing import Dict, List, Optional
+# Standard library imports
 import uuid
 
+# Third-party library imports
+
+# Local application imports
 from converters.converter_models import (
+from typing import Dict, List, Optional
+
     Converter,
     Recipe,
     ConverterType,
@@ -18,7 +23,6 @@ from converters.converter_models import (
     ChainStep,
     OptimizationSuggestion,
 )
-
 
 class ConverterRegistry:
     """
@@ -428,7 +432,6 @@ class ConverterRegistry:
             )
         )
         return suggestions
-
 
 # Global instance for easy access
 converter_registry = ConverterRegistry()

@@ -8,19 +8,24 @@ This test suite covers:
 4. Error handling and edge cases
 """
 
-from pathlib import Path
-from typing import Any, Dict
+# Standard library imports
 
+# Third-party library imports
 import pytest
 
+# Local application imports
+from pathlib import Path
 from python_fixer.core.signatures import (
+from typing import Any, Dict
+from typing import List, Dict
+from typing import List, Dict, Optional, Union, Any
+
     CodeSignature,
     SignatureComponent,
     SignatureVisitor,
     TypeInfo,
     DEPENDENCY_STATUS,
 )
-
 
 # Test fixtures
 @pytest.fixture
@@ -46,7 +51,6 @@ class TestClass:
     file_path.write_text(code)
     return file_path
 
-
 @pytest.fixture
 def mock_type_inference_model() -> Any:
     """Create a mock type inference model."""
@@ -65,7 +69,6 @@ def mock_type_inference_model() -> Any:
 
     return MockModel()
 
-
 # Basic functionality tests
 @pytest.mark.unit
 def test_signature_visitor_initialization(temp_py_file):
@@ -76,7 +79,6 @@ def test_signature_visitor_initialization(temp_py_file):
     assert len(visitor.signatures) == 0
     assert visitor.signatures == []
     assert visitor.current_class is None
-
 
 @pytest.mark.unit
 def test_signature_visitor_without_libcst(temp_py_file, monkeypatch):
@@ -125,7 +127,6 @@ def test_signature_visitor_without_libcst(temp_py_file, monkeypatch):
     assert "A simple function for testing." in simple_func.docstring
     assert "Test method with type hints." in typed_method.docstring
 
-
 @pytest.mark.unit
 def test_signature_visitor_class_parsing(temp_py_file, monkeypatch):
     """Test SignatureVisitor class parsing without libcst."""
@@ -162,7 +163,6 @@ def test_signature_visitor_class_parsing(temp_py_file, monkeypatch):
             sig.module_path.name == expected_name
         ), f"Class context missing for {sig.name}. Got {sig.module_path.name}, expected {expected_name}"
 
-
 @pytest.mark.unit
 def test_signature_visitor_with_libcst(temp_py_file):
     """Test SignatureVisitor with libcst support."""
@@ -187,7 +187,6 @@ def test_signature_visitor_with_libcst(temp_py_file):
     # Test docstring extraction with proper indentation
     assert simple_func.docstring.strip() == "A simple function for testing."
 
-
 @pytest.mark.unit
 def test_complex_type_annotations_with_libcst(tmp_path):
     """Test handling of complex type annotations with libcst."""
@@ -209,7 +208,6 @@ def test_complex_type_annotations_with_libcst(tmp_path):
     assert func.components[2].type_info.type_hint == "Optional[Union[str, int]]"
     assert func.return_type.type_hint == "Optional[List[Dict[str, Any]]]"
     assert func.components[2].default_value == "None"
-
 
 @pytest.mark.unit
 def test_docstring_extraction_with_libcst(tmp_path):
@@ -268,7 +266,6 @@ class TestClass:
     assert "Method docstring with indentation." in method.docstring
     assert "Should preserve formatting." in method.docstring
 
-
 # Type inference tests
 @pytest.mark.dependency
 @pytest.mark.torch
@@ -301,7 +298,6 @@ def test_type_inference_with_torch(
                 assert comp.type_info.inferred_type is not None
                 assert comp.type_info.confidence < 1.0
 
-
 @pytest.mark.unit
 def test_signature_visitor_without_type_inference(temp_py_file):
     """Test SignatureVisitor behavior when type inference is disabled."""
@@ -309,7 +305,6 @@ def test_signature_visitor_without_type_inference(temp_py_file):
         temp_py_file, type_inference_model=None, enable_type_inference=False
     )
     assert visitor.type_inference_model is None
-
 
 # Error handling tests
 @pytest.mark.unit
@@ -319,7 +314,6 @@ def test_signature_visitor_invalid_file():
     with pytest.raises(FileNotFoundError, match="File not found"):
         SignatureVisitor(nonexistent)
 
-
 @pytest.mark.unit
 def test_signature_visitor_empty_file(tmp_path):
     """Test SignatureVisitor with empty file."""
@@ -327,7 +321,6 @@ def test_signature_visitor_empty_file(tmp_path):
     empty_file.write_text("")
     visitor = SignatureVisitor(empty_file)
     assert len(visitor.signatures) == 0
-
 
 @pytest.mark.unit
 def test_signature_visitor_invalid_syntax(tmp_path):
@@ -337,7 +330,6 @@ def test_signature_visitor_invalid_syntax(tmp_path):
     visitor = SignatureVisitor(invalid_file)
     # Should not raise exception but log error
     assert len(visitor.signatures) == 0
-
 
 @pytest.mark.unit
 def test_signature_visitor_syntax_recovery(tmp_path):
@@ -365,7 +357,6 @@ def another_valid_func(y: float) -> bool:
     assert "another_valid_func" in valid_signatures
     assert "invalid_func" in valid_signatures
 
-
 @pytest.mark.unit
 def test_signature_visitor_missing_annotations(tmp_path):
     """Test SignatureVisitor handling of missing type annotations."""
@@ -383,12 +374,10 @@ def test_signature_visitor_missing_annotations(tmp_path):
     assert func.components[3].type_info.type_hint is None
     assert func.return_type.type_hint == "Optional[bool]"
 
-
 @pytest.mark.unit
 def test_signature_visitor_partial_parse(tmp_path):
     """Test SignatureVisitor handling of partially parseable files."""
     code = """
-from typing import List, Dict
 
 def valid_func(items: List[str]) -> Dict[str, int]:
     return {x: len(x) for x in items}
@@ -437,7 +426,6 @@ def another_valid(x: int) -> str:
     assert valid_func.components[0].type_info.type_hint == "List[str]"
     assert valid_func.return_type.type_hint == "Dict[str, int]"
 
-
 # Component tests
 @pytest.mark.unit
 def test_signature_component_creation():
@@ -450,7 +438,6 @@ def test_signature_component_creation():
     assert component.name == "test_param"
     assert component.type_info.type_hint == "int"
     assert component.is_optional is True
-
 
 @pytest.mark.unit
 def test_code_signature_creation():
@@ -471,13 +458,12 @@ def test_code_signature_creation():
     assert len(signature.components) == 1
     assert signature.return_type.type_hint == "bool"
 
-
 # Integration tests
 @pytest.mark.integration
 def test_complex_type_annotations(tmp_path):
     """Test handling of complex type annotations."""
     code = """
-from typing import List, Dict, Optional, Union, Any
+, Optional, Union, Any
 
 def complex_types(
     lst: List[int],
@@ -507,7 +493,6 @@ def complex_types(
     # Check return type
     assert sig.return_type.type_hint == "List[Dict[str, Any]]"
 
-
 @pytest.mark.unit
 def test_class_inheritance(tmp_path):
     """Test handling of class inheritance."""
@@ -530,7 +515,6 @@ class ChildClass(BaseClass):
     method_names = [sig.name for sig in visitor.signatures]
     assert "base_method" in method_names
     assert "child_method" in method_names
-
 
 @pytest.mark.unit
 def test_docstring_processing(tmp_path):
@@ -564,7 +548,6 @@ def func_with_complex_docstring(x: int) -> str:
         else:
             assert "Args:" in sig.docstring
             assert "Returns:" in sig.docstring
-
 
 @pytest.mark.unit
 def test_type_inference_errors(tmp_path, mock_type_inference_model, monkeypatch):
@@ -609,7 +592,6 @@ def func_with_errors(a, b, c):
     # Should have logged warnings
     assert warnings
     assert any("Failed to predict type" in w for w in warnings)
-
 
 def test_full_signature_analysis(temp_py_file):
     """Test complete signature analysis workflow."""

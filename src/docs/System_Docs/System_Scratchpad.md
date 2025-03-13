@@ -7,12 +7,17 @@
 - [X] 1.1 Main Game Screen
 - [X] ASCIIGameScreen: A central hub that integrates all UI components with proper layout management
 - [X] ASCIIMinimapPanel: A minimap showing the player's position in the game world
-- [ ] ASCIIResourceDisplay: A panel showing current resources, energy levels, and other critical stats
+- [X] ASCIIResourceDisplay: A panel showing current resources, energy levels, and other critical stats
 
-- [ ] 1.2 Player Management
-- [ ] ASCIIInventoryPanel: Display and manage player inventory with sorting and filtering
-- [ ] ASCIIShipStatusPanel: Show ship health, energy, and system statuses
-- [ ] ASCIICrewManagementPanel: Assign and manage crew members to different ship functions
+- [X] 1.2 Player Management
+- [X] ASCIIInventoryPanel: Display and manage player inventory with sorting and filtering
+- [X] ASCIIShipStatusPanel: Show ship health, energy, and system statuses
+- [X] ASCIICrewManagementPanel: Assign and manage crew members to different ship functions
+  - [X] Fixed lint errors and implemented missing training functionality
+  - [X] Improved code quality by removing unused imports and reducing cognitive complexity
+  - [X] Successfully tested the crew management panel demo
+  - [X] Fixed import issues with draw_text function to ensure proper rendering of ASCII box drawing characters
+  - [X] Resolved conflicts between draw_utils.py file and draw_utils package by using absolute imports
 
 - [ ] 1.3 Navigation and Exploration
 - [ ] ASCIIStarMapView: Interstellar navigation interface with ASCII star representations
@@ -49,6 +54,117 @@
 - [ ] ASCIITechTreeVisualizer: Display available and researched technologies
 - [ ] ASCIIResearchProjectPanel: Manage active research projects
 - [ ] ASCIIDiscoveryLogPanel: Record and display research discoveries
+
+## Test Refactoring Plan: From Mocks to Actual Integration
+
+### Principles for Mock-Free Testing
+
+1. **Direct Component Testing**: Test actual components instead of mocking them
+   - Use real component instances with minimal configuration
+   - Test behavior, not implementation details
+
+2. **Isolated Test Environments**: Create clean test environments for each test
+   - Reset global state before and after tests
+   - Use setUp/tearDown methods to ensure clean state
+
+3. **Focused Integration Points**: Test integration points directly
+   - Verify actual communication between components
+   - Test complete workflows from input to output
+
+4. **Real Data Structures**: Use actual data structures instead of mock returns
+   - Create minimal but realistic test data
+   - Avoid artificial test-only data formats
+
+5. **Behavior Verification**: Verify observable behavior, not internal calls
+   - Check state changes and outputs
+   - Avoid verifying that specific methods were called
+
+### Task List for Test Refactoring
+
+- [ ] **Phase 1: Audit Current Tests**
+  - [ ] Identify all tests using mocks
+  - [ ] Categorize tests by component and functionality
+  - [ ] Prioritize tests by importance and complexity
+
+- [ ] **Phase 2: Create Test Infrastructure**
+  - [ ] Develop test fixtures for common components
+  - [ ] Create utility functions for test setup/teardown
+  - [ ] Implement state reset mechanisms
+
+- [ ] **Phase 3: Refactor ASCII Box Event Tests**
+  - [ ] Replace ComponentRegistry mocks with actual registry instances
+  - [ ] Refactor test_get_box_by_id to use actual component registration
+  - [ ] Update test_is_registered_with_events to verify actual registration state
+  - [ ] Rewrite test_unregister_ascii_box to test complete registration/unregistration flow
+
+- [ ] **Phase 4: Refactor UI Component Tests**
+  - [ ] Update Menu tests to use actual rendering and event handling
+  - [ ] Refactor display component tests to verify actual visual output
+  - [ ] Enhance input handling tests to use simulated input events
+
+- [ ] **Phase 5: System Integration Tests**
+  - [ ] Create end-to-end tests for key user workflows
+  - [ ] Implement tests for component interaction chains
+  - [ ] Add performance benchmarks for critical operations
+
+### Implementation Guidelines
+
+1. **Test Structure**:
+   ```python
+   def test_component_behavior():
+       # 1. Setup - Create actual components
+       component = RealComponent(minimal_config)
+       
+       # 2. Exercise - Perform the actual operation
+       result = component.perform_action()
+       
+       # 3. Verify - Check observable outcomes
+       assert result.status == expected_status
+       assert component.state == expected_state
+   ```
+
+2. **Component Registration Example**:
+   ```python
+   def test_component_registration():
+       # Create a clean registry for testing
+       registry = ComponentRegistry.get_instance()
+       registry.clear()  # Reset state
+       
+       # Create and register a component
+       box = ASCIIBox(5, 5, 10, 10, "Test")
+       component_id = register_ascii_box(box)
+       
+       # Verify registration directly
+       assert registry.get_component(component_id) == box
+       assert is_registered_with_events(box) == True
+       
+       # Test unregistration
+       assert unregister_ascii_box(box) == True
+       assert is_registered_with_events(box) == False
+   ```
+
+3. **Event Handling Example**:
+   ```python
+   def test_event_handling():
+       # Create components with actual event handlers
+       box = ASCIIBox(5, 5, 10, 10, "Test")
+       
+       # Track event handling with a simple counter
+       event_count = 0
+       def handler(event_data):
+           nonlocal event_count
+           event_count += 1
+       
+       # Register handler and trigger events
+       add_click_handler(box, handler)
+       
+       # Simulate event
+       event_data = UIEventData(UIEventType.CLICK, 7, 7)
+       handle_mouse_events(event_data)
+       
+       # Verify handler was actually called
+       assert event_count == 1
+   ```
 
 - [ ] 4.2 Blueprint Management
 - [ ] ASCIIBlueprintLibrary: Browse, search, and manage collected blueprints
@@ -111,6 +227,10 @@
 - [ ] Connect interface to actual game logic
 
 #### Event System Enhancement
+- [X] Implement ASCIIBox event system integration
+- [X] Add component registration verification
+- [X] Create helper functions for event integration
+- [X] Add tests for event system integration
 - [ ] Add event history tracking
 - [ ] Implement event replay for debugging
 - [ ] Add event filtering capabilities

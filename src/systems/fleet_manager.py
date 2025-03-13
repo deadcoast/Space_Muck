@@ -5,16 +5,20 @@ This module provides functionality for creating and managing fleets of ships,
 including formation management, movement coordination, and fleet-wide operations.
 """
 
+# Standard library imports
 import logging
-import random
 import math
-import heapq
+import random
+
+# Third-party library imports
+
+# Local application imports
+from config import GAME_MAP_SIZE
+from entities.enemy_ship import EnemyShip
 from typing import Dict, List, Tuple, Any, Optional, Set, Callable
+import heapq
 
 # from collections import defaultdict  # Uncomment if needed in the future
-
-from entities.enemy_ship import EnemyShip
-from config import GAME_MAP_SIZE
 
 # Fleet formation types
 FLEET_FORMATIONS = {
@@ -42,7 +46,6 @@ MOVEMENT_PATTERNS = {
     "blockade": "Maintain position to block a designated area",
     "scout": "Explore and gather intelligence in a designated area",
 }
-
 
 class Fleet:
     """

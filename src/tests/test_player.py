@@ -2,11 +2,16 @@
 Test module for the Player class.
 """
 
-import unittest
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
 import numpy as np
 
+# Local application imports
+from entities.player import (
+import unittest
 
 # Use a simple mock object instead of importing MagicMock
 class SimpleMock:
@@ -20,7 +25,6 @@ class SimpleMock:
 
     def __getattr__(self, name):
         return self
-
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -36,10 +40,9 @@ sys.modules["scipy.stats"] = mock
 sys.modules["scipy.ndimage"] = mock
 
 # Import after mocking dependencies
-from entities.player import (
+
     Player,
 )  # noqa: E402 - Import not at top of file is intentional for mocking
-
 
 class MockField:
     """Mock asteroid field for testing."""
@@ -58,7 +61,6 @@ class MockField:
         self.rare_grid[60, 60] = 1
         self.grid[70, 70] = 300  # Anomaly
         self.rare_grid[70, 70] = 2
-
 
 class TestPlayer(unittest.TestCase):
     """Test cases for the Player class."""
@@ -595,7 +597,6 @@ class TestPlayer(unittest.TestCase):
         # Verify quest was rejected
         self.assertFalse(result["success"])
         self.assertIn("too low", result["reason"])
-
 
 if __name__ == "__main__":
     unittest.main()

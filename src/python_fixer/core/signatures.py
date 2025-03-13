@@ -9,16 +9,31 @@ Features:
 - Import dependency tracking with graph theory
 """
 
-from __future__ import annotations
+# Standard library imports
+from collections import defaultdict
+import inspect
 
+# Third-party library imports
+
+# Local application imports
+from __future__ import annotations
+from dataclasses import dataclass, field
+from pathlib import Path
+from pydantic import BaseModel, Field
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import PythonLexer
+from rich.console import Console
+from rich.syntax import Syntax
+from rich.tree import Tree
+from typing import (
+from typing_extensions import Protocol, runtime_checkable
 import ast
 import contextlib
 import importlib.util
-import inspect
-from collections import defaultdict
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import (
+import networkx as nx
+import typeguard
+
     TYPE_CHECKING,
     Any,
     Dict,
@@ -30,17 +45,6 @@ from typing import (
     TypeVar,
     Union,
 )
-
-import networkx as nx
-import typeguard
-from pydantic import BaseModel, Field
-from pygments import highlight
-from pygments.formatters import HtmlFormatter
-from pygments.lexers import PythonLexer
-from rich.console import Console
-from rich.syntax import Syntax
-from rich.tree import Tree
-from typing_extensions import Protocol, runtime_checkable
 
 # Import libcst with error handling
 try:
@@ -166,20 +170,17 @@ console = Console()
 
 T = TypeVar("T")
 
-
 @runtime_checkable
 class TypeAnnotated(Protocol):
     """Protocol for objects with type annotations"""
 
     __annotations__: Dict[str, Any]
 
-
 @runtime_checkable
 class Documented(Protocol):
     """Protocol for objects with docstrings"""
 
     __doc__: Optional[str]
-
 
 @runtime_checkable
 class Callable(Protocol):
@@ -191,7 +192,6 @@ class Callable(Protocol):
     __qualname__: str
     __annotations__: Dict[str, Any]
     __doc__: Optional[str]
-
 
 @runtime_checkable
 class SignatureComparable(Protocol):
@@ -205,7 +205,6 @@ class SignatureComparable(Protocol):
         """Calculate similarity score with another signature"""
         ...
 
-
 @runtime_checkable
 class SignatureValidatable(Protocol):
     """Protocol for objects that can validate their signatures"""
@@ -217,7 +216,6 @@ class SignatureValidatable(Protocol):
     def get_validation_errors(self) -> List[str]:
         """Get list of validation errors"""
         ...
-
 
 @runtime_checkable
 class SignatureProvider(Protocol):
@@ -234,7 +232,6 @@ class SignatureProvider(Protocol):
     def get_metrics(self) -> SignatureMetrics:
         """Get signature metrics"""
         ...
-
 
 @dataclass
 class TypeInfo(SignatureValidatable):
@@ -328,7 +325,6 @@ class TypeInfo(SignatureValidatable):
 
         return errors
 
-
 class SignatureMetrics(BaseModel):
     """Advanced metrics for code signatures
 
@@ -390,7 +386,6 @@ class SignatureMetrics(BaseModel):
     error_rate: float = Field(
         0.0, ge=0.0, le=1.0, description="Rate of validation errors"
     )
-
 
 @dataclass
 class SignatureComponent(
@@ -489,7 +484,6 @@ class SignatureComponent(
             "optional": self.is_optional,
             "constraints": self.constraints,
         }
-
 
 @dataclass
 class CodeSignature(
@@ -597,7 +591,6 @@ class CodeSignature(
         tfidf_matrix = vectorizer.fit_transform(signatures)
         return 1 - cosine(tfidf_matrix.toarray()[0], tfidf_matrix.toarray()[1])
 
-
 class MathExpressionEvaluator:
     """
     Utilizes `sympy` to evaluate and analyze mathematical expressions within signature components.
@@ -647,7 +640,6 @@ class MathExpressionEvaluator:
         except (sympy.SympifyError, ValueError):
             return None
 
-
 class CodeHighlighter:
     """
     Provides syntax highlighting for Python code using `pygments`.
@@ -666,7 +658,6 @@ class CodeHighlighter:
         """
         formatter = HtmlFormatter(full=True, linenos=True, style="colorful")
         return highlight(code, PythonLexer(), formatter)
-
 
 class SyntaxTreeVisualizer:
     """
@@ -775,7 +766,6 @@ class SyntaxTreeVisualizer:
         except Exception as e:
             console.print(f"[red]Error parsing code:[/] {str(e)}")
 
-
 class RichSyntaxHighlighter:
     """
     Uses `rich.syntax.Syntax` to display colorful syntax-highlighted code in the console.
@@ -829,7 +819,6 @@ class RichSyntaxHighlighter:
                     console.print(f"{' ' * (e.offset + 14)}[red]^[/]")
         except Exception as e:
             console.print(f"[red]Error parsing code:[/] {str(e)}")
-
 
 class SignatureVisitor:
     """
@@ -2455,7 +2444,6 @@ class SignatureVisitor:
         except Exception as e:
             console.warning(f"Error extracting docstring: {e}")
             return None
-
 
 class SignatureAnalyzer:
     """Advanced signature analyzer with ML-enhanced type inference"""

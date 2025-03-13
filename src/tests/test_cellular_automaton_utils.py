@@ -3,23 +3,28 @@
 Unit tests for the cellular automaton utilities module.
 """
 
-import unittest
-import numpy as np
-import sys
+# Standard library imports
 import os
+import sys
+
+# Third-party library imports
+import numpy as np
+
+# Local application imports
 from typing import Dict, Set, Any
+from utils.cellular_automaton_utils import (
+import unittest
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Import the cellular automaton utilities
-from utils.cellular_automaton_utils import (
+
     apply_cellular_automaton,
     apply_cellular_automaton_optimized,
     generate_cellular_automaton_rules,
     apply_environmental_effects,
 )
-
 
 class TestCellularAutomatonUtils(unittest.TestCase):
     """Test cases for cellular automaton utility functions."""
@@ -150,7 +155,6 @@ class TestCellularAutomatonUtils(unittest.TestCase):
 
         # With low hostility, more cells should survive
         self.assertTrue(np.sum(result_low_hostility) > np.sum(result))
-
 
 if __name__ == "__main__":
     unittest.main()

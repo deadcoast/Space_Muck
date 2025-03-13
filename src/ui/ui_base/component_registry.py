@@ -7,16 +7,19 @@ The registry is designed to be optional - components can function without it,
 but gain additional capabilities when registered.
 """
 
+# Standard library imports
 import logging
-import weakref
-from typing import Dict, List, Set, Optional, TypeVar, Type
-from enum import Enum, auto
 
-from ui.ui_base.ascii_base import UIElement
+# Third-party library imports
+
+# Local application imports
+from enum import Enum, auto
+from typing import Dict, List, Set, Optional, TypeVar, Type
+from src.ui.ui_base.ascii_base import UIElement
+import weakref
 
 # Type variable for generic component types
 T = TypeVar("T", bound=UIElement)
-
 
 class ComponentState(Enum):
     """Possible states of a UI component in the registry."""
@@ -27,7 +30,6 @@ class ComponentState(Enum):
     INACTIVE = auto()  # Component exists but is not currently visible
     DISABLED = auto()  # Component exists but is disabled from interaction
     DESTROYED = auto()  # Component is marked for removal
-
 
 class ComponentRegistry:
     """Registry for UI components with lifecycle management.
@@ -391,3 +393,18 @@ class ComponentRegistry:
                 self.unregister(component_id)
         except Exception as e:
             logging.error(f"Error cleaning up component: {e}")
+            
+    def is_registered(self, component_id: str) -> bool:
+        """Check if a component ID is registered in the registry.
+
+        Args:
+            component_id: ID of the component to check
+
+        Returns:
+            True if the component is registered, False otherwise
+        """
+        try:
+            return component_id in self._components
+        except Exception as e:
+            logging.error(f"Error checking if component is registered: {e}")
+            return False

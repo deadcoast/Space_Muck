@@ -10,22 +10,16 @@ Features:
 - Dependency graph rendering
 """
 
-import asyncio
+# Standard library imports
 from collections import deque
 from datetime import datetime
-from pathlib import Path
-from threading import Lock
-from typing import Any, Dict, Iterable
 
-import aiofiles
-import altair as alt
-import variant_loggers
-import dash
+# Third-party library imports
 import pandas as pd
-import plotly.graph_objects as go
-import seaborn as sns
-from variant_loggers import LogMetrics
+
+# Local application imports
 from jinja2 import Environment, PackageLoader, select_autoescape
+from pathlib import Path
 from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
@@ -36,9 +30,18 @@ from rich.table import Table
 from sklearn.cluster import DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
+from threading import Lock
+from typing import Any, Dict, Iterable
+from variant_loggers import LogMetrics
+import aiofiles
+import altair as alt
+import asyncio
+import dash
+import plotly.graph_objects as go
+import seaborn as sns
+import variant_loggers
 
 console = Console()
-
 
 class EnhancedFormatter(variant_loggers.Formatter):
     """Advanced log formatter with real-time analytics and visualization"""

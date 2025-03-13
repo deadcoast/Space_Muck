@@ -10,26 +10,31 @@ Features:
 - Dependency chain analysis
 """
 
+# Standard library imports
+from collections import Counter
+from datetime import datetime
+import os
+
+# Third-party library imports
+
+# Local application imports
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from pathlib import Path
+from python_fixer.core.types import ImportInfo
+from python_fixer.core.types import OPTIONAL_DEPS
+from rich.console import Console
+from rich.table import Table
+from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Any
 import ast
 import contextlib
 import importlib.util
-import os
-from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Any
 
 # Core dependencies that are always required
-from rich.console import Console
-from rich.table import Table
 
 # Local imports
-from python_fixer.core.types import ImportInfo
 
 # Optional dependencies
-from python_fixer.core.types import OPTIONAL_DEPS
 
 # Type hints for optional dependencies
 if TYPE_CHECKING:
@@ -44,7 +49,6 @@ else:
 _logging = None
 if importlib.util.find_spec("logging") is not None:
     import logging as _logging
-
 
 # Import optional dependencies with detailed error messages
 def _import_optional_dependency(name: str, import_path: str, features: str) -> Any:
@@ -70,7 +74,6 @@ def _import_optional_dependency(name: str, import_path: str, features: str) -> A
         print(f"  Error: {e}")
         print(f"  To enable these features, install {name} with: pip install {name}")
     return None
-
 
 # Import libcst for code parsing
 _libcst = _import_optional_dependency(
@@ -110,7 +113,6 @@ _toml = _import_optional_dependency("toml", "toml", "configuration file parsing"
 # Advanced console for rich output
 console = Console()
 
-
 @dataclass
 class CodeModule:
     """Represents a Python module with comprehensive metadata."""
@@ -135,7 +137,6 @@ class CodeModule:
     fixes_applied: List[str] = field(default_factory=list)
     last_modified: datetime = field(default_factory=datetime.now)
     backup_path: Optional[Path] = None
-
 
 @dataclass
 class ProjectMetrics:
@@ -164,7 +165,6 @@ class ProjectMetrics:
     fixes_applied: int = 0
     fixes_failed: int = 0
     files_modified: Set[str] = field(default_factory=set)
-
 
 class ASTImportVisitor(ast.NodeVisitor):
     """Basic AST visitor for collecting imports."""
@@ -197,7 +197,6 @@ class ASTImportVisitor(ast.NodeVisitor):
                     self.imports.add(name.name)
                 if name.asname:
                     self.imports.add(name.asname)
-
 
 class ImportAnalyzer:
     """Analyzes Python file imports using AST or libcst.
@@ -580,7 +579,6 @@ class ImportAnalyzer:
             True if all imports are valid, False otherwise
         """
         return len(self._invalid_imports) == 0
-
 
 class ProjectAnalyzer:
     """Unified system for Python codebase analysis and optimization."""
@@ -2047,7 +2045,6 @@ class ProjectAnalyzer:
                 ],
             )
 
-
 class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else object):
     """Visitor to collect imports using libcst.
 
@@ -2243,7 +2240,6 @@ class ImportCollectorVisitor(_libcst.CSTVisitor if _libcst is not None else obje
             self.imports.add(f"{module_name}{name_value}")
         else:
             self.imports.add(name_value)
-
 
 class TypeAnnotationVisitor(ast.NodeVisitor):
     """Visitor to analyze type annotations in the AST.

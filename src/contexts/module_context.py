@@ -5,13 +5,17 @@ This module provides a context for managing module states, dependencies,
 and lifecycle events within the game architecture.
 """
 
+# Standard library imports
+from datetime import datetime
 import logging
-from typing import Dict, List, Optional, Set, Callable
+
+# Third-party library imports
+
+# Local application imports
 from .game_context import GameContext, GameEventType, GameEvent
 from dataclasses import dataclass
 from enum import Enum, auto
-from datetime import datetime
-
+from typing import Dict, List, Optional, Set, Callable
 
 # Module States
 class ModuleState(Enum):
@@ -23,7 +27,6 @@ class ModuleState(Enum):
     RECOVERING = auto()
     SHUTTING_DOWN = auto()
 
-
 # Module Categories
 class ModuleCategory(Enum):
     CORE = auto()  # Essential system modules
@@ -31,7 +34,6 @@ class ModuleCategory(Enum):
     GAMEPLAY = auto()  # Game mechanics modules
     UI = auto()  # User interface modules
     UTILITY = auto()  # Helper/utility modules
-
 
 @dataclass
 class ModuleInfo:
@@ -44,7 +46,6 @@ class ModuleInfo:
     error_count: int = 0
     last_error: Optional[str] = None
     recovery_attempts: int = 0
-
 
 class ModuleContext:
     """
