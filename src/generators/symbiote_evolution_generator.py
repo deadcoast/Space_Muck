@@ -40,6 +40,7 @@ from utils.value_generator import (
     add_value_clusters,
 )
 
+
 @inject
 class SymbioteEvolutionGenerator(BaseGenerator):
     """
@@ -156,15 +157,52 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             return fallback_grid, {"seed": self.seed, "error": str(e)}
 
     def generate_colony_distribution(self, num_colonies, start_time):
+        """
+        Generate the initial distribution of symbiote colonies.
+
+        Args:
+            num_colonies: Number of colonies to generate, or None to use default
+            start_time: Start time for performance logging
+
+        Returns:
+            tuple: (colony_grid, metadata)
+        """
         # Create empty grid
         grid = np.zeros((self.height, self.width), dtype=int)
 
-        # Determine number of colonies
+        # Determine number of colonies and size
         if num_colonies is None:
             num_colonies = self.get_parameter("initial_colonies", 3)
-
         colony_size = self.get_parameter("colony_size", 5)
 
+        # Get colony centers
+        colony_centers = self._determine_colony_centers(num_colonies, colony_size)
+
+        # Place colonies on the grid
+        grid = self._place_colonies(grid, colony_centers, colony_size)
+
+        # Apply cellular automaton to make colonies more natural
+        grid = self._apply_colony_automaton(grid)
+
+        # Generate metadata
+        metadata = self._generate_colony_metadata(
+            colony_centers, colony_size, grid, num_colonies
+        )
+
+        log_performance_end("generate_initial_colonies", start_time)
+        return grid, metadata
+
+    def _determine_colony_centers(self, num_colonies, colony_size):
+        """
+        Determine the center coordinates for each colony.
+
+        Args:
+            num_colonies: Number of colonies to generate
+            colony_size: Size of each colony
+
+        Returns:
+            list: List of (x, y) coordinates for colony centers
+        """
         # Generate noise layer for colony placement
         noise_grid = self.generate_noise_layer("medium", scale=0.1)
 
@@ -176,40 +214,112 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         # Find potential colony locations (high noise values)
         potential_locations = np.argwhere(noise_grid > 0.7)
 
+        # If not enough high-value locations, just pick random locations
         if len(potential_locations) < num_colonies:
-            # If not enough high-value locations, just pick random locations
-            colony_centers = [
-                (
-                    random.randint(colony_size, self.width - colony_size),
-                    random.randint(colony_size, self.height - colony_size),
-                )
-                for _ in range(num_colonies)
-            ]
-        else:
-            # Pick random locations from high-value areas
-            indices = np.random.Generator.choice(
-                len(potential_locations), num_colonies, replace=False
+            return self._generate_random_centers(num_colonies, colony_size)
+
+        # Pick random locations from high-value areas
+        indices = np.random.Generator.choice(
+            len(potential_locations), num_colonies, replace=False
+        )
+        return [(x, y) for y, x in potential_locations[indices]]
+
+    def _generate_random_centers(self, num_colonies, colony_size):
+        """
+        Generate random colony centers when noise-based placement isn't possible.
+
+        Args:
+            num_colonies: Number of colonies to generate
+            colony_size: Size of each colony
+
+        Returns:
+            list: List of (x, y) coordinates for colony centers
+        """
+        return [
+            (
+                random.randint(colony_size, self.width - colony_size),
+                random.randint(colony_size, self.height - colony_size),
             )
-            colony_centers = [(x, y) for y, x in potential_locations[indices]]
+            for _ in range(num_colonies)
+        ]
 
-        # Place colonies on the grid
+    def _place_colonies(self, grid, colony_centers, colony_size):
+        """
+        Place colonies on the grid at specified centers.
+
+        Args:
+            grid: Empty grid to place colonies on
+            colony_centers: List of (x, y) coordinates for colony centers
+            colony_size: Size of each colony
+
+        Returns:
+            np.ndarray: Grid with colonies placed
+        """
+        result_grid = grid.copy()
+
         for center_x, center_y in colony_centers:
-            # Create a small circular colony
-            for y in range(center_y - colony_size, center_y + colony_size + 1):
-                for x in range(center_x - colony_size, center_x + colony_size + 1):
-                    if 0 <= x < self.width and 0 <= y < self.height:
-                        # Use distance from center to determine if cell is part of colony
-                        distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-                        if distance <= colony_size and random.random() < 0.8 - (
-                            distance / colony_size * 0.3
-                        ):
-                            grid[y, x] = 1
+            # Create a small circular colony at this center
+            self._place_single_colony(result_grid, center_x, center_y, colony_size)
 
-        # Apply cellular automaton to make colonies more natural
+        return result_grid
+
+    def _place_single_colony(self, grid, center_x, center_y, colony_size):
+        """
+        Place a single colony on the grid centered at the given coordinates.
+
+        Args:
+            grid: Grid to modify in-place
+            center_x: X-coordinate of colony center
+            center_y: Y-coordinate of colony center
+            colony_size: Size of the colony
+        """
+        # Calculate bounds with boundary checking
+        y_start = max(0, center_y - colony_size)
+        y_end = min(self.height, center_y + colony_size + 1)
+        x_start = max(0, center_x - colony_size)
+        x_end = min(self.width, center_x + colony_size + 1)
+
+        # Iterate over the bounded area
+        for y in range(y_start, y_end):
+            for x in range(x_start, x_end):
+                self._try_place_colony_cell(grid, x, y, center_x, center_y, colony_size)
+
+    def _try_place_colony_cell(self, grid, x, y, center_x, center_y, colony_size):
+        """
+        Try to place a colony cell at the given coordinates based on distance and probability.
+
+        Args:
+            grid: Grid to modify in-place
+            x: X-coordinate to check
+            y: Y-coordinate to check
+            center_x: X-coordinate of colony center
+            center_y: Y-coordinate of colony center
+            colony_size: Size of the colony
+        """
+        # Calculate distance from center
+        distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+
+        # Determine probability based on distance from center
+        probability = 0.8 - (distance / colony_size * 0.3)
+
+        # Place cell if within colony radius and passes probability check
+        if distance <= colony_size and random.random() < probability:
+            grid[y, x] = 1
+
+    def _apply_colony_automaton(self, grid):
+        """
+        Apply cellular automaton to make colonies more natural.
+
+        Args:
+            grid: Grid with initial colonies
+
+        Returns:
+            np.ndarray: Grid after cellular automaton rules applied
+        """
         birth_set, survival_set = generate_cellular_automaton_rules(
             hunger=0.5, genome=self.base_genome, race_id="initial"
         )
-        grid = apply_cellular_automaton(
+        return apply_cellular_automaton(
             grid,
             birth_set,
             survival_set,
@@ -218,17 +328,28 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             height=self.height,
         )
 
-        # Generate metadata
-        metadata = {
+    def _generate_colony_metadata(
+        self, colony_centers, colony_size, grid, num_colonies
+    ):
+        """
+        Generate metadata for the colony distribution.
+
+        Args:
+            colony_centers: List of colony center coordinates
+            colony_size: Size of each colony
+            grid: Grid with colonies
+            num_colonies: Number of colonies
+
+        Returns:
+            dict: Metadata dictionary
+        """
+        return {
             "seed": self.seed,
             "num_colonies": num_colonies,
             "colony_size": colony_size,
             "colony_centers": colony_centers,
             "colony_population": np.sum(grid),
         }
-
-        log_performance_end("generate_initial_colonies", start_time)
-        return grid, metadata
 
     def generate_mineral_distribution(self) -> np.ndarray:
         """
@@ -299,90 +420,43 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             return colony_grid, [{"error": str(e)}]
 
     def _evolution_handler(self, iterations, colony_grid, mineral_grid, start_time):
+        """
+        Handle the evolution of symbiote colonies over multiple iterations.
+
+        Args:
+            iterations: Number of evolution iterations to simulate
+            colony_grid: Initial colony distribution grid
+            mineral_grid: Mineral distribution grid
+            start_time: Start time for performance logging
+
+        Returns:
+            tuple: (final_grid, evolution_history)
+        """
         if iterations is None:
             iterations = self.get_parameter("evolution_iterations", 10)
 
         current_grid = colony_grid.copy()
         evolution_history = []
 
-        # Initialize genome and aggression
+        # Initialize genome and environmental factors
         genome = self.base_genome.copy()
         aggression = genome["aggression_base"]
         hostility = self.get_parameter("environmental_hostility", 0.3)
 
         # Simulate evolution over multiple iterations
         for i in range(iterations):
-            # Calculate mineral consumption based on current colony distribution
-            minerals = self._calculate_mineral_consumption(current_grid, mineral_grid)
-
-            # Process mineral feeding through evolution algorithm
-            population = np.sum(current_grid)
-            new_population, new_aggression, mutations = (
-                self.evolution_algorithm.process_mineral_feeding(
-                    race_id="symbiote_race",
-                    minerals=minerals,
-                    population=population,
-                    aggression=aggression,
+            # Process one evolution iteration
+            current_grid, genome, aggression, minerals = (
+                self._process_evolution_iteration(
+                    current_grid, mineral_grid, genome, aggression, hostility, i
                 )
             )
 
-            # Update genome based on mutations
-            for mutation in mutations:
-                attribute = mutation["attribute"]
-                if attribute in genome:
-                    genome[attribute] *= mutation["magnitude"]
-
-            # Update aggression
-            aggression = new_aggression
-
-            # Generate cellular automaton rules based on current genome using utility function
-            birth_set, survival_set = generate_cellular_automaton_rules(
-                hunger=1.0
-                - (new_population / self.evolution_algorithm.carrying_capacity),
-                genome=genome,
-                race_id="symbiote_race",
-            )
-
-            # Apply cellular automaton rules using optimized utility function
-            current_grid = apply_cellular_automaton_optimized(
-                current_grid, birth_set, survival_set
-            )
-
-            # Apply environmental effects using utility function
-            current_grid = apply_environmental_effects(
-                current_grid, mineral_grid, hostility
-            )
-
-            # Simulate colony interaction
-            current_grid = self.evolution_algorithm.simulate_colony_interaction(
-                current_grid, genome, aggression
-            )
-
-            # Limit population based on carrying capacity
-            if np.sum(current_grid) > self.evolution_algorithm.carrying_capacity:
-                # Randomly remove some cells to stay under capacity
-                excess = (
-                    np.sum(current_grid) - self.evolution_algorithm.carrying_capacity
-                )
-                if excess > 0:
-                    active_cells = np.argwhere(current_grid == 1)
-                    to_remove = np.random.Generator.choice(
-                        len(active_cells), int(excess), replace=False
-                    )
-                    for idx in to_remove:
-                        y, x = active_cells[idx]
-                        current_grid[y, x] = 0
-
-            # Record history
+            # Record history for this iteration
             evolution_history.append(
-                {
-                    "iteration": i,
-                    "population": np.sum(current_grid),
-                    "aggression": aggression,
-                    "genome": genome.copy(),
-                    "mutations": mutations,
-                    "mineral_consumption": minerals,
-                }
+                self._create_evolution_record(
+                    i, current_grid, aggression, genome, minerals
+                )
             )
 
             # Adjust hostility based on iteration (environment may become more challenging)
@@ -390,6 +464,158 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         log_performance_end("simulate_evolution", start_time)
         return current_grid, evolution_history
+
+    def _process_evolution_iteration(
+        self, current_grid, mineral_grid, genome, aggression, hostility, iteration
+    ):
+        """
+        Process a single evolution iteration.
+
+        Args:
+            current_grid: Current colony grid
+            mineral_grid: Mineral distribution grid
+            genome: Current genome
+            aggression: Current aggression level
+            hostility: Current environmental hostility
+            iteration: Current iteration number
+
+        Returns:
+            tuple: (updated_grid, updated_genome, updated_aggression, minerals_consumed)
+        """
+        # Calculate mineral consumption based on current colony distribution
+        minerals = self._calculate_mineral_consumption(current_grid, mineral_grid)
+
+        # Process mineral feeding through evolution algorithm
+        population = np.sum(current_grid)
+        new_population, new_aggression, mutations = (
+            self.evolution_algorithm.process_mineral_feeding(
+                race_id="symbiote_race",
+                minerals=minerals,
+                population=population,
+                aggression=aggression,
+            )
+        )
+
+        # Update genome based on mutations
+        updated_genome = self._apply_mutations(genome, mutations)
+
+        # Update grid based on cellular automaton rules
+        updated_grid = self._apply_automaton_rules(
+            current_grid,
+            updated_genome,
+            new_population,
+            mineral_grid,
+            hostility,
+            new_aggression,
+        )
+
+        # Limit population if needed
+        if np.sum(updated_grid) > self.evolution_algorithm.carrying_capacity:
+            updated_grid = self._limit_population(updated_grid)
+
+        return updated_grid, updated_genome, new_aggression, minerals
+
+    def _apply_mutations(self, genome, mutations):
+        """
+        Apply mutations to the genome.
+
+        Args:
+            genome: Current genome
+            mutations: List of mutations to apply
+
+        Returns:
+            dict: Updated genome
+        """
+        updated_genome = genome.copy()
+        for mutation in mutations:
+            attribute = mutation["attribute"]
+            if attribute in updated_genome:
+                updated_genome[attribute] *= mutation["magnitude"]
+        return updated_genome
+
+    def _apply_automaton_rules(
+        self, grid, genome, population, mineral_grid, hostility, aggression
+    ):
+        """
+        Apply cellular automaton rules and environmental effects.
+
+        Args:
+            grid: Current colony grid
+            genome: Current genome
+            population: Current population
+            mineral_grid: Mineral distribution grid
+            hostility: Environmental hostility level
+            aggression: Current aggression level
+
+        Returns:
+            np.ndarray: Updated grid after rules applied
+        """
+        # Generate cellular automaton rules based on current genome
+        birth_set, survival_set = generate_cellular_automaton_rules(
+            hunger=1.0 - (population / self.evolution_algorithm.carrying_capacity),
+            genome=genome,
+            race_id="symbiote_race",
+        )
+
+        # Apply cellular automaton rules
+        updated_grid = apply_cellular_automaton_optimized(grid, birth_set, survival_set)
+
+        # Apply environmental effects
+        updated_grid = apply_environmental_effects(
+            updated_grid, mineral_grid, hostility
+        )
+
+        # Simulate colony interaction
+        return self.evolution_algorithm.simulate_colony_interaction(
+            updated_grid, genome, aggression
+        )
+
+    def _limit_population(self, grid):
+        """
+        Limit population to stay under carrying capacity.
+
+        Args:
+            grid: Current colony grid
+
+        Returns:
+            np.ndarray: Grid with population limited
+        """
+        result_grid = grid.copy()
+        excess = np.sum(result_grid) - self.evolution_algorithm.carrying_capacity
+
+        if excess > 0:
+            active_cells = np.argwhere(result_grid == 1)
+            to_remove = np.random.Generator.choice(
+                len(active_cells), int(excess), replace=False
+            )
+            for idx in to_remove:
+                y, x = active_cells[idx]
+                result_grid[y, x] = 0
+
+        return result_grid
+
+    def _create_evolution_record(self, iteration, grid, aggression, genome, minerals):
+        """
+        Create a record of the current evolution state.
+
+        Args:
+            iteration: Current iteration number
+            grid: Current colony grid
+            aggression: Current aggression level
+            genome: Current genome
+            minerals: Minerals consumed
+
+        Returns:
+            dict: Evolution record
+        """
+        return {
+            "iteration": iteration,
+            "population": np.sum(grid),
+            "aggression": aggression,
+            "genome": genome.copy(),
+            "mutations": [],  # Note: mutations are applied in _apply_mutations and not stored here
+            "mineral_consumption": minerals,
+        }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SymbioteEvolutionGenerator":

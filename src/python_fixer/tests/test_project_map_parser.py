@@ -7,6 +7,7 @@ import unittest
 # Local application imports
 from project_map_parser import ProjectMapParser
 
+
 class TestProjectMapParser(unittest.TestCase):
     """Test suite for the ProjectMapParser class.
 
@@ -112,6 +113,7 @@ Dependencies Found:
         self.assertIn("Add resource distribution patterns", generated_map)
         self.assertIn("numpy", generated_map)
         self.assertIn("logging", generated_map)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -41,6 +41,7 @@ class Event:
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=lambda: __import__("time").time())
 
+
 class EventSystem:
     """Event handling system for method enhancements.
 

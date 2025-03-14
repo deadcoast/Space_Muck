@@ -14,15 +14,10 @@ import time
 # Local application imports
 from config import COLOR_BG
 from ui.ascii_ui import (
-from ui.game_screen import ASCIIGameScreen
-from ui.minimap_panel import ASCIIMinimapPanel
-import pygame
-
-# Add src directory to path for imports
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-    ASCIIBox,
+    ASCIIGameScreen,
+    ASCIIMinimapPanel,
     ASCIIPanel,
+    ASCIIBox,
     ASCIIProgressBar,
     ASCIIButton,
     ASCIIMetricsPanel,
@@ -31,6 +26,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
     ASCIIEfficiencyMonitor,
     UIStyle,
 )
+import pygame
+
+# Add src directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 
 class ASCIIUIDemo:
     def __init__(self):
@@ -554,6 +554,7 @@ class ASCIIUIDemo:
             self.running = False
         finally:
             pygame.quit()
+
 
 if __name__ == "__main__":
     demo = ASCIIUIDemo()

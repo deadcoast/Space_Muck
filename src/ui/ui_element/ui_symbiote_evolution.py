@@ -1,13 +1,3 @@
-
-
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
-
-class SymbioteEvolutionMonitor(UIElement):
-    """Monitor for the symbiote evolution process"""
-
 # Standard library imports
 
 # Third-party library imports
@@ -17,7 +7,17 @@ from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ascii_base import UIElement
 from typing import List
 import contextlib
-import curses
+import pygame
+
+
+# Define standard colors for UI components
+COLOR_TEXT = (220, 220, 220)  # Standard text color
+COLOR_BG = (20, 20, 30)  # Standard background color
+COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+
+
+class SymbioteEvolutionMonitor(UIElement):
+    """Monitor for the symbiote evolution process"""
 
     def __init__(
         self,

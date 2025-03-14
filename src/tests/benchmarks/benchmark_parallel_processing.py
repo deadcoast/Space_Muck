@@ -88,18 +88,16 @@ class BenchmarkResults:
         # Plot execution times
         ax1.plot(sorted_sizes, seq_times, "o-", label="Sequential", color="blue")
         ax1.plot(sorted_sizes, par_times, "s-", label="Parallel", color="green")
-        ax1.set_xlabel("Grid Size")
-        ax1.set_ylabel("Execution Time (ms)")
-        ax1.set_title(f"{title} - Execution Time Comparison")
+        self._set_plot_data(
+            ax1, "Execution Time (ms)", title, " - Execution Time Comparison"
+        )
         ax1.legend()
         ax1.grid(True)
 
         # Plot speedup factors
         ax2.plot(sorted_sizes, speedups, "D-", color="red")
         ax2.axhline(y=1, color="gray", linestyle="--")  # Add reference line at y=1
-        ax2.set_xlabel("Grid Size")
-        ax2.set_ylabel("Speedup Factor")
-        ax2.set_title(f"{title} - Speedup Factor")
+        self._set_plot_data(ax2, "Speedup Factor", title, " - Speedup Factor")
         ax2.grid(True)
 
         plt.tight_layout()
@@ -109,6 +107,11 @@ class BenchmarkResults:
             logging.info(f"Plot saved to {output_file}")
 
         plt.show()
+
+    def _set_plot_data(self, ax, y_label, title, suffix):
+        ax.set_xlabel("Grid Size")
+        ax.set_ylabel(y_label)
+        ax.set_title(f"{title}{suffix}")
 
 
 def benchmark_cellular_automaton(

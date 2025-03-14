@@ -26,6 +26,7 @@ from config import (
     COLOR_HIGHLIGHT,
 )
 
+
 class EnemyShip(BaseEntity):
     """
     Represents an enemy ship that can engage in combat with the player.

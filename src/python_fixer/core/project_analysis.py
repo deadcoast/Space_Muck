@@ -84,19 +84,110 @@ class ProjectAnalyzer:
         analysis = self.analyze_project()
         fixes = {"imports_fixed": 0, "files_modified": set(), "backup_created": False}
 
+        # Create backups if needed
         if self.backup:
-            # TODO: Implement backup functionality
-            fixes["backup_created"] = True
+            fixes["backup_created"] = self._create_backups(analysis)
 
-        # Apply fixes based on analysis
+        # Apply fixes to modules with issues
+        self._apply_fixes_to_modules(analysis, fixes)
+
+        return fixes
+
+    def _create_backups(self, analysis: Dict) -> bool:
+        """Create backups of files that will be modified.
+
+        Args:
+            analysis: Project analysis dictionary
+
+        Returns:
+            True if backups were created, False otherwise
+        """
+        # Create backup directory
+        backup_dir = self.project_path / "python_fixer_backup"
+        if not backup_dir.exists():
+            backup_dir.mkdir(parents=True)
+            self.logger.info(f"Created backup directory at {backup_dir}")
+
+        # Get files that need backup
+        files_to_backup = [
+            Path(module_path)
+            for module_path, info in analysis["dependencies"].items()
+            if info.get("cycles") or info.get("unused_imports")
+        ]
+
+        # Create the actual backups
+        for file_path in files_to_backup:
+            if file_path.exists():
+                backup_path = backup_dir / file_path.name
+                backup_path.write_text(file_path.read_text())
+                self.logger.info(f"Created backup of {file_path} at {backup_path}")
+
+        return True
+
+    def _apply_fixes_to_modules(self, analysis: Dict, fixes: Dict) -> None:
+        """Apply fixes to modules with issues.
+
+        Args:
+            analysis: Project analysis dictionary
+            fixes: Dictionary to track fix metrics
+        """
         for module_path, info in analysis["dependencies"].items():
             if info.get("cycles") or info.get("unused_imports"):
                 self.logger.info(f"Found issues in {module_path}")
-                # TODO: Implement fix application
+                self._fix_module(module_path, info, fixes)
+
+    def _fix_module(self, module_path: str, info: Dict, fixes: Dict) -> None:
+        """Apply fixes to a single module.
+
+        Args:
+            module_path: Path to the module
+            info: Module analysis information
+            fixes: Dictionary to track fix metrics
+        """
+        file_path = Path(module_path)
+        if not file_path.exists():
+            self.logger.warning(f"File {module_path} not found, skipping fixes")
+            return
+
+        try:
+            file_content = file_path.read_text()
+            tree = ast.parse(file_content)
+            if self._apply_module_fixes(tree, file_content, info, file_path):
                 fixes["imports_fixed"] += 1
                 fixes["files_modified"].add(module_path)
+        except Exception as e:
+            self.logger.error(f"Error fixing {module_path}: {e}")
 
-        return fixes
+    def _apply_module_fixes(
+        self, tree: ast.AST, file_content: str, info: Dict, file_path: Path
+    ) -> bool:
+        """Apply specific fixes to a module.
+
+        Args:
+            tree: AST of the module
+            file_content: Content of the file
+            info: Module analysis information
+            file_path: Path to the module file
+
+        Returns:
+            True if the module was modified, False otherwise
+        """
+        modified = False
+
+        # Fix unused imports
+        if info.get("unused_imports"):
+            modified = self._remove_unused_imports(
+                tree, file_content, info["unused_imports"], file_path
+            )
+
+        # Fix import cycles
+        if info.get("cycles"):
+            cycle_fix = self._fix_import_cycles(
+                tree, file_content, info["cycles"], file_path
+            )
+            modified = modified or cycle_fix
+
+        return modified
 
     def analyze_project(self) -> Dict:
         """Performs complete project analysis.
@@ -246,12 +337,12 @@ class ProjectAnalyzer:
 
         # Check classes and functions for documentation
         needs.extend(
-            f'add_class_docstring:{cls["name"]}'
+            f"add_class_docstring:{cls['name']}"
             for cls in module_info["classes"]
             if not cls["docstring"]
         )
         needs.extend(
-            f'add_function_docstring:{func["name"]}'
+            f"add_function_docstring:{func['name']}"
             for func in module_info["functions"]
             if not func["docstring"]
         )

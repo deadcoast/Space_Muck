@@ -1,15 +1,3 @@
-
-
-# Type definitions for better type checking
-T = TypeVar("T")
-Color = Tuple[int, int, int]
-ColorWithAlpha = Tuple[int, int, int, int]
-Point = Tuple[int, int]
-Rect = Tuple[int, int, int, int]  # x, y, width, height
-
-class ASCIIChainTemplateManager:
-    """Interface for managing converter chain templates."""
-
 # Standard library imports
 
 # Third-party library imports
@@ -22,6 +10,18 @@ from src.ui.draw_utils import draw_text
 from src.ui.ui_base.ascii_ui import ASCIIButton
 from src.ui.ui_base.ascii_ui import ASCIIPanel
 import pygame
+
+
+# Type definitions for better type checking
+T = TypeVar("T")
+Color = Tuple[int, int, int]
+ColorWithAlpha = Tuple[int, int, int, int]
+Point = Tuple[int, int]
+Rect = Tuple[int, int, int, int]  # x, y, width, height
+
+
+class ASCIIChainTemplateManager:
+    """Interface for managing converter chain templates."""
 
     def __init__(
         self,

@@ -25,6 +25,7 @@ DEFAULT_DASHBOARD_HOST = "localhost"
 DEFAULT_DASHBOARD_PORT = 8000
 DEFAULT_DASHBOARD_RELOAD = False
 
+
 @dataclass
 class LogLevels:
     DEBUG: str = "DEBUG"
@@ -33,7 +34,9 @@ class LogLevels:
     ERROR: str = "ERROR"
     CRITICAL: str = "CRITICAL"
 
+
 levels = LogLevels()
+
 
 def get_level_name(level: int) -> str:
     """Convert a numeric level to its string representation."""
@@ -50,6 +53,7 @@ def get_level_name(level: int) -> str:
     else:
         return f"Level {level}"
 
+
 @dataclass
 class LogContext:
     """Structure to hold context information for log entries."""
@@ -64,6 +68,7 @@ class LogContext:
     thread_name: str = threading.current_thread().name
     log_path: Optional[Path] = None
     context_id: str = str(uuid.uuid4())
+
 
 class LogRecord:
     """Container for log record information."""
@@ -112,6 +117,7 @@ class LogRecord:
             "context_id": self.context_id,
         }
 
+
 class Handler:
     """Base class for log handlers."""
 
@@ -135,6 +141,7 @@ class Handler:
         """Clean up handler resources."""
         pass
 
+
 class StreamHandler(Handler):
     """Handler for logging to streams (e.g., stdout)."""
 
@@ -149,6 +156,7 @@ class StreamHandler(Handler):
             )
             self.stream.write(msg + "\n")
             self.stream.flush()
+
 
 class FileHandler(Handler):
     """Handler for logging to files."""
@@ -170,6 +178,7 @@ class FileHandler(Handler):
         if self.file:
             self.file.close()
             self.file = None
+
 
 class Formatter:
     """Formatter for log records."""
@@ -208,6 +217,7 @@ class Formatter:
                 line=record.line,
                 message=record.message,
             )
+
 
 class Logger:
     """Main logger class."""
@@ -273,8 +283,10 @@ class Logger:
             for handler in self.handlers:
                 handler.handle(record)
 
+
 # Logger cache to avoid creating multiple loggers with the same name
 _loggers = {}
+
 
 def get_logger(name: str) -> Logger:
     """Get or create a logger with the specified name."""
@@ -282,21 +294,26 @@ def get_logger(name: str) -> Logger:
         _loggers[name] = Logger(name)
     return _loggers[name]
 
+
 def debug(msg: str, **kwargs):
     """Log a debug message."""
     get_logger("root").log(DEBUG, msg, kwargs.get("extra"))
+
 
 def info(msg: str, **kwargs):
     """Log an info message."""
     get_logger("root").log(INFO, msg, kwargs.get("extra"))
 
+
 def warning(msg: str, **kwargs):
     """Log a warning message."""
     get_logger("root").log(WARNING, msg, kwargs.get("extra"))
 
+
 def error(msg: str, **kwargs):
     """Log an error message."""
     get_logger("root").log(ERROR, msg, kwargs.get("extra"))
+
 
 def critical(msg: str, **kwargs):
     """Log a critical message."""

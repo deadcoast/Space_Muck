@@ -32,6 +32,7 @@ if VARIANT_LOGGERS_AVAILABLE:
 
         log_correlator = LogCorrelator()
 
+
 # Existing Aggregator Classes
 class Aggregator:
     """Aggregate log entries for analysis"""
@@ -43,7 +44,6 @@ class Aggregator:
         self.error_count = 0
         self.processing_times: List[float] = []
         self.counts_over_time = []
-
 
     def add_entry(self, record: LogRecord):
         """Add new log entry"""
@@ -63,25 +63,65 @@ class Aggregator:
             self._trim_window()
 
     def _trim_window(self):
-        """Trim aggregation window"""
+        """Trim aggregation window by removing excess entries and updating counts."""
         excess = len(self.entries) - self.window_size
-        if excess > 0:
-            removed = self.entries[:excess]
-            self.entries = self.entries[excess:]
-            for record in removed:
-                if record.level == 40:  # ERROR
-                    self.error_count -= 1
-                if "patterns" in record.extra:
-                    pid = record.extra["patterns"]["pattern_id"]
-                    self.pattern_counts[pid] -= 1
-                    if self.pattern_counts[pid] == 0:
-                        del self.pattern_counts[pid]
-                if "metrics" in record.extra:
-                    pt = record.extra["metrics"].get("processing_time")
-                    if pt and pt in self.processing_times:
-                        self.processing_times.remove(pt)
-                if self.counts_over_time:
-                    self.counts_over_time.pop(0)
+        if excess <= 0:
+            return
+
+        # Get entries to remove
+        removed = self.entries[:excess]
+        self.entries = self.entries[excess:]
+
+        # Process each removed entry
+        for record in removed:
+            self._update_counts_for_removed_record(record)
+
+    def _update_counts_for_removed_record(self, record):
+        """Update counts when a record is removed from the window.
+
+        Args:
+            record: The log record being removed
+        """
+        # Update error count
+        if record.level == 40:  # ERROR
+            self.error_count -= 1
+
+        # Update pattern counts
+        self._update_pattern_counts(record)
+
+        # Update processing times
+        self._update_processing_times(record)
+
+        # Update time-based counts
+        if self.counts_over_time:
+            self.counts_over_time.pop(0)
+
+    def _update_pattern_counts(self, record):
+        """Update pattern counts for a removed record.
+
+        Args:
+            record: The log record being removed
+        """
+        if "patterns" not in record.extra:
+            return
+
+        pid = record.extra["patterns"]["pattern_id"]
+        self.pattern_counts[pid] -= 1
+        if self.pattern_counts[pid] == 0:
+            del self.pattern_counts[pid]
+
+    def _update_processing_times(self, record):
+        """Update processing times for a removed record.
+
+        Args:
+            record: The log record being removed
+        """
+        if "metrics" not in record.extra:
+            return
+
+        pt = record.extra["metrics"].get("processing_time")
+        if pt and pt in self.processing_times:
+            self.processing_times.remove(pt)
 
     def get_aggregations(self) -> Dict[str, Any]:
         """Get aggregated metrics"""
@@ -98,6 +138,7 @@ class Aggregator:
             "correlations": self._analyze_correlations(),
         }
 
+
 def _analyze_correlations(self) -> Dict[str, Any]:
     """Analyze correlations between log attributes"""
     if not self.entries:
@@ -107,9 +148,7 @@ def _analyze_correlations(self) -> Dict[str, Any]:
             {
                 "level": e.getLevelName(),
                 "pattern": (
-                    e.extra["patterns"]["pattern_id"]
-                    if "patterns" in e.extra
-                    else -1
+                    e.extra["patterns"]["pattern_id"] if "patterns" in e.extra else -1
                 ),
                 "has_correlation": 1 if "correlations" in e.extra else 0,
             }
@@ -117,6 +156,7 @@ def _analyze_correlations(self) -> Dict[str, Any]:
         ]
     )
     return {} if df.empty else df.corr().to_dict(orient="dict")
+
 
 class LogAggregator:
     """Real-time log aggregation and analysis"""
@@ -157,28 +197,66 @@ class LogAggregator:
             self._trim_window()
 
     def _trim_window(self):
-        """Trim aggregation window"""
+        """Trim aggregation window by removing excess entries and updating counts."""
         excess = len(self.entries) - self.window_size
-        if excess > 0:
-            removed = self.entries[:excess]
-            self.entries = self.entries[excess:]
+        if excess <= 0:
+            return
 
-            # Adjust counts
-            for record in removed:
-                if record.level == _logging.ERROR:
-                    self.error_count -= 1
-                if "patterns" in record.extra:
-                    pid = record.extra["patterns"].get("pattern_id")
-                    if pid is not None:
-                        self.pattern_counts[pid] -= 1
-                        if self.pattern_counts[pid] == 0:
-                            del self.pattern_counts[pid]
-                if "metrics" in record.extra:
-                    pt = record.extra["metrics"].get("processing_time")
-                    if pt in self.processing_times:
-                        self.processing_times.remove(pt)
-                if self.counts_over_time:
-                    self.counts_over_time.pop(0)
+        # Get entries to remove
+        removed = self.entries[:excess]
+        self.entries = self.entries[excess:]
+
+        # Process each removed entry
+        for record in removed:
+            self._update_counts_for_removed_record(record)
+
+    def _update_counts_for_removed_record(self, record):
+        """Update counts when a record is removed from the window.
+
+        Args:
+            record: The log record being removed
+        """
+        # Update error count
+        if record.level == _logging.ERROR:
+            self.error_count -= 1
+
+        # Update pattern counts
+        self._update_pattern_counts(record)
+
+        # Update processing times
+        self._update_processing_times(record)
+
+        # Update time-based counts
+        if self.counts_over_time:
+            self.counts_over_time.pop(0)
+
+    def _update_pattern_counts(self, record):
+        """Update pattern counts for a removed record.
+
+        Args:
+            record: The log record being removed
+        """
+        if "patterns" not in record.extra:
+            return
+
+        pid = record.extra["patterns"].get("pattern_id")
+        if pid is not None:
+            self.pattern_counts[pid] -= 1
+            if self.pattern_counts[pid] == 0:
+                del self.pattern_counts[pid]
+
+    def _update_processing_times(self, record):
+        """Update processing times for a removed record.
+
+        Args:
+            record: The log record being removed
+        """
+        if "metrics" not in record.extra:
+            return
+
+        pt = record.extra["metrics"].get("processing_time")
+        if pt in self.processing_times:
+            self.processing_times.remove(pt)
 
     def get_aggregations(self) -> Dict[str, Any]:
         """Get aggregated metrics"""
@@ -200,23 +278,58 @@ class LogAggregator:
         if not self.entries:
             return {}
 
-        # Create correlation matrix
-        df = pd.DataFrame(
-            [
-                {
-                    "level": e.getLevelName(),
-                    "pattern": (
-                        e.extra["patterns"]["pattern_id"]
-                        if "patterns" in e.extra and "pattern_id" in e.extra["patterns"]
-                        else -1
-                    ),
-                    "has_correlation": 1 if e.extra.get("correlation_id") else 0,
-                }
-                for e in self.entries
-            ]
-        )
+        # Create correlation matrix from log entries
+        df = self._create_correlation_dataframe()
 
+        # Return empty dict if no data, otherwise return correlation matrix
         return {} if df.empty else df.corr().to_dict(orient="dict")
+
+    def _create_correlation_dataframe(self) -> pd.DataFrame:
+        """Create a DataFrame for correlation analysis from log entries.
+
+        Returns:
+            pd.DataFrame: DataFrame with log attributes for correlation analysis
+        """
+        data = []
+
+        for entry in self.entries:
+            # Extract entry data into a dictionary
+            entry_data = {
+                "level": entry.getLevelName(),
+                "pattern": self._extract_pattern_id(entry),
+                "has_correlation": self._has_correlation(entry),
+            }
+            data.append(entry_data)
+
+        return pd.DataFrame(data)
+
+    def _extract_pattern_id(self, entry) -> int:
+        """Extract pattern ID from a log entry.
+
+        Args:
+            entry: Log entry to extract pattern ID from
+
+        Returns:
+            int: Pattern ID or -1 if not found
+        """
+        # Early returns for missing data
+        if "patterns" not in entry.extra:
+            return -1
+
+        patterns = entry.extra["patterns"]
+        return patterns.get("pattern_id", -1)
+
+    def _has_correlation(self, entry) -> int:
+        """Check if entry has correlation ID.
+
+        Args:
+            entry: Log entry to check
+
+        Returns:
+            int: 1 if has correlation, 0 otherwise
+        """
+        return 1 if entry.extra.get("correlation_id") else 0
+
 
 class ProjectAnalyzer:
     """Analyze Python project structure and dependencies."""
@@ -250,10 +363,12 @@ class ProjectAnalyzer:
         self.logger.info(f"Fixing project at {self.project_path} (mode: {mode})")
         return {"status": "success"}
 
+
 # --- Logging Functions with Decorator ---
 
+
 # Configure the basic logger
-def basicConfig(
+def basic_config(
     level: str = "INFO",
     format: str = "%(asctime)s - %(levelname)s - %(message)s",
     datefmt: str = "%Y-%m-%d %H:%M:%S",
@@ -269,8 +384,9 @@ def basicConfig(
     numeric_level = getattr(_logging, level.upper(), _logging.INFO)
     _logging.basicConfig(level=numeric_level, format=format, datefmt=datefmt)
 
+
 # Get logger instance
-def getLoggerInstance(name: str) -> _logging.Logger:
+def get_logger_instance(name: str) -> _logging.Logger:
     """
     Retrieves a logger instance with the specified name.
 
@@ -282,8 +398,9 @@ def getLoggerInstance(name: str) -> _logging.Logger:
     """
     return _logging.getLogger(name)
 
+
 # Get level name
-def getLevelName(level: int) -> str:
+def get_level_name(level: int) -> str:
     """
     Retrieves the textual representation of a logging level.
 
@@ -294,6 +411,7 @@ def getLevelName(level: int) -> str:
         str: The name of the logging level.
     """
     return _logging.getLevelName(level)
+
 
 def _get_frame_info() -> tuple:
     """
@@ -311,6 +429,7 @@ def _get_frame_info() -> tuple:
             return function_name, line_number
     return None, None
 
+
 def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
     """
     Handles the logging logic, including creating a LogRecord and correlating it.
@@ -322,7 +441,7 @@ def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
         line_number (int): Line number in the caller function.
         **kwargs: Additional keyword arguments for logging.
     """
-    logger = getLoggerInstance(__name__)
+    logger = get_logger_instance(__name__)
     logger.log(level, msg, extra=kwargs)
 
     # Create a LogRecord instance
@@ -338,6 +457,7 @@ def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
 
     # Correlate the log record
     log_correlator.correlate(record)
+
 
 def log_decorator(level: int):
     """
@@ -360,6 +480,7 @@ def log_decorator(level: int):
 
     return decorator
 
+
 @log_decorator(_logging.DEBUG)
 def debug(msg: str, **kwargs):
     """
@@ -370,6 +491,7 @@ def debug(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
+
 
 @log_decorator(_logging.INFO)
 def info(msg: str, **kwargs):
@@ -382,6 +504,7 @@ def info(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
+
 @log_decorator(_logging.WARNING)
 def warning(msg: str, **kwargs):
     """
@@ -393,6 +516,7 @@ def warning(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
+
 @log_decorator(_logging.ERROR)
 def error(msg: str, **kwargs):
     """
@@ -403,6 +527,7 @@ def error(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
+
 
 @log_decorator(_logging.CRITICAL)
 def critical(msg: str, **kwargs):

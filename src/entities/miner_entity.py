@@ -68,11 +68,13 @@ from config import (
     CELL_SIZE as GRID_CELL_SIZE,
 )
 
+
 # Forward reference for type hints
 class AsteroidField:
     """Type hint for AsteroidField class."""
 
     pass
+
 
 class MinerEntity(BaseEntity):
     """
@@ -228,10 +230,10 @@ class MinerEntity(BaseEntity):
         except Exception as e:
             logging.error(f"Error in populate method: {str(e)}")
             log_exception(e)
-            
+
     def _populate_adaptive_race(self, field: AsteroidField) -> None:
         """Populate field with adaptive race using noise-based organic clusters.
-        
+
         Args:
             field: The asteroid field to populate
         """
@@ -245,24 +247,27 @@ class MinerEntity(BaseEntity):
         # Create several organic clusters
         for _ in range(3):
             self._create_adaptive_cluster(field, start_x, start_y, noise_func)
-            
+
     def _create_noise_function(self):
         """Create a noise function for adaptive race population.
-        
+
         Returns:
             A noise function that takes coordinates and returns a noise value
         """
         if PERLIN_AVAILABLE:
             return PerlinNoise(octaves=4, seed=random.randint(1, 1000))
+
         # Fallback noise generator
         def simple_noise(x, y):
             return (math.sin(x * 0.1) + math.cos(y * 0.1)) * 0.5
 
         return simple_noise
-            
-    def _create_adaptive_cluster(self, field: AsteroidField, start_x: int, start_y: int, noise_func) -> None:
+
+    def _create_adaptive_cluster(
+        self, field: AsteroidField, start_x: int, start_y: int, noise_func
+    ) -> None:
         """Create a single organic cluster for adaptive race.
-        
+
         Args:
             field: The asteroid field to populate
             start_x: Starting x coordinate
@@ -277,11 +282,17 @@ class MinerEntity(BaseEntity):
 
         # Populate cluster area using noise
         self._populate_cluster_area(field, center_x, center_y, radius, noise_func)
-        
-    def _populate_cluster_area(self, field: AsteroidField, center_x: int, center_y: int, 
-                               radius: int, noise_func) -> None:
+
+    def _populate_cluster_area(
+        self,
+        field: AsteroidField,
+        center_x: int,
+        center_y: int,
+        radius: int,
+        noise_func,
+    ) -> None:
         """Populate a circular area using noise-based probability.
-        
+
         Args:
             field: The asteroid field to populate
             center_x: Center x coordinate of the cluster
@@ -291,7 +302,7 @@ class MinerEntity(BaseEntity):
         """
         y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
         x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
-        
+
         for y, x in itertools.product(y_range, x_range):
             # Calculate distance from center
             dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
@@ -299,17 +310,13 @@ class MinerEntity(BaseEntity):
                 # Use noise to determine placement
                 noise_val = noise_func([x / field.width, y / field.height])
                 # Higher chance near center, affected by noise
-                chance = (
-                    self.initial_density
-                    * (0.8 + noise_val)
-                    * (1 - dist / radius)
-                )
+                chance = self.initial_density * (0.8 + noise_val) * (1 - dist / radius)
                 if random.random() < chance and field.entity_grid[y, x] == 0:
                     field.entity_grid[y, x] = self.race_id
-                    
+
     def _populate_selective_race(self, field: AsteroidField) -> None:
         """Populate field with selective race near resource-rich areas.
-        
+
         Args:
             field: The asteroid field to populate
         """
@@ -330,13 +337,15 @@ class MinerEntity(BaseEntity):
         else:
             # Not enough points for clustering, use simple proximity
             self._populate_using_proximity(field, asteroid_cells, asteroid_values)
-            
-    def _collect_asteroid_data(self, field: AsteroidField) -> Tuple[List[Tuple[int, int]], List[float]]:
+
+    def _collect_asteroid_data(
+        self, field: AsteroidField
+    ) -> Tuple[List[Tuple[int, int]], List[float]]:
         """Collect asteroid locations and their values.
-        
+
         Args:
             field: The asteroid field to analyze
-            
+
         Returns:
             Tuple containing (list of asteroid coordinates, list of asteroid values)
         """
@@ -350,12 +359,12 @@ class MinerEntity(BaseEntity):
                     value *= field.rare_bonus_multiplier
                 asteroid_cells.append((x, y))
                 asteroid_values.append(value)
-                
+
         return asteroid_cells, asteroid_values
-        
+
     def _populate_randomly(self, field: AsteroidField) -> None:
         """Populate the field with randomly placed entities.
-        
+
         Args:
             field: The asteroid field to populate
         """
@@ -365,10 +374,12 @@ class MinerEntity(BaseEntity):
             y = random.randint(0, field.height - 1)
             if field.entity_grid[y, x] == 0:
                 field.entity_grid[y, x] = self.race_id
-                
-    def _populate_using_kmeans(self, field: AsteroidField, points: np.ndarray, values: np.ndarray) -> None:
+
+    def _populate_using_kmeans(
+        self, field: AsteroidField, points: np.ndarray, values: np.ndarray
+    ) -> None:
         """Populate field using KMeans clustering of asteroid points.
-        
+
         Args:
             field: The asteroid field to populate
             points: Array of asteroid coordinates
@@ -383,13 +394,18 @@ class MinerEntity(BaseEntity):
 
             # Place symbiotes with higher density near the cluster center
             radius = random.randint(10, 15)
-            self._populate_around_center(field, center_x, center_y, radius, density_multiplier=5)
-            
-    def _populate_using_proximity(self, field: AsteroidField, 
-                                 asteroid_cells: List[Tuple[int, int]], 
-                                 asteroid_values: List[float]) -> None:
+            self._populate_around_center(
+                field, center_x, center_y, radius, density_multiplier=5
+            )
+
+    def _populate_using_proximity(
+        self,
+        field: AsteroidField,
+        asteroid_cells: List[Tuple[int, int]],
+        asteroid_values: List[float],
+    ) -> None:
         """Populate field based on proximity to valuable asteroids.
-        
+
         Args:
             field: The asteroid field to populate
             asteroid_cells: List of asteroid coordinates
@@ -401,11 +417,17 @@ class MinerEntity(BaseEntity):
             # Place symbiotes near valuable asteroids
             radius = int(3 + value / 100)  # Higher value = larger cluster
             self._populate_around_asteroid(field, x, y, radius, value)
-            
-    def _populate_around_center(self, field: AsteroidField, center_x: int, center_y: int, 
-                               radius: int, density_multiplier: float = 1.0) -> None:
+
+    def _populate_around_center(
+        self,
+        field: AsteroidField,
+        center_x: int,
+        center_y: int,
+        radius: int,
+        density_multiplier: float = 1.0,
+    ) -> None:
         """Populate an area around a center point with density dropping with distance.
-        
+
         Args:
             field: The asteroid field to populate
             center_x: Center x coordinate
@@ -415,20 +437,23 @@ class MinerEntity(BaseEntity):
         """
         y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
         x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
-        
+
         for y, x in itertools.product(y_range, x_range):
             # Calculate distance from center
             dist = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
             if dist <= radius:
                 # Higher chance near center, drops off with distance
-                chance = self.initial_density * density_multiplier * (1 - dist / radius) ** 2
+                chance = (
+                    self.initial_density * density_multiplier * (1 - dist / radius) ** 2
+                )
                 if random.random() < chance and field.entity_grid[y, x] == 0:
                     field.entity_grid[y, x] = self.race_id
-                    
-    def _populate_around_asteroid(self, field: AsteroidField, x: int, y: int, 
-                                 radius: int, value: float) -> None:
+
+    def _populate_around_asteroid(
+        self, field: AsteroidField, x: int, y: int, radius: int, value: float
+    ) -> None:
         """Populate an area around an asteroid with density based on asteroid value.
-        
+
         Args:
             field: The asteroid field to populate
             x: Asteroid x coordinate
@@ -436,7 +461,9 @@ class MinerEntity(BaseEntity):
             radius: Radius of the populated area
             value: Value of the asteroid
         """
-        for dy, dx in itertools.product(range(-radius, radius + 1), range(-radius, radius + 1)):
+        for dy, dx in itertools.product(
+            range(-radius, radius + 1), range(-radius, radius + 1)
+        ):
             nx, ny = x + dx, y + dy
             if 0 <= nx < field.width and 0 <= ny < field.height:
                 dist = math.sqrt(dx * dx + dy * dy)
@@ -753,10 +780,8 @@ class MinerEntity(BaseEntity):
         self.analyze_territory(field)
 
         # Get new CA rules from the algorithm
-        _, _ = (
-            self.evolution_algorithm.generate_cellular_automaton_rules(
-                self.race_id, self.hunger, self.genome
-            )
+        _, _ = self.evolution_algorithm.generate_cellular_automaton_rules(
+            self.race_id, self.hunger, self.genome
         )
 
         # Apply new rules with some chance of mutation
@@ -916,11 +941,11 @@ class MinerEntity(BaseEntity):
 
     def _perform_kmeans_clustering(self, points: np.ndarray, k: int):
         """Perform KMeans clustering on points.
-        
+
         Args:
             points: Array of points to cluster
             k: Number of clusters
-            
+
         Returns:
             Tuple of (clusters, centers, main_cluster_idx, main_center)
         """
@@ -931,10 +956,8 @@ class MinerEntity(BaseEntity):
 
         # Find main cluster (largest population)
         cluster_sizes = [np.sum(clusters == i) for i in range(k)]
-        return self._get_main_cluster_info(
-            cluster_sizes, centers, clusters
-        )
-        
+        return self._get_main_cluster_info(cluster_sizes, centers, clusters)
+
     def _perform_simple_clustering(self, points, k):
         """Simple clustering fallback when sklearn is not available.
 
@@ -980,9 +1003,7 @@ class MinerEntity(BaseEntity):
 
         # Find main cluster (largest population)
         cluster_sizes = [np.sum(clusters == i) for i in range(len(centers))]
-        return self._get_main_cluster_info(
-            cluster_sizes, centers, clusters
-        )
+        return self._get_main_cluster_info(cluster_sizes, centers, clusters)
 
     def _get_main_cluster_info(self, cluster_sizes, centers, clusters):
         """Identify the main (largest) cluster and return clustering information.

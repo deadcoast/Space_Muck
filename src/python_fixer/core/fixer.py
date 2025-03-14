@@ -169,7 +169,7 @@ class SmartFixer:
 
         # Calculate optimal module grouping using spectral clustering
         adjacency_matrix = nx.adjacency_matrix(self.dependency_graph).todense()
-        eigenvalues, eigenvectors = np.linalg.eigh(adjacency_matrix)
+        eigenvalues, _ = np.linalg.eigh(adjacency_matrix)
         lambda_gap = abs(eigenvalues[-1] - eigenvalues[-2])  # Spectral gap
         console.print(f"Largest spectral gap: {lambda_gap:.4f}")
 

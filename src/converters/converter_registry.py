@@ -23,6 +23,7 @@ from converters.converter_models import (
     OptimizationSuggestion,
 )
 
+
 class ConverterRegistry:
     """
     Registry for all converters and recipes in the game.
@@ -431,6 +432,7 @@ class ConverterRegistry:
             )
         )
         return suggestions
+
 
 # Global instance for easy access
 converter_registry = ConverterRegistry()

@@ -11,6 +11,22 @@ including converters, recipes, and production chains.
 
 # Local application imports
 from converters.converter_models import (
+    Converter,
+    ConverterType,
+    ConverterTier,
+    ResourceType,
+    ConversionProcess,
+    ChainStep,
+    ProductionChain,
+    EfficiencyFactor,
+    OptimizationSuggestion,
+    Recipe,
+    ResourceFlowType,
+    ResourceFlowDirection,
+    ResourceFlowUnit,
+    ResourceFlowRate,
+    ResourceFlowQuantity,
+)
 from converters.converter_registry import ConverterRegistry, converter_registry
 
 # Define what symbols are exported when using 'from converters import *'
@@ -20,6 +36,11 @@ __all__ = [
     "ConverterType",
     "ConverterTier",
     "ResourceType",
+    "ResourceFlowType",
+    "ResourceFlowDirection",
+    "ResourceFlowUnit",
+    "ResourceFlowRate",
+    "ResourceFlowQuantity",
     "ConversionProcess",
     "ChainStep",
     "ProductionChain",
@@ -28,16 +49,3 @@ __all__ = [
     "ConverterRegistry",
     "converter_registry",
 ]
-
-    Converter,
-    Recipe,
-    ConverterType,
-    ConverterTier,
-    ResourceType,
-    ConversionProcess,
-    ChainStep,
-    ProductionChain,
-    EfficiencyFactor,
-    OptimizationSuggestion,
-)
-

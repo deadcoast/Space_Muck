@@ -1,13 +1,3 @@
-
-
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
-
-class MiningStatus(UIElement):
-    """Display for resource mining operations and statistics"""
-
 # Standard library imports
 
 # Third-party library imports
@@ -18,6 +8,16 @@ from src.ui.ui_base.ascii_base import UIElement
 from typing import Dict
 import contextlib
 import curses
+
+
+# Define standard colors for UI components
+COLOR_TEXT = (220, 220, 220)  # Standard text color
+COLOR_BG = (20, 20, 30)  # Standard background color
+COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+
+
+class MiningStatus(UIElement):
+    """Display for resource mining operations and statistics"""
 
     def __init__(
         self,
@@ -68,7 +68,7 @@ import curses
                 # Extraction rate with arrow indicator
                 rate = self.extraction_rate[resource]
                 rate_str = f"{rate:+.2f}/s"
-                
+
                 # Determine direction indicator based on rate
                 if rate > 0:
                     direction = "↑"

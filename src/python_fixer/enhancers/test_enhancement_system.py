@@ -119,5 +119,6 @@ class TestEnhancementSystem(unittest.TestCase):
         self.assertEqual(enhancement["method_name"], "take_damage")
         self.assertTrue(enhancement["active"])
 
+
 if __name__ == "__main__":
     unittest.main()

@@ -138,33 +138,27 @@ def plot_results(
         noise_results: Noise generation benchmark results
         output_file: Output file path for the plot
     """
+    # Create subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # Plot cellular automaton results
-    for backend, times in ca_results.items():
-        ax1.plot(grid_sizes, times, marker="o", label=backend)
-
-    ax1.set_title("Cellular Automaton Performance")
-    ax1.set_xlabel("Grid Size")
-    ax1.set_ylabel("Execution Time (seconds)")
-    ax1.set_yscale("log")
-    ax1.grid(True)
-    ax1.legend()
-
-    # Plot noise generation results
-    for backend, times in noise_results.items():
-        ax2.plot(grid_sizes, times, marker="o", label=backend)
-
-    ax2.set_title("Noise Generation Performance")
-    ax2.set_xlabel("Grid Size")
-    ax2.set_ylabel("Execution Time (seconds)")
-    ax2.set_yscale("log")
-    ax2.grid(True)
-    ax2.legend()
-
+    _plot_results(ca_results, ax1, grid_sizes, "Cellular Automaton Performance")
+    _plot_results(noise_results, ax2, grid_sizes, "Noise Generation Performance")
     plt.tight_layout()
     plt.savefig(output_file)
     print(f"Results saved to {output_file}")
+
+
+def _plot_results(results: Dict[str, List[float]], ax, grid_sizes, title: str):
+    # Plot cellular automaton results
+    for backend, times in results.items():
+        ax.plot(grid_sizes, times, marker="o", label=backend)
+
+    ax.set_title(title)
+    ax.set_xlabel("Grid Size")
+    ax.set_ylabel("Execution Time (seconds)")
+    ax.set_yscale("log")
+    ax.grid(True)
+    ax.legend()
 
 
 def main():

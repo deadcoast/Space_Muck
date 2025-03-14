@@ -1,22 +1,3 @@
-
-
-# Type definitions for better type checking
-T = TypeVar("T")
-Color = Tuple[int, int, int]
-ColorWithAlpha = Tuple[int, int, int, int]
-Point = Tuple[int, int]
-Rect = Tuple[int, int, int, int]  # x, y, width, height
-
-class ASCIIPanel(UIElement):
-    """A panel with ASCII styling for complex UI layouts.
-
-    This class provides a container for multiple UI components with a consistent
-    visual style. It supports titles, borders, and can contain any number of
-    child components that implement a draw method.
-
-    Inherits from UIElement to leverage standardized animation framework and styling.
-    """
-
 # Standard library imports
 import logging
 
@@ -29,6 +10,25 @@ from .ascii_box import ASCIIBox
 from config import COLOR_TEXT
 from typing import Tuple, List, Optional, Any, TypeVar
 import pygame
+
+
+# Type definitions for better type checking
+T = TypeVar("T")
+Color = Tuple[int, int, int]
+ColorWithAlpha = Tuple[int, int, int, int]
+Point = Tuple[int, int]
+Rect = Tuple[int, int, int, int]  # x, y, width, height
+
+
+class ASCIIPanel(UIElement):
+    """A panel with ASCII styling for complex UI layouts.
+
+    This class provides a container for multiple UI components with a consistent
+    visual style. It supports titles, borders, and can contain any number of
+    child components that implement a draw method.
+
+    Inherits from UIElement to leverage standardized animation framework and styling.
+    """
 
     def __init__(
         self,

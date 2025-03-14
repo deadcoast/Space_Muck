@@ -25,6 +25,7 @@ def print_structure_summary(structure: dict) -> None:
     total_modules = len(structure["modules"])
     print(f"Total Python modules analyzed: {total_modules}")
 
+
 def print_enhancement_analysis(enhancements: list) -> None:
     """Print enhancement analysis results.
 
@@ -44,6 +45,7 @@ def print_enhancement_analysis(enhancements: list) -> None:
         print(f"\n{module} ({len(suggestions)} suggestions):")
         for suggestion in sorted(suggestions):
             print(f"  - {suggestion}")
+
 
 def print_dependency_analysis(dependencies: dict) -> None:
     """Print dependency analysis results.
@@ -68,6 +70,7 @@ def print_dependency_analysis(dependencies: dict) -> None:
             print(f"  - {' -> '.join(cycle)}")
     else:
         print("\nNo cyclic dependencies found - Good job!")
+
 
 def analyze_space_muck() -> None:
     """Analyze the Space Muck project structure and dependencies."""
@@ -96,6 +99,7 @@ def analyze_space_muck() -> None:
         logger.error(f"Analysis failed: {str(e)}")
         raise
 
+
 def main() -> None:
     """Main entry point."""
     try:
@@ -105,6 +109,7 @@ def main() -> None:
     except Exception as e:
         print(f"\nError: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     main()

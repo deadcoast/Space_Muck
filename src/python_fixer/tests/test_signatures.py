@@ -15,6 +15,7 @@ from python_fixer.core.signatures import (
     CodeSignature,
 )
 
+
 class TestTypeInfo(unittest.TestCase):
     """Test cases for TypeInfo class."""
 
@@ -45,6 +46,7 @@ class TestTypeInfo(unittest.TestCase):
         self.assertFalse(type_info.validate())
         errors = type_info.get_validation_errors()
         self.assertTrue(any("Missing type information" in err for err in errors))
+
 
 class TestSignatureMetrics(unittest.TestCase):
     """Test cases for SignatureMetrics class."""
@@ -79,6 +81,7 @@ class TestSignatureMetrics(unittest.TestCase):
             self.metrics.validation_coverage,
             msg="Validation coverage should be complement of error rate",
         )
+
 
 class TestSignatureComponent(unittest.TestCase):
     """Test cases for SignatureComponent class."""
@@ -118,6 +121,7 @@ class TestSignatureComponent(unittest.TestCase):
             is_optional=False,
         )
         self.assertTrue(self.component.is_compatible_with(other_component))
+
 
 class TestCodeSignature(unittest.TestCase):
     """Test cases for CodeSignature class."""
@@ -170,6 +174,7 @@ class TestCodeSignature(unittest.TestCase):
         )
         similarity = self.signature.similarity_score(other_signature)
         self.assertGreaterEqual(similarity, 0.9)  # High similarity expected
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
