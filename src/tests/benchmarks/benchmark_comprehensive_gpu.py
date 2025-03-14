@@ -16,23 +16,34 @@ import time
 # Third-party library imports
 import matplotlib.pyplot as plt
 import numpy as np
+import contextlib
+import importlib.util
+import platform
 
 # Local application imports
 from entities.base_generator import BaseGenerator  # noqa: E402
 from typing import Dict, List, Any, Optional, Tuple, TYPE_CHECKING
 from utils.cellular_automaton_utils import apply_cellular_automaton  # noqa: E402
-from utils.gpu_utils import (  # noqa: E402
-from utils.value_generator import (  # noqa: E402
-from utils.value_generator_gpu import (  # noqa: E402
-import contextlib
+from utils.gpu_utils import (
+    get_available_backends,
+    apply_cellular_automaton_gpu,
+    apply_noise_generation_gpu,
+    apply_kmeans_clustering_gpu,
+    apply_dbscan_clustering_gpu,
+)
+from utils.value_generator import (
+    generate_value_distribution,
+    add_value_clusters,
+)
+from utils.value_generator_gpu import (
+    generate_value_distribution_gpu,
+    add_value_clusters_gpu,
+)
 import importlib.util
 import platform
 
-# contextlib import removed (no longer needed)
-
 # For type checking only - these imports are not executed at runtime
 if TYPE_CHECKING:
-    # import cupy  # Uncomment if needed in the future
     import torch
 
 # Note: This benchmarking script requires optional dependencies:
@@ -60,6 +71,7 @@ if not TORCH_AVAILABLE:
     )
     logging.warning("To install: pip install torch")
 
+
 # Set up dummy modules to prevent errors when dependencies are missing
 class DummyModule:
     """Dummy module for when optional dependencies are not available.
@@ -74,6 +86,7 @@ class DummyModule:
 
     def __call__(self, *args, **kwargs):
         return self
+
 
 # Import optional dependencies with proper error handling
 cp = DummyModule()  # Default to dummy module
@@ -107,22 +120,6 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-# Import all modules at the top
-
-    get_available_backends,
-    apply_cellular_automaton_gpu,
-    apply_noise_generation_gpu,
-    apply_kmeans_clustering_gpu,
-    apply_dbscan_clustering_gpu,
-)
-
-    generate_value_distribution,
-    add_value_clusters,
-)
-
-    generate_value_distribution_gpu,
-    add_value_clusters_gpu,
-)
 
 # Define terrain generation functions
 def generate_terrain_cpu(width, height):
@@ -133,6 +130,7 @@ def generate_terrain_cpu(width, height):
     grid = np.ones((height, width))  # All cells active for terrain
     return generate_value_distribution(grid, base_grid)
 
+
 def generate_terrain_gpu(width, height, backend="cuda"):
     """Generate terrain using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
@@ -140,6 +138,7 @@ def generate_terrain_gpu(width, height, backend="cuda"):
     base_grid = np.random.rand(height, width)  # Simplified for benchmark
     grid = np.ones((height, width))  # All cells active for terrain
     return generate_value_distribution_gpu(grid, base_grid, backend=backend)
+
 
 # Define resource distribution functions
 def generate_resource_distribution_cpu(width, height):
@@ -151,6 +150,7 @@ def generate_resource_distribution_cpu(width, height):
     value_grid = generate_value_distribution(grid, base_grid)
     return add_value_clusters(value_grid, num_clusters=10, cluster_value_multiplier=1.5)
 
+
 def generate_resource_distribution_gpu(width, height, backend="cuda"):
     """Generate resource distribution using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
@@ -161,6 +161,7 @@ def generate_resource_distribution_gpu(width, height, backend="cuda"):
     return add_value_clusters_gpu(
         value_grid, num_clusters=10, cluster_value_multiplier=1.5, backend=backend
     )
+
 
 def benchmark_cellular_automaton(
     grid_sizes: List[int], iterations: int = 5, repetitions: int = 3
@@ -236,6 +237,7 @@ def benchmark_cellular_automaton(
                 logging.info(f"  {backend}: {avg_time:.4f} seconds")
 
     return results
+
 
 def benchmark_clustering(
     data_sizes: List[int], n_clusters: int = 5, repetitions: int = 3
@@ -398,10 +400,12 @@ def benchmark_clustering(
                 _speed_handler(dbscan_results, backend, "  DBSCAN ")
     return {"kmeans": kmeans_results, "dbscan": dbscan_results}
 
+
 def _speed_handler(arg0, backend, arg2):
     arg0["times"][backend].append(float("inf"))
     arg0["speedup"][backend].append(0.0)
     logging.info(f"{arg2}{backend}: Failed")
+
 
 def benchmark_value_generation(
     grid_sizes: List[int], repetitions: int = 3
@@ -555,6 +559,7 @@ def benchmark_value_generation(
                 _handle_benchmark_failure(resource_results, backend, "  Resources ")
     return {"terrain": terrain_results, "resources": resource_results}
 
+
 def _handle_benchmark_failure(results_dict, backend, operation_prefix):
     """Handle benchmark failure by setting appropriate values in the results dictionary.
 
@@ -569,6 +574,7 @@ def _handle_benchmark_failure(results_dict, backend, operation_prefix):
     results_dict["times"][backend].append(float("inf"))
     results_dict["speedup"][backend].append(0.0)
     logging.info(f"{operation_prefix}{backend}: Failed")
+
 
 def benchmark_memory_transfer(
     data_sizes: List[int], repetitions: int = 5
@@ -729,6 +735,7 @@ def benchmark_memory_transfer(
                 _handle_bandwidth_benchmark_failure(d2h_results, backend, "  D2H ")
     return {"host_to_device": h2d_results, "device_to_host": d2h_results}
 
+
 def _handle_bandwidth_benchmark_failure(results_dict, backend, operation_prefix):
     """Handle bandwidth benchmark failure by setting appropriate values in the results dictionary.
 
@@ -743,6 +750,7 @@ def _handle_bandwidth_benchmark_failure(results_dict, backend, operation_prefix)
     results_dict["times"][backend].append(float("inf"))
     results_dict["bandwidth"][backend].append(0.0)
     logging.info(f"{operation_prefix}{backend}: Failed")
+
 
 def visualize_benchmark_results(
     results: Dict[str, Any], title: str, output_dir: str = "./benchmark_results"
@@ -769,6 +777,7 @@ def visualize_benchmark_results(
         else:
             # This is a single operation result
             visualize_single_operation(op_results, f"{title} - {op_name}", output_dir)
+
 
 def visualize_single_operation(
     op_results: Dict[str, Any], title: str, output_dir: str
@@ -803,6 +812,7 @@ def visualize_single_operation(
             op_results, x_values, x_label, title, operation, output_dir
         )
 
+
 def _get_x_axis_data(
     op_results: Dict[str, Any], operation: str
 ) -> Tuple[List[int], str]:
@@ -817,10 +827,12 @@ def _get_x_axis_data(
         )
         return [], ""
 
+
 def _set_log_scale_if_needed(x_values: List[int]) -> None:
     """Set x-axis to log scale if the range is large enough."""
     if len(x_values) > 1 and max(x_values) / min(x_values) > 100:
         plt.xscale("log")
+
 
 def _filter_valid_data(
     values: List[float], x_values: List[int], filter_func=None
@@ -837,6 +849,7 @@ def _filter_valid_data(
     valid_x = [x_values[i] for i in valid_indices]
     valid_y = [values[i] for i in valid_indices]
     return valid_x, valid_y
+
 
 def _create_time_plot(
     op_results: Dict[str, Any],
@@ -887,6 +900,7 @@ def _create_time_plot(
     plt.savefig(os.path.join(output_dir, f"{operation}_time.png"))
     plt.close()
 
+
 def _create_speedup_plot(
     op_results: Dict[str, Any],
     x_values: List[int],
@@ -927,6 +941,7 @@ def _create_speedup_plot(
     plt.savefig(os.path.join(output_dir, f"{operation}_speedup.png"))
     plt.close()
 
+
 def _create_bandwidth_plot(
     op_results: Dict[str, Any],
     x_values: List[int],
@@ -965,6 +980,7 @@ def _create_bandwidth_plot(
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"{operation}_bandwidth.png"))
     plt.close()
+
 
 def run_all_benchmarks(
     output_dir: str = "./benchmark_results",
@@ -1041,6 +1057,7 @@ def run_all_benchmarks(
 
     logging.info("\n===== ALL BENCHMARKS COMPLETED =====")
     logging.info(f"Results saved to {output_dir}")
+
 
 def benchmark_noise_generation(
     grid_sizes: List[int], octaves: int = 4, repetitions: int = 3

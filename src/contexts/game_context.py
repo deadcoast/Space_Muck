@@ -205,23 +205,23 @@ class GameContext:
         # If already in the requested state, no transition needed
         if new_state == self.state:
             return True
-            
+
         # Check if the transition is allowed based on current state
         if not self._is_valid_transition(self.state, new_state):
             logging.warning(f"Invalid state transition: {self.state} -> {new_state}")
             return False
-            
+
         try:
             self._update_state_and_notify(new_state)
             return True
         except Exception as e:
             logging.error(f"Failed to transition state: {e}")
             return False
-            
+
     def _update_state_and_notify(self, new_state: GameState) -> None:
         """
         Update the game state and notify observers about the change.
-        
+
         Args:
             new_state: The new game state to transition to
         """
@@ -241,15 +241,17 @@ class GameContext:
         )
 
         logging.info(f"Game state transitioned: {self.previous_state} -> {new_state}")
-        
-    def _is_valid_transition(self, current_state: GameState, new_state: GameState) -> bool:
+
+    def _is_valid_transition(
+        self, current_state: GameState, new_state: GameState
+    ) -> bool:
         """
         Check if a state transition is valid.
-        
+
         Args:
             current_state: Current game state
             new_state: Proposed new state
-            
+
         Returns:
             bool: True if the transition is valid
         """
@@ -263,11 +265,11 @@ class GameContext:
             GameState.COMPLETED: [GameState.READY, GameState.ERROR],
             GameState.ERROR: [GameState.INITIALIZING, GameState.READY],
         }
-        
+
         # ERROR state can be reached from any state
         if new_state == GameState.ERROR:
             return True
-            
+
         # Check if the transition is allowed
         return new_state in valid_transitions.get(current_state, [])
 

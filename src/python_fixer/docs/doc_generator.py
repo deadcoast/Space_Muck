@@ -11,10 +11,6 @@
 # EFFECT: Generates documentation for enhanced methods and project structure
 # NAMING: Doc[Type]Generator
 
-@dataclass
-class MethodDoc:
-    """Container for method documentation."""
-
 # Standard library imports
 import inspect
 import logging
@@ -27,12 +23,18 @@ from graphviz import Digraph
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+@dataclass
+class MethodDoc:
+    """Container for method documentation."""
+
     name: str
     description: str
     parameters: Dict[str, str]
     returns: str
     examples: List[str] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
+
 
 class DocGenerator:
     """Generates documentation for enhanced methods and project structure.

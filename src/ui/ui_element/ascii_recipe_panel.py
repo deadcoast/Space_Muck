@@ -1,15 +1,3 @@
-
-
-# Type definitions for better type checking
-T = TypeVar("T")
-Color = Tuple[int, int, int]
-ColorWithAlpha = Tuple[int, int, int, int]
-Point = Tuple[int, int]
-Rect = Tuple[int, int, int, int]  # x, y, width, height
-
-class ASCIIRecipePanel:
-    """Panel for displaying and managing converter recipes."""
-
 # Standard library imports
 import logging
 
@@ -23,6 +11,18 @@ from src.ui.draw_utils import draw_text
 from src.ui.ui_base.ascii_ui import ASCIIButton
 from src.ui.ui_base.ascii_ui import ASCIIPanel
 import pygame
+
+
+# Type definitions for better type checking
+T = TypeVar("T")
+Color = Tuple[int, int, int]
+ColorWithAlpha = Tuple[int, int, int, int]
+Point = Tuple[int, int]
+Rect = Tuple[int, int, int, int]  # x, y, width, height
+
+
+class ASCIIRecipePanel:
+    """Panel for displaying and managing converter recipes."""
 
     def __init__(
         self,
@@ -156,7 +156,7 @@ import pygame
                 eff_color = (255, 100, 100)  # Red for low efficiency
             draw_text(
                 surface,
-                f"[{bar}] {eff*100:.1f}%",
+                f"[{bar}] {eff * 100:.1f}%",
                 bar_x,
                 y,
                 size=font.get_height(),
@@ -289,7 +289,7 @@ import pygame
 
         start_rect = self.start_button.draw(surface, font)
         stop_rect = self.stop_button.draw(surface, font)
-        
+
         # Return the appropriate rect based on selection state
         if has_selection:
             # When we have a selection, include button areas in the returned rect

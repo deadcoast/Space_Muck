@@ -37,7 +37,7 @@ class FixManager:
         :param config_path: Path to the configuration file.
         :type config_path: Optional[str]
         """
-        
+
         self.config = self._load_config(config_path) if config_path else {}
         self._setup_components(self.config)
 
@@ -500,6 +500,7 @@ fix_formatter = logging.Formatter(
 fix_handler.setFormatter(fix_formatter)
 fix_logger.addHandler(fix_handler)
 
+
 class Fix:
     """
     Base class for fixes.
@@ -510,6 +511,7 @@ class Fix:
         Apply the fix using the analyzer.
         """
         raise NotImplementedError("Apply method must be implemented by subclasses.")
+
 
 class ExampleFix(Fix):
     """
@@ -524,6 +526,7 @@ class ExampleFix(Fix):
                 fix_logger.info(
                     f"Fixed issue {issue['id']} in {issue['file']} at line {issue['line']}."
                 )
+
 
 class SmartFixManager:
     """
@@ -641,6 +644,7 @@ class SmartFixManager:
             except Exception as e:
                 variant_loggers.error(f"Failed to apply {fix.__class__.__name__}: {e}")
         variant_loggers.info("Automatic fixes completed.")
+
 
 class Analyzer:
     def __init__(self, files_to_analyze: Optional[List[str]] = None):
@@ -1019,6 +1023,7 @@ class Analyzer:
             analyzer, mode="interactive_fix", report_param={}, report_path=Path
         )
     )
+
 
 if __name__ == "__main__":
     asyncio.run(Analyzer().main())

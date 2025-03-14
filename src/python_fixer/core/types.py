@@ -96,36 +96,96 @@ def validate_type(
         # Import internal typeguard functions for type checking
         from typeguard._checkers import check_type_internal, TypeCheckError
 
-        # Convert expected_type to string representation for error messages
-        type_str = _get_type_str(expected_type)
-        if hasattr(expected_type, "__origin__"):
-            origin = expected_type.__origin__
-            args = expected_type.__args__
-            if origin is Union:
-                type_str = (
-                    f"Union[{', '.join(f"<class '{arg.__name__}'" for arg in args)}]"
-                )
-            elif origin is list:
-                type_str = f"<class 'list[{', '.join(str(args[0]))}]'>"
-            else:
-                type_str = f"<class '{origin.__name__}[{', '.join(str(args[0]))}]'>"
-        elif hasattr(expected_type, "__name__"):
-            type_str = f"<class '{expected_type.__name__}'>"
+        # Get string representation of the expected type
+        type_str = _get_type_representation(expected_type)
 
-        # Perform type check
-        try:
-            check_type_internal(value, expected_type, {})
-            return TypeCheckResult(is_valid=True)
-        except TypeCheckError:
-            error_msg = f"expected {type_str}, got {type(value).__name__}"
-            if context:
-                error_msg = f"{context}: {error_msg}"
-            return TypeCheckResult(is_valid=False, errors=[error_msg], context=context)
+        # Perform the actual type check
+        return _perform_type_check(value, expected_type, type_str, context)
     except Exception as e:
-        error_msg = str(e)
+        return _create_exception_result(e, context)
+
+
+def _get_type_representation(expected_type: Any) -> str:
+    """Get a string representation of a type for error messages.
+
+    Args:
+        expected_type: The type to represent as a string
+
+    Returns:
+        String representation of the type
+    """
+    type_str = _get_type_str(expected_type)
+
+    if hasattr(expected_type, "__origin__"):
+        return _get_generic_type_representation(expected_type)
+    elif hasattr(expected_type, "__name__"):
+        return f"<class '{expected_type.__name__}'>"
+
+    return type_str
+
+
+def _get_generic_type_representation(expected_type: Any) -> str:
+    """Get a string representation of a generic type.
+
+    Args:
+        expected_type: The generic type to represent as a string
+
+    Returns:
+        String representation of the generic type
+    """
+    origin = expected_type.__origin__
+    args = expected_type.__args__
+
+    if origin is Union:
+        return f"Union[{', '.join(f"<class '{arg.__name__}'" for arg in args)}]"
+    elif origin is list:
+        return f"<class 'list[{', '.join(str(args[0]))}]'>"
+    else:
+        return f"<class '{origin.__name__}[{', '.join(str(args[0]))}]'>"
+
+
+def _perform_type_check(
+    value: Any, expected_type: Any, type_str: str, context: Optional[str] = None
+) -> TypeCheckResult:
+    """Perform the actual type check using typeguard.
+
+    Args:
+        value: The value to check
+        expected_type: The expected type
+        type_str: String representation of the expected type
+        context: Optional context information for error messages
+
+    Returns:
+        TypeCheckResult with validation status and any errors
+    """
+    try:
+        from typeguard._checkers import check_type_internal, TypeCheckError
+
+        check_type_internal(value, expected_type, {})
+        return TypeCheckResult(is_valid=True)
+    except TypeCheckError:
+        error_msg = f"expected {type_str}, got {type(value).__name__}"
         if context:
             error_msg = f"{context}: {error_msg}"
         return TypeCheckResult(is_valid=False, errors=[error_msg], context=context)
+
+
+def _create_exception_result(
+    exception: Exception, context: Optional[str] = None
+) -> TypeCheckResult:
+    """Create a TypeCheckResult for an exception during type checking.
+
+    Args:
+        exception: The exception that occurred
+        context: Optional context information for error messages
+
+    Returns:
+        TypeCheckResult with validation status and error message
+    """
+    error_msg = str(exception)
+    if context:
+        error_msg = f"{context}: {error_msg}"
+    return TypeCheckResult(is_valid=False, errors=[error_msg], context=context)
 
 
 @typechecked
@@ -174,138 +234,239 @@ def validate_protocol(value: Any, protocol_type: Any) -> TypeCheckResult:
     Returns:
         TypeCheckResult with validation status and any errors
     """
-    # Initialize variables before conditional blocks
-    missing_methods: List[str] = []
-    incorrect_types: List[str] = []
-    error_messages: List[str] = []
-    value_method: Optional[Any] = None
-    value_annotations: Dict[str, Any] = {}
-
     try:
         # First check if the value implements the protocol
         if not isinstance(value, protocol_type):
-            # Try to get a helpful error message about why it doesn't match
-            for name, method in protocol_type.__dict__.items():
-                if name.startswith("_") or not hasattr(method, "__annotations__"):
-                    continue
-
-                if not hasattr(value, name):
-                    missing_methods.append(name)
-                    continue
-
-                value_method = getattr(value, name)
-                if not callable(value_method):
-                    incorrect_types.append(
-                        f"{name} (expected callable, got {type(value_method).__name__})"
-                    )
-                    continue
-
-                # Check method signature
-                value_annotations = getattr(value_method, "__annotations__", {})
-                for param_name, expected_type in method.__annotations__.items():
-                    if param_name == "return":
-                        continue
-
-                    # Handle missing annotations
-                    if param_name not in value_annotations:
-                        incorrect_types.append(
-                            f"{name}.{param_name} (missing type annotation)"
-                        )
-                        continue
-
-                    # Handle type mismatches
-                    if value_annotations[param_name] != expected_type:
-                        type_str = _get_type_str(expected_type)
-                        value_type_str = _get_type_str(value_annotations[param_name])
-                        incorrect_types.append(
-                            f"{name}.{param_name} (expected {type_str}, got {value_type_str})"
-                        )
-
-                # Check return type
-                if "return" in method.__annotations__:
-                    expected_return = method.__annotations__["return"]
-                    if "return" not in value_annotations:
-                        incorrect_types.append(
-                            f"{name} return (missing type annotation)"
-                        )
-                        continue
-
-                    # Handle return type mismatch
-                    if value_annotations["return"] != expected_return:
-                        type_str = _get_type_str(expected_return)
-                        value_return_str = _get_type_str(value_annotations["return"])
-                        incorrect_types.append(
-                            f"{name} return (expected {type_str}, got {value_return_str})"
-                        )
-
-            # Build error messages
-            if missing_methods:
-                error_messages.append(
-                    f"Missing required methods: {', '.join(missing_methods)}"
-                )
-            if incorrect_types:
-                error_messages.append(f"Type mismatches: {', '.join(incorrect_types)}")
-
-            return TypeCheckResult(
-                is_valid=False,
-                errors=[f"Object does not implement protocol {protocol_type.__name__}:"]
-                + error_messages,
-            )
+            return _check_protocol_compatibility(value, protocol_type)
 
         # Check if all required methods have correct signatures
-        for name, method in protocol_type.__dict__.items():
-            if name.startswith("_") or not hasattr(method, "__annotations__"):
-                continue
-
-            value_method = getattr(value, name)
-            value_annotations = getattr(value_method, "__annotations__", {})
-
-            # Check method signature
-            for param_name, expected_type in method.__annotations__.items():
-                if param_name == "return":
-                    continue
-
-                if param_name not in value_annotations:
-                    return TypeCheckResult(
-                        is_valid=False,
-                        errors=[f"Missing type annotation for {name}.{param_name}"],
-                    )
-
-                if value_annotations[param_name] != expected_type:
-                    type_str = _get_type_str(expected_type)
-                    value_type_str = _get_type_str(value_annotations[param_name])
-                    return TypeCheckResult(
-                        is_valid=False,
-                        errors=[
-                            f"Type mismatch in {name}.{param_name}: expected {type_str}, got {value_type_str}"
-                        ],
-                    )
-
-            # Check return type
-            if "return" in method.__annotations__:
-                expected_return = method.__annotations__["return"]
-                if "return" not in value_annotations:
-                    return TypeCheckResult(
-                        is_valid=False,
-                        errors=[f"Missing return type annotation for {name}"],
-                    )
-                elif value_annotations["return"] != expected_return:
-                    type_str = _get_type_str(expected_return)
-                    value_return_str = _get_type_str(value_annotations["return"])
-                    return TypeCheckResult(
-                        is_valid=False,
-                        errors=[
-                            f"Return type mismatch in {name}: expected {type_str}, got {value_return_str}"
-                        ],
-                    )
-
-        # All checks passed
-        return TypeCheckResult(is_valid=True)
+        return _validate_protocol_methods(value, protocol_type)
     except Exception as e:
         return TypeCheckResult(
             is_valid=False,
             errors=[f"Error validating protocol implementation: {str(e)}"],
         )
+
+
+def _check_protocol_compatibility(value: Any, protocol_type: Any) -> TypeCheckResult:
+    """Check why a value doesn't implement a protocol and provide detailed error messages.
+
+    Args:
+        value: The value to check
+        protocol_type: The protocol class to check against
+
+    Returns:
+        TypeCheckResult with validation status and detailed error messages
+    """
+    missing_methods: List[str] = []
+    incorrect_types: List[str] = []
+    error_messages: List[str] = []
+
+    # Analyze each method in the protocol
+    for name, method in protocol_type.__dict__.items():
+        if name.startswith("_") or not hasattr(method, "__annotations__"):
+            continue
+
+        # Check if method exists
+        if not hasattr(value, name):
+            missing_methods.append(name)
+            continue
+
+        # Check if method is callable
+        value_method = getattr(value, name)
+        if not callable(value_method):
+            incorrect_types.append(
+                f"{name} (expected callable, got {type(value_method).__name__})"
+            )
+            continue
+
+        # Check method signature
+        _check_method_signature_compatibility(
+            name, method, value_method, incorrect_types
+        )
+
+    # Build error messages
+    if missing_methods:
+        error_messages.append(f"Missing required methods: {', '.join(missing_methods)}")
+    if incorrect_types:
+        error_messages.append(f"Type mismatches: {', '.join(incorrect_types)}")
+
+    return TypeCheckResult(
+        is_valid=False,
+        errors=[f"Object does not implement protocol {protocol_type.__name__}:"]
+        + error_messages,
+    )
+
+
+def _check_method_signature_compatibility(
+    name: str, method: Any, value_method: Any, incorrect_types: List[str]
+) -> None:
+    """Check if a method's signature is compatible with a protocol method.
+
+    Args:
+        name: The method name
+        method: The protocol method
+        value_method: The implementation method
+        incorrect_types: List to collect type mismatch errors
+    """
+    value_annotations = getattr(value_method, "__annotations__", {})
+
+    # Check parameter types
+    for param_name, expected_type in method.__annotations__.items():
+        if param_name == "return":
+            continue
+
+        # Handle missing annotations
+        if param_name not in value_annotations:
+            incorrect_types.append(f"{name}.{param_name} (missing type annotation)")
+            continue
+
+        # Handle type mismatches
+        if value_annotations[param_name] != expected_type:
+            type_str = _get_type_str(expected_type)
+            value_type_str = _get_type_str(value_annotations[param_name])
+            incorrect_types.append(
+                f"{name}.{param_name} (expected {type_str}, got {value_type_str})"
+            )
+
+    # Check return type
+    _check_return_type_compatibility(name, method, value_annotations, incorrect_types)
+
+
+def _check_return_type_compatibility(
+    name: str,
+    method: Any,
+    value_annotations: Dict[str, Any],
+    incorrect_types: List[str],
+) -> None:
+    """Check if a method's return type is compatible with a protocol method.
+
+    Args:
+        name: The method name
+        method: The protocol method
+        value_annotations: The implementation method's annotations
+        incorrect_types: List to collect type mismatch errors
+    """
+    if "return" in method.__annotations__:
+        expected_return = method.__annotations__["return"]
+        if "return" not in value_annotations:
+            incorrect_types.append(f"{name} return (missing type annotation)")
+            return
+
+        # Handle return type mismatch
+        if value_annotations["return"] != expected_return:
+            type_str = _get_type_str(expected_return)
+            value_return_str = _get_type_str(value_annotations["return"])
+            incorrect_types.append(
+                f"{name} return (expected {type_str}, got {value_return_str})"
+            )
+
+
+def _validate_protocol_methods(value: Any, protocol_type: Any) -> TypeCheckResult:
+    """Validate that all methods in a protocol are correctly implemented.
+
+    Args:
+        value: The value to check
+        protocol_type: The protocol class to check against
+
+    Returns:
+        TypeCheckResult with validation status and any errors
+    """
+    for name, method in protocol_type.__dict__.items():
+        if name.startswith("_") or not hasattr(method, "__annotations__"):
+            continue
+
+        value_method = getattr(value, name)
+        value_annotations = getattr(value_method, "__annotations__", {})
+
+        # Check parameter types
+        result = _validate_parameter_types(name, method, value_annotations)
+        if not result.is_valid:
+            return result
+
+        # Check return type
+        result = _validate_return_type(name, method, value_annotations)
+        if not result.is_valid:
+            return result
+
+    # All checks passed
+    return TypeCheckResult(is_valid=True)
+
+
+def _validate_parameter_types(
+    name: str, method: Any, value_annotations: Dict[str, Any]
+) -> TypeCheckResult:
+    """Validate parameter types for a method against a protocol method.
+
+    Args:
+        name: The method name
+        method: The protocol method
+        value_annotations: The implementation method's annotations
+
+    Returns:
+        TypeCheckResult with validation status and any errors
+    """
+    for param_name, expected_type in method.__annotations__.items():
+        if param_name == "return":
+            continue
+
+        if param_name not in value_annotations:
+            return TypeCheckResult(
+                is_valid=False,
+                errors=[f"Missing type annotation for {name}.{param_name}"],
+            )
+
+        if value_annotations[param_name] != expected_type:
+            type_str = _get_type_str(expected_type)
+            value_type_str = _get_type_str(value_annotations[param_name])
+            return TypeCheckResult(
+                is_valid=False,
+                errors=[
+                    f"Type mismatch in {name}.{param_name}: expected {type_str}, got {value_type_str}"
+                ],
+            )
+
+    return TypeCheckResult(is_valid=True)
+
+
+def _validate_return_type(
+    name: str, method: Any, value_annotations: Dict[str, Any]
+) -> TypeCheckResult:
+    """Validate return type for a method against a protocol method.
+
+    Args:
+        name: The method name
+        method: The protocol method
+        value_annotations: The implementation method's annotations
+
+    Returns:
+        TypeCheckResult with validation status and any errors
+    """
+    # If no return type annotation in protocol, it's valid
+    if "return" not in method.__annotations__:
+        return TypeCheckResult(is_valid=True)
+
+    expected_return = method.__annotations__["return"]
+
+    # Check if return type annotation is missing
+    if "return" not in value_annotations:
+        return TypeCheckResult(
+            is_valid=False,
+            errors=[f"Missing return type annotation for {name}"],
+        )
+
+    # Check if return type matches
+    if value_annotations["return"] != expected_return:
+        type_str = _get_type_str(expected_return)
+        value_return_str = _get_type_str(value_annotations["return"])
+        return TypeCheckResult(
+            is_valid=False,
+            errors=[
+                f"Return type mismatch in {name}: expected {type_str}, got {value_return_str}"
+            ],
+        )
+
+    return TypeCheckResult(is_valid=True)
 
 
 @dataclass
@@ -337,58 +498,119 @@ class ImportInfo:
         Returns:
             True if the import is valid, False otherwise
         """
-        if not self.module and not self.imported_names:
-            return self._extracted_from_validate_11(
+        # Check if import has required components
+        if not self._has_valid_components():
+            return self._set_validation_result(
                 False, "Import has no module or imported names"
             )
+
         try:
+            # Handle relative imports
             if self.is_relative:
-                if not package_path:
-                    return self._extracted_from_validate_11(
-                        False,
-                        "Cannot resolve relative import without package path",
-                    )
-                # Calculate the parent package for relative imports
-                parts = package_path.split(".")
-                if self.level > len(parts):
-                    self.is_valid = False
-                    self.error_message = f"Relative import level {self.level} exceeds package depth {len(parts)}"
-                    return False
+                return self._validate_relative_import(package_path)
+            # Handle absolute imports
+            elif self.module:
+                return self._validate_absolute_import()
 
-                parent_pkg = (
-                    "" if self.level == len(parts) else ".".join(parts[: -self.level])
-                )
-                # Construct the full module name
-                if self.module:
-                    full_module = (
-                        f"{parent_pkg}.{self.module}" if parent_pkg else self.module
-                    )
-                else:
-                    full_module = parent_pkg
-
-                # Check if the module exists
-                if not check_dependency_available(full_module):
-                    self.is_valid = False
-                    self.error_message = (
-                        f"Cannot resolve relative import: {full_module}"
-                    )
-                    return False
-            elif self.module and not check_dependency_available(self.module):
-                self.is_valid = False
-                self.error_message = f"Cannot resolve absolute import: {self.module}"
-                return False
-
-            return self._extracted_from_validate_11(True, None)
+            return self._set_validation_result(True, None)
         except Exception as e:
-            self.is_valid = False
-            self.error_message = f"Error validating import: {str(e)}"
-            return False
+            return self._set_validation_result(
+                False, f"Error validating import: {str(e)}"
+            )
 
-    # TODO Rename this here and in `validate`
-    def _extracted_from_validate_11(self, arg0, arg1):
-        self.is_valid = arg0
-        self.error_message = arg1
-        return arg0
+    def _has_valid_components(self) -> bool:
+        """
+        Check if the import has valid components (module or imported names).
+
+        Returns:
+            True if the import has valid components, False otherwise
+        """
+        return bool(self.module or self.imported_names)
+
+    def _validate_relative_import(self, package_path: Optional[str]) -> bool:
+        """
+        Validate a relative import.
+
+        Args:
+            package_path: Package path for resolving relative imports
+
+        Returns:
+            True if the import is valid, False otherwise
+        """
+        # Relative imports require a package path
+        if not package_path:
+            return self._set_validation_result(
+                False, "Cannot resolve relative import without package path"
+            )
+
+        if full_module := self._resolve_relative_module_path(package_path):
+            # Check if the module exists
+            return (
+                True if check_dependency_available(full_module) else self._set_validation_result(
+                                    False, f"Cannot resolve relative import: {full_module}"
+                                )
+            )
+        else:
+            return False  # Error already set in _resolve_relative_module_path
+
+    def _resolve_relative_module_path(self, package_path: str) -> Optional[str]:
+        """
+        Resolve the full module path for a relative import.
+
+        Args:
+            package_path: Package path for resolving relative imports
+
+        Returns:
+            Full module path if resolved successfully, None otherwise
+        """
+        parts = package_path.split(".")
+
+        # Check if relative import level is valid
+        if self.level > len(parts):
+            self._set_validation_result(
+                False,
+                f"Relative import level {self.level} exceeds package depth {len(parts)}",
+            )
+            return None
+
+        # Calculate parent package
+        parent_pkg = "" if self.level == len(parts) else ".".join(parts[: -self.level])
+
+        # Construct the full module name
+        if self.module:
+            return f"{parent_pkg}.{self.module}" if parent_pkg else self.module
+        else:
+            return parent_pkg
+
+    def _validate_absolute_import(self) -> bool:
+        """
+        Validate an absolute import.
+
+        Returns:
+            True if the import is valid, False otherwise
+        """
+        if not check_dependency_available(self.module):
+            return self._set_validation_result(
+                False, f"Cannot resolve absolute import: {self.module}"
+            )
+        return True
+
+    def _set_validation_result(
+        self, is_valid: bool, error_message: Optional[str]
+    ) -> bool:
+        """
+        Set the validation result and error message.
+
+        Args:
+            is_valid: Whether the import is valid
+            error_message: Error message if the import is invalid
+
+        Returns:
+            The is_valid parameter (for method chaining)
+        """
+        self.is_valid = is_valid
+        self.error_message = error_message
+        return is_valid
 
     def get_full_import_path(self, package_path: Optional[str] = None) -> Optional[str]:
         """Get the full import path for this import.

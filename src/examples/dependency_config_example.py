@@ -15,26 +15,23 @@ import sys
 
 # Local application imports
 from utils.dependency_config import (
-from utils.dependency_injection import inject, container
-from utils.noise_generator import NoiseGenerator
-import src.utils.dependency_injection
-
-# Add the parent directory to the path to allow importing from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
     app_container,
     DependencyConfig,
     load_config_from_file,
 )
+from utils.dependency_injection import inject, container
+from utils.noise_generator import NoiseGenerator
+
+# Add the parent directory to the path to allow importing from src
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Example class that uses dependency injection
 # First, set the global container to our app_container
 # Save the original container
 original_container = container
 # Replace it with our app_container
-  # noqa: E402
+container = app_container
 
-src.utils.dependency_injection.container = app_container
 
 @inject
 class NoiseGeneratorDemo:
@@ -68,6 +65,7 @@ class NoiseGeneratorDemo:
             row = [f"{noise_grid[y, x]:.2f}" for x in range(min(5, width))]
             print(" ".join(row))
 
+
 def main():
     """Main function to demonstrate dependency configuration."""
     # Configure logging
@@ -96,6 +94,7 @@ def main():
         "\n=== Using Updated Configuration ===",
     )
 
+
 def _print_config_and_run_demo(header_text, dependency_config, demo_header):
     # Print current configuration
     print(header_text)
@@ -106,6 +105,7 @@ def _print_config_and_run_demo(header_text, dependency_config, demo_header):
     print(demo_header)
     demo1 = NoiseGeneratorDemo()
     demo1.generate_sample()
+
 
 if __name__ == "__main__":
     main()

@@ -15,8 +15,10 @@ import numpy as np
 
 # Optional dependencies
 try:
-    import scipy.ndimage as ndimage
-    SCIPY_AVAILABLE = True
+    # Check if scipy.ndimage is available without importing it
+    import importlib.util
+
+    SCIPY_AVAILABLE = importlib.util.find_spec("scipy.ndimage") is not None
 except ImportError:
     SCIPY_AVAILABLE = False
     print("scipy not available, using fallback implementation.")
@@ -37,6 +39,7 @@ from utils.logging_setup import (
     log_performance_end,
     log_exception,
 )
+
 
 @inject
 class ProceduralGenerator(BaseGenerator):
@@ -172,8 +175,7 @@ class ProceduralGenerator(BaseGenerator):
         grid = np.zeros((self.height, self.width), dtype=np.int32)
 
         # Use provided octaves or default
-        if octaves is None:
-            octaves = [2, 4, 6]
+        # Note: octaves parameter is handled by the noise generator internally
 
         # Generate primary noise layer
         primary = self.generate_noise_layer("medium", scale=noise_scale * 0.2)
@@ -424,35 +426,87 @@ class ProceduralGenerator(BaseGenerator):
         Returns:
             np.ndarray: Grid with edge degradation
         """
+        # Create a copy of the grid to store the result
         result_grid = grid.copy()
 
-        # Find edges using a simple edge detection method
+        # Find edges in the grid
+        edges = self._find_grid_edges(grid)
+
+        # Apply decay to the identified edges
+        result_grid = self._apply_decay_to_edges(result_grid, edges, decay_factor)
+
+        return result_grid
+
+    def _find_grid_edges(self, grid: np.ndarray) -> np.ndarray:
+        """
+        Find edges in the grid by detecting cells with empty neighbors.
+
+        Args:
+            grid: Input asteroid grid
+
+        Returns:
+            np.ndarray: Boolean mask of edge cells
+        """
         edges = np.zeros_like(grid, dtype=bool)
 
+        # Iterate through the grid (excluding the outer border)
         for y in range(1, self.height - 1):
             for x in range(1, self.width - 1):
-                if grid[y, x] > 0:
-                    # Check if this cell has an empty neighbor
-                    has_empty_neighbor = False
-                    for dy in [-1, 0, 1]:
-                        for dx in [-1, 0, 1]:
-                            if dx == 0 and dy == 0:
-                                continue
-                            if grid[y + dy, x + dx] == 0:
-                                has_empty_neighbor = True
-                                break
-                        if has_empty_neighbor:
-                            break
+                if grid[y, x] > 0 and self._has_empty_neighbor(grid, y, x):
+                    edges[y, x] = True
 
-                    if has_empty_neighbor:
-                        edges[y, x] = True
+        return edges
+
+    def _has_empty_neighbor(self, grid: np.ndarray, y: int, x: int) -> bool:
+        """
+        Check if a cell has at least one empty neighboring cell.
+
+        Args:
+            grid: Input asteroid grid
+            y: Y-coordinate of the cell
+            x: X-coordinate of the cell
+
+        Returns:
+            bool: True if the cell has at least one empty neighbor
+        """
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                # Skip the cell itself
+                if dx == 0 and dy == 0:
+                    continue
+
+                # Check if neighbor is empty
+                if grid[y + dy, x + dx] == 0:
+                    return True
+
+        return False
+
+    def _apply_decay_to_edges(
+        self, grid: np.ndarray, edges: np.ndarray, decay_factor: float
+    ) -> np.ndarray:
+        """
+        Apply random decay to edge cells to create a more natural appearance.
+
+        Args:
+            grid: Input asteroid grid
+            edges: Boolean mask of edge cells
+            decay_factor: Factor controlling edge decay rate
+
+        Returns:
+            np.ndarray: Grid with decay applied to edges
+        """
+        result_grid = grid.copy()
+
+        # Create a random number generator
+        rng = np.random.default_rng(self.seed)
 
         # Apply decay to edges
         for y in range(self.height):
             for x in range(self.width):
-                if edges[y, x] and np.random.Generator() < decay_factor:
+                if edges[y, x] and rng.random() < decay_factor:
+                    # Apply random decay factor between 0.5 and 0.8
                     result_grid[y, x] = int(
-                        result_grid[y, x] * (0.5 + np.random.Generator() * 0.3)
+                        result_grid[y, x] * (0.5 + rng.random() * 0.3)
                     )
 
         return result_grid
@@ -598,12 +652,12 @@ class ProceduralGenerator(BaseGenerator):
 
         return grid, rare_grid
 
+
 def create_field_with_multiple_algorithms(
     width: int = 100,
     height: int = 100,
     seed: Optional[int] = None,
     rare_chance: float = 0.1,
-    rare_bonus: float = 2.0,
     energy_chance: float = 0.1,
 ) -> "AsteroidField":
     """
@@ -617,7 +671,6 @@ def create_field_with_multiple_algorithms(
         height: Height of the field
         seed: Random seed for reproducibility
         rare_chance: Chance of rare minerals appearing
-        rare_bonus: Value multiplier for rare minerals
         energy_chance: Chance of energy sources appearing
 
     Returns:

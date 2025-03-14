@@ -49,9 +49,18 @@ def draw_text(
         pygame.Rect: Bounding rectangle of the rendered text
     """
     try:
-        font = pygame.font.SysFont("Arial", size)
-    except Exception:
-        font = pygame.font.Font(None, size)
+        # Use the Unicode font from assets/fonts folder
+        font_path = "assets/fonts/DejaVuSansMono.ttf"
+        font = pygame.font.Font(font_path, size)
+    except Exception as e:
+        # Fallback to system font if custom font fails to load
+        import logging
+
+        logging.warning(f"Failed to load custom font: {e}")
+        try:
+            font = pygame.font.SysFont("Arial", size)
+        except Exception:
+            font = pygame.font.Font(None, size)
 
     # Handle wrapping if max_width is specified
     if max_width is not None and font.size(text)[0] > max_width:

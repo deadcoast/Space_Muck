@@ -1,22 +1,3 @@
-
-
-# Type definitions for better type checking
-T = TypeVar("T")
-Color = Tuple[int, int, int]
-ColorWithAlpha = Tuple[int, int, int, int]
-Point = Tuple[int, int]
-Rect = Tuple[int, int, int, int]  # x, y, width, height
-
-class ASCIIProgressBar(UIElement):
-    """ASCII-style progress bar with animation support.
-
-    This class provides a customizable progress bar with different visual styles
-    based on the selected UIStyle. It supports smooth animations when progress
-    changes and style-specific characters for filled and empty portions.
-
-    Inherits from UIElement to leverage standardized animation framework and styling.
-    """
-
 # Standard library imports
 import logging
 import math
@@ -29,6 +10,25 @@ from typing import Tuple, Optional, TypeVar
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.draw_utils import draw_text
 import pygame
+
+
+# Type definitions for better type checking
+T = TypeVar("T")
+Color = Tuple[int, int, int]
+ColorWithAlpha = Tuple[int, int, int, int]
+Point = Tuple[int, int]
+Rect = Tuple[int, int, int, int]  # x, y, width, height
+
+
+class ASCIIProgressBar(UIElement):
+    """ASCII-style progress bar with animation support.
+
+    This class provides a customizable progress bar with different visual styles
+    based on the selected UIStyle. It supports smooth animations when progress
+    changes and style-specific characters for filled and empty portions.
+
+    Inherits from UIElement to leverage standardized animation framework and styling.
+    """
 
     def __init__(
         self,
@@ -108,10 +108,10 @@ import pygame
 
     def _get_quantum_filled_text(self, filled_width: int) -> str:
         """Generate filled text for quantum style.
-        
+
         Args:
             filled_width: Width of the filled portion
-            
+
         Returns:
             str: The generated text pattern
         """
@@ -124,13 +124,13 @@ import pygame
             chars = ["◈", "◆"]
             filled_text += chars[char_idx]
         return filled_text
-        
+
     def _get_symbiotic_filled_text(self, filled_width: int) -> str:
         """Generate filled text for symbiotic style.
-        
+
         Args:
             filled_width: Width of the filled portion
-            
+
         Returns:
             str: The generated text pattern
         """
@@ -183,37 +183,41 @@ import pygame
 
     def _get_quantum_empty_text(self, filled_width: int, empty_width: int) -> str:
         """Generate empty text for quantum style.
-        
+
         Args:
             filled_width: Width of the filled portion
             empty_width: Width of the empty portion
-            
+
         Returns:
             str: The generated text pattern
         """
         empty_text = ""
         time_factor = time.time() * 2.0
-        
+
         for i in range(empty_width):
             # Subtle variation in empty space
             pos = filled_width + i
             wave = math.sin(pos / 4.0 + time_factor) * 0.5 + 0.5
             empty_text += "·" if wave < 0.3 else self.empty_char
-            
+
         return empty_text
-        
+
     def _get_symbiotic_empty_text(self, filled_width: int, empty_width: int) -> str:
         """Generate empty text for symbiotic style.
-        
+
         Args:
             filled_width: Width of the filled portion
             empty_width: Width of the empty portion
-            
+
         Returns:
             str: The generated text pattern
         """
         return "".join(
-            "░" if (filled_width + i) / self.width < self.progress + 0.1 else self.empty_char
+            (
+                "░"
+                if (filled_width + i) / self.width < self.progress + 0.1
+                else self.empty_char
+            )
             for i in range(empty_width)
         )
 

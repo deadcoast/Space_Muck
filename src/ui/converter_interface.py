@@ -11,14 +11,19 @@ import time
 # Third-party library imports
 
 # Local application imports
-from config import COLOR_TEXT, COLOR_BG
-from converters.converter_models import (
 from typing import Dict, List, Optional, Tuple, Any, Callable
-from src.ui.ascii_ui import (
-from src.ui.draw_utils import draw_text
-from src.ui.event_system import EventSystem
+from src.ui.draw_utils import draw_text, draw_panel
+from src.ui.event_system import (
+    EventSystem,
+    EventType,
+    EventData,
+    MetricType,
+    MetricData,
+)
 import pygame
 
+
+from src.ui.ui_element.ui_ascii import (
     ASCIIBox,
     ASCIIPanel,
     ASCIIProgressBar,
@@ -27,6 +32,8 @@ import pygame
     draw_ascii_table,
 )
 
+# Removed unused import
+from src.converters.converter_models import (
     Converter,
     Recipe,
     ConversionProcess,
@@ -38,6 +45,12 @@ import pygame
     EfficiencyFactor,
     OptimizationSuggestion,
 )
+
+# Define standard colors for UI components
+COLOR_TEXT = (220, 220, 220)  # Standard text color
+COLOR_BG = (20, 20, 30)  # Standard background color
+COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+
 
 class ConverterDashboard:
     """Main dashboard for converter management overview."""
@@ -223,9 +236,10 @@ class ConverterDashboard:
             "Select a converter to view details or manage chains",
             self.x + 10,
             self.y + self.height - 70,
-            font=font,
+            size=18,  # Using default size instead of font parameter
             color=COLOR_TEXT,
         )
+
 
 class ConverterDetailsView:
     """Detailed view of a single converter with process management."""
@@ -303,10 +317,23 @@ class ConverterDetailsView:
         self.info_box.add_text(1, 1, f"Name: {self.converter.name}")
 
         # Type info with background panel
-        type_panel = draw_panel(
-            pygame.Rect(0, 0, 20, 3), border_style="single", bg_color=COLOR_BG
+        # Create a surface for the type panel
+        type_panel_surface = pygame.Surface((20, 3), pygame.SRCALPHA)
+        # Draw the panel on the surface
+        draw_panel(
+            type_panel_surface,
+            pygame.Rect(0, 0, 20, 3),
+            color=COLOR_BG,
+            border_color=(100, 100, 140),
+            border_width=1,
         )
-        draw_text(type_panel, 1, 1, f"Type: {self.converter.type.value.capitalize()}")
+        # Draw text on the surface
+        draw_text(
+            type_panel_surface, f"Type: {self.converter.type.value.capitalize()}", 1, 1
+        )
+
+        # Add the type panel to the info box
+        self.info_box.add_component(type_panel_surface)
 
         # Tier with color coding based on ConverterTier
         tier_colors: Dict[ConverterTier, Tuple[int, int, int]] = {
@@ -495,6 +522,7 @@ class ConverterDetailsView:
         self.start_process_button.draw(surface, font)
         self.cancel_process_button.draw(surface, font)
         self.back_button.draw(surface, font)
+
 
 class ChainManagementInterface:
     """Interface for creating and managing production chains."""
@@ -829,6 +857,7 @@ class ChainManagementInterface:
         self.delete_chain_button.draw(surface, font)
         self.back_button.draw(surface, font)
 
+
 class EfficiencyMonitor:
     """Interface for monitoring and improving converter efficiency."""
 
@@ -910,7 +939,7 @@ class EfficiencyMonitor:
 
         # Display current efficiency factors if available
         y_pos = self._display_efficiency_factors(y_pos)
-        
+
         # Display optimization suggestions
         if not self.suggestions:
             self.suggestions_box.add_text(
@@ -925,20 +954,20 @@ class EfficiencyMonitor:
 
         for i, suggestion in enumerate(self.suggestions):
             y_pos = self._display_suggestion(i, suggestion, y_pos)
-    
+
     def _display_efficiency_factors(self, y_pos: int) -> int:
         """
         Display efficiency factors in the suggestions box.
-        
+
         Args:
             y_pos: Current vertical position
-            
+
         Returns:
             int: Updated vertical position
         """
         if not self.efficiency_factors:
             return y_pos
-            
+
         self.suggestions_box.add_text(
             1, y_pos, "Current Efficiency Factors:", {"color": (200, 200, 200)}
         )
@@ -953,16 +982,16 @@ class EfficiencyMonitor:
                 {"color": factor_color},
             )
             y_pos += 1
-            
+
         return y_pos + 1  # Add spacing
-    
+
     def _get_factor_color(self, factor_value: float) -> Tuple[int, int, int]:
         """
         Get color based on factor value.
-        
+
         Args:
             factor_value: The efficiency factor value
-            
+
         Returns:
             Tuple[int, int, int]: RGB color tuple
         """
@@ -972,16 +1001,18 @@ class EfficiencyMonitor:
             return (255, 100, 100)
         else:  # Gray for minimal impact
             return (200, 200, 200)
-    
-    def _display_suggestion(self, index: int, suggestion: OptimizationSuggestion, y_pos: int) -> int:
+
+    def _display_suggestion(
+        self, index: int, suggestion: OptimizationSuggestion, y_pos: int
+    ) -> int:
         """
         Display a single optimization suggestion.
-        
+
         Args:
             index: Suggestion index
             suggestion: The suggestion to display
             y_pos: Current vertical position
-            
+
         Returns:
             int: Updated vertical position
         """
@@ -1012,14 +1043,14 @@ class EfficiencyMonitor:
             )
 
         return y_pos + 3  # Space for next suggestion
-    
+
     def _get_gain_color(self, gain: float) -> Tuple[int, int, int]:
         """
         Get color based on potential gain value.
-        
+
         Args:
             gain: The potential gain value
-            
+
         Returns:
             Tuple[int, int, int]: RGB color tuple
         """
@@ -1029,14 +1060,14 @@ class EfficiencyMonitor:
             return (100, 255, 100)
         else:  # Gray for low impact
             return (200, 200, 200)
-    
+
     def _get_cost_color(self, cost: float) -> Tuple[int, int, int]:
         """
         Get color based on cost value.
-        
+
         Args:
             cost: The cost value
-            
+
         Returns:
             Tuple[int, int, int]: RGB color tuple
         """
@@ -1164,6 +1195,7 @@ class EfficiencyMonitor:
         self.optimize_button.draw(surface, font)
         self.analyze_button.draw(surface, font)
         self.back_button.draw(surface, font)
+
 
 class ConverterInterface:
     """Main interface for the converter management system."""
@@ -1494,7 +1526,7 @@ class ConverterInterface:
             f"Converter Management - {self.current_view.capitalize()}",
             10,
             10,
-            font=font,
+            size=18,  # Using default size instead of font parameter
             color=COLOR_TEXT,
         )
 
@@ -1510,3 +1542,6 @@ class ConverterInterface:
         # Update efficiency metrics
         for converter in self.converters:
             self._update_efficiency_metrics(converter.id)
+
+        # Update optimization suggestions
+        self._update_optimization_suggestions(self.optimization_suggestions)

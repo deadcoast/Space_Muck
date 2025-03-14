@@ -1,3 +1,16 @@
+# Standard library imports
+import logging
+import time
+
+# Third-party library imports
+
+# Local application imports
+from config import COLOR_TEXT
+from typing import Tuple, List, Optional, Any, TypeVar
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_ui import ASCIIPanel
+import pygame
 
 
 # Type definitions for better type checking
@@ -6,6 +19,7 @@ Color = Tuple[int, int, int]
 ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
+
 
 class ASCIITable:
     def __init__(
@@ -31,20 +45,6 @@ class ASCIITable:
             selectable: Whether rows can be selected
             sortable: Whether columns can be sorted
         """
-
-# Standard library imports
-import logging
-import time
-
-# Third-party library imports
-
-# Local application imports
-from config import COLOR_TEXT
-from typing import Tuple, List, Optional, Any, TypeVar
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.draw_utils import draw_text
-from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
 
         self.rect = rect
         self.headers = headers
@@ -321,20 +321,20 @@ import pygame
 
     def _handle_header_click(self, event: pygame.event.Event) -> bool:
         """Handle clicks on column headers for sorting.
-        
+
         Args:
             event: The pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
         if not (self.sortable and event.button == 1):
             return False
-            
+
         header_height = 30  # Approximate height of header
         if not (self.rect.y <= event.pos[1] <= self.rect.y + header_height):
             return False
-            
+
         # Determine which column was clicked
         x = self.rect.x + 10  # Starting x position with margin
         for i, width in enumerate(self.column_widths):
@@ -342,39 +342,41 @@ import pygame
                 self.sort_by_column(i)
                 return True
             x += width + 5  # Add spacing between columns
-            
+
         return False
-        
+
     def _handle_row_selection(self, event: pygame.event.Event) -> bool:
         """Handle row selection clicks.
-        
+
         Args:
             event: The pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
         if not (self.selectable and event.button == 1):
             return False
-            
+
         row_height = 20  # Approximate height of each row
         header_offset = 40  # Space for headers
         y = self.rect.y + header_offset
 
         # Calculate which row was clicked
         row_idx = self.scroll_offset + (event.pos[1] - y) // row_height
-        if y <= event.pos[1] < y + row_height * self.visible_rows and 0 <= row_idx < len(self.data):
+        if y <= event.pos[
+            1
+        ] < y + row_height * self.visible_rows and 0 <= row_idx < len(self.data):
             self.select_row(row_idx)
             return True
-            
+
         return False
-        
+
     def _handle_scrolling(self, event: pygame.event.Event) -> bool:
         """Handle scrolling events.
-        
+
         Args:
             event: The pygame event
-            
+
         Returns:
             bool: True if the event was handled
         """
@@ -384,7 +386,7 @@ import pygame
         elif event.button == 5:  # Scroll down
             self.scroll(1)
             return True
-            
+
         return False
 
     def handle_event(self, event: pygame.event.Event) -> bool:
@@ -397,10 +399,10 @@ import pygame
             # Try to handle the event with each handler in order
             if self._handle_header_click(event):
                 return True
-                
+
             if self._handle_row_selection(event):
                 return True
-                
+
             if self._handle_scrolling(event):
                 return True
 
@@ -445,6 +447,12 @@ import pygame
                 size=font.get_height(),
                 color=(255, 255, 255),
                 bold=True,
+                style=self.style,
+                converter_type=self.converter_type,
+                selectable=self.selectable,
+                sortable=self.sortable,
+                rect=self.rect,
+                font=font,
             )
 
             current_x += width + 5  # Add spacing between columns
@@ -614,7 +622,7 @@ import pygame
             str: Formatted text
         """
         if len(cell_text) > width - 2:
-            return f"{cell_text[:width - 5]}..."
+            return f"{cell_text[: width - 5]}..."
         return cell_text
 
     def _draw_row_separator(

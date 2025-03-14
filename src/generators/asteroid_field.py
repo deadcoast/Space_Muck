@@ -74,16 +74,19 @@ if not SCIPY_AVAILABLE:
         "SciPy signal module not available. Using manual implementation for cellular automaton."
     )
 
+
 # Forward references for type hints
 class NotificationManager:
     """Type hint for NotificationManager class."""
 
     pass
 
+
 class Player:
     """Type hint for Player class."""
 
     pass
+
 
 class AsteroidField:
     """
@@ -522,23 +525,27 @@ class AsteroidField:
         logging.warning("Using legacy pattern initialization method")
 
         self._initialize_handler()
-        
+
         # Generate noise map using Perlin noise
         noise_map = self._generate_perlin_noise_map()
-        
+
         # Normalize the noise map to 0-1 range
         noise_map = self._normalize_noise_map(noise_map)
-        
+
         # Calculate thresholds for different asteroid types
-        asteroid_threshold, rare_threshold, anomaly_threshold = self._calculate_asteroid_thresholds()
-        
+        asteroid_threshold, rare_threshold, anomaly_threshold = (
+            self._calculate_asteroid_thresholds()
+        )
+
         # Create asteroid formations based on the noise map and thresholds
-        self._create_asteroid_formations(noise_map, asteroid_threshold, rare_threshold, anomaly_threshold)
+        self._create_asteroid_formations(
+            noise_map, asteroid_threshold, rare_threshold, anomaly_threshold
+        )
 
     def _generate_perlin_noise_map(self) -> np.ndarray:
         """
         Generate a noise map using multiple Perlin noise generators at different scales.
-        
+
         Returns:
             np.ndarray: The generated noise map
         """
@@ -577,26 +584,26 @@ class AsteroidField:
                     + noise3([nx, ny]) * 0.2
                 )
                 noise_map[y, x] = noise_val
-                
+
         return noise_map
-        
+
     def _normalize_noise_map(self, noise_map: np.ndarray) -> np.ndarray:
         """
         Normalize the noise map to a 0-1 range.
-        
+
         Args:
             noise_map: The noise map to normalize
-            
+
         Returns:
             np.ndarray: The normalized noise map
         """
         # Normalize noise map to 0-1 range
         return (noise_map - np.min(noise_map)) / (np.max(noise_map) - np.min(noise_map))
-        
+
     def _calculate_asteroid_thresholds(self) -> tuple:
         """
         Calculate thresholds for different asteroid types based on field density.
-        
+
         Returns:
             tuple: (asteroid_threshold, rare_threshold, anomaly_threshold)
         """
@@ -604,14 +611,19 @@ class AsteroidField:
         asteroid_threshold = 0.7 - self.field_density * 0.3
         rare_threshold = asteroid_threshold + ((1.0 - asteroid_threshold) * 0.6)
         anomaly_threshold = rare_threshold + ((1.0 - rare_threshold) * 0.7)
-        
+
         return asteroid_threshold, rare_threshold, anomaly_threshold
-        
-    def _create_asteroid_formations(self, noise_map: np.ndarray, asteroid_threshold: float, 
-                                   rare_threshold: float, anomaly_threshold: float) -> None:
+
+    def _create_asteroid_formations(
+        self,
+        noise_map: np.ndarray,
+        asteroid_threshold: float,
+        rare_threshold: float,
+        anomaly_threshold: float,
+    ) -> None:
         """
         Create asteroid formations based on the noise map and thresholds.
-        
+
         Args:
             noise_map: The normalized noise map
             asteroid_threshold: Threshold for asteroid creation
@@ -619,13 +631,20 @@ class AsteroidField:
             anomaly_threshold: Threshold for anomalies
         """
         # Create asteroid clusters
-        self._populate_asteroid_grid(noise_map, asteroid_threshold, rare_threshold, anomaly_threshold)
-        
-    def _populate_asteroid_grid(self, noise_map: np.ndarray, asteroid_threshold: float,
-                               rare_threshold: float, anomaly_threshold: float) -> None:
+        self._populate_asteroid_grid(
+            noise_map, asteroid_threshold, rare_threshold, anomaly_threshold
+        )
+
+    def _populate_asteroid_grid(
+        self,
+        noise_map: np.ndarray,
+        asteroid_threshold: float,
+        rare_threshold: float,
+        anomaly_threshold: float,
+    ) -> None:
         """
         Populate the grid with asteroids based on the noise map and thresholds.
-        
+
         Args:
             noise_map: The normalized noise map
             asteroid_threshold: Threshold for asteroid creation
@@ -635,13 +654,27 @@ class AsteroidField:
         # Process each cell in the grid
         for y in range(self.height):
             for x in range(self.width):
-                self._process_grid_cell(noise_map[y, x], x, y, asteroid_threshold, rare_threshold, anomaly_threshold)
-                
-    def _process_grid_cell(self, noise_val: float, x: int, y: int, 
-                          asteroid_threshold: float, rare_threshold: float, anomaly_threshold: float) -> None:
+                self._process_grid_cell(
+                    noise_map[y, x],
+                    x,
+                    y,
+                    asteroid_threshold,
+                    rare_threshold,
+                    anomaly_threshold,
+                )
+
+    def _process_grid_cell(
+        self,
+        noise_val: float,
+        x: int,
+        y: int,
+        asteroid_threshold: float,
+        rare_threshold: float,
+        anomaly_threshold: float,
+    ) -> None:
         """
         Process a single cell in the grid based on its noise value and thresholds.
-        
+
         Args:
             noise_val: The noise value at this cell
             x: X coordinate
@@ -653,38 +686,48 @@ class AsteroidField:
         # Skip cells below the asteroid threshold
         if noise_val <= asteroid_threshold:
             return
-            
+
         # Calculate value factor for mineral richness
         value_factor = self._calculate_value_factor(noise_val, asteroid_threshold)
-        
+
         # Set the base asteroid value
         self.grid[y, x] = int(50 + 150 * value_factor)
-        
+
         # Set energy level based on proximity to threshold
         self.energy_grid[y, x] = value_factor * 0.5
-        
+
         # Process rare and anomalous minerals
-        self._process_special_minerals(noise_val, x, y, rare_threshold, anomaly_threshold)
-    
-    def _calculate_value_factor(self, noise_val: float, asteroid_threshold: float) -> float:
+        self._process_special_minerals(
+            noise_val, x, y, rare_threshold, anomaly_threshold
+        )
+
+    def _calculate_value_factor(
+        self, noise_val: float, asteroid_threshold: float
+    ) -> float:
         """
         Calculate the value factor for mineral richness based on noise value.
-        
+
         Args:
             noise_val: The noise value at this cell
             asteroid_threshold: Threshold for asteroid creation
-            
+
         Returns:
             float: The calculated value factor
         """
         # Higher noise values = higher mineral value
         return (noise_val - asteroid_threshold) / (1 - asteroid_threshold)
-    
-    def _process_special_minerals(self, noise_val: float, x: int, y: int, 
-                                 rare_threshold: float, anomaly_threshold: float) -> None:
+
+    def _process_special_minerals(
+        self,
+        noise_val: float,
+        x: int,
+        y: int,
+        rare_threshold: float,
+        anomaly_threshold: float,
+    ) -> None:
         """
         Process rare and anomalous minerals based on noise value and thresholds.
-        
+
         Args:
             noise_val: The noise value at this cell
             x: X coordinate
@@ -693,16 +736,16 @@ class AsteroidField:
             anomaly_threshold: Threshold for anomalies
         """
         # Chance for rare minerals in high-value areas
-        if (noise_val > rare_threshold and random.random() < self.rare_chance):
+        if noise_val > rare_threshold and random.random() < self.rare_chance:
             self._set_rare_mineral(x, y)
         # Chance for anomalous minerals in extremely high-value areas
-        elif (noise_val > anomaly_threshold and random.random() < self.anomaly_chance):
+        elif noise_val > anomaly_threshold and random.random() < self.anomaly_chance:
             self._set_anomalous_mineral(x, y)
-    
+
     def _set_rare_mineral(self, x: int, y: int) -> None:
         """
         Set a cell as containing rare minerals.
-        
+
         Args:
             x: X coordinate
             y: Y coordinate
@@ -710,11 +753,11 @@ class AsteroidField:
         self.rare_grid[y, x] = 1  # Mark as rare
         # Rare asteroids worth more
         self.grid[y, x] = int(self.grid[y, x] * self.rare_bonus_multiplier)
-    
+
     def _set_anomalous_mineral(self, x: int, y: int) -> None:
         """
         Set a cell as containing anomalous minerals.
-        
+
         Args:
             x: X coordinate
             y: Y coordinate
@@ -741,17 +784,17 @@ class AsteroidField:
         """
         # Get the predefined life patterns
         life_patterns = self._get_life_patterns()
-        
+
         # Determine number of patterns to place based on field size
         num_patterns = self._calculate_pattern_count()
-        
+
         # Place patterns in the field
         self._place_life_patterns(life_patterns, num_patterns)
-    
+
     def _get_life_patterns(self) -> list:
         """
         Define and return a list of Game of Life patterns.
-        
+
         Returns:
             list: List of patterns, where each pattern is a list of (x,y) coordinates
         """
@@ -762,52 +805,146 @@ class AsteroidField:
             [(0, 2), (1, 0), (1, 2), (2, 1), (2, 2)],
             # Lightweight spaceship
             [
-                (0, 1), (0, 4), (1, 0), (2, 0), (3, 0), (3, 4),
-                (4, 0), (4, 1), (4, 2), (4, 3),
+                (0, 1),
+                (0, 4),
+                (1, 0),
+                (2, 0),
+                (3, 0),
+                (3, 4),
+                (4, 0),
+                (4, 1),
+                (4, 2),
+                (4, 3),
             ],
             # Gosper glider gun (creates ongoing gliders)
             [
-                (0, 24), (1, 22), (1, 24), (2, 12), (2, 13), (2, 20),
-                (2, 21), (2, 34), (2, 35), (3, 11), (3, 15), (3, 20),
-                (3, 21), (3, 34), (3, 35), (4, 0), (4, 1), (4, 10),
-                (4, 16), (4, 20), (4, 21), (5, 0), (5, 1), (5, 10),
-                (5, 14), (5, 16), (5, 17), (5, 22), (5, 24), (6, 10),
-                (6, 16), (6, 24), (7, 11), (7, 15), (8, 12), (8, 13),
+                (0, 24),
+                (1, 22),
+                (1, 24),
+                (2, 12),
+                (2, 13),
+                (2, 20),
+                (2, 21),
+                (2, 34),
+                (2, 35),
+                (3, 11),
+                (3, 15),
+                (3, 20),
+                (3, 21),
+                (3, 34),
+                (3, 35),
+                (4, 0),
+                (4, 1),
+                (4, 10),
+                (4, 16),
+                (4, 20),
+                (4, 21),
+                (5, 0),
+                (5, 1),
+                (5, 10),
+                (5, 14),
+                (5, 16),
+                (5, 17),
+                (5, 22),
+                (5, 24),
+                (6, 10),
+                (6, 16),
+                (6, 24),
+                (7, 11),
+                (7, 15),
+                (8, 12),
+                (8, 13),
             ],
             # Pulsar (high-period oscillator)
             [
-                (2, 4), (2, 5), (2, 6), (2, 10), (2, 11), (2, 12),
-                (4, 2), (4, 7), (4, 9), (4, 14), (5, 2), (5, 7),
-                (5, 9), (5, 14), (6, 2), (6, 7), (6, 9), (6, 14),
-                (7, 4), (7, 5), (7, 6), (7, 10), (7, 11), (7, 12),
-                (9, 4), (9, 5), (9, 6), (9, 10), (9, 11), (9, 12),
-                (10, 2), (10, 7), (10, 9), (10, 14), (11, 2), (11, 7),
-                (11, 9), (11, 14), (12, 2), (12, 7), (12, 9), (12, 14),
-                (14, 4), (14, 5), (14, 6), (14, 10), (14, 11), (14, 12),
+                (2, 4),
+                (2, 5),
+                (2, 6),
+                (2, 10),
+                (2, 11),
+                (2, 12),
+                (4, 2),
+                (4, 7),
+                (4, 9),
+                (4, 14),
+                (5, 2),
+                (5, 7),
+                (5, 9),
+                (5, 14),
+                (6, 2),
+                (6, 7),
+                (6, 9),
+                (6, 14),
+                (7, 4),
+                (7, 5),
+                (7, 6),
+                (7, 10),
+                (7, 11),
+                (7, 12),
+                (9, 4),
+                (9, 5),
+                (9, 6),
+                (9, 10),
+                (9, 11),
+                (9, 12),
+                (10, 2),
+                (10, 7),
+                (10, 9),
+                (10, 14),
+                (11, 2),
+                (11, 7),
+                (11, 9),
+                (11, 14),
+                (12, 2),
+                (12, 7),
+                (12, 9),
+                (12, 14),
+                (14, 4),
+                (14, 5),
+                (14, 6),
+                (14, 10),
+                (14, 11),
+                (14, 12),
             ],
             # Pufferfish (moves and leaves debris)
             [
-                (0, 0), (0, 1), (0, 2), (0, 6), (0, 7), (0, 8),
-                (1, 0), (1, 4), (1, 8), (2, 4), (3, 0), (3, 4),
-                (3, 8), (4, 0), (4, 1), (4, 2), (4, 6), (4, 7), (4, 8),
+                (0, 0),
+                (0, 1),
+                (0, 2),
+                (0, 6),
+                (0, 7),
+                (0, 8),
+                (1, 0),
+                (1, 4),
+                (1, 8),
+                (2, 4),
+                (3, 0),
+                (3, 4),
+                (3, 8),
+                (4, 0),
+                (4, 1),
+                (4, 2),
+                (4, 6),
+                (4, 7),
+                (4, 8),
             ],
         ]
-    
+
     def _calculate_pattern_count(self) -> int:
         """
         Calculate the number of patterns to place based on field size.
-        
+
         Returns:
             int: Number of patterns to place
         """
         # Number of patterns scales with field size
         num_patterns = int(math.sqrt(self.width * self.height) / 20)
         return max(3, min(10, num_patterns))
-    
+
     def _place_life_patterns(self, life_patterns: list, num_patterns: int) -> None:
         """
         Place life patterns in the field.
-        
+
         Args:
             life_patterns: List of patterns to choose from
             num_patterns: Number of patterns to place
@@ -816,114 +953,119 @@ class AsteroidField:
             try:
                 # Select a pattern
                 pattern = self._select_pattern(life_patterns)
-                
+
                 # Find a suitable location for the pattern
                 placement_info = self._find_pattern_placement(pattern)
                 if not placement_info:
                     continue  # Skip if no suitable placement found
-                    
+
                 offset_x, offset_y = placement_info
-                
+
                 # Add the pattern to the grid
                 self._add_pattern_to_grid(pattern, offset_x, offset_y)
-                
+
             except Exception as e:
                 # Log the error but continue with other patterns
                 print(f"Error placing life pattern: {str(e)}")
-    
+
     def _select_pattern(self, life_patterns: list) -> list:
         """
         Select a pattern based on pattern complexity.
-        
+
         Args:
             life_patterns: List of patterns to choose from
-            
+
         Returns:
             list: The selected pattern
         """
         # Choose a pattern with complexity proportional to pattern_complexity
         pattern_index = min(
             len(life_patterns) - 1,
-            int(random.random() ** (1.0 - self.pattern_complexity) * len(life_patterns))
+            int(
+                random.random() ** (1.0 - self.pattern_complexity) * len(life_patterns)
+            ),
         )
         return life_patterns[pattern_index]
-    
+
     def _find_pattern_placement(self, pattern: list) -> Optional[tuple]:
         """
         Find a suitable location for placing a pattern.
-        
+
         Args:
             pattern: The pattern to place
-            
+
         Returns:
             Optional[tuple]: (offset_x, offset_y) if a suitable location is found, None otherwise
         """
         margin = 20
-        
+
         # Calculate pattern dimensions
         pattern_dimensions = self._calculate_pattern_dimensions(pattern)
         if not pattern_dimensions:
             return None
-            
+
         # Unpack dimensions, only using max_pattern_size for placement calculations
         _, _, max_pattern_size = pattern_dimensions
-        
+
         # Check if field is large enough for the pattern
         if not self._is_field_large_enough(max_pattern_size, margin):
             return None
-        
+
         # Calculate valid placement ranges
         placement_ranges = self._calculate_placement_ranges(max_pattern_size, margin)
         if not placement_ranges:
             return None
-            
+
         min_x, max_x, min_y, max_y = placement_ranges
-        
+
         # Generate random position within valid ranges
         return self._generate_random_position(min_x, max_x, min_y, max_y)
-    
+
     def _calculate_pattern_dimensions(self, pattern: list) -> Optional[tuple]:
         """
         Calculate the dimensions of a pattern.
-        
+
         Args:
             pattern: The pattern to calculate dimensions for
-            
+
         Returns:
             Optional[tuple]: (max_width, max_height, max_size) or None if pattern is empty
         """
         if not pattern:
             return None
-            
+
         # Calculate pattern dimensions with padding
         max_width = max(dx for dx, dy in pattern) + 5
         max_height = max(dy for dx, dy in pattern) + 5
         max_size = max(max_width, max_height)
-        
+
         return max_width, max_height, max_size
-    
+
     def _is_field_large_enough(self, max_pattern_size: int, margin: int) -> bool:
         """
         Check if the field is large enough to place the pattern with margins.
-        
+
         Args:
             max_pattern_size: Maximum dimension of the pattern
             margin: Margin to keep from field edges
-            
+
         Returns:
             bool: True if field is large enough, False otherwise
         """
-        return (self.width > (margin * 2 + max_pattern_size) and 
-                self.height > (margin * 2 + max_pattern_size))
-    
-    def _calculate_placement_ranges(self, max_pattern_size: int, margin: int) -> Optional[tuple]:
+        return self.width > (margin * 2 + max_pattern_size) and self.height > (
+            margin * 2 + max_pattern_size
+        )
+
+    def _calculate_placement_ranges(
+        self, max_pattern_size: int, margin: int
+    ) -> Optional[tuple]:
         """
         Calculate valid ranges for pattern placement.
-        
+
         Args:
             max_pattern_size: Maximum dimension of the pattern
             margin: Margin to keep from field edges
-            
+
         Returns:
             Optional[tuple]: (min_x, max_x, min_y, max_y) or None if ranges are invalid
         """
@@ -931,35 +1073,37 @@ class AsteroidField:
         max_x = self.width - max_pattern_size - margin
         min_y = margin
         max_y = self.height - max_pattern_size - margin
-        
+
         # Ensure valid ranges (prevent ValueError in randint)
         if min_x >= max_x or min_y >= max_y:
             return None
-            
+
         return min_x, max_x, min_y, max_y
-    
-    def _generate_random_position(self, min_x: int, max_x: int, min_y: int, max_y: int) -> tuple:
+
+    def _generate_random_position(
+        self, min_x: int, max_x: int, min_y: int, max_y: int
+    ) -> tuple:
         """
         Generate a random position within the given ranges.
-        
+
         Args:
             min_x: Minimum x coordinate
             max_x: Maximum x coordinate
             min_y: Minimum y coordinate
             max_y: Maximum y coordinate
-            
+
         Returns:
             tuple: (offset_x, offset_y) random position
         """
         offset_x = random.randint(min_x, max_x)
         offset_y = random.randint(min_y, max_y)
-        
+
         return offset_x, offset_y
-    
+
     def _add_pattern_to_grid(self, pattern: list, offset_x: int, offset_y: int) -> None:
         """
         Add a pattern to the grid at the specified offset.
-        
+
         Args:
             pattern: The pattern to add
             offset_x: X coordinate offset
@@ -970,17 +1114,17 @@ class AsteroidField:
             if 0 <= x < self.width and 0 <= y < self.height:
                 # Set asteroid value
                 self.grid[y, x] = random.randint(80, 120)  # Good value range
-                
+
                 # Set energy level
                 self.energy_grid[y, x] = random.uniform(0.6, 0.9)  # High energy
-                
+
                 # Process rare minerals
                 self._process_pattern_rare_minerals(x, y)
-    
+
     def _process_pattern_rare_minerals(self, x: int, y: int) -> None:
         """
         Process rare minerals for a cell in a pattern.
-        
+
         Args:
             x: X coordinate
             y: Y coordinate
@@ -1174,28 +1318,30 @@ class AsteroidField:
             return self._apply_cellular_automaton_manual(
                 grid, energy_grid, energy_boost
             )
-            
+
         # Create a copy to avoid modifying the original
         new_grid = np.zeros_like(grid)
-        
+
         # Calculate neighbor counts using convolution
         neighbor_counts = self._calculate_neighbor_counts_scipy(grid)
-        
+
         # Apply the appropriate rules based on whether energy is used
         if energy_grid is not None and energy_boost is not None:
-            self._apply_energy_based_rules(grid, neighbor_counts, new_grid, energy_boost)
+            self._apply_energy_based_rules(
+                grid, neighbor_counts, new_grid, energy_boost
+            )
         else:
             self._rule_handler(grid, neighbor_counts, new_grid)
-            
+
         return new_grid
-        
+
     def _calculate_neighbor_counts_scipy(self, grid):
         """
         Calculate neighbor counts using scipy's convolution function.
-        
+
         Args:
             grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
-            
+
         Returns:
             numpy.ndarray: Grid of neighbor counts for each cell
         """
@@ -1206,11 +1352,11 @@ class AsteroidField:
             mode="same",
             boundary="wrap" if self.apply_edge_wrapping else "fill",
         )
-    
+
     def _apply_energy_based_rules(self, grid, neighbor_counts, new_grid, energy_boost):
         """
         Apply cellular automaton rules with energy boost considerations.
-        
+
         Args:
             grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
             neighbor_counts (numpy.ndarray): Grid of neighbor counts for each cell
@@ -1220,40 +1366,44 @@ class AsteroidField:
         for y in range(self.height):
             for x in range(self.width):
                 # Get adjusted survival set for this cell based on energy
-                cell_survival_set = self._get_energy_adjusted_survival_set(energy_boost[y, x])
-                
+                cell_survival_set = self._get_energy_adjusted_survival_set(
+                    energy_boost[y, x]
+                )
+
                 # Apply rules to determine if cell lives or dies
-                if self._should_cell_live(grid[y, x], neighbor_counts[y, x], cell_survival_set):
+                if self._should_cell_live(
+                    grid[y, x], neighbor_counts[y, x], cell_survival_set
+                ):
                     new_grid[y, x] = 1
-    
+
     def _get_energy_adjusted_survival_set(self, boost):
         """
         Get a survival set adjusted by energy boost.
-        
+
         Args:
             boost (int): Energy boost value
-            
+
         Returns:
             set: Adjusted survival set
         """
         cell_survival_set = self.survival_set.copy()
-        
+
         # Add energy-boosted values to the survival set
         if boost > 0:
             for n in list(self.survival_set):
                 cell_survival_set.add(n + boost)
-                
+
         return cell_survival_set
-    
+
     def _should_cell_live(self, cell_state, neighbor_count, survival_set):
         """
         Determine if a cell should be alive in the next generation.
-        
+
         Args:
             cell_state (int): Current state of the cell (0 or 1)
             neighbor_count (int): Number of live neighbors
             survival_set (set): Set of neighbor counts that allow survival
-            
+
         Returns:
             bool: True if the cell should be alive, False otherwise
         """
@@ -1305,33 +1455,35 @@ class AsteroidField:
             for x in range(self.width):
                 # Count neighbors and apply rules
                 neighbors = self._count_neighbors_manual(grid, x, y)
-                
+
                 # Get adjusted survival set if energy is used
                 if energy_grid is not None and energy_boost is not None:
-                    cell_survival_set = self._get_energy_adjusted_survival_set(energy_boost[y, x])
+                    cell_survival_set = self._get_energy_adjusted_survival_set(
+                        energy_boost[y, x]
+                    )
                 else:
                     cell_survival_set = self.survival_set
-                
+
                 # Determine if cell should live
                 if self._should_cell_live(grid[y, x], neighbors, cell_survival_set):
                     new_grid[y, x] = 1
-                    
+
         return new_grid
-        
+
     def _count_neighbors_manual(self, grid, x, y):
         """
         Count the number of live neighbors for a cell using manual iteration.
-        
+
         Args:
             grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
             x (int): X coordinate of the cell
             y (int): Y coordinate of the cell
-            
+
         Returns:
             int: Number of live neighbors
         """
         neighbors = 0
-        
+
         # Check all 8 neighboring cells
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
@@ -1341,39 +1493,39 @@ class AsteroidField:
 
                 # Calculate neighbor coordinates
                 nx, ny = x + dx, y + dy
-                
+
                 # Apply coordinate adjustments based on edge wrapping setting
                 nx, ny = self._adjust_coordinates(nx, ny)
-                
+
                 # Skip if coordinates are out of bounds
                 if nx is None or ny is None:
                     continue
-                    
+
                 # Count live neighbor
                 if grid[ny, nx] > 0:
                     neighbors += 1
-                    
+
         return neighbors
-        
+
     def _adjust_coordinates(self, x, y):
         """
         Adjust coordinates based on edge wrapping settings.
-        
+
         Args:
             x (int): X coordinate
             y (int): Y coordinate
-            
+
         Returns:
             tuple: Adjusted (x, y) coordinates, or (None, None) if out of bounds
         """
         # Apply edge wrapping if enabled
         if self.apply_edge_wrapping:
             return x % self.width, y % self.height
-            
+
         # Check if coordinates are within bounds
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             return None, None
-            
+
         return x, y
 
     def update_asteroids(self) -> None:
@@ -1391,7 +1543,9 @@ class AsteroidField:
         binary_grid, energy_grid_normalized, energy_boost = self._prepare_grid_data()
 
         # Apply cellular automaton and update grid values
-        new_binary_grid = self._apply_automaton_with_energy(binary_grid, energy_grid_normalized, energy_boost)
+        new_binary_grid = self._apply_automaton_with_energy(
+            binary_grid, energy_grid_normalized, energy_boost
+        )
         energy_neighborhood = self._calculate_energy_neighborhood(self.energy_grid)
         self._update_grid_values(
             binary_grid,
@@ -1410,10 +1564,10 @@ class AsteroidField:
         self._cache_update_results(cache_key)
 
         log_performance_end("update_asteroids", start_time)
-        
+
     def _get_update_cache_key(self) -> Optional[str]:
         """Generate a cache key for the current grid state.
-        
+
         Returns:
             Optional[str]: Cache key string or None if caching is not initialized
         """
@@ -1426,14 +1580,14 @@ class AsteroidField:
             # Initialize cache if not exists
             self._update_cache = {}
             return None
-            
+
     def _check_update_cache(self, cache_key: Optional[str], start_time) -> bool:
         """Check if the current update is already cached and apply if found.
-        
+
         Args:
             cache_key: The cache key to check
             start_time: Start time for performance logging
-            
+
         Returns:
             bool: True if cache was used, False otherwise
         """
@@ -1442,10 +1596,10 @@ class AsteroidField:
             log_performance_end("update_asteroids", start_time, "cached")
             return True
         return False
-        
+
     def _initialize_new_grids(self):
         """Initialize new grid arrays for the update process.
-        
+
         Returns:
             tuple: Tuple of (new_grid, new_rare_grid, new_energy_grid)
         """
@@ -1453,10 +1607,10 @@ class AsteroidField:
         new_rare_grid = np.zeros_like(self.rare_grid)
         new_energy_grid = np.zeros_like(self.energy_grid)
         return new_grid, new_rare_grid, new_energy_grid
-        
+
     def _prepare_grid_data(self):
         """Prepare grid data for cellular automaton processing.
-        
+
         Returns:
             tuple: Tuple of (binary_grid, energy_grid_normalized, energy_boost)
         """
@@ -1464,25 +1618,27 @@ class AsteroidField:
         energy_grid_normalized = np.clip(self.energy_grid, 0, 1)
         energy_boost = np.minimum(2, (energy_grid_normalized * 3).astype(np.int8))
         return binary_grid, energy_grid_normalized, energy_boost
-        
-    def _apply_automaton_with_energy(self, binary_grid, energy_grid_normalized, energy_boost):
+
+    def _apply_automaton_with_energy(
+        self, binary_grid, energy_grid_normalized, energy_boost
+    ):
         """Apply cellular automaton with energy-adjusted rules.
-        
+
         Args:
             binary_grid: Binary representation of the asteroid grid
             energy_grid_normalized: Normalized energy grid
             energy_boost: Energy boost values for survival rules
-            
+
         Returns:
             numpy.ndarray: Updated binary grid after applying cellular automaton
         """
         return self.apply_cellular_automaton(
             binary_grid, energy_grid=energy_grid_normalized, energy_boost=energy_boost
         )
-        
+
     def _update_main_grids(self, new_grid, new_rare_grid, new_energy_grid):
         """Update the main grid arrays with new values.
-        
+
         Args:
             new_grid: New asteroid grid
             new_rare_grid: New rare minerals grid
@@ -1491,10 +1647,10 @@ class AsteroidField:
         self.grid = new_grid
         self.rare_grid = new_rare_grid
         self.energy_grid = new_energy_grid
-        
+
     def _cache_update_results(self, cache_key: Optional[str]):
         """Cache the update results for future use.
-        
+
         Args:
             cache_key: Cache key to use for storing results
         """
@@ -1512,10 +1668,10 @@ class AsteroidField:
 
     def _calculate_energy_neighborhood(self, energy_grid):
         """Calculate the energy neighborhood for each cell using optimized methods.
-        
+
         Args:
             energy_grid: Grid of energy values
-            
+
         Returns:
             numpy.ndarray: Grid of summed energy values in the neighborhood of each cell
         """
@@ -1527,14 +1683,14 @@ class AsteroidField:
         else:
             # Manual fallback for energy neighborhood calculation
             return self._calculate_energy_neighborhood_manual(energy_grid)
-            
+
     def _calculate_energy_neighborhood_scipy(self, energy_grid, kernel):
         """Calculate energy neighborhood using scipy's convolution function.
-        
+
         Args:
             energy_grid: Grid of energy values
             kernel: Convolution kernel for neighborhood calculation
-            
+
         Returns:
             numpy.ndarray: Grid of summed energy values in the neighborhood of each cell
         """
@@ -1545,61 +1701,61 @@ class AsteroidField:
             mode="same",
             boundary=boundary_mode,
         )
-        
+
     def _calculate_energy_neighborhood_manual(self, energy_grid):
         """Calculate energy neighborhood using manual iteration (fallback method).
-        
+
         Args:
             energy_grid: Grid of energy values
-            
+
         Returns:
             numpy.ndarray: Grid of summed energy values in the neighborhood of each cell
         """
         energy_neighborhood = np.zeros_like(energy_grid)
-        
+
         for y in range(self.height):
             for x in range(self.width):
                 energy_sum = self._calculate_cell_energy_sum(energy_grid, x, y)
                 energy_neighborhood[y, x] = energy_sum
-                
+
         return energy_neighborhood
-        
+
     def _calculate_cell_energy_sum(self, energy_grid, x, y):
         """Calculate the sum of energy in the neighborhood of a single cell.
-        
+
         Args:
             energy_grid: Grid of energy values
             x: X coordinate of the cell
             y: Y coordinate of the cell
-            
+
         Returns:
             float: Sum of energy in the neighborhood
         """
         energy_sum = 0
-        
+
         for dy in [-1, 0, 1]:
             for dx in [-1, 0, 1]:
                 # Skip the center cell
                 if dx == 0 and dy == 0:
                     continue
-                    
+
                 # Get neighbor coordinates with appropriate boundary handling
                 nx, ny = x + dx, y + dy
                 nx, ny = self._get_neighbor_coordinates(nx, ny)
-                
+
                 # Add energy if coordinates are valid
                 if nx is not None and ny is not None:
                     energy_sum += energy_grid[ny, nx]
-                    
+
         return energy_sum
-        
+
     def _get_neighbor_coordinates(self, nx, ny):
         """Get valid neighbor coordinates based on edge wrapping settings.
-        
+
         Args:
             nx: Neighbor X coordinate
             ny: Neighbor Y coordinate
-            
+
         Returns:
             tuple: Valid (nx, ny) coordinates or (None, None) if invalid
         """
@@ -1631,7 +1787,7 @@ class AsteroidField:
                 new_grid,
                 new_rare_grid,
                 new_energy_grid,
-                energy_neighborhood
+                energy_neighborhood,
             )
         except Exception as e:
             # Fall back to non-vectorized approach if vectorization fails
@@ -1643,9 +1799,9 @@ class AsteroidField:
                 new_grid,
                 new_rare_grid,
                 new_energy_grid,
-                energy_neighborhood
+                energy_neighborhood,
             )
-            
+
     def _update_grid_vectorized(
         self,
         binary_grid,
@@ -1656,7 +1812,7 @@ class AsteroidField:
         energy_neighborhood,
     ):
         """Update grid values using vectorized operations for better performance.
-        
+
         Args:
             binary_grid: Binary representation of the current grid
             new_binary_grid: Binary representation of the next generation grid
@@ -1667,77 +1823,83 @@ class AsteroidField:
         """
         # Calculate new energy levels (vectorized)
         new_energy = self._calculate_new_energy_levels(energy_neighborhood)
-        
+
         # Create masks for different cell states
-        old_alive, new_alive = self._create_cell_state_masks(binary_grid, new_binary_grid)
-        survival_mask, death_mask, birth_mask = self._create_transition_masks(old_alive, new_alive)
-        
+        old_alive, new_alive = self._create_cell_state_masks(
+            binary_grid, new_binary_grid
+        )
+        survival_mask, death_mask, birth_mask = self._create_transition_masks(
+            old_alive, new_alive
+        )
+
         # Handle surviving cells (keep values and rare status)
         self._process_surviving_cells(survival_mask, new_grid, new_rare_grid)
-        
+
         # Handle dying cells (add energy)
         new_energy[death_mask] += 0.2
-        
+
         # Process birth cells (requires random generation)
-        self._process_birth_cells(birth_mask, new_grid, new_rare_grid, energy_neighborhood)
-        
+        self._process_birth_cells(
+            birth_mask, new_grid, new_rare_grid, energy_neighborhood
+        )
+
         # Process regeneration in dead cells
         self._process_regeneration_cells(old_alive, new_alive, new_grid, new_rare_grid)
-        
+
         # Cap energy at 1.0 (vectorized)
         new_energy_grid[:] = np.minimum(1.0, new_energy)
-    
+
     def _calculate_new_energy_levels(self, energy_neighborhood):
         """Calculate new energy levels based on current energy and neighborhood.
-        
+
         Args:
             energy_neighborhood: Grid of energy values in the neighborhood of each cell
-            
+
         Returns:
             numpy.ndarray: New energy levels before capping
         """
         new_energy = self.energy_grid * (1.0 - self.energy_decay)
         new_energy += energy_neighborhood * self.energy_spread / 8.0
         return new_energy
-    
+
     def _create_cell_state_masks(self, binary_grid, new_binary_grid):
         """Create masks for cells that are alive in current and next generation.
-        
+
         Args:
             binary_grid: Binary representation of the current grid
             new_binary_grid: Binary representation of the next generation grid
-            
+
         Returns:
             tuple: (old_alive, new_alive) boolean masks
         """
         old_alive = binary_grid > 0
         new_alive = new_binary_grid > 0
         return old_alive, new_alive
-    
+
     def _create_transition_masks(self, old_alive, new_alive):
         """Create masks for different cell state transitions.
-        
+
         Args:
             old_alive: Boolean mask of cells that are alive in current generation
             new_alive: Boolean mask of cells that are alive in next generation
-            
+
         Returns:
             tuple: (survival_mask, death_mask, birth_mask) boolean masks
         """
         # Survival mask: cells that were alive and remain alive
         survival_mask = old_alive & new_alive
-        
+
         # Death mask: cells that were alive but died
         death_mask = old_alive & ~new_alive
-        
+
         # Birth mask: cells that were dead but became alive
         birth_mask = ~old_alive & new_alive
-        
+
         return survival_mask, death_mask, birth_mask
-    
+
     def _process_surviving_cells(self, survival_mask, new_grid, new_rare_grid):
         """Process cells that survive from one generation to the next.
-        
+
         Args:
             survival_mask: Boolean mask of cells that survive
             new_grid: Grid to store the updated asteroid values
@@ -1745,10 +1907,12 @@ class AsteroidField:
         """
         new_grid[survival_mask] = self.grid[survival_mask]
         new_rare_grid[survival_mask] = self.rare_grid[survival_mask]
-    
-    def _process_birth_cells(self, birth_mask, new_grid, new_rare_grid, energy_neighborhood):
+
+    def _process_birth_cells(
+        self, birth_mask, new_grid, new_rare_grid, energy_neighborhood
+    ):
         """Process cells where new asteroids are born.
-        
+
         Args:
             birth_mask: Boolean mask of cells where new asteroids are born
             new_grid: Grid to store the updated asteroid values
@@ -1756,19 +1920,21 @@ class AsteroidField:
             energy_neighborhood: Grid of energy values in the neighborhood of each cell
         """
         birth_cells = np.argwhere(birth_mask)
-        
+
         for y, x in birth_cells:
             # New asteroid born - calculate value based on energy
             new_grid[y, x] = int(50 + energy_neighborhood[y, x] * 100)
-            
+
             # Small chance for rare asteroid in births
             if random.random() < self.rare_chance:
                 new_rare_grid[y, x] = 1
                 new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
-    
-    def _process_regeneration_cells(self, old_alive, new_alive, new_grid, new_rare_grid):
+
+    def _process_regeneration_cells(
+        self, old_alive, new_alive, new_grid, new_rare_grid
+    ):
         """Process cells that may regenerate (dead cells that stay dead).
-        
+
         Args:
             old_alive: Boolean mask of cells that are alive in current generation
             new_alive: Boolean mask of cells that are alive in next generation
@@ -1778,7 +1944,7 @@ class AsteroidField:
         # Create mask for cells that are dead and stay dead
         regen_mask = ~old_alive & ~new_alive
         regen_cells = np.argwhere(regen_mask)
-        
+
         for y, x in regen_cells:
             local_energy = self.energy_grid[y, x]
             if random.random() < self.regen_rate * local_energy:
@@ -1786,7 +1952,7 @@ class AsteroidField:
                 if random.random() < self.rare_chance:
                     new_rare_grid[y, x] = 1
                     new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
-    
+
     def _update_grid_non_vectorized(
         self,
         binary_grid,
@@ -1797,7 +1963,7 @@ class AsteroidField:
         energy_neighborhood,
     ):
         """Update grid values using non-vectorized operations (fallback method).
-        
+
         Args:
             binary_grid: Binary representation of the current grid
             new_binary_grid: Binary representation of the next generation grid
@@ -1809,104 +1975,226 @@ class AsteroidField:
         # Process each cell to update values and energy
         for y in range(self.height):
             for x in range(self.width):
-                self._process_single_cell(
-                    y, x,
+                # Calculate new energy for this cell
+                new_energy = self._calculate_new_cell_energy(y, x, energy_neighborhood)
+
+                # Process cell based on its state transition
+                self._process_cell_state_transition(
+                    y,
+                    x,
                     binary_grid,
                     new_binary_grid,
                     new_grid,
                     new_rare_grid,
-                    new_energy_grid,
-                    energy_neighborhood
+                    new_energy,
                 )
-                
-    def _process_single_cell(
-        self, y, x,
-        binary_grid,
-        new_binary_grid,
-        new_grid,
-        new_rare_grid,
-        new_energy_grid,
-        energy_neighborhood
+
+                # Store new energy level (capped at 1.0)
+                new_energy_grid[y, x] = min(1.0, new_energy)
+
+    def _calculate_new_cell_energy(self, y, x, energy_neighborhood):
+        """Calculate the new energy level for a cell.
+
+        Args:
+            y, x: Cell coordinates
+            energy_neighborhood: Grid of energy values in the neighborhood of each cell
+
+        Returns:
+            float: New energy level for the cell (before capping)
+        """
+        local_energy = self.energy_grid[y, x]
+
+        # New energy starts with decayed version of current energy
+        new_energy = local_energy * (1.0 - self.energy_decay)
+        # Add energy from neighbors
+        new_energy += energy_neighborhood[y, x] * self.energy_spread / 8.0
+
+        return new_energy
+
+    def _process_cell_state_transition(
+        self, y, x, binary_grid, new_binary_grid, new_grid, new_rare_grid, new_energy
     ):
-        """Process a single cell during non-vectorized grid update.
-        
+        """Process a cell based on its state transition between generations.
+
         Args:
             y, x: Cell coordinates
             binary_grid: Binary representation of the current grid
             new_binary_grid: Binary representation of the next generation grid
             new_grid: Grid to store the updated asteroid values
             new_rare_grid: Grid to store the updated rare mineral status
-            new_energy_grid: Grid to store the updated energy values
-            energy_neighborhood: Grid of energy values in the neighborhood of each cell
+            new_energy: Reference to the new energy value for this cell
+
+        Returns:
+            float: Updated new energy value
         """
         old_has_asteroid = binary_grid[y, x] > 0
         new_has_asteroid = new_binary_grid[y, x] > 0
-        local_energy = self.energy_grid[y, x]
-        
-        # New energy starts with decayed version of current energy
-        new_energy = local_energy * (1.0 - self.energy_decay)
-        new_energy += energy_neighborhood[y, x] * self.energy_spread / 8.0
-        
+
+        # Handle different state transitions
         if old_has_asteroid and new_has_asteroid:
-            # Asteroid survives - keep its value and rare status
-            new_grid[y, x] = self.grid[y, x]
-            new_rare_grid[y, x] = self.rare_grid[y, x]
-            
+            self._handle_surviving_cell(y, x, new_grid, new_rare_grid)
+
         elif old_has_asteroid:
             # Asteroid dies - add energy
             new_energy += 0.2
-            
+
         elif new_has_asteroid:
-            # New asteroid born - calculate value based on energy
-            new_grid[y, x] = int(50 + energy_neighborhood[y, x] * 100)
-            
-            # Small chance for rare asteroid in births
-            if random.random() < self.rare_chance:
-                new_rare_grid[y, x] = 1
-                new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
-                
-        # Handle cells that are dead and stay dead
-        elif not old_has_asteroid and not new_has_asteroid and random.random() < self.regen_rate * local_energy:
-            # Random regeneration based on energy level
+            self._handle_birth_cell(y, x, new_grid, new_rare_grid, new_energy)
+
+        else:
+            self._handle_regeneration_cell(y, x, new_grid, new_rare_grid)
+
+        return new_energy
+
+    def _handle_surviving_cell(self, y, x, new_grid, new_rare_grid):
+        """Handle a cell where an asteroid survives from one generation to the next.
+
+        Args:
+            y, x: Cell coordinates
+            new_grid: Grid to store the updated asteroid values
+            new_rare_grid: Grid to store the updated rare mineral status
+        """
+        # Asteroid survives - keep its value and rare status
+        new_grid[y, x] = self.grid[y, x]
+        new_rare_grid[y, x] = self.rare_grid[y, x]
+
+    def _handle_birth_cell(self, y, x, new_grid, new_rare_grid, energy_value):
+        """Handle a cell where a new asteroid is born.
+
+        Args:
+            y, x: Cell coordinates
+            new_grid: Grid to store the updated asteroid values
+            new_rare_grid: Grid to store the updated rare mineral status
+            energy_value: Energy value to use for calculating asteroid value
+        """
+        # New asteroid born - calculate value based on energy
+        new_grid[y, x] = int(50 + energy_value * 100)
+
+        # Small chance for rare asteroid in births
+        self._apply_rare_chance(y, x, new_grid, new_rare_grid)
+
+    def _handle_regeneration_cell(self, y, x, new_grid, new_rare_grid):
+        """Handle potential regeneration in a cell that is dead and stays dead.
+
+        Args:
+            y, x: Cell coordinates
+            new_grid: Grid to store the updated asteroid values
+            new_rare_grid: Grid to store the updated rare mineral status
+        """
+        local_energy = self.energy_grid[y, x]
+
+        # Check if regeneration occurs based on energy level
+        if random.random() < self.regen_rate * local_energy:
+            # Random regeneration - new asteroid value
             new_grid[y, x] = int(30 + random.random() * 70)
-            if random.random() < self.rare_chance:
-                new_rare_grid[y, x] = 1
-                new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
-                
-        # Store new energy level
-        new_energy_grid[y, x] = min(1.0, new_energy)  # Cap energy at 1.0
+
+            # Check for rare asteroid
+            self._apply_rare_chance(y, x, new_grid, new_rare_grid)
+
+    def _apply_rare_chance(self, y, x, grid, rare_grid):
+        """Apply chance for rare mineral and adjust value accordingly.
+
+        Args:
+            y, x: Cell coordinates
+            grid: Grid to store the asteroid values
+            rare_grid: Grid to store the rare mineral status
+        """
+        if random.random() < self.rare_chance:
+            rare_grid[y, x] = 1
+            grid[y, x] = int(grid[y, x] * self.rare_bonus_multiplier)
 
     def _add_energy_to_low_density_areas(self, binary_grid):
-        """Add energy to low density areas to encourage new growth."""
+        """Add energy to low density areas to encourage new growth.
+
+        Args:
+            binary_grid: Binary representation of the asteroid grid
+        """
+        if SCIPY_AVAILABLE:
+            self._add_energy_to_low_density_areas_vectorized(binary_grid)
+        else:
+            self._add_energy_to_low_density_areas_manual(binary_grid)
+
+    def _add_energy_to_low_density_areas_vectorized(self, binary_grid):
+        """Add energy to low density areas using vectorized operations.
+
+        Args:
+            binary_grid: Binary representation of the asteroid grid
+        """
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
 
-        if SCIPY_AVAILABLE:
-            # Use vectorized operations with scipy
-            neighbor_counts = signal.convolve2d(
-                binary_grid,
-                kernel,
-                mode="same",
-                boundary="wrap" if self.apply_edge_wrapping else "fill",
-            )
-            low_density_mask = neighbor_counts < 2
-            self.energy_grid[low_density_mask] += 0.05
-        else:
-            # Manual calculation of low density areas
-            for y, x in itertools.product(range(self.height), range(self.width)):
-                neighbors = 0
-                for dy in [-1, 0, 1]:
-                    for dx in [-1, 0, 1]:
-                        if dx == 0 and dy == 0:
-                            continue
-                        nx, ny = x + dx, y + dy
-                        if self.apply_edge_wrapping:
-                            nx = nx % self.width
-                            ny = ny % self.height
-                        elif 0 <= nx < self.width and 0 <= ny < self.height:
-                            if binary_grid[ny, nx] > 0:
-                                neighbors += 1
-                if neighbors < 2:
-                    self.energy_grid[y, x] += 0.05
+        # Use vectorized operations with scipy
+        boundary_mode = "wrap" if self.apply_edge_wrapping else "fill"
+        neighbor_counts = signal.convolve2d(
+            binary_grid,
+            kernel,
+            mode="same",
+            boundary=boundary_mode,
+        )
+
+        # Identify and boost low density areas
+        low_density_mask = neighbor_counts < 2
+        self.energy_grid[low_density_mask] += 0.05
+
+    def _add_energy_to_low_density_areas_manual(self, binary_grid):
+        """Add energy to low density areas using manual iteration.
+
+        Args:
+            binary_grid: Binary representation of the asteroid grid
+        """
+        # Manual calculation of low density areas
+        for y, x in itertools.product(range(self.height), range(self.width)):
+            # Count neighbors with asteroids
+            neighbor_count = self._count_asteroid_neighbors(binary_grid, x, y)
+
+            # Add energy to cells with few asteroid neighbors
+            if neighbor_count < 2:
+                self.energy_grid[y, x] += 0.05
+
+    def _count_asteroid_neighbors(self, binary_grid, x, y):
+        """Count the number of neighboring cells that contain asteroids.
+
+        Args:
+            binary_grid: Binary representation of the asteroid grid
+            x: X coordinate of the cell
+            y: Y coordinate of the cell
+
+        Returns:
+            int: Number of neighboring cells with asteroids
+        """
+        neighbor_count = 0
+
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                # Skip the center cell
+                if dx == 0 and dy == 0:
+                    continue
+
+                # Get valid neighbor coordinates
+                nx, ny = self._get_valid_neighbor_coordinates(x + dx, y + dy)
+
+                # Count if neighbor has asteroid
+                if nx is not None and ny is not None and binary_grid[ny, nx] > 0:
+                    neighbor_count += 1
+
+        return neighbor_count
+
+    def _get_valid_neighbor_coordinates(self, nx, ny):
+        """Get valid neighbor coordinates based on edge wrapping settings.
+
+        Args:
+            nx: Raw neighbor X coordinate
+            ny: Raw neighbor Y coordinate
+
+        Returns:
+            tuple: Valid (nx, ny) coordinates or (None, None) if invalid
+        """
+        if self.apply_edge_wrapping:
+            return nx % self.width, ny % self.height
+
+        if 0 <= nx < self.width and 0 <= ny < self.height:
+            return nx, ny
+
+        return None, None
 
     def update_entities(self) -> Dict[int, int]:
         """
@@ -1928,7 +2216,10 @@ class AsteroidField:
         if not self.races:
             return {}
 
+        # Initialize race income dictionary
         race_income = {race.race_id: 0 for race in self.races}
+
+        # Initialize other income dictionaries
         symbiote_income = {}
         fleet_income = {}
 
@@ -1943,178 +2234,506 @@ class AsteroidField:
             self.fleet_entities.copy() if hasattr(self, "fleet_entities") else []
         )
 
-        # Reset fed status
+        # Reset fed status for all races
         for race in self.races:
             race.fed_this_turn = False
 
         # Create new entity grid
         new_entity_grid = np.zeros_like(self.entity_grid)
 
-        # Using scipy.ndimage for spatial analysis of entity distributions
-        # This creates labeled regions of connected components for each race
+        # Process race colonies to update colony metrics
+        self._process_race_colonies()
+
+        # Process cellular automaton rules for each race
+        self._process_race_automaton_rules(new_entity_grid)
+
+        # Process mining and interactions with asteroids
+        self._process_mining_interactions(race_income)
+
+        # Process population dynamics and evolution
+        self._process_population_dynamics(race_income, new_entity_grid)
+
+        # Update entity algorithms and entities
+        self._update_entity_algorithms_and_entities()
+
+        # Store additional data for later use
+        self._last_update_data = {
+            "symbiote_income": symbiote_income,
+            "fleet_income": fleet_income,
+            "symbiote_entities": symbiote_entities,
+            "miner_entities": miner_entities,
+            "fleet_entities": fleet_entities,
+        }
+
+        # Return race income dictionary
+        return race_income
+
+    def _process_race_colonies(self):
+        """
+        Process race colonies using scipy.ndimage for spatial analysis.
+        Identifies connected regions (colonies) and updates race colony metrics.
+        """
+        # Process each race's colonies separately
+        for race in self.races:
+            self._analyze_race_colonies(race)
+
+    def _analyze_race_colonies(self, race):
+        """
+        Analyze colonies for a specific race using spatial analysis.
+
+        Args:
+            race: The race to analyze colonies for
+        """
+        # Create a binary mask for this race's entities
+        race_mask = self._create_race_mask(race)
+
+        # Find connected regions (colonies)
+        labeled_regions, num_regions = self._identify_colonies(race_mask)
+
+        # Update race colony data if colonies exist
+        if num_regions > 0:
+            self._update_colony_metrics(race, race_mask, labeled_regions, num_regions)
+
+    def _create_race_mask(self, race):
+        """
+        Create a binary mask for a race's entities.
+
+        Args:
+            race: The race to create a mask for
+
+        Returns:
+            numpy.ndarray: Boolean mask where race entities are located
+        """
+        return self.entity_grid == race.race_id
+
+    def _identify_colonies(self, race_mask):
+        """
+        Identify connected regions (colonies) in the race mask.
+
+        Args:
+            race_mask: Boolean mask where race entities are located
+
+        Returns:
+            tuple: (labeled_regions, num_regions) - labeled array and count of regions
+        """
+        return ndimage.label(race_mask)
+
+    def _update_colony_metrics(self, race, race_mask, labeled_regions, num_regions):
+        """
+        Update colony metrics for a race based on spatial analysis results.
+
+        Args:
+            race: The race to update metrics for
+            race_mask: Boolean mask where race entities are located
+            labeled_regions: Array with labeled regions
+            num_regions: Number of distinct regions (colonies)
+        """
+        # Calculate colony sizes
+        sizes = self._calculate_colony_sizes(race_mask, labeled_regions, num_regions)
+
+        # Store colony metrics in race data
+        race.colony_data = {
+            "count": num_regions,
+            "sizes": sizes,
+            "mean_size": np.mean(sizes),
+            "max_size": np.max(sizes),
+            "total_population": np.sum(sizes),
+        }
+
+        # Update race population based on colony data
+        race.population = int(race.colony_data["total_population"])
+
+    def _calculate_colony_sizes(self, race_mask, labeled_regions, num_regions):
+        """
+        Calculate the size of each colony.
+
+        Args:
+            race_mask: Boolean mask where race entities are located
+            labeled_regions: Array with labeled regions
+            num_regions: Number of distinct regions (colonies)
+
+        Returns:
+            numpy.ndarray: Array of colony sizes
+        """
+        return ndimage.sum(race_mask, labeled_regions, range(1, num_regions + 1))
+
+    def _process_race_automaton_rules(self, new_entity_grid):
+        """
+        Process cellular automaton rules for each race.
+
+        This method applies Game of Life-like rules to determine which cells survive
+        and which new cells are born based on race-specific parameters and hunger levels.
+
+        Args:
+            new_entity_grid: The new entity grid to populate with updated race positions
+        """
+        # Process symbiote cell-by-cell interactions using ndimage filters
+        # These operations can calculate neighbor counts very efficiently
         for race in self.races:
             # Create a binary mask for this race's entities
             race_mask = self.entity_grid == race.race_id
 
-            # Find connected regions (colonies) using ndimage
-            labeled_regions, num_regions = ndimage.label(race_mask)
+            # Apply survival and birth rules
+            self._apply_survival_rules(race, race_mask, new_entity_grid)
+            self._apply_birth_rules(race, race_mask, new_entity_grid)
 
-            if num_regions > 0:
-                # Process colonies and track their metrics
-                sizes = ndimage.sum(
-                    race_mask, labeled_regions, range(1, num_regions + 1)
-                )
-                race.colony_data = {
-                    "count": num_regions,
-                    "sizes": sizes,
-                    "mean_size": np.mean(sizes),
-                    "max_size": np.max(sizes),
-                    "total_population": np.sum(sizes),
-                }
+    def _apply_survival_rules(self, race, race_mask, new_entity_grid):
+        """
+        Apply survival rules for a race's existing cells.
 
-                # Set population based on colony data
-                race.population = int(race.colony_data["total_population"])
+        Args:
+            race: The race to process
+            race_mask: Binary mask of the race's current cells
+            new_entity_grid: The new entity grid to update
+        """
+        # Calculate neighbor counts using convolution
+        own_neighbors = self._calculate_neighbor_counts(race_mask)
 
-        # Process symbiote cell-by-cell interactions using ndimage filters
-        # These operations can calculate neighbor counts very efficiently
-        for race in self.races:
-            race_mask = self.entity_grid == race.race_id
+        # Get adjusted survival rules based on hunger
+        adjusted_survival_set = self._get_adjusted_survival_set(race)
 
-            # Calculate neighbor counts using convolution
-            neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-            own_neighbors = ndimage.convolve(
-                race_mask.astype(np.int8), neighbors_kernel, mode="constant", cval=0
+        # Create survival mask based on rules
+        survival_mask = self._create_survival_mask(
+            own_neighbors, race_mask, adjusted_survival_set
+        )
+
+        # Update the entity grid with surviving cells
+        self._update_grid_with_survivors(survival_mask, new_entity_grid, race.race_id)
+
+    def _get_adjusted_survival_set(self, race):
+        """
+        Get the adjusted survival set based on race hunger.
+
+        Args:
+            race: The race to process
+
+        Returns:
+            set: Adjusted set of neighbor counts that allow survival
+        """
+        # Calculate hunger modifier
+        hunger_modifier = int(race.hunger * 2)
+
+        return race.survival_set.union({n + hunger_modifier for n in race.survival_set})
+
+    def _create_survival_mask(self, own_neighbors, race_mask, survival_set):
+        """
+        Create a mask of cells that survive based on neighbor counts and rules.
+
+        Args:
+            own_neighbors: Array with neighbor counts for each cell
+            race_mask: Binary mask of the race's current cells
+            survival_set: Set of neighbor counts that allow survival
+
+        Returns:
+            numpy.ndarray: Boolean mask of cells that survive
+        """
+        survival_mask = np.zeros_like(race_mask, dtype=bool)
+
+        for n in survival_set:
+            survival_mask |= (own_neighbors == n) & race_mask
+
+        return survival_mask
+
+    def _update_grid_with_survivors(self, survival_mask, new_entity_grid, race_id):
+        """
+        Update the entity grid with cells that survive.
+
+        Args:
+            survival_mask: Boolean mask of cells that survive
+            new_entity_grid: The new entity grid to update
+            race_id: ID of the race to assign to surviving cells
+        """
+        new_entity_grid[survival_mask] = race_id
+
+    def _apply_birth_rules(self, race, race_mask, new_entity_grid):
+        """
+        Apply birth rules for a race's new cells.
+
+        Args:
+            race: The race to process
+            race_mask: Binary mask of the race's current cells
+            new_entity_grid: The new entity grid to update
+        """
+        # Calculate neighbor counts using convolution
+        own_neighbors = self._calculate_neighbor_counts(race_mask)
+
+        # Get empty cells where new entities can be born
+        empty_mask = self.entity_grid == 0
+
+        # Get adjusted birth rules based on race state
+        adjusted_birth_set = self._get_adjusted_birth_set(race)
+
+        # Create birth mask based on neighbor counts and birth rules
+        birth_mask = self._create_birth_mask(
+            own_neighbors, empty_mask, adjusted_birth_set
+        )
+
+        # Apply influence-based probability modifiers if available
+        birth_mask = self._apply_influence_probability(race, birth_mask)
+
+        # Apply final birth probability based on hunger
+        self._apply_final_birth_probability(race, birth_mask, new_entity_grid)
+
+    def _calculate_neighbor_counts(self, race_mask):
+        """
+        Calculate the number of neighbors for each cell using convolution.
+
+        Args:
+            race_mask: Binary mask of the race's current cells
+
+        Returns:
+            numpy.ndarray: Array with neighbor counts for each cell
+        """
+        neighbors_kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+        return ndimage.convolve(
+            race_mask.astype(np.int8), neighbors_kernel, mode="constant", cval=0
+        )
+
+    def _get_adjusted_birth_set(self, race):
+        """
+        Get the adjusted birth set based on race behavior and hunger.
+
+        Args:
+            race: The race to process
+
+        Returns:
+            set: Adjusted set of neighbor counts that trigger birth
+        """
+        # Start with the race's base birth set
+        adjusted_birth_set = race.birth_set
+
+        # Expand birth conditions when hungry or in expansion mode
+        if race.current_behavior == "expanding" or race.hunger > 0.7:
+            adjusted_birth_set = adjusted_birth_set.union(
+                {birth - 1 for birth in race.birth_set}
             )
 
-            # Apply Game of Life rules based on hunger level
-            # Calculate survival mask - cells that survive
-            hunger_modifier = int(race.hunger * 2)
-            adjusted_survival_set = race.survival_set.union(
-                {n + hunger_modifier for n in race.survival_set}
-            )
+        return adjusted_birth_set
 
-            # Create a mask of cells that survive
-            survival_mask = np.zeros_like(race_mask, dtype=bool)
-            for n in adjusted_survival_set:
-                survival_mask |= (own_neighbors == n) & race_mask
+    def _create_birth_mask(self, own_neighbors, empty_mask, birth_set):
+        """
+        Create a mask of cells where new entities should be born.
 
-            # Add these cells to the new grid
-            new_entity_grid[survival_mask] = race.race_id
+        Args:
+            own_neighbors: Array with neighbor counts for each cell
+            empty_mask: Mask of empty cells
+            birth_set: Set of neighbor counts that trigger birth
 
-            # Handle birth using similar approach
-            # Calculate birth mask - empty cells that should become new entities
-            empty_mask = self.entity_grid == 0
+        Returns:
+            numpy.ndarray: Boolean mask of cells where birth should occur
+        """
+        birth_mask = np.zeros_like(empty_mask, dtype=bool)
 
-            # Adjust birth rules based on hunger and behavior
-            adjusted_birth_set = race.birth_set
-            if race.current_behavior == "expanding" or race.hunger > 0.7:
-                # Add more birth conditions when hungry or in expansion mode
-                adjusted_birth_set = adjusted_birth_set.union(
-                    {birth - 1 for birth in race.birth_set}
-                )
+        for n in birth_set:
+            birth_mask |= (own_neighbors == n) & empty_mask
 
-            # Create birth mask
-            birth_mask = np.zeros_like(empty_mask, dtype=bool)
-            for n in adjusted_birth_set:
-                birth_mask |= (own_neighbors == n) & empty_mask
+        return birth_mask
 
-            # Apply probabilistic birth based on influence and expansion drive
-            if race.race_id in self.influence_grids:
-                influence = self.influence_grids[race.race_id]
-                # Higher influence = higher chance of birth
-                birth_proba = influence * race.genome["expansion_drive"]
-                # Use numpy random Generator API instead of legacy functions
-                rng = np.random.default_rng(int(time.time()))
-                random_mask = rng.random(birth_mask.shape) < birth_proba
-                birth_mask &= random_mask
+    def _apply_influence_probability(self, race, birth_mask):
+        """
+        Apply probability modifiers based on influence grids if available.
 
-            # Add these cells to the new grid with probability based on hunger
-            birth_probability = min(1.0, 0.8 + race.hunger * 0.4)
-            # Use the same rng instance for consistency
-            birth_random = rng.random(birth_mask.shape) < birth_probability
-            new_entity_grid[birth_mask & birth_random] = race.race_id
+        Args:
+            race: The race to process
+            birth_mask: Initial birth mask
 
+        Returns:
+            numpy.ndarray: Modified birth mask after applying influence probabilities
+        """
+        if race.race_id in self.influence_grids:
+            # Get influence grid for this race
+            influence = self.influence_grids[race.race_id]
+
+            # Calculate birth probability based on influence and expansion drive
+            birth_proba = influence * race.genome["expansion_drive"]
+
+            # Apply probabilistic filter
+            rng = np.random.default_rng(int(time.time()))
+            random_mask = rng.random(birth_mask.shape) < birth_proba
+
+            # Update birth mask
+            birth_mask &= random_mask
+
+        return birth_mask
+
+    def _apply_final_birth_probability(self, race, birth_mask, new_entity_grid):
+        """
+        Apply final birth probability based on race hunger and update the grid.
+
+        Args:
+            race: The race to process
+            birth_mask: Birth mask after influence processing
+            new_entity_grid: The new entity grid to update
+        """
+        # Calculate birth probability based on hunger
+        birth_probability = min(1.0, 0.8 + race.hunger * 0.4)
+
+        # Apply random filter based on probability
+        rng = np.random.default_rng(int(time.time()))
+        birth_random = rng.random(birth_mask.shape) < birth_probability
+
+        # Update the grid with new entities
+        new_entity_grid[birth_mask & birth_random] = race.race_id
+
+    def _process_mining_interactions(self, race_income):
+        """
+        Process mining interactions between races and asteroids.
+
+        This method handles how races mine asteroids, calculates income,
+        and updates the grid accordingly.
+
+        Args:
+            race_income: Dictionary mapping race IDs to their income values
+        """
         # Process each race's mining and interactions with asteroids
         for y in range(self.height):
             for x in range(self.width):
                 entity = self.entity_grid[y, x]
-                if entity > 0:  # There's a race here
-                    race = next((r for r in self.races if r.race_id == entity), None)
-                    if race and self.grid[y, x] > 0:
-                        # Entity mines asteroid
-                        value = self.grid[y, x]
-                        rare_type = self.rare_grid[y, x]
+                if entity <= 0:  # No race here
+                    continue
 
-                        # Race's mining efficiency affects value
-                        income = int(value * race.mining_efficiency)
+                # Find the race at this location
+                race = next((r for r in self.races if r.race_id == entity), None)
+                if not race or self.grid[y, x] <= 0:
+                    continue
 
-                        # Process different mineral types
-                        if rare_type == 1:  # Rare
-                            income = int(income * self.rare_bonus_multiplier)
-                        elif rare_type == 2:  # Anomalous
-                            income = int(income * self.rare_bonus_multiplier * 2)
+                # Process mining at this location
+                self._process_single_mining_interaction(race, y, x, race_income)
 
-                        # Add income to race
-                        race_income[race.race_id] += income
+    def _process_single_mining_interaction(self, race, y, x, race_income):
+        """
+        Process a single mining interaction at a specific location.
 
-                        # Mark race as fed this turn
-                        race.fed_this_turn = True
+        Args:
+            race: The race that is mining
+            y: Y-coordinate of the mining location
+            x: X-coordinate of the mining location
+            race_income: Dictionary mapping race IDs to their income values
+        """
+        # Entity mines asteroid
+        value = self.grid[y, x]
+        rare_type = self.rare_grid[y, x]
 
-                        # Remove asteroid after mining
-                        self.grid[y, x] = 0
-                        self.rare_grid[y, x] = 0
+        # Race's mining efficiency affects value
+        income = int(value * race.mining_efficiency)
 
-        # Apply complex dynamics based on statstics
+        # Process different mineral types
+        if rare_type == 1:  # Rare
+            income = int(income * self.rare_bonus_multiplier)
+        elif rare_type == 2:  # Anomalous
+            income = int(income * self.rare_bonus_multiplier * 2)
+
+        # Add income to race
+        race_income[race.race_id] += income
+
+        # Mark race as fed this turn
+        race.fed_this_turn = True
+
+        # Remove asteroid after mining
+        self.grid[y, x] = 0
+        self.rare_grid[y, x] = 0
+
+    def _process_population_dynamics(self, race_income, new_entity_grid):
+        """
+        Process population dynamics and evolution for each race.
+
+        This method handles population tracking, income history, evolution points,
+        and potential race evolution based on accumulated resources.
+
+        Args:
+            race_income: Dictionary mapping race IDs to their income values
+            new_entity_grid: The updated entity grid with new race positions
+        """
+        # Apply complex dynamics based on statistics
         for race in self.races:
+            # Get the population from the new entity grid
             new_mask = new_entity_grid == race.race_id
             population = np.sum(new_mask)
 
-            # Use statistical models to simulate natural phenomena
-            if population > 0:
-                # Calculate population change
-                # Store current population for future use if needed
-                # race.population is updated below
-                race.population = population
+            # Skip processing if race is extinct
+            if population <= 0:
+                continue
 
-                # Update population history
-                race.population_history.append(population)
-                if len(race.population_history) > 100:
-                    race.population_history.pop(0)
+            # Update race population and history
+            self._update_race_population(race, population)
 
-                # Calculate income and update history
-                income = race_income[race.race_id]
-                race.last_income = income
-                race.income_history.append(income)
-                if len(race.income_history) > 100:
-                    race.income_history.pop(0)
+            # Update race income history and evolution
+            self._update_race_income_and_evolution(race, race_income)
 
-                # Update evolution points based on income
-                race.evolution_points += income // 10
+        # Process mineral availability for each race
+        self._process_mineral_availability()
 
-                # Check if race should evolve
-                if race.evolution_points >= race.evolution_threshold:
-                    # Evolution attempt
-                    metrics = race.evolve()
-                    race.evolution_points -= race.evolution_threshold
-                    race.evolution_threshold = int(race.evolution_threshold * 1.5)
+    def _update_race_population(self, race, population):
+        """
+        Update a race's population and population history.
 
-                    # Log evolution
-                    logging.info(
-                        f"Race {race.race_id} evolved to stage {race.evolution_stage}"
-                    )
-                    logging.info(
-                        f"  - Territory: {metrics['radius']} radius with density {metrics['density']:.2f}"
-                    )
+        Args:
+            race: The race to update
+            population: The current population count
+        """
+        # Store current population
+        race.population = population
 
-                    # Notify player
-                    if self.notifier:
-                        self.notifier.notify_event(
-                            "race",
-                            f"Race {race.race_id} has evolved to stage {race.evolution_stage}!",
-                            importance=2,
-                        )
+        # Update population history with a fixed length
+        race.population_history.append(population)
+        if len(race.population_history) > 100:
+            race.population_history.pop(0)
 
-        # Process mineral availability for the evolution algorithm
+    def _update_race_income_and_evolution(self, race, race_income):
+        """
+        Update a race's income history and handle evolution if applicable.
+
+        Args:
+            race: The race to update
+            race_income: Dictionary mapping race IDs to their income values
+        """
+        # Calculate income and update history
+        income = race_income[race.race_id]
+        race.last_income = income
+        race.income_history.append(income)
+        if len(race.income_history) > 100:
+            race.income_history.pop(0)
+
+        # Update evolution points based on income
+        race.evolution_points += income // 10
+
+        # Check if race should evolve
+        if race.evolution_points >= race.evolution_threshold:
+            self._handle_race_evolution(race)
+
+    def _handle_race_evolution(self, race):
+        """
+        Handle the evolution of a race when it reaches the evolution threshold.
+
+        Args:
+            race: The race that is evolving
+        """
+        # Evolution attempt
+        metrics = race.evolve()
+        race.evolution_points -= race.evolution_threshold
+        race.evolution_threshold = int(race.evolution_threshold * 1.5)
+
+        # Log evolution
+        logging.info(f"Race {race.race_id} evolved to stage {race.evolution_stage}")
+        logging.info(
+            f"  - Territory: {metrics['radius']} radius with density {metrics['density']:.2f}"
+        )
+
+        # Notify player
+        if self.notifier:
+            self.notifier.notify_event(
+                "race",
+                f"Race {race.race_id} has evolved to stage {race.evolution_stage}!",
+                importance=2,
+            )
+
+    def _process_mineral_availability(self):
+        """
+        Process mineral availability for each race's territory.
+
+        This method analyzes the distribution of minerals around each race's colonies
+        and updates the race's mineral availability metrics.
+        """
         for race in self.races:
             # Analyze mineral distribution around race colonies
             race_mask = self.entity_grid == race.race_id
@@ -2122,69 +2741,107 @@ class AsteroidField:
                 continue  # Race is extinct
 
             # Calculate mineral availability in race territory
-            minerals_available = {
-                "common": 0,
-                "rare": 0,
-                "precious": 0,
-                "anomaly": 0,
-            }
-
-            # Find all race entity locations
-            entity_locations = np.nonzero(race_mask)
-            # Check surrounding area for minerals
-            search_radius = 3  # Look in a 3-cell radius
-            for i in range(len(entity_locations[0])):
-                y, x = entity_locations[0][i], entity_locations[1][i]
-
-                # Check surrounding area for minerals
-                for dy, dx in itertools.product(
-                    range(-search_radius, search_radius + 1),
-                    range(-search_radius, search_radius + 1),
-                ):
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < self.width and 0 <= ny < self.height:
-                        if self.grid[ny, nx] == 0:
-                            rare_type = self.rare_grid[ny, nx]
-                        if rare_type == 1:  # Rare
-                            minerals_available["rare"] += 1
-                        elif rare_type == 2:  # Anomalous
-                            minerals_available["anomaly"] += 1
-                        elif rare_type == 3:  # Precious
-                            minerals_available["precious"] += 1
-                        else:  # Common
-                            minerals_available["common"] += 1
+            minerals_available = self._calculate_race_mineral_availability(race_mask)
 
             # Update race's mineral availability
             race.mineral_availability = minerals_available
 
+    def _calculate_race_mineral_availability(self, race_mask):
+        """
+        Calculate the mineral availability in a race's territory.
+
+        Args:
+            race_mask: Binary mask indicating the race's territory
+
+        Returns:
+            Dictionary with counts of different mineral types
+        """
+        # Initialize mineral counts
+        minerals_available = {
+            "common": 0,
+            "rare": 0,
+            "precious": 0,
+            "anomaly": 0,
+        }
+
+        # Find all race entity locations
+        entity_locations = np.nonzero(race_mask)
+        # Check surrounding area for minerals
+        search_radius = 3  # Look in a 3-cell radius
+
+        for i in range(len(entity_locations[0])):
+            y, x = entity_locations[0][i], entity_locations[1][i]
+            self._check_minerals_in_radius(x, y, search_radius, minerals_available)
+
+        return minerals_available
+
+    def _check_minerals_in_radius(self, center_x, center_y, radius, minerals_available):
+        """
+        Check for minerals within a radius of a given center point.
+
+        Args:
+            center_x: X-coordinate of the center point
+            center_y: Y-coordinate of the center point
+            radius: Radius to check around the center point
+            minerals_available: Dictionary to update with mineral counts
+        """
+        # Check surrounding area for minerals
+        for dy, dx in itertools.product(
+            range(-radius, radius + 1),
+            range(-radius, radius + 1),
+        ):
+            nx, ny = center_x + dx, center_y + dy
+            if (
+                0 <= nx < self.width
+                and 0 <= ny < self.height
+                and self.grid[ny, nx] == 0
+            ):
+                rare_type = self.rare_grid[ny, nx]
+                self._update_mineral_counts(rare_type, minerals_available)
+
+    def _update_mineral_counts(self, rare_type, minerals_available):
+        """
+        Update mineral counts based on the rare type.
+
+        Args:
+            rare_type: The type of mineral (0=common, 1=rare, 2=anomalous, 3=precious)
+            minerals_available: Dictionary to update with mineral counts
+        """
+        if rare_type == 1:  # Rare
+            minerals_available["rare"] += 1
+        elif rare_type == 2:  # Anomalous
+            minerals_available["anomaly"] += 1
+        elif rare_type == 3:  # Precious
+            minerals_available["precious"] += 1
+        else:  # Common
+            minerals_available["common"] += 1
+
+    def _update_entity_algorithms_and_entities(self):
+        """
+        Update all entity algorithms and entities.
+
+        This method updates the evolution algorithm, symbiote algorithm,
+        and all entity types (symbiotes, miners, fleets).
+        """
         # Update evolution algorithm
         if self.evolution_algorithm:
-            self.evolution_algorithm.update(self)
+            self.evolution_algorithm.update(self.races)
 
         # Update symbiote evolution algorithm
-        if self.symbiote_algorithm:
+        if hasattr(self, "symbiote_algorithm") and self.symbiote_algorithm:
             self.symbiote_algorithm.update(self)
 
         # Update symbiote entities
-        for symbiote in self.symbiote_entities:
+        symbiote_entities = getattr(self, "symbiote_entities", [])
+        for symbiote in symbiote_entities:
             symbiote.update()
 
         # Update miner entities
-        for miner in self.miner_entities:
+        miner_entities = getattr(self, "miner_entities", [])
+        for miner in miner_entities:
             miner.update()
 
         # Update fleet entities
-        for fleet in self.fleet_entities:
+        fleet_entities = getattr(self, "fleet_entities", [])
+        for fleet in fleet_entities:
             fleet.update()
-
-        # Store additional data as instance attributes for later use
-        self._last_update_data = {
-            'symbiote_income': symbiote_income,
-            'fleet_income': fleet_income,
-            'symbiote_entities': symbiote_entities,
-            'miner_entities': miner_entities,
-            'fleet_entities': fleet_entities,
-        }
-        
-        # Return race_income as Dict[int, int] to match the type hint
-        return race_income

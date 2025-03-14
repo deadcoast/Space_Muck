@@ -256,7 +256,7 @@ class TradingSystem:
             station: Trading station data dictionary
         """
         location_factor = station.get("location_factor", 1.0)
-        # faction_id = station.get("faction_id")  # Unused in this context
+        faction_id = station.get("faction_id")
 
         # Update each commodity price for this station
         for commodity_id in self.commodities:

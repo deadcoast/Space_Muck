@@ -112,7 +112,10 @@ class FixManager:
         # For example, setting up paths, initializing patch handlers, etc.
 
     async def _generate_report(
-        self, analyzer: Any, param: Dict[str, Any], custom_report_path: Optional[Path] = None
+        self,
+        analyzer: Any,
+        param: Dict[str, Any],
+        custom_report_path: Optional[Path] = None,
     ) -> Optional[str]:
         """
         Asynchronously generates a report based on the analysis results.
@@ -128,7 +131,11 @@ class FixManager:
         """
         report_format = param.get("format", "json")  # e.g., 'json', 'txt', 'html'
         # Use custom_report_path if provided, otherwise use the one from param
-        report_path = str(custom_report_path) if custom_report_path else param.get("report_path", "report.json")
+        report_path = (
+            str(custom_report_path)
+            if custom_report_path
+            else param.get("report_path", "report.json")
+        )
 
         try:
             report_data = (
@@ -467,7 +474,13 @@ class FixManager:
                 logger.error(f"Error reading patched content: {e}")
                 return None
 
-    async def run(self, analyzer: Any, mode: str, report_param: Dict[str, Any], report_path: Optional[Path] = None) -> None:
+    async def run(
+        self,
+        analyzer: Any,
+        mode: str,
+        report_param: Dict[str, Any],
+        report_path: Optional[Path] = None,
+    ) -> None:
         """
         Runs the FixManager based on the specified mode.
 
@@ -482,7 +495,9 @@ class FixManager:
         """
         if mode == "report":
             # Pass the report_path parameter to the _generate_report method
-            output_path = await self._generate_report(analyzer, report_param, report_path)
+            output_path = await self._generate_report(
+                analyzer, report_param, report_path
+            )
             if output_path:
                 logger.info(f"Report successfully generated at '{output_path}'.")
             else:
@@ -530,6 +545,7 @@ async def main(fix_manager=None):
             logger.error(f"Failed to create configuration file: {e}")
             return
 
+
 def run(analyzer, mode, report_param, report_path):
     # Path to the configuration file
     config_path = "config.json"  # Using the same config path as in main()
@@ -538,20 +554,35 @@ def run(analyzer, mode, report_param, report_path):
     fix_manager = FixManager(config_path=config_path)
 
     # Generate Report
-    asyncio.run(fix_manager.run(
-        analyzer, mode="report", report_param=report_param, report_path=report_path
-    ))
+    asyncio.run(
+        fix_manager.run(
+            analyzer, mode="report", report_param=report_param, report_path=report_path
+        )
+    )
 
     # Apply Automatic Fixes - use mode parameter from function arguments
     if mode in ["auto_fix", "all"]:
-        asyncio.run(fix_manager.run(analyzer, mode="auto_fix", report_param=report_param, report_path=report_path))
+        asyncio.run(
+            fix_manager.run(
+                analyzer,
+                mode="auto_fix",
+                report_param=report_param,
+                report_path=report_path,
+            )
+        )
 
     # Apply Interactive Fixes - use mode parameter from function arguments
     if mode in ["interactive_fix", "all"]:
-        asyncio.run(fix_manager.run(
-            analyzer, mode="interactive_fix", report_param=report_param, report_path=report_path
-        ))
+        asyncio.run(
+            fix_manager.run(
+                analyzer,
+                mode="interactive_fix",
+                report_param=report_param,
+                report_path=report_path,
+            )
+        )
     return None
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -37,11 +37,19 @@ def count_neighbors(grid: np.ndarray) -> np.ndarray:
     )
 
 
-def _process_cell_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
-                         birth_set: set, survival_set: set, y: int, x: int, energy_level: float) -> None:
+def _process_cell_with_energy(
+    grid: np.ndarray,
+    new_grid: np.ndarray,
+    neighbor_counts: np.ndarray,
+    birth_set: set,
+    survival_set: set,
+    y: int,
+    x: int,
+    energy_level: float,
+) -> None:
     """
     Process a single cell with energy influence.
-    
+
     Args:
         grid: Current state grid
         new_grid: Grid being constructed
@@ -54,9 +62,7 @@ def _process_cell_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_c
     """
     # Energy can boost survival by adding to neighbor count
     energy_boost = min(2, int(energy_level * 3))
-    adjusted_survival = survival_set.union(
-        {n + energy_boost for n in survival_set}
-    )
+    adjusted_survival = survival_set.union({n + energy_boost for n in survival_set})
 
     if grid[y, x] > 0:  # Cell is alive
         if neighbor_counts[y, x] in adjusted_survival:
@@ -65,11 +71,18 @@ def _process_cell_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_c
         new_grid[y, x] = 1  # Cell is born
 
 
-def _process_cell_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
-                      birth_set: set, survival_set: set, y: int, x: int) -> None:
+def _process_cell_simple(
+    grid: np.ndarray,
+    new_grid: np.ndarray,
+    neighbor_counts: np.ndarray,
+    birth_set: set,
+    survival_set: set,
+    y: int,
+    x: int,
+) -> None:
     """
     Process a single cell without energy influence.
-    
+
     Args:
         grid: Current state grid
         new_grid: Grid being constructed
@@ -86,11 +99,17 @@ def _process_cell_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts
         new_grid[y, x] = 1  # Cell is born
 
 
-def _apply_rules_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
-                          birth_set: set, survival_set: set, energy_grid: np.ndarray) -> None:
+def _apply_rules_with_energy(
+    grid: np.ndarray,
+    new_grid: np.ndarray,
+    neighbor_counts: np.ndarray,
+    birth_set: set,
+    survival_set: set,
+    energy_grid: np.ndarray,
+) -> None:
     """
     Apply cellular automaton rules with energy influence.
-    
+
     Args:
         grid: Current state grid
         new_grid: Grid being constructed
@@ -102,14 +121,21 @@ def _apply_rules_with_energy(grid: np.ndarray, new_grid: np.ndarray, neighbor_co
     height, width = grid.shape
     for y, x in product(range(height), range(width)):
         energy_level = energy_grid[y, x]
-        _process_cell_with_energy(grid, new_grid, neighbor_counts, birth_set, survival_set, y, x, energy_level)
+        _process_cell_with_energy(
+            grid, new_grid, neighbor_counts, birth_set, survival_set, y, x, energy_level
+        )
 
 
-def _apply_rules_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts: np.ndarray,
-                      birth_set: set, survival_set: set) -> None:
+def _apply_rules_simple(
+    grid: np.ndarray,
+    new_grid: np.ndarray,
+    neighbor_counts: np.ndarray,
+    birth_set: set,
+    survival_set: set,
+) -> None:
     """
     Apply cellular automaton rules without energy influence.
-    
+
     Args:
         grid: Current state grid
         new_grid: Grid being constructed
@@ -119,7 +145,9 @@ def _apply_rules_simple(grid: np.ndarray, new_grid: np.ndarray, neighbor_counts:
     """
     height, width = grid.shape
     for y, x in product(range(height), range(width)):
-        _process_cell_simple(grid, new_grid, neighbor_counts, birth_set, survival_set, y, x)
+        _process_cell_simple(
+            grid, new_grid, neighbor_counts, birth_set, survival_set, y, x
+        )
 
 
 def apply_life_rules(
@@ -145,7 +173,9 @@ def apply_life_rules(
     neighbor_counts = count_neighbors(grid)
 
     if energy_grid is not None:
-        _apply_rules_with_energy(grid, new_grid, neighbor_counts, birth_set, survival_set, energy_grid)
+        _apply_rules_with_energy(
+            grid, new_grid, neighbor_counts, birth_set, survival_set, energy_grid
+        )
     else:
         _apply_rules_simple(grid, new_grid, neighbor_counts, birth_set, survival_set)
 

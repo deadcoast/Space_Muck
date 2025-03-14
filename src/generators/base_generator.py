@@ -613,160 +613,33 @@ class BaseGenerator(BaseEntity):
             np.ndarray: New state of the grid after one iteration
         """
         from concurrent.futures import ProcessPoolExecutor
-        import math
 
         logging.info(
             f"Using parallel processing for cellular automaton on {grid.shape} grid"
         )
 
-        # Determine number of workers based on CPU count
-        import multiprocessing
-
-        num_workers = min(multiprocessing.cpu_count(), 8)  # Limit to 8 workers max
-
-        # Calculate chunk size based on grid height
-        chunk_size = math.ceil(grid.shape[0] / num_workers)
+        # Setup parallel processing parameters
+        num_workers, chunk_size = self._setup_parallel_processing(grid.shape[0])
 
         # Create a new grid to store the result
         new_grid = np.zeros_like(grid)
-
-        # Define a function to process a chunk of the grid
-        def process_chunk(start_row, end_row):
-            # Need to include one extra row on each side for neighbor calculations
-            # Handle the boundary conditions based on wrap parameter
-            if wrap:
-                # For wrap=True, we need to handle the edge cases specially
-                if start_row == 0:
-                    # Include the last row for wrapping
-                    process_start = start_row
-                    input_chunk = np.vstack(
-                        (grid[-1:], grid[process_start : end_row + 1])
-                    )
-                else:
-                    process_start = start_row - 1
-                    input_chunk = grid[process_start : end_row + 1]
-
-                if end_row >= grid.shape[0]:
-                    # Include the first row for wrapping
-                    input_chunk = np.vstack((input_chunk, grid[:1]))
-                else:
-                    input_chunk = np.vstack((input_chunk, grid[end_row : end_row + 1]))
-            else:
-                # For wrap=False, we just need to ensure we don't go out of bounds
-                process_start = max(0, start_row - 1)
-                process_end = min(grid.shape[0], end_row + 1)
-                input_chunk = grid[process_start:process_end]
-
-            # Process the chunk using the appropriate method
-            try:
-                # Check if scipy is available using importlib
-                import importlib.util
-
-                if importlib.util.find_spec("scipy") is None:
-                    raise ImportError("scipy not available")
-                # Use scipy implementation for the chunk
-                from scipy import signal
-
-                # Create kernel for neighbor counting
-                kernel = np.ones((3, 3), dtype=np.int8)
-                kernel[1, 1] = 0  # Don't count the cell itself
-
-                # Count neighbors using convolution
-                boundary_mode = "wrap" if wrap else "fill"
-                neighbors = signal.convolve2d(
-                    input_chunk, kernel, mode="same", boundary=boundary_mode
-                )
-
-                # Create the neighbor masks for birth and survival rules
-                birth_mask = np.zeros_like(neighbors, dtype=bool)
-                survival_mask = np.zeros_like(neighbors, dtype=bool)
-
-                # Vectorized approach to create masks
-                for n in birth_set:
-                    birth_mask |= neighbors == n
-
-                for n in survival_set:
-                    survival_mask |= neighbors == n
-
-                # Apply rules using vectorized operations
-                alive_mask = input_chunk == 1
-                dead_mask = input_chunk == 0
-
-                result_chunk = np.zeros_like(input_chunk)
-                result_chunk[alive_mask & survival_mask] = 1  # Cells that survive
-                result_chunk[dead_mask & birth_mask] = 1  # Cells that are born
-
-            except ImportError:
-                # Fall back to manual implementation for the chunk
-                result_chunk = np.zeros_like(input_chunk)
-
-                # Define neighbor offsets once for efficiency
-                neighbor_offsets = [
-                    (dx, dy)
-                    for dy in [-1, 0, 1]
-                    for dx in [-1, 0, 1]
-                    if dx != 0 or dy != 0
-                ]
-
-                height, width = input_chunk.shape
-
-                for y in range(height):
-                    for x in range(width):
-                        # Count neighbors
-                        neighbor_count = 0
-                        for dx, dy in neighbor_offsets:
-                            if wrap:
-                                # Wrap around edges
-                                nx, ny = (x + dx) % width, (y + dy) % height
-                            else:
-                                # Don't wrap, check boundaries
-                                nx, ny = x + dx, y + dy
-                                if nx < 0 or nx >= width or ny < 0 or ny >= height:
-                                    continue
-
-                            if input_chunk[ny, nx] > 0:
-                                neighbor_count += 1
-
-                        # Apply rules
-                        if input_chunk[y, x] > 0:  # Cell is alive
-                            if neighbor_count in survival_set:
-                                result_chunk[y, x] = 1  # Cell survives
-                        else:  # Cell is dead
-                            if neighbor_count in birth_set:
-                                result_chunk[y, x] = 1  # Cell is born
-
-            # Return the processed chunk along with its position information
-            # If we added padding rows, remove them from the result
-            if wrap:
-                if start_row == 0 and end_row >= grid.shape[0]:
-                    # Both first and last rows were padded
-                    result = result_chunk[1:-1]
-                elif start_row == 0:
-                    # Only first row was padded
-                    result = result_chunk[1:]
-                elif end_row >= grid.shape[0]:
-                    # Only last row was padded
-                    result = result_chunk[:-1]
-                else:
-                    # Both edges were padded
-                    result = result_chunk[1:-1]
-            else:
-                # For non-wrap, we just need to match the original chunk size
-                result = result_chunk[
-                    process_start
-                    - start_row : process_start
-                    - start_row
-                    + (end_row - start_row)
-                ]
-
-            return start_row, end_row, result
 
         # Process chunks in parallel
         futures = []
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
             for i in range(0, grid.shape[0], chunk_size):
                 end_row = min(i + chunk_size, grid.shape[0])
-                futures.append(executor.submit(process_chunk, i, end_row))
+                futures.append(
+                    executor.submit(
+                        self._process_grid_chunk,
+                        grid,
+                        i,
+                        end_row,
+                        birth_set,
+                        survival_set,
+                        wrap,
+                    )
+                )
 
             # Collect results and assemble the final grid
             for future in futures:
@@ -774,6 +647,421 @@ class BaseGenerator(BaseEntity):
                 new_grid[start_row:end_row] = chunk_result
 
         return new_grid
+
+    def _setup_parallel_processing(self, grid_height: int) -> Tuple[int, int]:
+        """
+        Set up parameters for parallel processing.
+
+        Args:
+            grid_height: Height of the grid to process
+
+        Returns:
+            Tuple[int, int]: Number of workers and chunk size
+        """
+        import multiprocessing
+        import math
+
+        # Determine number of workers based on CPU count
+        num_workers = min(multiprocessing.cpu_count(), 8)  # Limit to 8 workers max
+
+        # Calculate chunk size based on grid height
+        chunk_size = math.ceil(grid_height / num_workers)
+
+        return num_workers, chunk_size
+
+    def _process_grid_chunk(
+        self,
+        grid: np.ndarray,
+        start_row: int,
+        end_row: int,
+        birth_set: Set[int],
+        survival_set: Set[int],
+        wrap: bool,
+    ) -> Tuple[int, int, np.ndarray]:
+        """
+        Process a chunk of the grid with cellular automaton rules.
+
+        Args:
+            grid: The full grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+            birth_set: Set of neighbor counts that cause cell birth
+            survival_set: Set of neighbor counts that allow cell survival
+            wrap: Whether to wrap around grid edges
+
+        Returns:
+            Tuple[int, int, np.ndarray]: Start row, end row, and processed chunk
+        """
+        # Prepare input chunk with proper padding
+        input_chunk, process_start = self._prepare_input_chunk(
+            grid, start_row, end_row, wrap
+        )
+
+        # Process the chunk using the appropriate method
+        try:
+            # Try to use scipy for faster processing
+            result_chunk = self._process_chunk_with_scipy(
+                input_chunk, birth_set, survival_set, wrap
+            )
+        except ImportError:
+            # Fall back to manual implementation
+            result_chunk = self._process_chunk_manually(
+                input_chunk, birth_set, survival_set, wrap
+            )
+
+        # Trim padding from the result
+        result = self._trim_chunk_padding(
+            result_chunk, grid.shape[0], start_row, end_row, process_start, wrap
+        )
+
+        return start_row, end_row, result
+
+    def _prepare_input_chunk(
+        self, grid: np.ndarray, start_row: int, end_row: int, wrap: bool
+    ) -> Tuple[np.ndarray, int]:
+        """
+        Prepare input chunk with proper padding for neighbor calculations.
+
+        Args:
+            grid: The full grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+            wrap: Whether to wrap around grid edges
+
+        Returns:
+            Tuple[np.ndarray, int]: Padded input chunk and process start row
+        """
+        if wrap:
+            return self._prepare_wrapped_chunk(grid, start_row, end_row)
+        else:
+            return self._prepare_bounded_chunk(grid, start_row, end_row)
+
+    def _prepare_wrapped_chunk(
+        self, grid: np.ndarray, start_row: int, end_row: int
+    ) -> Tuple[np.ndarray, int]:
+        """
+        Prepare input chunk with wrapping at edges.
+
+        Args:
+            grid: The full grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+
+        Returns:
+            Tuple[np.ndarray, int]: Padded input chunk and process start row
+        """
+        # For wrap=True, we need to handle the edge cases specially
+        if start_row == 0:
+            # Include the last row for wrapping
+            process_start = start_row
+            input_chunk = np.vstack((grid[-1:], grid[process_start : end_row + 1]))
+        else:
+            process_start = start_row - 1
+            input_chunk = grid[process_start : end_row + 1]
+
+        if end_row >= grid.shape[0]:
+            # Include the first row for wrapping
+            input_chunk = np.vstack((input_chunk, grid[:1]))
+        else:
+            input_chunk = np.vstack((input_chunk, grid[end_row : end_row + 1]))
+
+        return input_chunk, process_start
+
+    def _prepare_bounded_chunk(
+        self, grid: np.ndarray, start_row: int, end_row: int
+    ) -> Tuple[np.ndarray, int]:
+        """
+        Prepare input chunk with boundaries (no wrapping).
+
+        Args:
+            grid: The full grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+
+        Returns:
+            Tuple[np.ndarray, int]: Padded input chunk and process start row
+        """
+        # For wrap=False, we just need to ensure we don't go out of bounds
+        process_start = max(0, start_row - 1)
+        process_end = min(grid.shape[0], end_row + 1)
+        input_chunk = grid[process_start:process_end]
+
+        return input_chunk, process_start
+
+    def _process_chunk_with_scipy(
+        self,
+        input_chunk: np.ndarray,
+        birth_set: Set[int],
+        survival_set: Set[int],
+        wrap: bool,
+    ) -> np.ndarray:
+        """
+        Process a chunk using scipy's optimized convolution.
+
+        Args:
+            input_chunk: The input chunk to process
+            birth_set: Set of neighbor counts that cause cell birth
+            survival_set: Set of neighbor counts that allow cell survival
+            wrap: Whether to wrap around edges
+
+        Returns:
+            np.ndarray: Processed chunk
+        """
+        # Check if scipy is available using importlib
+        import importlib.util
+
+        if importlib.util.find_spec("scipy") is None:
+            raise ImportError("scipy not available")
+
+        # Use scipy implementation for the chunk
+        from scipy import signal
+
+        # Create kernel for neighbor counting
+        kernel = np.ones((3, 3), dtype=np.int8)
+        kernel[1, 1] = 0  # Don't count the cell itself
+
+        # Count neighbors using convolution
+        boundary_mode = "wrap" if wrap else "fill"
+        neighbors = signal.convolve2d(
+            input_chunk, kernel, mode="same", boundary=boundary_mode
+        )
+
+        # Apply rules using vectorized operations
+        return self._apply_rules_vectorized(
+            input_chunk, neighbors, birth_set, survival_set
+        )
+
+    def _apply_rules_vectorized(
+        self,
+        input_chunk: np.ndarray,
+        neighbors: np.ndarray,
+        birth_set: Set[int],
+        survival_set: Set[int],
+    ) -> np.ndarray:
+        """
+        Apply cellular automaton rules using vectorized operations.
+
+        Args:
+            input_chunk: The input chunk to process
+            neighbors: Array of neighbor counts
+            birth_set: Set of neighbor counts that cause cell birth
+            survival_set: Set of neighbor counts that allow cell survival
+
+        Returns:
+            np.ndarray: Processed chunk
+        """
+        # Create the neighbor masks for birth and survival rules
+        birth_mask = self._create_rule_mask(neighbors, birth_set)
+        survival_mask = self._create_rule_mask(neighbors, survival_set)
+
+        return self._cellular_automation_chunk(input_chunk, survival_mask, birth_mask)
+
+    def _create_rule_mask(
+        self, neighbors: np.ndarray, rule_set: Set[int]
+    ) -> np.ndarray:
+        """
+        Create a mask for cells that match a rule set.
+
+        Args:
+            neighbors: Array of neighbor counts
+            rule_set: Set of neighbor counts to match
+
+        Returns:
+            np.ndarray: Boolean mask of cells matching the rule
+        """
+        mask = np.zeros_like(neighbors, dtype=bool)
+
+        for n in rule_set:
+            mask |= neighbors == n
+
+        return mask
+
+    def _process_chunk_manually(
+        self,
+        input_chunk: np.ndarray,
+        birth_set: Set[int],
+        survival_set: Set[int],
+        wrap: bool,
+    ) -> np.ndarray:
+        """
+        Process a chunk using manual iteration (fallback method).
+
+        Args:
+            input_chunk: The input chunk to process
+            birth_set: Set of neighbor counts that cause cell birth
+            survival_set: Set of neighbor counts that allow cell survival
+            wrap: Whether to wrap around edges
+
+        Returns:
+            np.ndarray: Processed chunk
+        """
+        result_chunk = np.zeros_like(input_chunk)
+        height, width = input_chunk.shape
+
+        # Define neighbor offsets once for efficiency
+        neighbor_offsets = self._get_neighbor_offsets()
+
+        for y in range(height):
+            for x in range(width):
+                # Count neighbors
+                neighbor_count = self._count_neighbors(
+                    input_chunk, x, y, neighbor_offsets, height, width, wrap
+                )
+
+                # Apply rules
+                if (
+                    input_chunk[y, x] > 0
+                    and neighbor_count in survival_set
+                    or input_chunk[y, x] <= 0
+                    and neighbor_count in birth_set
+                ):
+                    result_chunk[y, x] = 1  # Cell survives
+        return result_chunk
+
+    def _get_neighbor_offsets(self) -> List[Tuple[int, int]]:
+        """
+        Get the offsets for the 8 neighboring cells.
+
+        Returns:
+            List[Tuple[int, int]]: List of (dx, dy) offsets
+        """
+        return [
+            (dx, dy) for dy in [-1, 0, 1] for dx in [-1, 0, 1] if dx != 0 or dy != 0
+        ]
+
+    def _count_neighbors(
+        self,
+        grid: np.ndarray,
+        x: int,
+        y: int,
+        neighbor_offsets: List[Tuple[int, int]],
+        height: int,
+        width: int,
+        wrap: bool,
+    ) -> int:
+        """
+        Count the number of live neighbors for a cell.
+
+        Args:
+            grid: The grid to check
+            x: X-coordinate of the cell
+            y: Y-coordinate of the cell
+            neighbor_offsets: List of neighbor offsets
+            height: Height of the grid
+            width: Width of the grid
+            wrap: Whether to wrap around edges
+
+        Returns:
+            int: Number of live neighbors
+        """
+        neighbor_count = 0
+
+        for dx, dy in neighbor_offsets:
+            if wrap:
+                # Wrap around edges
+                nx, ny = (x + dx) % width, (y + dy) % height
+            else:
+                # Don't wrap, check boundaries
+                nx, ny = x + dx, y + dy
+                if nx < 0 or nx >= width or ny < 0 or ny >= height:
+                    continue
+
+            if grid[ny, nx] > 0:
+                neighbor_count += 1
+
+        return neighbor_count
+
+    def _trim_chunk_padding(
+        self,
+        result_chunk: np.ndarray,
+        grid_height: int,
+        start_row: int,
+        end_row: int,
+        process_start: int,
+        wrap: bool,
+    ) -> np.ndarray:
+        """
+        Trim padding from the processed chunk.
+
+        Args:
+            result_chunk: The processed chunk with padding
+            grid_height: Height of the original grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+            process_start: Starting row after padding
+            wrap: Whether wrapping was used
+
+        Returns:
+            np.ndarray: Trimmed result chunk
+        """
+        if wrap:
+            return self._trim_wrapped_chunk(
+                result_chunk, grid_height, start_row, end_row
+            )
+        else:
+            return self._trim_bounded_chunk(
+                result_chunk, start_row, process_start, end_row
+            )
+
+    def _trim_wrapped_chunk(
+        self,
+        result_chunk: np.ndarray,
+        grid_height: int,
+        start_row: int,
+        end_row: int,
+    ) -> np.ndarray:
+        """
+        Trim padding from a chunk that used wrapping.
+
+        Args:
+            result_chunk: The processed chunk with padding
+            grid_height: Height of the original grid
+            start_row: Starting row of the chunk
+            end_row: Ending row of the chunk
+
+        Returns:
+            np.ndarray: Trimmed result chunk
+        """
+        if (
+            start_row == 0
+            and end_row >= grid_height
+            or start_row != 0
+            and end_row < grid_height
+        ):
+            # Both first and last rows were padded
+            return result_chunk[1:-1]
+        elif start_row == 0:
+            # Only first row was padded
+            return result_chunk[1:]
+        else:
+            # Only last row was padded
+            return result_chunk[:-1]
+
+    def _trim_bounded_chunk(
+        self,
+        result_chunk: np.ndarray,
+        start_row: int,
+        process_start: int,
+        end_row: int,
+    ) -> np.ndarray:
+        """
+        Trim padding from a chunk that used boundaries.
+
+        Args:
+            result_chunk: The processed chunk with padding
+            start_row: Starting row of the chunk
+            process_start: Starting row after padding
+            end_row: Ending row of the chunk
+
+        Returns:
+            np.ndarray: Trimmed result chunk
+        """
+        return result_chunk[
+            process_start
+            - start_row : process_start
+            - start_row
+            + (end_row - start_row)
+        ]
 
     def _apply_cellular_automaton_scipy(
         self,
@@ -809,15 +1097,15 @@ class BaseGenerator(BaseEntity):
             neighbors, birth_set, survival_set
         )
 
-        # Apply rules using vectorized operations
-        alive_mask = grid == 1
-        dead_mask = grid == 0
+        return self._cellular_automation_chunk(grid, survival_mask, birth_mask)
 
-        new_grid = np.zeros_like(grid)
-        new_grid[alive_mask & survival_mask] = 1  # Cells that survive
-        new_grid[dead_mask & birth_mask] = 1  # Cells that are born
-
-        return new_grid
+    def _cellular_automation_chunk(self, arg0, survival_mask, birth_mask):
+        alive_mask = arg0 == 1
+        dead_mask = arg0 == 0
+        result_chunk = np.zeros_like(arg0)
+        result_chunk[alive_mask & survival_mask] = 1
+        result_chunk[dead_mask & birth_mask] = 1
+        return result_chunk
 
     def _create_neighbor_masks(
         self,
@@ -1249,10 +1537,10 @@ class BaseGenerator(BaseEntity):
         Returns:
             np.ndarray: Selected cluster centers
         """
-        # Randomly select cluster centers without replacement
-        cluster_indices = np.random.choice(
-            len(non_zero_coords), num_clusters, replace=False
-        )
+        # Randomly select cluster centers without replacement using Generator API
+        # Use time-based seed for reproducibility
+        rng = np.random.default_rng(seed=int(time.time()))
+        cluster_indices = rng.choice(len(non_zero_coords), num_clusters, replace=False)
         return non_zero_coords[cluster_indices]
 
     def _apply_vectorized_clustering(
@@ -1301,7 +1589,14 @@ class BaseGenerator(BaseEntity):
         # For each cluster center
         for center in cluster_centers:
             cy, cx = center
-            radius = np.random.randint(3, 10)
+            # Use numpy random Generator API with time-based seed
+            rng = np.random.default_rng(seed=int(time.time()))
+            radius = rng.integers(3, 10)
+            radius = radius * self.zoom
+            radius = max(1, radius)
+            radius = min(self.width, radius)
+            radius = min(self.height, radius)
+            radius = int(radius)
 
             # Calculate distances for all points at once
             distances = np.sqrt((x_indices - cx) ** 2 + (y_indices - cy) ** 2)
@@ -1382,7 +1677,14 @@ class BaseGenerator(BaseEntity):
             # Process each cluster center assigned to this worker
             for center in worker_clusters:
                 cy, cx = center
-                radius = np.random.randint(3, 10)
+                # Use numpy random Generator API with time-based seed
+                rng = np.random.default_rng(seed=int(time.time()))
+                radius = rng.integers(3, 10)
+                radius = radius * self.zoom
+                radius = max(1, radius)
+                radius = min(self.width, radius)
+                radius = min(self.height, radius)
+                radius = int(radius)
 
                 # Calculate distances for all points at once
                 distances = np.sqrt((x_indices - cx) ** 2 + (y_indices - cy) ** 2)
@@ -1448,7 +1750,9 @@ class BaseGenerator(BaseEntity):
         # Create clusters around centers (original approach)
         for center in cluster_centers:
             cy, cx = center
-            radius = np.random.randint(3, 10)
+            # Use numpy random Generator API with time-based seed
+            rng = np.random.default_rng(seed=int(time.time()))
+            radius = rng.integers(3, 10)
 
             # Optimize by only iterating over the area within the radius
             y_min = max(0, cy - radius)

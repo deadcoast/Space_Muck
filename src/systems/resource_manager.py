@@ -219,60 +219,132 @@ class ResourceManager:
         Args:
             dt: Time delta since last update
         """
-        if not self.active or self.paused:
+        if not self._should_update(dt):
             return
+
+        self._process_active_flows()
+        self._update_resource_states()
+        self.last_update = 0
+
+    def _should_update(self, dt: float) -> bool:
+        """
+        Determine if an update should be performed based on time and system state.
+
+        Args:
+            dt: Time delta since last update
+
+        Returns:
+            bool: True if update should proceed, False otherwise
+        """
+        if not self.active or self.paused:
+            return False
 
         self.last_update += dt
-        if self.last_update < self.update_interval:
-            return
+        return self.last_update >= self.update_interval
 
-        # Process all active flows
+    def _process_active_flows(self) -> None:
+        """
+        Process all active resource flows in the system.
+        """
         for flow in self.flows:
             if not flow.active:
                 continue
 
-            # Calculate transfer amount
-            transfer = flow.rate * self.update_interval
-            source = self.resources[flow.source_id]
-            dest = self.resources[flow.dest_id]
-
-            # Check if transfer is possible
-            available = source.get(flow.resource_type, 0)
-            capacity = self.capacities[flow.dest_id].get(flow.resource_type, 0)
-            current = dest.get(flow.resource_type, 0)
-
-            # Adjust transfer based on constraints
-            transfer = min(transfer, available)
-            transfer = min(transfer, capacity - current)
+            transfer = self._calculate_transfer_amount(flow)
 
             if transfer > 0:
-                # Execute transfer
-                source[flow.resource_type] -= transfer
-                dest[flow.resource_type] = dest.get(flow.resource_type, 0) + transfer
+                self._execute_transfer(flow, transfer)
+                self._record_flow_history(flow, transfer)
 
-                # Record in history
-                flow_id = f"{flow.source_id}->{flow.dest_id}"
-                if flow_id not in self.flow_history:
-                    self.flow_history[flow_id] = []
-                self.flow_history[flow_id].append((self.last_update, transfer))
+    def _calculate_transfer_amount(self, flow: ResourceFlow) -> float:
+        """
+        Calculate the amount of resources to transfer for a given flow.
 
-        # Update resource states
+        Args:
+            flow: The resource flow to calculate transfer for
+
+        Returns:
+            float: The amount to transfer
+        """
+        # Calculate base transfer amount
+        transfer = flow.rate * self.update_interval
+
+        # Get current resource levels
+        source = self.resources[flow.source_id]
+        dest = self.resources[flow.dest_id]
+
+        # Check constraints
+        available = source.get(flow.resource_type, 0)
+        capacity = self.capacities[flow.dest_id].get(flow.resource_type, 0)
+        current = dest.get(flow.resource_type, 0)
+
+        # Apply constraints
+        transfer = min(transfer, available)
+        transfer = min(transfer, capacity - current)
+
+        return transfer
+
+    def _execute_transfer(self, flow: ResourceFlow, amount: float) -> None:
+        """
+        Execute a resource transfer between nodes.
+
+        Args:
+            flow: The resource flow to execute
+            amount: The amount to transfer
+        """
+        source = self.resources[flow.source_id]
+        dest = self.resources[flow.dest_id]
+
+        # Update source and destination resource amounts
+        source[flow.resource_type] -= amount
+        dest[flow.resource_type] = dest.get(flow.resource_type, 0) + amount
+
+    def _record_flow_history(self, flow: ResourceFlow, amount: float) -> None:
+        """
+        Record a flow transfer in the history.
+
+        Args:
+            flow: The resource flow that was executed
+            amount: The amount that was transferred
+        """
+        flow_id = f"{flow.source_id}->{flow.dest_id}"
+
+        if flow_id not in self.flow_history:
+            self.flow_history[flow_id] = []
+
+        self.flow_history[flow_id].append((self.last_update, amount))
+
+    def _update_resource_states(self) -> None:
+        """
+        Update the state of all resources based on their current levels.
+        """
         for node_id, resources in self.resources.items():
             for rtype, amount in resources.items():
-                capacity = self.capacities[node_id][rtype]
-                ratio = amount / capacity
+                self._update_resource_state(node_id, rtype, amount)
 
-                # Update state based on thresholds
-                if ratio <= RESOURCE_THRESHOLDS["critical_low"]:
-                    self.states[node_id][rtype] = ResourceState.CRITICAL
-                elif ratio <= RESOURCE_THRESHOLDS["low"]:
-                    self.states[node_id][rtype] = ResourceState.DEPLETING
-                elif ratio >= RESOURCE_THRESHOLDS["high"]:
-                    self.states[node_id][rtype] = ResourceState.GROWING
-                else:
-                    self.states[node_id][rtype] = ResourceState.STABLE
+    def _update_resource_state(
+        self, node_id: str, rtype: ResourceType, amount: float
+    ) -> None:
+        """
+        Update the state of a specific resource based on its current level.
 
-        self.last_update = 0
+        Args:
+            node_id: The ID of the node containing the resource
+            rtype: The type of resource to update
+            amount: The current amount of the resource
+        """
+        capacity = self.capacities[node_id][rtype]
+        ratio = amount / capacity
+
+        # Determine state based on thresholds
+        if ratio <= RESOURCE_THRESHOLDS["critical_low"]:
+            self.states[node_id][rtype] = ResourceState.CRITICAL
+        elif ratio <= RESOURCE_THRESHOLDS["low"]:
+            self.states[node_id][rtype] = ResourceState.DEPLETING
+        elif ratio >= RESOURCE_THRESHOLDS["high"]:
+            self.states[node_id][rtype] = ResourceState.GROWING
+        else:
+            self.states[node_id][rtype] = ResourceState.STABLE
 
     def get_resource_amount(
         self, node_id: str, resource_type: ResourceType

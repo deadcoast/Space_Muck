@@ -24,21 +24,54 @@ import time
 import numpy as np
 
 # Local application imports
-from config import (  # noqa: E402
-from entities.miner_entity import MinerEntity  # noqa: E402
-from entities.player import Player  # noqa: E402
-from events.event_bus import get_event_bus  # noqa: E402
-from generators.asteroid_field import AsteroidField  # noqa: E402
-from systems.combat_system import CombatSystem  # noqa: E402
-from systems.encounter_generator import EncounterGenerator  # noqa: E402
-from systems.event_system import get_event_batcher  # noqa: E402
-from systems.game_loop import get_game_loop  # noqa: E402
+from config import (
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    GRID_WIDTH,
+    GRID_HEIGHT,
+    MINIMAP_SIZE,
+    MINIMAP_PADDING,
+    VIEW_WIDTH,
+    VIEW_HEIGHT,
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_RACE_1,
+    COLOR_RACE_2,
+    COLOR_RACE_3,
+    RACE_INITIAL_DENSITY,
+    COLOR_PLAYER,
+    STATE_PLAY,
+    STATE_SHOP,
+    SHOW_FPS,
+)
+
+from entities.miner_entity import MinerEntity
+from entities.player import Player
+from events.event_bus import get_event_bus
+from generators.asteroid_field import AsteroidField
+from systems.combat_system import CombatSystem
+from systems.encounter_generator import EncounterGenerator
+from systems.event_system import get_event_batcher
+from systems.game_loop import get_game_loop
 from typing import Dict, List, Tuple, Any, Optional
-from ui.draw_utils import (  # noqa: E402
-from ui.notification import NotificationManager  # noqa: E402
-from ui.renderers import AsteroidFieldRenderer  # noqa: E402
-from ui.shop import Shop  # noqa: E402
-from utils.logging_setup import (  # noqa: E402
+from ui.draw_utils import (
+    draw_text,
+    draw_panel,
+    draw_button,
+    draw_progress_bar,
+    draw_minimap,
+)
+from ui.notification import NotificationManager
+from ui.renderers import AsteroidFieldRenderer
+from ui.shop import Shop
+from utils.logging_setup import (
+    log_exception,
+    log_performance_start,
+    log_performance_end,
+    LogContext,
+    log_memory_usage,
+    log_performance_metric,
+)
 import gc
 import pygame
 
@@ -48,37 +81,6 @@ import pygame
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, current_dir)
-
-# Third-party library imports
-  # noqa: E402
-  # noqa: E402
-
-# Local application imports
-# Game constants and configuration
-
-    # Window and display settings
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    GRID_WIDTH,
-    GRID_HEIGHT,
-    MINIMAP_SIZE,
-    MINIMAP_PADDING,
-    VIEW_WIDTH,
-    VIEW_HEIGHT,
-    # Colors
-    COLOR_BG,
-    COLOR_TEXT,
-    COLOR_RACE_1,
-    COLOR_RACE_2,
-    COLOR_RACE_3,
-    RACE_INITIAL_DENSITY,
-    COLOR_PLAYER,
-    # Game states
-    STATE_PLAY,
-    STATE_SHOP,
-    # Debug settings
-    SHOW_FPS,
-)
 
 # Game configuration constants
 GAME_CONFIG = {
@@ -119,46 +121,50 @@ GAME_CONFIG = {
     },
 }
 
+
 # State machine error types
 class GameStateError(Exception):
     """Base class for game state related errors."""
 
     pass
 
+
 class InvalidStateTransitionError(GameStateError):
     """Raised when attempting an invalid state transition."""
 
     pass
+
 
 class StateValidationError(GameStateError):
     """Raised when state validation fails."""
 
     pass
 
+
 class GameInitializationError(GameStateError):
     """Raised when game initialization fails."""
 
     pass
 
-# Game components
 
+# Game components
+(
     draw_text,
     draw_panel,
-    # draw_minimap removed - unused import
     draw_progress_bar,
     draw_button,
 )
 
 # Game systems
-
+(
     log_exception,
     log_performance_start,
     log_performance_end,
     LogContext,
     log_memory_usage,
-    # Add missing function
     log_performance_metric,
 )
+
 
 class Game:
     """Main game class that orchestrates all game components.
@@ -2585,12 +2591,8 @@ class Game:
 
         elif outcome == "victory":
             self.stats["combats_won"] = self.stats.get("combats_won", 0) + 1
-        self._track_combat_by_category(
-            combat_info, "zone", "combats_in_"
-        )
-        self._track_combat_by_category(
-            combat_info, "enemy_type", "combats_against_"
-        )
+        self._track_combat_by_category(combat_info, "zone", "combats_in_")
+        self._track_combat_by_category(combat_info, "enemy_type", "combats_against_")
         if combat_stats := combat_info["stats"]:
             for stat_name, stat_value in combat_stats.items():
                 self.stats[f"combat_{stat_name}"] = (
@@ -3121,6 +3123,7 @@ class Game:
         # End event batching and dispatch all events
         event_batcher.dispatch_batch()
 
+
 def run_game_loop(game):
     """Run the main game loop.
 
@@ -3159,6 +3162,7 @@ def run_game_loop(game):
         log_exception("Unhandled exception in main game loop", e)
         return False
 
+
 def main():
     """Main entry point for the game."""
     try:
@@ -3170,6 +3174,7 @@ def main():
         # Ensure pygame is properly shut down
         pygame.quit()
         logging.info("Game shutdown complete")
+
 
 def _initialize_game_and_run():
     # Configure logging
@@ -3196,6 +3201,7 @@ def _initialize_game_and_run():
         logging.info("Game completed successfully")
     else:
         logging.warning("Game loop terminated with errors")
+
 
 if __name__ == "__main__":
     main()

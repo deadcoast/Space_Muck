@@ -11,10 +11,6 @@
 # EFFECT: Generates test cases for enhanced methods
 # NAMING: Test[Type]Generator
 
-@dataclass
-class TestCase:
-    """Container for test case data."""
-
 # Standard library imports
 import inspect
 import logging
@@ -26,11 +22,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
+
+@dataclass
+class TestCase:
+    """Container for test case data."""
+
     method_name: str
     inputs: Dict[str, Any]
     expected_output: Any
     description: str = ""
     tags: List[str] = field(default_factory=list)
+
 
 class TestGenerator:
     """Generates test cases for enhanced methods.

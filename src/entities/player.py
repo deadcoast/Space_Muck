@@ -46,6 +46,7 @@ GAME_FACTIONS = [
     "fringe_colonies",  # Outlaw/independent faction
 ]
 
+
 class Player(MinerEntity):
     """
     Represents the player character in the game.
@@ -1021,7 +1022,6 @@ class Player(MinerEntity):
             Dict with attack results
         """
         # Import here to avoid circular imports
-        
 
         # Calculate base damage
         damage = self.attack_power

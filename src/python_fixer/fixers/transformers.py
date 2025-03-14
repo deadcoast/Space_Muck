@@ -10,6 +10,7 @@ import ast
 import astor
 import variant_loggers
 
+
 # Base Transformer Class
 class BaseTransformer:
     """
@@ -70,6 +71,7 @@ class RelativeImportTransformer(BaseTransformer):
         base = parts[: -node.level]
         absolute_module = ".".join(base + target)
         return absolute_module or None
+
 
 # CircularDependencyTransformer Class
 class CircularDependencyTransformer(BaseTransformer):

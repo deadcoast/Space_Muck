@@ -1,7 +1,7 @@
 # Standard library imports
 from datetime import datetime, timezone
 from functools import wraps
-from logging import LogRecord, getLogger, getLevelName
+from logging import LogRecord, getLogger
 import inspect
 import logging
 
@@ -10,8 +10,9 @@ import logging
 # Local application imports
 from python_fixer.logging.correlator import log_correlator
 
+
 # Configure the basic logger
-def basicConfig(
+def basic_config(
     level: str = "INFO",
     format: str = "%(asctime)s - %(levelname)s - %(message)s",
     datefmt: str = "%Y-%m-%d %H:%M:%S",
@@ -27,8 +28,9 @@ def basicConfig(
     numeric_level = getattr(logging, level.upper(), logging.INFO)
     logging.basicConfig(level=numeric_level, format=format, datefmt=datefmt)
 
+
 # Get logger instance
-def getLoggerInstance(name: str) -> logging.Logger:
+def get_logger_instance(name: str) -> logging.Logger:
     """
     Retrieves a logger instance with the specified name.
 
@@ -40,8 +42,9 @@ def getLoggerInstance(name: str) -> logging.Logger:
     """
     return getLogger(name)
 
+
 # Get level name
-def getLevelName(level: int) -> str:
+def get_level_name(level: int) -> str:
     """
     Retrieves the textual representation of a logging level.
 
@@ -52,6 +55,7 @@ def getLevelName(level: int) -> str:
         str: The name of the logging level.
     """
     return logging.getLevelName(level)
+
 
 def _get_frame_info() -> tuple:
     """
@@ -69,6 +73,7 @@ def _get_frame_info() -> tuple:
             return function_name, line_number
     return None, None
 
+
 def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
     """
     Handles the logging logic, including creating a LogRecord and correlating it.
@@ -80,7 +85,7 @@ def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
         line_number (int): Line number in the caller function.
         **kwargs: Additional keyword arguments for logging.
     """
-    logger = getLoggerInstance(__name__)
+    logger = get_logger_instance(__name__)
     logger.log(level, msg, extra=kwargs)
 
     # Create a LogRecord instance
@@ -96,6 +101,7 @@ def log(level: int, msg: str, function_name: str, line_number: int, **kwargs):
 
     # Correlate the log record
     log_correlator.correlate(record)
+
 
 def log_decorator(level: int):
     """
@@ -118,6 +124,7 @@ def log_decorator(level: int):
 
     return decorator
 
+
 @log_decorator(logging.DEBUG)
 def debug(msg: str, **kwargs):
     """
@@ -128,6 +135,7 @@ def debug(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
+
 
 @log_decorator(logging.INFO)
 def info(msg: str, **kwargs):
@@ -140,6 +148,7 @@ def info(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
+
 @log_decorator(logging.WARNING)
 def warning(msg: str, **kwargs):
     """
@@ -151,6 +160,7 @@ def warning(msg: str, **kwargs):
     """
     pass  # The decorator handles the logging
 
+
 @log_decorator(logging.ERROR)
 def error(msg: str, **kwargs):
     """
@@ -161,6 +171,7 @@ def error(msg: str, **kwargs):
         **kwargs: Additional keyword arguments for logging.
     """
     pass  # The decorator handles the logging
+
 
 @log_decorator(logging.CRITICAL)
 def critical(msg: str, **kwargs):

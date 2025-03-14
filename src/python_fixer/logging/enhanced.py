@@ -155,7 +155,7 @@ class EnhancedLogger:
         extra = record.extra or {}
         self.logger.log(record.level, log_message, extra=extra)
 
-    async def _update_visualizations(self, record: LogRecord):
+    async def _update_visualizations(self):
         """Update visual dashboards with the latest log information."""
         # Placeholder for visualization updates
         await asyncio.sleep(0)  # Avoid blocking
@@ -235,7 +235,7 @@ class EnhancedLogger:
             self._write_entry(record)
 
             # Update visualizations
-            await self._update_visualizations(record)
+            await self._update_visualizations()
 
     async def generate_report(self, format: str = "html") -> Path:
         """Generate a report based on aggregated log data."""
@@ -306,6 +306,7 @@ class EnhancedLogger:
         for handler in self.logger.handlers:
             handler.close()
             self.logger.removeHandler(handler)
+
 
 if __name__ == "__main__":
 

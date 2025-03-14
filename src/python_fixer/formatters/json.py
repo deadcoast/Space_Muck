@@ -20,8 +20,8 @@ class JsonFormatter:
         """Format record as JSON string"""
         data = {
             "timestamp": record.timestamp,
-            "level": record.getLevelName(),
-            "message": record.getMessage(),
+            "level": record.get_level_name(),
+            "message": record.get_message(),
             "module": record.module,
             "function": record.function,
             "line": record.line,
@@ -37,7 +37,7 @@ class JsonFormatter:
 
         return json.dumps(data)
 
-    def formatException(self, exc_info):
+    def format_exception(self, exc_info):
         """
         Formats the given exception information into a formatted string.
 
@@ -47,16 +47,18 @@ class JsonFormatter:
         :return: A formatted string that represents the provided exception details.
         :rtype: str
         """
-        return "".join(variant_loggers.Formatter.formatException(self, exc_info))
+        return "".join(variant_loggers.Formatter.format_exception(self, exc_info))
 
 
-def getLevelName(self) -> str:
+def get_level_name(self) -> str:
     """Returns the name of the variant_loggers level."""
-    return variant_loggers.getLevelName(self.level)
+    return variant_loggers.get_level_name(self.level)
 
-def getMessage(self) -> str:
+
+def get_message(self) -> str:
     """Returns the log message."""
     return self.message
+
 
 @classmethod
 def from_dict(cls, record_data: Dict[str, Any]) -> "LogRecord":

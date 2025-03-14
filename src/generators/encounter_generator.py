@@ -200,10 +200,7 @@ class EncounterGenerator:
         """
         # Determine if this is a faction-based encounter
         faction_encounter = random.random() < 0.3
-        faction = None
-
-        if faction_encounter:
-            faction = self._extracted_from__generate_combat_encounter_14()
+        faction = self._random_choices() if faction_encounter else None
         # Generate enemy ship
         enemy = self.combat_system.generate_enemy(
             faction=faction, position=self.player.position
@@ -236,8 +233,7 @@ class EncounterGenerator:
             "combat_system": self.combat_system,
         }
 
-    # TODO Rename this here and in `_generate_combat_encounter`
-    def _extracted_from__generate_combat_encounter_14(self):
+    def _random_choices(self):
         # Determine which faction based on player location and reputation
         from entities.player import GAME_FACTIONS
 

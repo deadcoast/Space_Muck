@@ -11,14 +11,11 @@
 # EFFECT: Generates project structure maps and analysis
 # NAMING: ProjectMap[Type]Generator
 
-@dataclass
-class ProjectMap:
-    """Container for project map data."""
-
 # Standard library imports
 import logging
 
 # Third-party library imports
+
 
 # Local application imports
 from dataclasses import dataclass, field
@@ -30,12 +27,18 @@ from sphinx.util.docutils import SphinxDirective
 from typing import Dict, List, Optional, Set
 import networkx as nx
 
+
+@dataclass
+class ProjectMap:
+    """Container for project map data."""
+
     name: str
     description: str
     components: Set[str]
     dependencies: Dict[str, List[str]]
     enhancement_targets: List[str] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
+
 
 class ProjectMapGenerator:
     """Generates project structure maps and analysis.
@@ -333,6 +336,7 @@ class ProjectMapGenerator:
         except Exception as e:
             self.logger.error(f"Error generating Sphinx documentation: {str(e)}")
 
+
 class ProjectMapDirective(SphinxDirective):
     """Sphinx directive for including project maps in documentation."""
 
@@ -377,6 +381,7 @@ class ProjectMapDirective(SphinxDirective):
         section += dep_section
 
         return [section]
+
 
 def setup(app: Sphinx) -> Dict[str, bool]:
     """Set up the Sphinx extension."""

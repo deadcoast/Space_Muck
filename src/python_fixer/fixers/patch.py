@@ -20,6 +20,8 @@ import variant_loggers
 # Configure variant_loggers
 variant_loggers.basicConfig(level=variant_loggers.INFO)
 logger = variant_loggers.getLogger(__name__)
+
+
 class PatchHandler:
     def __init__(self, patches_dir: str):
         """
@@ -310,7 +312,6 @@ if __name__ == "__main__":
         :param config_file: Path to the configuration file.
         :return: Configuration as a dictionary.
         """
-        
 
         import yaml
 
@@ -365,6 +366,7 @@ if __name__ == "__main__":
         fixer_instance = SmartFixer(self)
         fixer_instance.apply_fixes()
         variant_loggers.info("Automatic fix applied.")
+
 
 # Example Usage of SmartFixer
 if __name__ == "__main__":
