@@ -1,12 +1,13 @@
 # Standard library imports
+# Local application imports
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, Optional, Set
+
+from rich import Console
 
 # Third-party library imports
 
-# Local application imports
-from dataclasses import dataclass, field
-from rich import Console
-from typing import Any, Dict, Optional, Set
 
 cli = Console()
 

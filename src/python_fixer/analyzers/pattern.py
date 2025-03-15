@@ -2,10 +2,12 @@
 
 # Third-party library imports
 
+from typing import Any, Dict
+
+import torch
+
 # Local application imports
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import Any, Dict
-import torch
 
 
 class PatternAnalyzer:

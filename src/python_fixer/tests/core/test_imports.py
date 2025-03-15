@@ -7,42 +7,38 @@ This test suite covers:
 3. Circular import prevention
 """
 
+import datetime as dt
+import os
+import sys
+
 # Standard library imports
 from collections import defaultdict as dd
-from collections import defaultdict as dd
 from os import *
-import datetime as dt
-import datetime as dt
-import os
-import os
-import sys
-import sys
+from pathlib import Path
+from typing import *
+from typing import Dict, List, Optional
 
 # Third-party library imports
 import pytest
 
-# Local application imports
-from . import module_b
-from . import module_b
-from .. import module_a
+from python_fixer.core.analyzer import ImportAnalyzer, ImportCollectorVisitor
+
 from ...subpkg3.module_d import ClassD
+from .. import module_a
 from ..module_a import ClassA
 from ..module_b import ClassB
+
+# Local application imports
+from . import module_b
 from .module_a import ClassA
 from .module_b import ClassB
 from .module_c import ClassC
 from .module_x import ClassX
 from .module_y import ClassY
 from .subpkg import module_c
-from .subpkg import module_c
-from .subpkg.module_c import *
 from .subpkg1.module_b import ClassB
 from .subpkg2.module_c import ClassC
-from pathlib import Path
-from python_fixer.core.analyzer import ImportAnalyzer, ImportCollectorVisitor
-from typing import *
-from typing import List, Dict, Optional
-from typing import List, Dict, Optional
+from .subpkg.module_c import *
 
 # Check if libcst is available for testing
 try:
@@ -140,12 +136,12 @@ def test_parent_directory_imports(temp_package_structure: Path) -> None:
     analyzer = ImportAnalyzer(temp_package_structure / "subpkg1" / "module_b.py")
     imports = analyzer.analyze_imports()
 
-    assert any(
-        imp.module == "..module_a" for imp in imports
-    ), "Parent directory import not found"
-    assert any(
-        imp.imported_names == ["ClassA"] for imp in imports
-    ), "ClassA import not found"
+    assert any(imp.module == "..module_a" for imp in imports), (
+        "Parent directory import not found"
+    )
+    assert any(imp.imported_names == ["ClassA"] for imp in imports), (
+        "ClassA import not found"
+    )
 
 
 def test_sibling_imports(temp_package_structure: Path) -> None:
@@ -172,12 +168,12 @@ def test_sibling_imports(temp_package_structure: Path) -> None:
         imports.append(mock_import)
 
     # Now the assertions should pass
-    assert any(
-        imp.module == ".subpkg2.module_c" for imp in imports
-    ), "Sibling directory import not found"
-    assert any(
-        imp.imported_names == ["ClassC"] for imp in imports
-    ), "ClassC import not found"
+    assert any(imp.module == ".subpkg2.module_c" for imp in imports), (
+        "Sibling directory import not found"
+    )
+    assert any(imp.imported_names == ["ClassC"] for imp in imports), (
+        "ClassC import not found"
+    )
 
     # Print debug information
     print("\nDebug - Sibling imports:")
@@ -214,12 +210,12 @@ def test_nested_package_imports(temp_package_structure: Path) -> None:
         imports.append(mock_import)
 
     # Now the assertions should pass
-    assert any(
-        imp.module == "...subpkg3.module_d" for imp in imports
-    ), "Nested package import not found"
-    assert any(
-        imp.imported_names == ["ClassD"] for imp in imports
-    ), "ClassD import not found"
+    assert any(imp.module == "...subpkg3.module_d" for imp in imports), (
+        "Nested package import not found"
+    )
+    assert any(imp.imported_names == ["ClassD"] for imp in imports), (
+        "ClassD import not found"
+    )
 
     # Print debug information
     print("\nDebug - Nested package imports:")
@@ -234,12 +230,12 @@ def test_init_imports(temp_package_structure: Path) -> None:
     analyzer = ImportAnalyzer(temp_package_structure / "__init__.py")
     imports = analyzer.analyze_imports()
 
-    assert any(
-        imp.module == ".module_a" for imp in imports
-    ), "Module import in __init__.py not found"
-    assert any(
-        imp.imported_names == ["ClassA"] for imp in imports
-    ), "ClassA import in __init__.py not found"
+    assert any(imp.module == ".module_a" for imp in imports), (
+        "Module import in __init__.py not found"
+    )
+    assert any(imp.imported_names == ["ClassA"] for imp in imports), (
+        "ClassA import in __init__.py not found"
+    )
 
 
 @pytest.fixture
@@ -290,20 +286,20 @@ def test_detect_direct_circular_import(circular_import_structure: Path) -> None:
     imports_y = analyzer_y.analyze_imports()
 
     # Verify both modules import from each other
-    assert any(
-        imp.module == ".module_y" for imp in imports_x
-    ), "Import from module_y not found"
-    assert any(
-        imp.module == ".module_x" for imp in imports_y
-    ), "Import from module_x not found"
+    assert any(imp.module == ".module_y" for imp in imports_x), (
+        "Import from module_y not found"
+    )
+    assert any(imp.module == ".module_x" for imp in imports_y), (
+        "Import from module_x not found"
+    )
 
     # Verify imported class names
-    assert any(
-        imp.imported_names == ["ClassY"] for imp in imports_x
-    ), "ClassY import not found"
-    assert any(
-        imp.imported_names == ["ClassX"] for imp in imports_y
-    ), "ClassX import not found"
+    assert any(imp.imported_names == ["ClassY"] for imp in imports_x), (
+        "ClassY import not found"
+    )
+    assert any(imp.imported_names == ["ClassX"] for imp in imports_y), (
+        "ClassX import not found"
+    )
 
 
 @pytest.fixture
@@ -368,26 +364,26 @@ def test_detect_indirect_circular_import(indirect_circular_structure: Path) -> N
     imports_c = analyzer_c.analyze_imports()
 
     # Verify the circular import chain
-    assert any(
-        imp.module == ".module_b" for imp in imports_a
-    ), "Import from module_b not found"
-    assert any(
-        imp.module == ".module_c" for imp in imports_b
-    ), "Import from module_c not found"
-    assert any(
-        imp.module == ".module_a" for imp in imports_c
-    ), "Import from module_a not found"
+    assert any(imp.module == ".module_b" for imp in imports_a), (
+        "Import from module_b not found"
+    )
+    assert any(imp.module == ".module_c" for imp in imports_b), (
+        "Import from module_c not found"
+    )
+    assert any(imp.module == ".module_a" for imp in imports_c), (
+        "Import from module_a not found"
+    )
 
     # Verify imported class names
-    assert any(
-        imp.imported_names == ["ClassB"] for imp in imports_a
-    ), "ClassB import not found"
-    assert any(
-        imp.imported_names == ["ClassC"] for imp in imports_b
-    ), "ClassC import not found"
-    assert any(
-        imp.imported_names == ["ClassA"] for imp in imports_c
-    ), "ClassA import not found"
+    assert any(imp.imported_names == ["ClassB"] for imp in imports_a), (
+        "ClassB import not found"
+    )
+    assert any(imp.imported_names == ["ClassC"] for imp in imports_b), (
+        "ClassC import not found"
+    )
+    assert any(imp.imported_names == ["ClassA"] for imp in imports_c), (
+        "ClassA import not found"
+    )
 
 
 # Additional tests for refactored ImportCollectorVisitor and analyze_imports
@@ -498,17 +494,17 @@ def test_import_collector_visitor():
     assert any("typing." in imp for imp in imports), "From import 'typing' not found"
 
     # Check for collections imports - they might be stored as collections.defaultdict, etc.
-    assert any(
-        "collections." in imp for imp in imports
-    ), "From import with alias 'collections' not found"
+    assert any("collections." in imp for imp in imports), (
+        "From import with alias 'collections' not found"
+    )
 
     # Check for relative imports
-    assert any(
-        "module_b" in imp for imp in imports
-    ), "Relative import '.module_b' not found"
-    assert any(
-        "subpkg.module_c" in imp for imp in imports
-    ), "Nested relative import '.subpkg.module_c' not found"
+    assert any("module_b" in imp for imp in imports), (
+        "Relative import '.module_b' not found"
+    )
+    assert any("subpkg.module_c" in imp for imp in imports), (
+        "Nested relative import '.subpkg.module_c' not found"
+    )
 
 
 def test_analyze_imports_with_various_types(complex_import_structure: Path) -> None:
@@ -530,9 +526,9 @@ def test_analyze_imports_with_various_types(complex_import_structure: Path) -> N
     assert "datetime" in import_modules, "Import with alias 'datetime' not found"
 
     # From imports - check if any module contains 'typing'
-    assert any(
-        "typing" in mod for mod in import_modules
-    ), "From import 'typing' not found"
+    assert any("typing" in mod for mod in import_modules), (
+        "From import 'typing' not found"
+    )
 
     # Check for relative imports - we need to be more flexible in how we check
     relative_imports = [imp for imp in imports if getattr(imp, "is_relative", False)]
@@ -591,9 +587,9 @@ def test_analyze_imports_with_star_imports(complex_import_structure: Path) -> No
         # Check that star imports are correctly processed
         # We'll verify the modules are imported and check for star imports pattern
         assert any("os" in mod for mod in import_modules), "Import from 'os' not found"
-        assert any(
-            "typing" in mod for mod in import_modules
-        ), "Import from 'typing' not found"
+        assert any("typing" in mod for mod in import_modules), (
+            "Import from 'typing' not found"
+        )
 
         # Check for star imports by looking for '.*' pattern in modules or imported_names
         has_star_import = False
@@ -671,37 +667,37 @@ def test_helper_methods_in_analyze_imports(complex_import_structure: Path) -> No
     # Test _parse_and_collect_imports method
     source = "\nfrom typing import List"
     imports = analyzer._parse_and_collect_imports(source)
-    assert (
-        "os" in imports
-    ), "Regular import 'os' not found in _parse_and_collect_imports"
+    assert "os" in imports, (
+        "Regular import 'os' not found in _parse_and_collect_imports"
+    )
 
     # The import is collected as 'typing.List', not just 'typing'
-    assert any(
-        "typing." in imp for imp in imports
-    ), "From import 'typing' not found in _parse_and_collect_imports"
+    assert any("typing." in imp for imp in imports), (
+        "From import 'typing' not found in _parse_and_collect_imports"
+    )
 
     # Test _count_leading_dots method (if it exists)
     if hasattr(analyzer, "_count_leading_dots"):
         assert analyzer._count_leading_dots(".") == 1, "Single dot count incorrect"
-        assert (
-            analyzer._count_leading_dots("..module") == 2
-        ), "Double dot count incorrect"
-        assert (
-            analyzer._count_leading_dots("...pkg.module") == 3
-        ), "Triple dot count incorrect"
+        assert analyzer._count_leading_dots("..module") == 2, (
+            "Double dot count incorrect"
+        )
+        assert analyzer._count_leading_dots("...pkg.module") == 3, (
+            "Triple dot count incorrect"
+        )
         assert analyzer._count_leading_dots("module") == 0, "No dot count incorrect"
 
     # Test _is_special_test_import method (if it exists)
     if hasattr(analyzer, "_is_special_test_import"):
-        assert analyzer._is_special_test_import(
-            ".subpkg2.module_c"
-        ), "Special test import '.subpkg2.module_c' not recognized"
-        assert analyzer._is_special_test_import(
-            "...subpkg3.module_d"
-        ), "Special test import '...subpkg3.module_d' not recognized"
-        assert not analyzer._is_special_test_import(
-            "os"
-        ), "Regular import 'os' incorrectly recognized as special test import"
+        assert analyzer._is_special_test_import(".subpkg2.module_c"), (
+            "Special test import '.subpkg2.module_c' not recognized"
+        )
+        assert analyzer._is_special_test_import("...subpkg3.module_d"), (
+            "Special test import '...subpkg3.module_d' not recognized"
+        )
+        assert not analyzer._is_special_test_import("os"), (
+            "Regular import 'os' incorrectly recognized as special test import"
+        )
 
 
 def test_import_validation_after_analysis(complex_import_structure: Path) -> None:
@@ -717,18 +713,18 @@ def test_import_validation_after_analysis(complex_import_structure: Path) -> Non
         invalid_imports = analyzer._invalid_imports
 
         # Standard library imports should be valid
-        assert any(
-            imp.module == "os" for imp in valid_imports
-        ), "Standard library import 'os' should be valid"
-        assert any(
-            imp.module == "sys" for imp in valid_imports
-        ), "Standard library import 'sys' should be valid"
+        assert any(imp.module == "os" for imp in valid_imports), (
+            "Standard library import 'os' should be valid"
+        )
+        assert any(imp.module == "sys" for imp in valid_imports), (
+            "Standard library import 'sys' should be valid"
+        )
 
         # Relative imports within the package should be validated
         relative_imports = [
             imp for imp in imports if getattr(imp, "is_relative", False)
         ]
         for imp in relative_imports:
-            assert (
-                imp in valid_imports or imp in invalid_imports
-            ), "Import should be either valid or invalid"
+            assert imp in valid_imports or imp in invalid_imports, (
+                "Import should be either valid or invalid"
+            )

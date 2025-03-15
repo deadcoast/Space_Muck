@@ -10,10 +10,11 @@ injection framework to register and configure dependencies.
 # Standard library imports
 import logging
 
+# Local application imports
+from typing import Any, Dict
+
 # Third-party library imports
 
-# Local application imports
-from typing import Dict, Any
 
 # Try relative imports first, then fall back to absolute imports
 try:

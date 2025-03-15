@@ -19,13 +19,14 @@ Author: Space Muck Team
 
 # Standard library imports
 import argparse
+import glob
 import os
-
-# Third-party library imports
 
 # Local application imports
 from pathlib import Path
-import glob
+
+# Third-party library imports
+
 
 # Default patterns to ignore
 DEFAULT_IGNORE = [

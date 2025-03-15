@@ -1,23 +1,22 @@
 # Standard library imports
+import contextlib
+import curses
 import logging
 import math
 import random
 import time
 
-# Third-party library imports
-
 # Local application imports
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_helpers.render_helper import RenderHelper
-from typing import List, Dict, Optional, Any, Tuple
-import contextlib
-import curses
+from typing import Any, Dict, List, Optional, Tuple
+
 import pygame
 
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+from config import COLOR_TEXT
+from src.ui.ui_base.animation_style import AnimationStyle
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_helpers.render_helper import RenderHelper
+
+# Third-party library imports
 
 
 class UIElement:

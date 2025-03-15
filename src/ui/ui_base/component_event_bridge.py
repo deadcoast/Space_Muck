@@ -13,11 +13,11 @@ dependencies on either system.
 import logging
 import time
 
-# Third-party library imports
-
 # Local application imports
 from src.ui.ui_base.component_registry import ComponentRegistry
 from src.ui.ui_base.event_system import UIEventSystem
+
+# Third-party library imports
 
 
 def connect_systems() -> bool:

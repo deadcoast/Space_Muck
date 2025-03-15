@@ -8,14 +8,16 @@ It provides a scrollable notification panel and customizable tooltip system.
 # Standard library imports
 import logging
 import time
+from typing import Any, Dict, List, Optional, Tuple
 
-# Third-party library imports
+import pygame
+
+from config import COLOR_TEXT, WINDOW_HEIGHT
 
 # Local application imports
-from .draw_utils import draw_text, draw_panel
-from config import WINDOW_HEIGHT, COLOR_TEXT
-from typing import List, Tuple, Dict, Any, Optional
-import pygame
+from .draw_utils import draw_panel, draw_text
+
+# Third-party library imports
 
 
 class NotificationManager:

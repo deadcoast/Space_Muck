@@ -13,40 +13,33 @@ Unit tests for GPU-based clustering algorithms.
 
 # Standard library imports
 import logging
-import sys
+from logging import getLogger
+
+# Local application imports
+from pathlib import Path
 
 # Third-party library imports
 import numpy as np
 
-# Local application imports
-from pathlib import Path
-from utils.gpu_utils import (  # noqa: E402
-import importlib.util
-import unittest
+# Import GPU utilities
+from utils.gpu_utils import (
+    apply_dbscan_clustering_gpu,
+    apply_kmeans_clustering_gpu,
+    get_available_backends,
+    importlib,
+    is_gpu_available,
+    unittest,
+)
 
-  # Used for package availability checking
+# Configure logging
+logger = getLogger(__name__)
 
-# Configure logging for GPU clustering tests
-logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-
-# Clear any previously imported modules to avoid mock interference
-for module_name in list(sys.modules.keys()):
-    if module_name.startswith("src.utils.gpu_utils"):
-        del sys.modules[module_name]
-
-# Import from project modules
-
-    apply_kmeans_clustering_gpu,
-    apply_dbscan_clustering_gpu,
-    is_gpu_available,
-    get_available_backends,
-)
 
 # Use direct imports for visualization if available
 # but make visualization optional
@@ -63,28 +56,29 @@ SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
 if not SKLEARN_AVAILABLE:
     logger.warning("scikit-learn not available - some tests will be skipped")
 
+
 class TestGPUClustering(unittest.TestCase):
     """Tests for GPU-based clustering algorithms."""
 
     def setUp(self):
         """Set up test data."""
         # Create a dataset with 3 clear clusters
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
 
         # Cluster 1
-        cluster1 = np.random.randn(100, 2) * 0.5 + np.array([5, 5])
+        cluster1 = rng.normal(0, 0.5, (100, 2)) + np.array([5, 5])
 
         # Cluster 2
-        cluster2 = np.random.randn(100, 2) * 0.5 + np.array([0, 0])
+        cluster2 = rng.normal(0, 0.5, (100, 2)) + np.array([0, 0])
 
         # Cluster 3
-        cluster3 = np.random.randn(100, 2) * 0.5 + np.array([5, 0])
+        cluster3 = rng.normal(0, 0.5, (100, 2)) + np.array([5, 0])
 
         # Combine clusters
         self.data = np.vstack([cluster1, cluster2, cluster3])
 
         # Add some noise points
-        noise = np.random.uniform(-2, 7, (20, 2))
+        noise = rng.uniform(-2, 7, (20, 2))
         self.data_with_noise = np.vstack([self.data, noise])
 
         # Create output directory for plots
@@ -107,7 +101,7 @@ class TestGPUClustering(unittest.TestCase):
 
         # Check that all clusters have points
         for i in range(3):
-            self.assertTrue(np.sum(labels == i) > 0)
+            self.assertGreater(np.sum(labels == i) > 0)
 
         # Visualize results
         self._plot_kmeans_results(self.data, labels, centroids, "kmeans_cpu")
@@ -138,7 +132,7 @@ class TestGPUClustering(unittest.TestCase):
 
         # Check that all clusters have points
         for i in range(3):
-            self.assertTrue(np.sum(labels == i) > 0)
+            self.assertGreater(np.sum(labels == i), 0)
 
         # Visualize results
         self._plot_kmeans_results(self.data, labels, centroids, f"kmeans_{backend}")
@@ -155,8 +149,8 @@ class TestGPUClustering(unittest.TestCase):
 
         # Check that we have some clusters and some noise
         unique_labels = np.unique(labels)
-        self.assertTrue(-1 in unique_labels)  # Noise should be present
-        self.assertTrue(len(unique_labels) > 1)  # Should have at least one cluster
+        self.assertGreater(-1 in unique_labels, 0)  # Noise should be present
+        self.assertGreater(len(unique_labels), 1)  # Should have at least one cluster
 
         # Visualize results
         self._plot_dbscan_results(self.data_with_noise, labels, "dbscan_cpu")
@@ -179,8 +173,8 @@ class TestGPUClustering(unittest.TestCase):
 
         # Check that we have some clusters and some noise
         unique_labels = np.unique(labels)
-        self.assertTrue(-1 in unique_labels)  # Noise should be present
-        self.assertTrue(len(unique_labels) > 1)  # Should have at least one cluster
+        self.assertIn(-1, unique_labels)  # Noise should be present
+        self.assertGreater(len(unique_labels), 1)  # Should have at least one cluster
 
         # Visualize results
         self._plot_dbscan_results(self.data_with_noise, labels, f"dbscan_{backend}")
@@ -433,6 +427,7 @@ class TestGPUClustering(unittest.TestCase):
             inertia += np.sum(distances)
 
         return inertia
+
 
 if __name__ == "__main__":
     unittest.main()

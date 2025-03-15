@@ -13,18 +13,19 @@ import logging
 import time
 import uuid
 
-# Third-party library imports
-
 # Local application imports
 from typing import (
+    Any,
+    Callable,
     Dict,
     List,
-    Callable,
-    Any,
     Optional,
-    TypeVar,
     Tuple,
+    TypeVar,
 )
+
+# Third-party library imports
+
 
 # Type definitions
 T = TypeVar("T")

@@ -11,17 +11,17 @@ It provides both standard unit tests and advanced functionality tests including:
 5. Pattern generation testing
 """
 
+# Local application imports
+import importlib.util
+
 # Standard library imports
 import os
 import sys
 import time
+import unittest
 
 # Third-party library imports
 import numpy as np
-
-# Local application imports
-import importlib.util
-import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -227,7 +227,7 @@ class TestAsteroidGenerator(unittest.TestCase):
 
         # Test with pattern weights
         pattern_weights = [0.25, 0.25, 0.25, 0.25]  # Equal weights for all patterns
-        asteroid_grid2, metadata2 = self.generator.generate_field(
+        asteroid_grid2, _ = self.generator.generate_field(
             pattern_weights=pattern_weights
         )
 
@@ -249,8 +249,7 @@ class TestAsteroidGenerator(unittest.TestCase):
         except Exception as e:
             print(f"Pattern generation tests encountered an error: {str(e)}")
 
-    # TODO Rename this here and in `test_pattern_generation`
-    def _extracted_from_test_pattern_generation_10(self):
+    def _setup_random_generator(self):
         # Import the module to patch the functions
 
         from contextlib import suppress
@@ -309,14 +308,13 @@ class TestAsteroidGenerator(unittest.TestCase):
             self.assertIsInstance(void_pattern, np.ndarray)
             self.assertEqual(void_pattern.shape, (self.height, self.width))
 
-    # TODO Rename this here and in `test_pattern_generation`
-    def _extracted_from_test_pattern_generation_29(
-        self, arg0, module, arg2, original_func
+    def _validate_grid_and_restore_function(
+        self, grid, module, function_name, original_func
     ):
-        self.assertIsInstance(arg0, np.ndarray)
-        self.assertEqual(arg0.shape, (self.height, self.width))
+        self.assertIsInstance(grid, np.ndarray)
+        self.assertEqual(grid.shape, (self.height, self.width))
         # Restore original function if patched
-        if module and hasattr(module, arg2) and original_func:
+        if module and hasattr(module, function_name) and original_func:
             result = original_func
 
         return result
@@ -407,14 +405,13 @@ class TestAsteroidGenerator(unittest.TestCase):
             # If the method doesn't exist or has parameter mismatch, skip the test
             self.skipTest(f"Rare resource generation test skipped: {str(e)}")
 
-    # TODO Rename this here and in `test_value_distribution` and `test_rare_resource_generation`
-    def _extracted_from_test_rare_resource_generation_11(self, arg0, asteroid_grid):
-        self.assertIsInstance(arg0, np.ndarray)
-        self.assertEqual(arg0.shape, (self.height, self.width))
+    def _validate_resource_grid(self, resource_grid, asteroid_grid):
+        self.assertIsInstance(resource_grid, np.ndarray)
+        self.assertEqual(resource_grid.shape, (self.height, self.width))
         for y in range(self.height):
             for x in range(self.width):
                 if asteroid_grid[y, x] == 0:
-                    self.assertEqual(arg0[y, x], 0)
+                    self.assertEqual(resource_grid[y, x], 0)
 
     def test_generate_energy_field(self):
         """Test the generate_energy_field method."""
@@ -425,7 +422,8 @@ class TestAsteroidGenerator(unittest.TestCase):
 
         # Create a simple asteroid grid and mineral grid
         asteroid_grid = np.ones((self.height, self.width))
-        mineral_grid = np.random.random((self.height, self.width))
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        mineral_grid = rng.random((self.height, self.width))
 
         from contextlib import suppress
 
@@ -458,7 +456,7 @@ class TestAsteroidGenerator(unittest.TestCase):
             # when the primary function call fails, which is a critical test case
             if energy_grid is None:
                 with suppress(TypeError, AttributeError):
-                    _ = self.generator.generate_energy_field(asteroid_grid)
+                    energy_grid = self.generator.generate_energy_field(asteroid_grid)
                     # Verify the shape and type of the grid
                     self.assertIsInstance(energy_grid, np.ndarray)
                     self.assertEqual(energy_grid.shape, (self.height, self.width))
@@ -467,7 +465,9 @@ class TestAsteroidGenerator(unittest.TestCase):
             # sourcery skip: no-conditionals-in-tests
             # This conditional is necessary for testing additional functionality
             # that depends on the success of a previous operation
-            if energy_grid is not None:
+            if (
+                energy_grid is not None
+            ):  # This check is necessary to test optional functionality
                 energy_types = ["radiation", "plasma", "standard"]
                 for energy_type in energy_types:
                     with self.subTest(energy_type=energy_type):
@@ -542,8 +542,8 @@ class TestAsteroidGenerator(unittest.TestCase):
                     found_keys = [key for key in common_keys if key in field_data]
 
                     # Ensure we have at least one valid grid
-                    self.assertTrue(
-                        len(found_keys) > 0, "No recognized grids found in field data"
+                    self.assertGreater(
+                        len(found_keys), 0, "No recognized grids found in field data"
                     )
 
                     # Verify grid shapes for keys that exist
@@ -608,8 +608,7 @@ class TestAsteroidGenerator(unittest.TestCase):
             self.generator.width = original_width
             self.generator.height = original_height
 
-    # TODO Rename this here and in `test_performance`
-    def _extracted_from_test_performance_17(self):
+    def _benchmark_field_generation(self):
         # Field generation
         start_time = time.time()
         asteroid_grid, _ = self.generator.generate_field()
@@ -633,13 +632,7 @@ class TestAsteroidGenerator(unittest.TestCase):
 
         # Energy field generation
         try:
-            start_time = time.time()
-            mineral_grid = np.random.random(
-                (self.generator.height, self.generator.width)
-            )
-            _ = self.generator.generate_energy_field(asteroid_grid, mineral_grid)
-            energy_time = time.time() - start_time
-            print(f"Energy field generation time: {energy_time:.4f} seconds")
+            self._benchmark_energy_field_generation(asteroid_grid)
         except (AttributeError, TypeError):
             print("Energy field generation not available")
 
@@ -661,13 +654,21 @@ class TestAsteroidGenerator(unittest.TestCase):
         self.assertLess(field_time, 5.0, "Field generation extremely slow")
         self.assertLess(value_time, 2.0, "Value generation extremely slow")
 
+    def _benchmark_energy_field_generation(self, asteroid_grid):
+        start_time = time.time()
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        mineral_grid = rng.random((self.generator.height, self.generator.width))
+        _ = self.generator.generate_energy_field(asteroid_grid, mineral_grid)
+        energy_time = time.time() - start_time
+        print(f"Energy field generation time: {energy_time:.4f} seconds")
+
     def _test_cache_performance(self, original_time):
         """Test the caching performance of the generator."""
         print("\nTesting cache performance...")
 
         # Generate the same field again with the same seed
         start_time = time.time()
-        asteroid_grid2, _ = self.generator.generate_field()
+        _, _ = self.generator.generate_field()
         cached_time = time.time() - start_time
         print(f"Cached field generation time: {cached_time:.4f} seconds")
 
@@ -772,151 +773,191 @@ class TestAsteroidGenerator(unittest.TestCase):
         if not MATPLOTLIB_AVAILABLE:
             self.skipTest("Skipping visualization test as matplotlib is not available")
 
-        from contextlib import suppress
+        original_noise_method = self._patch_noise_method()
 
-        # Patch the _generate_base_noise method if it doesn't accept scale parameter
-        original_noise_method = None
         try:
-            if hasattr(self.generator, "_generate_base_noise"):
-                original_noise_method = self.generator._generate_base_noise
-
-                def patched_noise_method(*args, **kwargs):
-                    # Ignore scale parameter if present
-                    return original_noise_method()
-
-                self.generator._generate_base_noise = patched_noise_method
-
-            # Try to generate a complete field
-            field_data = None
-
-            # Try different method names for complete field generation
-            for method_name in [
-                "create_complete_field",
-                "create_asteroid_field",
-                "generate_complete_field",
-            ]:
-                if hasattr(self.generator, method_name):
-                    with suppress(TypeError, AttributeError, ValueError):
-                        field_result = getattr(self.generator, method_name)()
-                        if field_result is not None:
-                            # Convert AsteroidField object to dictionary if needed
-                            if hasattr(field_result, "grid"):
-                                # It's an AsteroidField object
-                                field_data = {"asteroid_grid": field_result.grid}
-
-                                # Try to get additional grids from the field object
-                                with suppress(AttributeError):
-                                    if hasattr(field_result, "mineral_values"):
-                                        field_data["value_grid"] = (
-                                            field_result.mineral_values
-                                        )
-
-                                    if hasattr(field_result, "energy_values"):
-                                        field_data["energy_grid"] = (
-                                            field_result.energy_values
-                                        )
-
-                                    if hasattr(field_result, "rare_resources"):
-                                        field_data["rare_grid"] = (
-                                            field_result.rare_resources
-                                        )
-                            else:
-                                # It's already a dictionary
-                                field_data = field_result
-                            break
-
-            # If we couldn't get field data, generate individual grids
-            if field_data is None:
-                # Generate individual grids
-                asteroid_grid, _ = self.generator.generate_field()
-
-                # Create a field data dictionary
-                field_data = {"asteroid_grid": asteroid_grid}
-
-                # Try to add value grid
-                with suppress(TypeError, AttributeError, ValueError):
-                    field_data["value_grid"] = self.generator.generate_values(
-                        asteroid_grid
-                    )
-
-                # Try to add rare resources grid
-                with suppress(TypeError, AttributeError, ValueError):
-                    field_data["rare_grid"] = self.generator.generate_rare_resources(
-                        asteroid_grid
-                    )
-
-                # Try to add energy grid
-                with suppress(TypeError, AttributeError, ValueError):
-                    if "value_grid" in field_data:
-                        field_data["energy_grid"] = (
-                            self.generator.generate_energy_field(
-                                asteroid_grid, field_data["value_grid"]
-                            )
-                        )
-                    else:
-                        field_data["energy_grid"] = (
-                            self.generator.generate_energy_field(asteroid_grid)
-                        )
+            # Generate field data for visualization
+            field_data = self._generate_field_data_for_visualization()
 
             # Skip if we don't have at least an asteroid grid
-            if field_data is None or (
-                isinstance(field_data, dict) and "asteroid_grid" not in field_data
-            ):
-                self.skipTest("Could not generate any grids for visualization")
+            if not self._has_valid_asteroid_grid(field_data):
                 return
 
-            # Create a visualizer
+            # Create visualizer and prepare grids
             visualizer = GeneratorVisualizer()
-
-            # Prepare grids for visualization (only include those that exist)
-            grid_configs = [
-                {"key": "asteroid_grid", "title": "Asteroid Field", "cmap": "binary"},
-                {"key": "value_grid", "title": "Value Distribution", "cmap": "viridis"},
-                {"key": "rare_grid", "title": "Rare Resources", "cmap": "hot"},
-                {"key": "energy_grid", "title": "Energy Field", "cmap": "plasma"},
-            ]
-
-            grids = []
-            for config in grid_configs:
-                if (
-                    config["key"] in field_data
-                    and field_data[config["key"]] is not None
-                ):
-                    grids.append(
-                        {
-                            "grid": field_data[config["key"]],
-                            "title": config["title"],
-                            "cmap": config["cmap"],
-                        }
-                    )
+            grids = self._prepare_grids_for_visualization(field_data)
 
             # Skip if we don't have any grids to visualize
             if not grids:
                 self.skipTest("No valid grids available for visualization")
                 return
 
-            # Just test that visualization runs without errors
-            try:
-                # Determine layout based on number of grids
-                layout = (1, len(grids)) if len(grids) <= 2 else (2, 2)
-                fig = visualizer.visualize_multiple_grids(
-                    grids=grids, layout=layout, figsize=(12, 10), show=False
-                )
-                plt.close(fig)  # Close the figure to avoid displaying it during tests
-                self.assertTrue(True, "Visualization completed successfully")
+            # Test visualization
+            self._test_visualization(visualizer, grids)
 
-                # Test with different layout if we have at least 2 grids
-                if len(grids) >= 2:
-                    fig = visualizer.visualize_multiple_grids(
-                        grids=grids[:2], layout=(1, 2), figsize=(10, 5), show=False
-                    )
-                    plt.close(fig)
-            except Exception as e:
-                self.skipTest(f"Visualization test failed: {str(e)}")
         finally:
             # Restore original method if patched
             if original_noise_method:
                 self.generator._generate_base_noise = original_noise_method
+
+    def _patch_noise_method(self):
+        """Patch the _generate_base_noise method if needed."""
+        original_noise_method = None
+
+        if hasattr(self.generator, "_generate_base_noise"):
+            original_noise_method = self.generator._generate_base_noise
+
+            def patched_noise_method(*args, **kwargs):
+                # Ignore scale parameter if present
+                return original_noise_method()
+
+            self.generator._generate_base_noise = patched_noise_method
+
+        return original_noise_method
+
+    def _generate_field_data_for_visualization(self):
+        """Generate field data for visualization testing."""
+        # Try to generate a complete field
+        field_data = self._try_complete_field_generation()
+
+        # If we couldn't get field data, generate individual grids
+        if field_data is None:
+            field_data = self._generate_individual_grids()
+
+        return field_data
+
+    def _try_complete_field_generation(self):
+        """Try different methods to generate a complete field."""
+        from contextlib import suppress
+
+        field_data = None
+        # Try different method names for complete field generation
+        method_names = [
+            "create_complete_field",
+            "create_asteroid_field",
+            "generate_complete_field",
+        ]
+
+        for method_name in method_names:
+            if hasattr(self.generator, method_name):
+                with suppress(TypeError, AttributeError, ValueError):
+                    field_result = getattr(self.generator, method_name)()
+                    if field_result is not None:
+                        field_data = self._process_field_result(field_result)
+                        break
+
+        return field_data
+
+    def _process_field_result(self, field_result):
+        """Process field result into a dictionary of grids."""
+        from contextlib import suppress
+
+        if hasattr(field_result, "grid"):
+            # It's an AsteroidField object
+            field_data = {"asteroid_grid": field_result.grid}
+
+            # Try to get additional grids from the field object
+            with suppress(AttributeError):
+                if hasattr(field_result, "mineral_values"):
+                    field_data["value_grid"] = field_result.mineral_values
+
+                if hasattr(field_result, "energy_values"):
+                    field_data["energy_grid"] = field_result.energy_values
+
+                if hasattr(field_result, "rare_resources"):
+                    field_data["rare_grid"] = field_result.rare_resources
+        else:
+            # It's already a dictionary
+            field_data = field_result
+
+        return field_data
+
+    def _generate_individual_grids(self):
+        """Generate individual grids for visualization testing."""
+        from contextlib import suppress
+
+        # Generate individual grids
+        asteroid_grid, _ = self.generator.generate_field()
+
+        # Create a field data dictionary
+        field_data = {"asteroid_grid": asteroid_grid}
+
+        # Try to add value grid
+        with suppress(TypeError, AttributeError, ValueError):
+            field_data["value_grid"] = self.generator.generate_values(asteroid_grid)
+
+        # Try to add rare resources grid
+        with suppress(TypeError, AttributeError, ValueError):
+            field_data["rare_grid"] = self.generator.generate_rare_resources(
+                asteroid_grid
+            )
+
+        # Try to add energy grid
+        self._try_add_energy_grid(field_data, asteroid_grid)
+
+        return field_data
+
+    def _try_add_energy_grid(self, field_data, asteroid_grid):
+        """Try to add energy grid to field data."""
+        from contextlib import suppress
+
+        with suppress(TypeError, AttributeError, ValueError):
+            if "value_grid" in field_data:
+                field_data["energy_grid"] = self.generator.generate_energy_field(
+                    asteroid_grid, field_data["value_grid"]
+                )
+            else:
+                field_data["energy_grid"] = self.generator.generate_energy_field(
+                    asteroid_grid
+                )
+
+    def _has_valid_asteroid_grid(self, field_data):
+        """Check if field data has a valid asteroid grid."""
+        if field_data is None or (
+            isinstance(field_data, dict) and "asteroid_grid" not in field_data
+        ):
+            self.skipTest("Could not generate any grids for visualization")
+            return False
+        return True
+
+    def _prepare_grids_for_visualization(self, field_data):
+        """Prepare grids for visualization."""
+        # Prepare grids for visualization (only include those that exist)
+        grid_configs = [
+            {"key": "asteroid_grid", "title": "Asteroid Field", "cmap": "binary"},
+            {"key": "value_grid", "title": "Value Distribution", "cmap": "viridis"},
+            {"key": "rare_grid", "title": "Rare Resources", "cmap": "hot"},
+            {"key": "energy_grid", "title": "Energy Field", "cmap": "plasma"},
+        ]
+
+        return [
+            {
+                "grid": field_data[config["key"]],
+                "title": config["title"],
+                "cmap": config["cmap"],
+            }
+            for config in grid_configs
+            if (config["key"] in field_data and field_data[config["key"]] is not None)
+        ]
+
+    def _test_visualization(self, visualizer, grids):
+        """Test visualization with different layouts."""
+        try:
+            # Determine layout based on number of grids
+            layout = (1, len(grids)) if len(grids) <= 2 else (2, 2)
+            fig = visualizer.visualize_multiple_grids(
+                grids=grids, layout=layout, figsize=(12, 10), show=False
+            )
+            plt.close(fig)  # Close the figure to avoid displaying it during tests
+
+            # Test with different layout if we have at least 2 grids
+            if len(grids) >= 2:
+                fig = visualizer.visualize_multiple_grids(
+                    grids=grids[:2], layout=(1, 2), figsize=(10, 5), show=False
+                )
+                plt.close(fig)
+        except Exception as e:
+            self.skipTest(f"Visualization test failed: {str(e)}")
 
 
 def run_comprehensive_tests():

@@ -14,12 +14,12 @@
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
+
+# Third-party library imports
 
 
 class EventType(Enum):

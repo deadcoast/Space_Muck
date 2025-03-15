@@ -11,12 +11,13 @@ GPU support.
 import itertools
 import logging
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
-import numpy as np
-
 # Local application imports
 from typing import Any, List, Optional, Set, Tuple, Union
+
+import numpy as np
+
+# Third-party library imports
+from numpy.random import PCG64, Generator
 
 # Standard library imports
 

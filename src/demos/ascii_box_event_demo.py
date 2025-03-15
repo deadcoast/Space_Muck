@@ -9,18 +9,19 @@ It provides practical examples of event registration, handling, and emission.
 import logging
 import time
 
-# Third-party library imports
-
 # Local application imports
 from typing import List, Tuple
-from ui.ui_base.event_system import UIEventType, UIEventData
+
+from ui.ui_base.event_system import UIEventData, UIEventType
 from ui.ui_element.ascii_box import ASCIIBox
 from ui.ui_helpers.ascii_box_event_helper import (
-    register_ascii_box,
     add_click_handler,
     add_hover_handlers,
     create_interactive_box,
+    register_ascii_box,
 )
+
+# Third-party library imports
 
 
 def demo_basic_event_integration() -> ASCIIBox:

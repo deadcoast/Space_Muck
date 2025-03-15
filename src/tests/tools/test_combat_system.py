@@ -6,11 +6,12 @@ Tests for the combat system module.
 
 # Third-party library imports
 
+import unittest
+
 # Local application imports
 from entities.enemy_ship import EnemyShip
 from entities.player import Player
 from systems.combat_system import CombatSystem
-import unittest
 
 
 class DeterministicCombatSystem(CombatSystem):

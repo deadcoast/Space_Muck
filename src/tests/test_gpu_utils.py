@@ -8,25 +8,24 @@ with appropriate fallbacks for systems without GPU support.
 
 # Standard library imports
 
+# Local application imports
+from unittest.mock import patch
+
 # Third-party library imports
 import numpy as np
 
-# Local application imports
-from unittest.mock import patch
-from utils.gpu_utils import (
-import unittest
-
-# Import the module to test
-
-    is_gpu_available,
-    get_available_backends,
-    to_gpu,
-    to_cpu,
-    apply_cellular_automaton_gpu,
-    apply_noise_generation_gpu,
+from utils.gpu_utils import (  # Import the module to test
     CUDA_AVAILABLE,
     CUPY_AVAILABLE,
+    apply_cellular_automaton_gpu,
+    apply_noise_generation_gpu,
+    get_available_backends,
+    is_gpu_available,
+    to_cpu,
+    to_gpu,
+    unittest,
 )
+
 
 class TestGPUUtils(unittest.TestCase):
     """Test cases for GPU utilities."""
@@ -56,12 +55,13 @@ class TestGPUUtils(unittest.TestCase):
         """Test backend detection."""
         backends = get_available_backends()
         self.assertIsInstance(backends, list)
-        self.assertTrue(len(backends) > 0)  # At least CPU should be available
+        self.assertGreater(len(backends), 0)  # At least CPU should be available
 
     def test_array_transfer(self):
         """Test array transfer between CPU and GPU."""
         # Create a test array
-        test_array = np.random.random((10, 10))
+        rng = np.random.default_rng(42)  # Use a fixed seed for reproducibility
+        test_array = rng.random((10, 10))
 
         # Transfer to GPU
         gpu_array = to_gpu(test_array)
@@ -181,6 +181,7 @@ class TestGPUUtils(unittest.TestCase):
 
             # Verify that the CPU function was called
             mock_cpu_fn.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

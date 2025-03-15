@@ -6,9 +6,10 @@ to 2D grids, primarily used for procedural generation of asteroid fields and
 other game elements.
 """
 
+from itertools import product
+
 # Standard library imports
 from typing import Optional
-from itertools import product
 
 # Third-party library imports
 import numpy as np

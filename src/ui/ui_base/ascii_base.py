@@ -13,12 +13,14 @@ import logging
 import math
 import time
 
-# Third-party library imports
-
 # Local application imports
 from enum import Enum, auto
 from typing import Dict, Optional, Tuple
+
 import pygame
+
+# Third-party library imports
+
 
 SYMBIOTIC = auto()  # Organic, flowing style
 ASTEROID = auto()  # Rocky, rough style

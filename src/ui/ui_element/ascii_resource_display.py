@@ -7,15 +7,19 @@ critical game statistics in an ASCII-based UI panel.
 
 # Standard library imports
 import logging
+from typing import Any, Dict, Tuple
+
+import pygame
+
+from config import COLOR_TEXT
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ascii_panel import ASCIIPanel
+
+# Local application imports
+from systems.resource_manager import ResourceState, ResourceType
 
 # Third-party library imports
 
-# Local application imports
-from systems.resource_manager import ResourceType, ResourceState
-from typing import Dict, Tuple, Any
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
 
 # Type definitions for better type checking
 Color = Tuple[int, int, int]

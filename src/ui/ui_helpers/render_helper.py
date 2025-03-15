@@ -1,9 +1,20 @@
+# Standard library imports
+import logging
+import math
+from typing import Tuple
 
+import pygame
 
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+# Import all standard UI colors for consistency across components
+# COLOR_TEXT is currently used in draw_char
+# COLOR_BG and COLOR_HIGHLIGHT may be needed for future styling enhancements
+from config import COLOR_TEXT
+
+# Local application imports
+from src.ui.ui_base.ascii_base import UIStyle
+
+# Third-party library imports
+
 
 class RenderHelper:
     """Helper class for standardized rendering across UI components.
@@ -12,17 +23,6 @@ class RenderHelper:
     styling, animation effects, and error handling. It centralizes common rendering
     code to reduce duplication and ensure a unified visual approach.
     """
-
-# Standard library imports
-import logging
-import math
-
-# Third-party library imports
-
-# Local application imports
-from src.ui.ui_base.ascii_base import UIStyle
-from typing import Tuple
-import pygame
 
     @staticmethod
     def draw_char(

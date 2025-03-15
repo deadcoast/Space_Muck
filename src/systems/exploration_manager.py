@@ -9,12 +9,12 @@ including region discovery, resource scanning, and exploration missions.
 import logging
 import random
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Set, Tuple
+
+# Third-party library imports
 
 
 # Exploration States
@@ -98,9 +98,9 @@ class ExplorationManager:
         """Initialize the exploration manager."""
         # Region tracking
         self.regions: Dict[str, Region] = {}
-        self.region_grid: Dict[Tuple[int, int], str] = (
-            {}
-        )  # Position to region_id mapping
+        self.region_grid: Dict[
+            Tuple[int, int], str
+        ] = {}  # Position to region_id mapping
 
         # Mission management
         self.active_missions: Dict[str, ExplorationMission] = {}

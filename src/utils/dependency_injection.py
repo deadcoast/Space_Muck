@@ -6,14 +6,15 @@ This module provides a simple dependency injection container and decorators
 to facilitate better testability and decoupling of components.
 """
 
+import contextlib
+
 # Standard library imports
 import inspect
 
-# Third-party library imports
-
 # Local application imports
 from typing import Any, Type, get_type_hints
-import contextlib
+
+# Third-party library imports
 
 
 class DependencyContainer:

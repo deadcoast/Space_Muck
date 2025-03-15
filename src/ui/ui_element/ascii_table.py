@@ -1,16 +1,17 @@
 # Standard library imports
 import logging
 import time
+from typing import Any, List, Optional, Tuple, TypeVar
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from config import COLOR_TEXT
-from typing import Tuple, List, Optional, Any, TypeVar
-from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
+
+# Third-party library imports
 
 
 # Type definitions for better type checking
@@ -446,13 +447,6 @@ class ASCIITable:
                 y + 5,  # Center vertically
                 size=font.get_height(),
                 color=(255, 255, 255),
-                bold=True,
-                style=self.style,
-                converter_type=self.converter_type,
-                selectable=self.selectable,
-                sortable=self.sortable,
-                rect=self.rect,
-                font=font,
             )
 
             current_x += width + 5  # Add spacing between columns

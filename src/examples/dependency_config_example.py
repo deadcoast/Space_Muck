@@ -11,16 +11,17 @@ import logging
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from utils.dependency_config import (
-    app_container,
     DependencyConfig,
+    app_container,
     load_config_from_file,
 )
-from utils.dependency_injection import inject, container
+from utils.dependency_injection import container, inject
 from utils.noise_generator import NoiseGenerator
+
+# Third-party library imports
+
 
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))

@@ -8,13 +8,16 @@ with options for sorting, filtering, and basic inventory management.
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from typing import Dict, List, Tuple
+
+import pygame
+
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
+
+# Third-party library imports
+
 
 # Type definitions for better type checking
 Color = Tuple[int, int, int]

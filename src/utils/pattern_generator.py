@@ -10,12 +10,13 @@ by different generator classes to avoid code duplication.
 import itertools
 import math
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
-import numpy as np
-
 # Local application imports
 from typing import Callable, List, Optional, Tuple
+
+import numpy as np
+
+# Third-party library imports
+from numpy.random import PCG64, Generator
 
 # Standard library imports
 

@@ -6,16 +6,18 @@ and other common linting problems. It can be used as a standalone script or impo
 as a module in other testing tools.
 """
 
+import ast
+import importlib.util
+
 # Standard library imports
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from typing import List, Tuple
-import ast
-import importlib.util
+
+# Third-party library imports
+
 
 # Standard library imports
 

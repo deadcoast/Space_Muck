@@ -9,9 +9,11 @@ across different grid sizes, configurations, and hardware acceleration options.
 # Standard library imports
 import argparse
 import logging
+import multiprocessing
 import os
 import sys
 import time
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import matplotlib.pyplot as plt
@@ -19,18 +21,16 @@ import numpy as np
 
 # Local application imports
 from entities.base_generator import BaseGenerator
-from typing import Dict, List, Tuple, Callable, Any, Optional
 from utils.cellular_automaton_utils import apply_cellular_automaton
-from utils.noise_generator import get_noise_generator
-import multiprocessing
 
 # Import GPU utilities
 from utils.gpu_utils import (
-    is_gpu_available,
-    get_available_backends,
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
+    get_available_backends,
+    is_gpu_available,
 )
+from utils.noise_generator import get_noise_generator
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -64,7 +64,7 @@ def benchmark_complete_generation(
     generator_class: type,
     grid_sizes: List[int],
     repetitions: int = 3,
-    use_gpu: bool = True,
+    # Removed unused parameter: use_gpu: bool = True
 ) -> Dict[str, List[float]]:
     """
     Benchmark the complete generation process.
@@ -73,7 +73,7 @@ def benchmark_complete_generation(
         generator_class: Generator class to benchmark
         grid_sizes: List of grid sizes to test
         repetitions: Number of times to repeat each test for averaging
-        use_gpu: Whether to use GPU acceleration if available
+        # use_gpu parameter removed as it was unused
 
     Returns:
         Dict[str, List[float]]: Dictionary of execution times for different phases
@@ -237,8 +237,9 @@ def benchmark_cellular_automaton(
     for size in grid_sizes:
         logging.info(f"Benchmarking cellular automaton for size {size}x{size}...")
 
-        # Create a random grid
-        grid = np.random.choice([0, 1], size=(size, size), p=[0.7, 0.3])
+        # Create a random grid using the newer Generator API
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        grid = rng.choice([0, 1], size=(size, size), p=[0.7, 0.3])
 
         # Benchmark each backend
         for backend in backends:
@@ -290,8 +291,9 @@ def benchmark_clustering(
         # Create a generator with the specified size
         generator = BaseGenerator(width=size, height=size)
 
-        # Create a random grid
-        grid = np.random.random((size, size))
+        # Create a random grid using the newer Generator API
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        grid = rng.random((size, size))
 
         # Benchmark sequential clustering
         seq_times = []
@@ -340,7 +342,7 @@ def plot_results(
         output_file: Output file path for the plot
     """
     # Create a figure with subplots
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    _, axes = plt.subplots(2, 2, figsize=(15, 10))
 
     # Plot complete generation results
     if "complete" in results:

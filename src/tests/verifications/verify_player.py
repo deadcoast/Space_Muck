@@ -6,10 +6,11 @@ Simple script to verify that the Player class can be instantiated.
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from unittest.mock import MagicMock
+
+# Third-party library imports
+
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,9 +50,9 @@ class MockSymbioteEvolutionAlgorithm:
 
 # Replace the actual algorithm with our mock
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
-    MockSymbioteEvolutionAlgorithm
-)
+sys.modules[
+    "src.algorithms.symbiote_algorithm"
+].SymbioteEvolutionAlgorithm = MockSymbioteEvolutionAlgorithm
 
 # Now try to import and instantiate the Player class
 try:

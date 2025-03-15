@@ -4,18 +4,18 @@ Unit tests for GPU-accelerated value generation functions.
 """
 
 # Standard library imports
+import unittest
+
+# Local application imports
+from unittest.mock import patch
 
 # Third-party library imports
 import numpy as np
 
-# Local application imports
-from unittest.mock import patch
 from utils.gpu_utils import is_gpu_available
 from utils.value_generator_gpu import (
-import unittest
-
-    generate_value_distribution_gpu,
     add_value_clusters_gpu,
+    generate_value_distribution_gpu,
 )
 
 # Check if GPU backends are available
@@ -40,16 +40,17 @@ try:
 except ImportError:
     CUPY_AVAILABLE = False
 
+
 class TestValueGeneratorGPU(unittest.TestCase):
     """Tests for GPU-accelerated value generation functions."""
 
     def setUp(self):
         """Set up test data."""
-        # Create test grids
-        np.random.seed(42)
-        self.small_grid = np.random.randint(0, 2, (20, 20))
-        self.medium_grid = np.random.randint(0, 2, (50, 50))
-        self.noise_grid = np.random.random((50, 50))
+        # Create test grids using the new Generator API
+        rng = np.random.default_rng(42)  # Use seed 42 for reproducibility
+        self.small_grid = rng.integers(0, 2, size=(20, 20))
+        self.medium_grid = rng.integers(0, 2, size=(50, 50))
+        self.noise_grid = rng.random((50, 50))
 
     def test_generate_value_distribution_cpu(self):
         """Test value distribution generation with CPU backend."""
@@ -69,7 +70,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         if np.any(mask):
             # Verify minimum value constraint
             min_value = 1
-            self.assertTrue(np.all(value_grid[mask] >= min_value))
+            self.assertTrue(
+                (value_grid[mask] >= min_value).all(),
+                f"All non-zero values should be at least {min_value}",
+            )
 
     @unittest.skipIf(not CUPY_AVAILABLE, "CuPy not available")
     def test_generate_value_distribution_cupy(self):
@@ -90,7 +94,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         if np.any(mask):
             # Verify minimum value constraint
             min_value = 1
-            self.assertTrue(np.all(value_grid[mask] >= min_value))
+            self.assertTrue(
+                (value_grid[mask] >= min_value).all(),
+                f"All non-zero values should be at least {min_value}",
+            )
 
     @unittest.skipIf(not CUDA_AVAILABLE, "CUDA not available")
     def test_generate_value_distribution_cuda(self):
@@ -111,7 +118,10 @@ class TestValueGeneratorGPU(unittest.TestCase):
         if np.any(mask):
             # Verify minimum value constraint
             min_value = 1
-            self.assertTrue(np.all(value_grid[mask] >= min_value))
+            self.assertTrue(
+                (value_grid[mask] >= min_value).all(),
+                f"All non-zero values should be at least {min_value}",
+            )
 
     def test_generate_value_distribution_auto(self):
         """Test value distribution generation with auto backend selection."""
@@ -143,7 +153,13 @@ class TestValueGeneratorGPU(unittest.TestCase):
         self.assertEqual(result.shape, value_grid.shape)
 
         # Verify clusters were added (some values should be higher than original)
-        self.assertTrue(np.any(result > value_grid))
+        # Check that at least some values have increased
+        increased_values = np.sum(result > value_grid)
+        self.assertGreater(
+            increased_values,
+            0,
+            f"At least some values should increase (found {increased_values} increased values)",
+        )
 
         # Verify values are only modified where original values exist
         np.testing.assert_array_equal(result > 0, value_grid > 0)
@@ -165,7 +181,13 @@ class TestValueGeneratorGPU(unittest.TestCase):
         self.assertEqual(result.shape, value_grid.shape)
 
         # Verify clusters were added (some values should be higher than original)
-        self.assertTrue(np.any(result > value_grid))
+        # Check that at least some values have increased
+        increased_values = np.sum(result > value_grid)
+        self.assertGreater(
+            increased_values,
+            0,
+            f"At least some values should increase (found {increased_values} increased values)",
+        )
 
         # Verify values are only modified where original values exist
         np.testing.assert_array_equal(result > 0, value_grid > 0)
@@ -187,7 +209,13 @@ class TestValueGeneratorGPU(unittest.TestCase):
         self.assertEqual(result.shape, value_grid.shape)
 
         # Verify clusters were added (some values should be higher than original)
-        self.assertTrue(np.any(result > value_grid))
+        # Check that at least some values have increased
+        increased_values = np.sum(result > value_grid)
+        self.assertGreater(
+            increased_values,
+            0,
+            f"At least some values should increase (found {increased_values} increased values)",
+        )
 
         # Verify values are only modified where original values exist
         np.testing.assert_array_equal(result > 0, value_grid > 0)
@@ -208,7 +236,13 @@ class TestValueGeneratorGPU(unittest.TestCase):
         self.assertEqual(result.shape, value_grid.shape)
 
         # Verify clusters were added (some values should be higher than original)
-        self.assertTrue(np.any(result > value_grid))
+        # Check that at least some values have increased
+        increased_values = np.sum(result > value_grid)
+        self.assertGreater(
+            increased_values,
+            0,
+            f"At least some values should increase (found {increased_values} increased values)",
+        )
 
     def test_value_distribution_consistency(self):
         """Test that GPU and CPU implementations give similar results."""
@@ -216,12 +250,11 @@ class TestValueGeneratorGPU(unittest.TestCase):
         if not is_gpu_available():
             self.skipTest("No GPU available for consistency test")
 
-        # Set a fixed seed for reproducibility
-        np.random.seed(42)
-
-        # Create test data
-        test_grid = np.random.randint(0, 2, (30, 30))
-        noise_grid = np.random.random((30, 30))
+        # Create test data using the new Generator API
+        # No need for global seed since we're using the Generator API with a local seed
+        rng = np.random.default_rng(42)  # Use seed 42 for reproducibility
+        test_grid = rng.integers(0, 2, size=(30, 30))
+        noise_grid = rng.random((30, 30))
 
         # Run with CPU backend
         cpu_result = generate_value_distribution_gpu(
@@ -243,7 +276,12 @@ class TestValueGeneratorGPU(unittest.TestCase):
                 1, cpu_result[mask]
             )
             # Allow for small differences (less than 5%)
-            self.assertTrue(np.all(rel_diff < 0.05))
+            # Check that relative differences are within tolerance
+            max_rel_diff = np.max(rel_diff)
+            self.assertTrue(
+                (rel_diff < 0.05).all(),
+                f"All relative differences should be less than 5% (max found: {max_rel_diff:.2%})",
+            )
 
     def test_value_clusters_consistency(self):
         """Test that GPU and CPU implementations give similar results for clustering."""
@@ -251,8 +289,8 @@ class TestValueGeneratorGPU(unittest.TestCase):
         if not is_gpu_available():
             self.skipTest("No GPU available for consistency test")
 
-        # Set a fixed seed for reproducibility
-        np.random.seed(42)
+        # Use the Generator API with a local seed for reproducibility
+        # No need for global seed
 
         # Create test data
         value_grid = np.zeros((30, 30), dtype=np.int32)
@@ -280,8 +318,19 @@ class TestValueGeneratorGPU(unittest.TestCase):
         np.testing.assert_array_equal(gpu_result > 0, value_grid > 0)
 
         # Both should have increased some values
-        self.assertTrue(np.any(cpu_result > value_grid))
-        self.assertTrue(np.any(gpu_result > value_grid))
+        # Check that both CPU and GPU results show value increases
+        cpu_increased = np.sum(cpu_result > value_grid)
+        gpu_increased = np.sum(gpu_result > value_grid)
+        self.assertGreater(
+            cpu_increased,
+            0,
+            f"CPU result should have some increased values (found {cpu_increased})",
+        )
+        self.assertGreater(
+            gpu_increased,
+            0,
+            f"GPU result should have some increased values (found {gpu_increased})",
+        )
 
     @patch("src.utils.value_generator_gpu.CUDA_AVAILABLE", False)
     @patch("src.utils.value_generator_gpu.CUPY_AVAILABLE", False)
@@ -317,7 +366,9 @@ class TestValueGeneratorGPU(unittest.TestCase):
         """Test value distribution with an empty grid."""
         # Create an empty grid
         empty_grid = np.zeros((20, 20))
-        noise_grid = np.random.random((20, 20))
+        # Use the new Generator API for random values
+        rng = np.random.default_rng(42)  # Use seed 42 for reproducibility
+        noise_grid = rng.random((20, 20))
 
         # Generate values
         result = generate_value_distribution_gpu(empty_grid, noise_grid, backend="auto")
@@ -345,6 +396,7 @@ class TestValueGeneratorGPU(unittest.TestCase):
 
         # Verify no values were assigned (all zeros)
         self.assertTrue(np.all(result == 0))
+
 
 if __name__ == "__main__":
     unittest.main()

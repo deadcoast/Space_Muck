@@ -2,13 +2,15 @@
 
 # Third-party library imports
 
-# Local application imports
-from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
+import ast
 from pathlib import Path
 from typing import Dict, List, Optional
-import ast
+
 import astor
 import variant_loggers
+
+# Local application imports
+from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
 
 
 # Base Transformer Class

@@ -8,11 +8,13 @@ in a consistent and reliable way across different fonts and platforms.
 # Standard library imports
 import logging
 
+# Local application imports
+from typing import Dict, Optional, Tuple
+
+import pygame
+
 # Third-party library imports
 
-# Local application imports
-from typing import Dict, Tuple, Optional
-import pygame
 
 # Mapping of box drawing characters to ASCII fallbacks
 BOX_DRAWING_FALLBACKS: Dict[str, str] = {

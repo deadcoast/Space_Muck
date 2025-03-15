@@ -6,9 +6,10 @@ Logging and reporting functionality for Python Import Fixer.
 
 # Third-party library imports
 
+from typing import Any, Dict
+
 # Local application imports
 from .structured import StructuredLogger
-from typing import Any, Dict
 
 __all__ = [
     "get_formatters",

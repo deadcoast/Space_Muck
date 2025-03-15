@@ -2,10 +2,10 @@
 # Standard library imports
 import unittest
 
-# Third-party library imports
-
 # Local application imports
 from project_map_parser import ProjectMapParser
+
+# Third-party library imports
 
 
 class TestProjectMapParser(unittest.TestCase):

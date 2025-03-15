@@ -9,6 +9,8 @@ under various conditions.
 import os
 import sys
 import time
+import unittest
+from unittest.mock import patch
 
 # Third-party library imports
 import numpy as np
@@ -18,8 +20,6 @@ from config import NotificationManager, Shop
 from entities.miner_entity import MinerEntity
 from entities.player import Player
 from generators import AsteroidField, AsteroidGenerator
-from unittest.mock import patch
-import unittest
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

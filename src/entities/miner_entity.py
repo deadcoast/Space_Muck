@@ -8,17 +8,18 @@ import logging
 import math
 import random
 import time
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+import networkx as nx
 
 # Third-party library imports
 import numpy as np
+import pygame
 
 # Local application imports
 from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 from entities.base_entity import BaseEntity
-from typing import Any, Dict, List, Optional, Set, Tuple
 from utils.logging_setup import log_exception
-import networkx as nx
-import pygame
 
 # Standard library imports
 
@@ -54,18 +55,18 @@ except ImportError:
 # Local application imports
 
 # Import from config package
+from config import CELL_SIZE as GRID_CELL_SIZE
 from config import (
+    COLOR_ENTITY_AGGRESSIVE,
+    COLOR_ENTITY_DEFAULT,
+    COLOR_ENTITY_EXPANDING,
+    COLOR_ENTITY_FEEDING,
+    COLOR_ENTITY_MIGRATING,
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
-    COLOR_ENTITY_DEFAULT,
-    COLOR_ENTITY_FEEDING,
-    COLOR_ENTITY_EXPANDING,
-    COLOR_ENTITY_MIGRATING,
-    COLOR_ENTITY_AGGRESSIVE,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
-    CELL_SIZE as GRID_CELL_SIZE,
 )
 
 

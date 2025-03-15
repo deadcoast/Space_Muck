@@ -6,13 +6,14 @@ Unit tests for the Fleet class.
 # Standard library imports
 import os
 import sys
-
-# Third-party library imports
+import unittest
 
 # Local application imports
 from entities.base_entity import BaseEntity
 from entities.fleet import Fleet
-import unittest
+
+# Third-party library imports
+
 
 # Removed unused mock imports
 

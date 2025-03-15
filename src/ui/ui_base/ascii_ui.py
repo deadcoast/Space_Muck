@@ -8,11 +8,13 @@ class ASCIIBox(UIElement):
 # Standard library imports
 import logging
 
+# Local application imports
+from typing import Callable, Dict, List, Optional, Tuple
+
+import pygame
+
 # Third-party library imports
 
-# Local application imports
-from typing import List, Dict, Optional, Tuple, Callable
-import pygame
 
     def __init__(
         self,

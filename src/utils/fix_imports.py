@@ -14,15 +14,16 @@ If no file or directory is specified, it will fix imports in the entire src dire
 
 # Standard library imports
 import argparse
+import importlib.util
 import os
 import re
 import sys
 
+# Local application imports
+from typing import Dict, List, Optional, Set, Tuple
+
 # Third-party library imports
 
-# Local application imports
-from typing import List, Dict, Set, Optional, Tuple
-import importlib.util
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))

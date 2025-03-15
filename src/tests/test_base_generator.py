@@ -3,21 +3,22 @@
 Unit tests for the BaseGenerator class.
 """
 
+import importlib.util
+
 # Standard library imports
 import itertools
 import os
 import sys
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from generators.base_generator import BaseGenerator
-from unittest.mock import patch, MagicMock
 from utils.dependency_injection import DependencyContainer
 from utils.noise_generator import NoiseGenerator
-import importlib.util
-import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -107,11 +108,19 @@ class TestBaseGenerator(unittest.TestCase):
         self.assertEqual(self.generator._noise_cache, {})
 
         # Test default parameters
-        self.assertIn("density", self.generator.parameters)
-        self.assertIn("complexity", self.generator.parameters)
-        self.assertIn("turbulence", self.generator.parameters)
-        self.assertIn("iterations", self.generator.parameters)
-        self.assertIn("rare_chance", self.generator.parameters)
+        expected_parameters = [
+            "density",
+            "complexity",
+            "turbulence",
+            "iterations",
+            "rare_chance",
+        ]
+        for param in expected_parameters:
+            self.assertIn(
+                param,
+                self.generator.parameters,
+                f"Generator should have '{param}' in its parameters",
+            )
 
     def test_default_initialization(self):
         """Test initialization with default values."""
@@ -156,7 +165,11 @@ class TestBaseGenerator(unittest.TestCase):
         noise_layer = self.generator.generate_noise_layer(
             noise_type="unknown", scale=0.1
         )
-        self.assertEqual(noise_layer.shape, (60, 50))
+        self.assertEqual(
+            noise_layer.shape,
+            (60, 50),
+            "Noise layer shape should match generator dimensions (height, width)",
+        )
 
         # Test caching
         # Call again with same parameters
@@ -165,7 +178,11 @@ class TestBaseGenerator(unittest.TestCase):
         self.generator.generate_noise_layer(noise_type="medium", scale=0.1)
 
         # Should use cached value, so no new calls to noise generator
-        self.assertEqual(len(self.mock_noise_generator.calls), 0)
+        self.assertEqual(
+            len(self.mock_noise_generator.calls),
+            0,
+            "Expected no new calls to noise generator when using cached values",
+        )
 
     def test_apply_cellular_automaton(self):
         """Test the apply_cellular_automaton method."""
@@ -187,46 +204,25 @@ class TestBaseGenerator(unittest.TestCase):
         )
 
         # Verify the result is the same shape
-        self.assertEqual(result.shape, (10, 10))
-
-        # Create a test case where we know the expected outcome
-        # For a 3x3 block in Conway's Game of Life, the corners die and the edges survive
-        # But our implementation preserves original values where cells are alive
-        expected = np.zeros((10, 10))
-        expected[4:7, 4:7] = 1  # Original 3x3 block
-        expected[4, 4] = 0  # Top-left corner dies
-        expected[4, 6] = 0  # Top-right corner dies
-        expected[6, 4] = 0  # Bottom-left corner dies
-        expected[6, 6] = 0  # Bottom-right corner dies
+        self.assertEqual(
+            result.shape, (10, 10), "Result shape should match input grid shape"
+        )
 
         # Test with a controlled grid and known rules
+        self._test_conways_game_of_life_rules(test_generator)
+
+    def _test_conways_game_of_life_rules(self, test_generator):
+        """Helper method to test Conway's Game of Life rules."""
+        # Create a test case where we know the expected outcome
+        # For a 3x3 block in Conway's Game of Life, the corners die and the edges survive
         controlled_grid = np.zeros((10, 10))
         controlled_grid[4:7, 4:7] = 1  # 3x3 block
 
         # Create a binary version for testing
         binary_grid = (controlled_grid > 0).astype(np.int8)
 
-        # Apply rules manually for one iteration
-        new_grid = binary_grid.copy()
-
-        # Apply cellular automaton rules manually
-        for y, x in itertools.product(range(10), range(10)):
-            # Count live neighbors
-            neighbors = 0
-            for dy in [-1, 0, 1]:
-                for dx in [-1, 0, 1]:
-                    if dx == 0 and dy == 0:
-                        continue
-                    nx, ny = (x + dx) % 10, (y + dy) % 10  # Wrap around
-                    neighbors += binary_grid[ny, nx]
-
-            # Apply rules
-            if binary_grid[y, x] == 1:
-                # Cell is alive
-                if neighbors not in {2, 3}:
-                    new_grid[y, x] = 0  # Cell dies
-            elif neighbors == 3:
-                new_grid[y, x] = 1  # Cell is born
+        # Get the expected result after one iteration
+        expected_grid = self._apply_conways_rules_manually(binary_grid)
 
         # Apply the method
         result = test_generator.apply_cellular_automaton(
@@ -239,8 +235,47 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Verify the result matches our manual calculation
         # Note: The method preserves original values where cells are alive
-        expected_result = controlled_grid * new_grid
-        np.testing.assert_array_equal(result, expected_result)
+        expected_result = controlled_grid * expected_grid
+        np.testing.assert_array_equal(
+            result,
+            expected_result,
+            "Cellular automaton result should match expected pattern after applying Conway's rules",
+        )
+
+    def _apply_conways_rules_manually(self, binary_grid):
+        """Apply Conway's Game of Life rules manually to a grid."""
+        grid_size = binary_grid.shape[0]  # Assuming square grid
+        new_grid = binary_grid.copy()
+
+        # Apply cellular automaton rules manually
+        for y, x in itertools.product(range(grid_size), range(grid_size)):
+            # Count live neighbors
+            neighbors = self._count_live_neighbors(binary_grid, x, y, grid_size)
+
+            # Apply rules
+            new_grid[y, x] = self._apply_conway_rule(binary_grid[y, x], neighbors)
+
+        return new_grid
+
+    def _count_live_neighbors(self, grid, x, y, grid_size):
+        """Count the number of live neighbors for a cell at (x, y)."""
+        neighbors = 0
+        for dy in [-1, 0, 1]:
+            for dx in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = (x + dx) % grid_size, (y + dy) % grid_size  # Wrap around
+                neighbors += grid[ny, nx]
+        return neighbors
+
+    def _apply_conway_rule(self, cell_state, neighbors):
+        """Apply Conway's Game of Life rules to a cell."""
+        if cell_state == 1:
+            # Cell is alive
+            return 1 if neighbors in {2, 3} else 0
+        else:
+            # Cell is dead
+            return 1 if neighbors == 3 else 0
 
     def test_create_clusters(self):
         """Test the create_clusters method."""
@@ -261,10 +296,16 @@ class TestBaseGenerator(unittest.TestCase):
         )
 
         # Verify the result is the same shape
-        self.assertEqual(result.shape, (10, 10))
+        self.assertEqual(
+            result.shape, (10, 10), "Result shape should match input grid shape"
+        )
 
         # Verify that some values are higher than the original
-        self.assertTrue(np.any(result > 1.0))
+        self.assertGreater(
+            np.max(result),
+            1.0,
+            "Expected at least some values to be greater than 1.0 after clustering",
+        )
 
         # Test with an empty grid (should return the original grid)
         empty_grid = np.zeros((10, 10))
@@ -283,22 +324,38 @@ class TestBaseGenerator(unittest.TestCase):
         # Should return a grid with the same shape
         self.assertEqual(result.shape, sparse_grid.shape)
         # Non-zero values should still be present
-        self.assertTrue(result[0, 0] > 0)
-        self.assertTrue(result[9, 9] > 0)
+        self.assertGreater(result[0, 0], 0, "Expected non-zero value at position (0,0)")
+        self.assertGreater(result[9, 9], 0, "Expected non-zero value at position (9,9)")
 
     def test_to_dict(self):
         """Test the to_dict method."""
         data = self.generator.to_dict()
 
         # Verify the dictionary contains all required fields
-        self.assertEqual(data["entity_id"], "gen-123")
-        self.assertEqual(data["entity_type"], "test_generator")
-        self.assertEqual(data["seed"], 42)
-        self.assertEqual(data["width"], 50)
-        self.assertEqual(data["height"], 60)
-        self.assertEqual(data["color"], (100, 200, 100))
-        self.assertEqual(data["position"], (5, 10))
-        self.assertEqual(data["parameters"], self.generator.parameters)
+        self.assertEqual(
+            data["entity_id"], "gen-123", "entity_id should match the initialized value"
+        )
+        self.assertEqual(
+            data["entity_type"],
+            "test_generator",
+            "entity_type should match the initialized value",
+        )
+        self.assertEqual(data["seed"], 42, "seed should match the initialized value")
+        self.assertEqual(data["width"], 50, "width should match the initialized value")
+        self.assertEqual(
+            data["height"], 60, "height should match the initialized value"
+        )
+        self.assertEqual(
+            data["color"], (100, 200, 100), "color should match the initialized value"
+        )
+        self.assertEqual(
+            data["position"], (5, 10), "position should match the initialized value"
+        )
+        self.assertEqual(
+            data["parameters"],
+            self.generator.parameters,
+            "parameters should match the generator's parameters",
+        )
 
     def test_generate_multi_octave_noise(self):
         """Test the generate_multi_octave_noise method."""
@@ -320,12 +377,22 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Test with default parameters
         self.mock_noise_generator.calls = []  # Clear call history
-        noise_layer = self.generator.generate_multi_octave_noise(scale=0.1)
+        # Generate noise and capture for verification
+        result_noise = self.generator.generate_multi_octave_noise(scale=0.1)
+
+        # Verify shape of the result
+        self.assertEqual(
+            result_noise.shape,
+            (60, 50),
+            "Multi-octave noise should match generator dimensions",
+        )
 
         # Verify default parameters were used
         last_call = self.mock_noise_generator.calls[-1]
-        self.assertEqual(last_call[4], [3, 5, 8])  # default octaves
-        self.assertEqual(last_call[5], [1.0, 0.5, 0.25])  # default weights
+        self.assertEqual(last_call[4], [3, 5, 8], "Default octaves should be [3, 5, 8]")
+        self.assertEqual(
+            last_call[5], [1.0, 0.5, 0.25], "Default weights should be [1.0, 0.5, 0.25]"
+        )
 
         # Test caching
         self.mock_noise_generator.calls = []  # Clear call history
@@ -333,7 +400,11 @@ class TestBaseGenerator(unittest.TestCase):
         self.generator.generate_multi_octave_noise(scale=0.1)
 
         # Should use cached value, so no new calls to noise generator
-        self.assertEqual(len(self.mock_noise_generator.calls), 0)
+        self.assertEqual(
+            len(self.mock_noise_generator.calls),
+            0,
+            "Expected no new calls to noise generator when using cached values",
+        )
 
     def test_apply_cellular_automaton_with_utils(self):
         """Test the apply_cellular_automaton method with utility module integration."""
@@ -371,6 +442,10 @@ class TestBaseGenerator(unittest.TestCase):
 
         # Verify the utility function was called
         mock_ca.assert_called_once()
+        self.assertIsNotNone(
+            mock_ca.call_args,
+            "Expected cellular automaton utility function to be called with arguments",
+        )
 
         # Verify the result is what the mock returned
         np.testing.assert_array_equal(result, mock_result)
@@ -437,12 +512,26 @@ class TestBaseGenerator(unittest.TestCase):
         call_kwargs = mock_clusters.call_args[1]
 
         # Check positional arguments
-        np.testing.assert_array_equal(call_args[0], grid)
+        np.testing.assert_array_equal(
+            call_args[0], grid, "First positional argument should be the input grid"
+        )
 
         # Check keyword arguments
-        self.assertEqual(call_kwargs["num_clusters"], 3)
-        self.assertEqual(call_kwargs["cluster_value_multiplier"], 2.0)
-        self.assertTrue("cluster_radius" in call_kwargs)
+        self.assertEqual(
+            call_kwargs["num_clusters"],
+            3,
+            "num_clusters parameter should be passed correctly",
+        )
+        self.assertEqual(
+            call_kwargs["cluster_value_multiplier"],
+            2.0,
+            "cluster_value_multiplier parameter should be passed correctly",
+        )
+        self.assertIn(
+            "cluster_radius",
+            call_kwargs,
+            "cluster_radius parameter should be included in the function call",
+        )
 
         # Verify the result is what the mock returned
         np.testing.assert_array_equal(result, mock_result)
@@ -473,7 +562,11 @@ class TestBaseGenerator(unittest.TestCase):
         self.assertEqual(result.shape, (10, 10))
 
         # Verify that some values are higher than the original
-        self.assertTrue(np.any(result > 1.0))
+        self.assertGreater(
+            np.max(result),
+            1.0,
+            "Expected at least some values to be greater than 1.0 after clustering",
+        )
 
     def test_parameter_validation_clusters(self):
         """Test parameter validation in the create_clusters method."""
@@ -493,36 +586,59 @@ class TestBaseGenerator(unittest.TestCase):
             grid=grid, num_clusters=-1, cluster_value_multiplier=2.0
         )
         # Verify the shape is correct
-        self.assertEqual(result.shape, (10, 10))
+        self.assertEqual(
+            result.shape,
+            (10, 10),
+            "Result shape should match input grid shape even with invalid parameters",
+        )
 
         # Test invalid cluster_value_multiplier
         result = test_generator.create_clusters(
             grid=grid, num_clusters=3, cluster_value_multiplier=0
         )
         # Verify the shape is correct
-        self.assertEqual(result.shape, (10, 10))
+        self.assertEqual(
+            result.shape,
+            (10, 10),
+            "Result shape should match input grid shape even with invalid parameters",
+        )
 
     def test_parallel_clustering(self):
         """Test the parallel clustering implementation."""
         # Create a test generator with larger dimensions to trigger parallel processing
-        test_generator = BaseGenerator(
-            entity_id="test-parallel-clusters",
+        test_generator = self._create_large_test_generator()
+
+        # Create a grid with non-zero values
+        grid = np.ones((250, 250))
+
+        # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
+        with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
+            # Set up the mock
+            self._setup_clustering_mock(mock_executor)
+
+            # Call the create_clusters method which should use parallel processing
+            result = test_generator.create_clusters(
+                grid=grid, num_clusters=8, cluster_value_multiplier=2.0
+            )
+
+            # Verify the result has the expected shape
+            self.assertEqual(
+                result.shape,
+                (250, 250),
+                "Result shape should match input grid shape for parallel processing",
+            )
+
+    def _create_large_test_generator(self):
+        """Create a test generator with large dimensions for parallel processing tests."""
+        return BaseGenerator(
+            entity_id="test-parallel",
             width=250,
             height=250,
             noise_generator=self.mock_noise_generator,
         )
 
-        # Create a grid with non-zero values
-        grid = np.ones((250, 250))
-
-        # Create a test generator with large grid to trigger parallel processing
-
-        # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
-        with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
-            self._grid_result_handler(mock_executor, test_generator, grid)
-
-    def _grid_result_handler(self, mock_executor, test_generator, grid):
-        # Set up the mock to return a result that would be expected from clustering
+    def _setup_clustering_mock(self, mock_executor):
+        """Set up the mock for parallel clustering tests."""
         mock_future = MagicMock()
         mock_result = np.ones((250, 250)) * 1.5  # Simulated result with elevated values
         mock_future.result.return_value = mock_result
@@ -530,42 +646,48 @@ class TestBaseGenerator(unittest.TestCase):
             mock_future
         )
 
-        # Call the create_clusters method which should use parallel processing
-        result = test_generator.create_clusters(
-            grid=grid, num_clusters=8, cluster_value_multiplier=2.0
-        )
-
-        # Verify the result has the expected shape
-        self.assertEqual(result.shape, (250, 250))
-
     def test_parallel_cellular_automaton(self):
         """Test the parallel cellular automaton implementation."""
         # Create a test generator with larger dimensions to trigger parallel processing
-        test_generator = BaseGenerator(
-            entity_id="test-parallel-ca",
-            width=250,
-            height=250,
-            noise_generator=self.mock_noise_generator,
-        )
+        test_generator = self._create_large_test_generator()
 
-        # Create a controlled grid with a pattern
-        controlled_grid = np.zeros((250, 250))
-
-        # Create a glider pattern
-        glider = np.array([[0, 1, 0], [0, 0, 1], [1, 1, 1]])
-        controlled_grid[10:13, 10:13] = glider
+        # Create a controlled grid with a glider pattern
+        controlled_grid = self._create_glider_grid()
 
         # Mock the ProcessPoolExecutor to avoid multiprocessing issues in tests
         with patch("concurrent.futures.ProcessPoolExecutor") as mock_executor:
-            self._ca_evolution_handler(mock_executor, test_generator, controlled_grid)
+            # Set up the mock
+            self._setup_ca_mock(mock_executor)
 
-    def _ca_evolution_handler(self, mock_executor, test_generator, controlled_grid):
-        # Set up the mock to return a result that would be expected from CA evolution
+            # Call the apply_cellular_automaton method which should use parallel processing for large grids
+            result = test_generator.apply_cellular_automaton(
+                grid=controlled_grid,
+                birth_set={3},
+                survival_set={2, 3},
+                iterations=1,
+                wrap=True,
+            )
+
+            # Verify the result has the expected shape
+            self.assertEqual(
+                result.shape,
+                (250, 250),
+                "Result shape should match input grid shape for parallel processing",
+            )
+
+    def _create_glider_grid(self):
+        """Create a grid with a glider pattern for cellular automaton tests."""
+        controlled_grid = np.zeros((250, 250))
+        glider = np.array([[0, 1, 0], [0, 0, 1], [1, 1, 1]])
+        controlled_grid[10:13, 10:13] = glider
+        return controlled_grid
+
+    def _setup_ca_mock(self, mock_executor):
+        """Set up the mock for parallel cellular automaton tests."""
         mock_future = MagicMock()
 
         # Create a simulated result with the expected glider evolution
         simulated_result = np.zeros((250, 250))
-        # The glider pattern after one iteration
         evolved_glider = np.array([[0, 0, 0], [1, 0, 1], [0, 1, 1], [0, 1, 0]])
         simulated_result[10:14, 10:13] = evolved_glider
 
@@ -574,18 +696,6 @@ class TestBaseGenerator(unittest.TestCase):
         mock_executor.return_value.__enter__.return_value.submit.return_value = (
             mock_future
         )
-
-        # Call the apply_cellular_automaton method which should use parallel processing for large grids
-        result = test_generator.apply_cellular_automaton(
-            grid=controlled_grid,
-            birth_set={3},
-            survival_set={2, 3},
-            iterations=1,
-            wrap=True,
-        )
-
-        # Verify the result has the expected shape
-        self.assertEqual(result.shape, (250, 250))
 
 
 if __name__ == "__main__":

@@ -9,19 +9,19 @@ throughout the game.
 import uuid
 from typing import Dict, List, Optional
 
-# Third-party library imports
-
 # Local application imports
 from converters.converter_models import (
-    Converter,
-    Recipe,
-    ConverterType,
-    ConverterTier,
-    ResourceType,
-    ProductionChain,
     ChainStep,
+    Converter,
+    ConverterTier,
+    ConverterType,
     OptimizationSuggestion,
+    ProductionChain,
+    Recipe,
+    ResourceType,
 )
+
+# Third-party library imports
 
 
 class ConverterRegistry:

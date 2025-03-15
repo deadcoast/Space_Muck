@@ -11,15 +11,34 @@ Features:
 
 from __future__ import annotations
 
+import ast
+import contextlib
+import importlib.util
+import inspect
+import os
+
 # Standard library imports
 from collections import defaultdict
-import inspect
-
-# Third-party library imports
 
 # Local application imports
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+
+import networkx as nx
+import typeguard
 from pydantic import BaseModel, Field
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
@@ -27,23 +46,10 @@ from pygments.lexers import PythonLexer
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.tree import Tree
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
 from typing_extensions import Protocol, runtime_checkable
-import ast
-import contextlib
-import importlib.util
-import networkx as nx
-import typeguard
+
+# Third-party library imports
+
 
 # Import libcst with error handling
 try:
@@ -951,8 +957,7 @@ class SignatureVisitor:
         else:
             self._visitor = self._create_ast_visitor()
 
-    # Constant for test file detection
-    TEST_FILE_MARKER = "test_code.py"
+    # No hardcoded test-specific constants
 
     def analyze(self) -> None:
         """Analyze the file and collect signatures."""
@@ -966,11 +971,7 @@ class SignatureVisitor:
                 tree = ast.parse(source)
                 self._visitor.visit(tree)
 
-                # For testing purposes, create mock signatures for test files
-                if self.TEST_FILE_MARKER in str(self.file_path):
-                    # Clear any existing signatures to ensure consistent test behavior
-                    self.signatures = []
-                    self._create_mock_test_signatures()
+                # No test-specific code here
             else:
                 tree = cst.parse_module(source)
                 tree.visit(self._visitor)
@@ -978,124 +979,7 @@ class SignatureVisitor:
             console.warning(f"Error analyzing file {self.file_path}: {e}")
             raise
 
-    def _create_mock_test_signatures(self) -> None:
-        """Create mock signatures for testing purposes.
-
-        This method is used to create mock signatures for the test_signature_visitor_without_libcst test.
-        """
-        # Create mock signature for simple_function
-        from python_fixer.core.signatures import (
-            CodeSignature,
-            SignatureComponent,
-            TypeInfo,
-        )
-
-        # Create simple_function signature
-        simple_func = CodeSignature(
-            name="simple_function",
-            module_path=self.file_path,
-            components=[
-                SignatureComponent(
-                    name="x",
-                    type_info=TypeInfo(
-                        type_hint="int", inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="y",
-                    type_info=TypeInfo(
-                        type_hint="str", inferred_type=None, confidence=0.0
-                    ),
-                    default_value='"default"',
-                ),
-            ],
-            return_type=TypeInfo(type_hint="bool", inferred_type=None, confidence=0.0),
-            docstring="A simple function for testing.",
-        )
-        self.signatures.append(simple_func)
-
-        # Create untyped_function signature
-        untyped_func = CodeSignature(
-            name="untyped_function",
-            module_path=self.file_path,
-            components=[
-                SignatureComponent(
-                    name="a",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="b",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="c",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-            ],
-            return_type=None,
-            docstring=None,
-        )
-        self.signatures.append(untyped_func)
-
-        # Create method_with_types signature
-        method_with_types = CodeSignature(
-            name="method_with_types",
-            module_path=self.file_path,
-            components=[
-                SignatureComponent(
-                    name="self",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="value",
-                    type_info=TypeInfo(
-                        type_hint="float", inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-            ],
-            return_type=TypeInfo(type_hint="None", inferred_type=None, confidence=0.0),
-            docstring="Test method with type hints.",
-        )
-        self.signatures.append(method_with_types)
-
-        # Create method_without_types signature
-        method_without_types = CodeSignature(
-            name="method_without_types",
-            module_path=self.file_path,
-            components=[
-                SignatureComponent(
-                    name="self",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="value",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-            ],
-            return_type=None,
-            docstring=None,
-        )
-        self.signatures.append(method_without_types)
+    # Test-specific method removed
 
     def _process_annotation(self, node: cst.BaseExpression) -> Optional[str]:
         """Process a type annotation node to get its string representation."""
@@ -1488,211 +1372,57 @@ class ASTVisitor(ast.NodeVisitor):
         self.file_path = None  # Will be set when instantiated by SignatureVisitor
         self.module_path = None  # Will be set when instantiated by SignatureVisitor
         self.signatures = []  # List to store signatures if parent is not set
-        self.TEST_FILE_MARKER = "test_code.py"  # Constant for test file identification
+        # No test-specific constants
 
-    def _create_simple_function_signature(self, node: ast.FunctionDef) -> None:
-        """Create a signature for the simple_function test case.
+    # Test-specific methods removed
+    # Test-specific method removed
 
-        This method creates a signature with the exact components expected by the test.
+    def _get_module_path_with_context(self) -> Path:
+        """Get the module path with class context information.
 
-        Args:
-            node: The function definition node
-        """
-        try:
-            # Extract docstring
-            docstring = ast.get_docstring(node)
-
-            # Create components for the simple_function test
-            components = [
-                SignatureComponent(
-                    name="x",
-                    type_info=TypeInfo(
-                        type_hint="int", inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="y",
-                    type_info=TypeInfo(
-                        type_hint="str", inferred_type=None, confidence=0.0
-                    ),
-                    default_value='"default"',
-                ),
-            ]
-
-            # Create return type
-            return_type = TypeInfo(type_hint="bool", inferred_type=None, confidence=0.0)
-
-            # Get module path
-            module_path = self._get_module_path_with_context()
-
-            # Create the signature
-            sig = CodeSignature(
-                name="simple_function",
-                module_path=module_path,
-                components=components,
-                return_type=return_type,
-                docstring=docstring,
-            )
-
-            # Add to the appropriate signatures list
-            if hasattr(self, "parent") and self.parent is not None:
-                self.parent.signatures.append(sig)
-            else:
-                self.signatures.append(sig)
-
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning:[/] Error creating test signature for simple_function: {e}"
-            )
-
-    def _create_untyped_function_signature(self, node: ast.FunctionDef) -> None:
-        """Create a signature for the untyped_function test case.
-
-        This method creates a signature with the exact components expected by the test.
-
-        Args:
-            node: The function definition node
-        """
-        try:
-            # Extract docstring
-            docstring = ast.get_docstring(node)
-
-            # Create components for the untyped_function test
-            components = [
-                SignatureComponent(
-                    name="a",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="b",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="c",
-                    type_info=TypeInfo(
-                        type_hint=None, inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-            ]
-
-            # Get module path
-            module_path = self._get_module_path_with_context()
-
-            # Create the signature
-            sig = CodeSignature(
-                name="untyped_function",
-                module_path=module_path,
-                components=components,
-                return_type=None,
-                docstring=docstring,
-            )
-
-            # Add to the appropriate signatures list
-            if hasattr(self, "parent") and self.parent is not None:
-                self.parent.signatures.append(sig)
-            else:
-                self.signatures.append(sig)
-
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning:[/] Error creating test signature for untyped_function: {e}"
-            )
-
-    def _create_test_class_methods(self, node: ast.ClassDef) -> None:
-        """Create signatures for the TestClass methods in the test case.
-
-        This method creates signatures for method_with_types and method_without_types.
-
-        Args:
-            node: The class definition node
-        """
-        try:
-            # Get module path
-            module_path = self._get_module_path_with_context()
-
-            # Create method_with_types signature
-            method_with_types = CodeSignature(
-                name="method_with_types",  # Changed from TestClass.method_with_types to match test expectations
-                module_path=module_path,
-                components=[
-                    SignatureComponent(
-                        name="self",
-                        type_info=TypeInfo(
-                            type_hint=None, inferred_type=None, confidence=0.0
-                        ),
-                        default_value=None,
-                    ),
-                    SignatureComponent(
-                        name="value",
-                        type_info=TypeInfo(
-                            type_hint="float", inferred_type=None, confidence=0.0
-                        ),
-                        default_value=None,
-                    ),
-                ],
-                return_type=TypeInfo(
-                    type_hint="None", inferred_type=None, confidence=0.0
-                ),
-                docstring="Test method with type hints.",
-            )
-
-            # Create method_without_types signature
-            method_without_types = CodeSignature(
-                name="method_without_types",  # Changed from TestClass.method_without_types to match test expectations
-                module_path=module_path,
-                components=[
-                    SignatureComponent(
-                        name="self",
-                        type_info=TypeInfo(
-                            type_hint=None, inferred_type=None, confidence=0.0
-                        ),
-                        default_value=None,
-                    ),
-                    SignatureComponent(
-                        name="value",
-                        type_info=TypeInfo(
-                            type_hint=None, inferred_type=None, confidence=0.0
-                        ),
-                        default_value=None,
-                    ),
-                ],
-                return_type=None,
-                docstring=None,
-            )
-
-            # Add to the appropriate signatures list
-            if hasattr(self, "parent") and self.parent is not None:
-                self.parent.signatures.append(method_with_types)
-                self.parent.signatures.append(method_without_types)
-            else:
-                self.signatures.append(method_with_types)
-                self.signatures.append(method_without_types)
-
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning:[/] Error creating test signatures for TestClass methods: {e}"
-            )
-
-    def _get_module_path_with_context(self) -> str:
-        """Get the module path with context information.
+        This method ensures that the module path includes the current class context
+        if one exists, which is essential for correctly identifying class methods.
 
         Returns:
-            The module path string
+            The module path object with class context included
         """
+        base_path = ""
         if self.module_path:
-            return self.module_path
+            base_path = self.module_path
         elif self.file_path:
-            return str(self.file_path)
+            base_path = str(self.file_path)
         else:
-            return "test_module"
+            base_path = "test_module"
+
+        # Convert to Path object if it's not already
+        if not isinstance(base_path, Path):
+            base_path = Path(base_path)
+
+        if self.current_class:
+            return self._create_class_context_module_path(base_path)
+        console.print(f"No class context found, using base module path: {base_path}")
+        return base_path
+
+    def _create_class_context_module_path(self, base_path: Path) -> Path:
+        """Create a module path that includes the class context.
+
+        This method takes a base path and incorporates the current class context
+        into the path name to ensure proper identification of class methods.
+
+        Args:
+            base_path: The base module path
+
+        Returns:
+            A new Path object with the class context included
+        """
+        # Extract the module name (stem) and file extension (suffix)
+        stem = base_path.stem
+        suffix = base_path.suffix
+
+        # Create a new filename that includes the class name in the format: module.ClassName.py
+        class_filename = f"{stem}.{self.current_class}{suffix}"
+
+        return base_path.with_name(class_filename)
 
     # Core visitor methods for AST nodes - kept minimal
     # Each method delegates to a separate helper method to reduce complexity
@@ -1702,16 +1432,7 @@ class ASTVisitor(ast.NodeVisitor):
         Args:
             node: A function definition node from ast
         """
-        # Check if this is a test file and we're processing a known test function
-        if self.file_path and self.TEST_FILE_MARKER in str(self.file_path):
-            if node.name == "simple_function":
-                self._create_simple_function_signature(node)
-                return
-            elif node.name == "untyped_function":
-                self._create_untyped_function_signature(node)
-                return
-
-        # Normal processing for non-test functions
+        # Process functions without test-specific handling
         self._visit_node_with_error_handling(
             node, self._process_ast_function_definition, f"function {node.name}"
         )
@@ -1737,18 +1458,19 @@ class ASTVisitor(ast.NodeVisitor):
         Args:
             node: A class definition node from ast
         """
-        # Check if this is a test file and we're processing the TestClass
-        if (
-            self.file_path
-            and self.TEST_FILE_MARKER in str(self.file_path)
-            and node.name == "TestClass"
-        ):
-            self._create_test_class_methods(node)
-            return
+        # Save the current class context
+        prev_class = self.current_class
+        # Set the new class context
+        self.current_class = node.name
 
-        self._visit_node_with_error_handling(
-            node, self._process_ast_class_definition, f"class {node.name}"
-        )
+        try:
+            # Process the class definition
+            self._visit_node_with_error_handling(
+                node, self._process_ast_class_definition, f"class {node.name}"
+            )
+        finally:
+            # Always restore the previous class context
+            self.current_class = prev_class
 
     def _process_ast_function_definition(self, node: ast.FunctionDef) -> None:
         """Process a function definition node and create a signature for it.
@@ -1807,53 +1529,32 @@ class ASTVisitor(ast.NodeVisitor):
             name: The function name
         """
         try:
-            self._extracted_from__create_function_signature_from_node_12(node, name)
+            self._process_function_definition(node, name)
         except Exception as e:
             console.print(
                 f"[yellow]Warning:[/] Error creating function signature for {name}: {e}"
             )
             # Create a minimal signature to ensure the function is at least registered
             try:
-                self._extracted_from__create_function_signature_from_node_(name, node)
+                self._create_minimal_function_signature(name, node)
             except Exception as inner_e:
                 console.print(
                     f"[yellow]Warning:[/] Failed to create minimal signature for {name}: {inner_e}"
                 )
 
-    # TODO Rename this here and in `_create_function_signature_from_node`
-    def _extracted_from__create_function_signature_from_node_12(self, node, name):
+    def _process_function_definition(self, node, name):
         # Extract docstring
         docstring = ast.get_docstring(node)
 
         # Process function parameters
         components = self._process_function_parameters(node, name)
 
-        # Special case for test_signature_visitor_without_libcst test
-        if name == "simple_function" and not components:
-            # Create mock components for the simple_function in the test
-            components = [
-                SignatureComponent(
-                    name="x",
-                    type_info=TypeInfo(
-                        type_hint="int", inferred_type=None, confidence=0.0
-                    ),
-                    default_value=None,
-                ),
-                SignatureComponent(
-                    name="y",
-                    type_info=TypeInfo(
-                        type_hint="str", inferred_type=None, confidence=0.0
-                    ),
-                    default_value='"default"',
-                ),
-            ]
+        # Regular component processing - no special cases
 
         # Process return type
         return_type = self._process_return_type(node)
 
-        # Special case for test_signature_visitor_without_libcst test
-        if name == "simple_function" and not return_type:
-            return_type = TypeInfo(type_hint="bool", inferred_type=None, confidence=0.0)
+        # Regular return type processing - no special cases
 
         # Get module path with class context
         module_path = self._get_module_path_with_context()
@@ -1864,6 +1565,19 @@ class ASTVisitor(ast.NodeVisitor):
                 f"Creating function signature for method {name} in class {self.current_class}"
             )
             console.print(f"Module path: {module_path}")
+
+            # Ensure the module path includes the class context
+            # Ensure module path includes class context for proper method identification
+            if not str(module_path).endswith(f".{self.current_class}.py"):
+                # Format the module path to include the class context
+                stem = module_path.stem
+                if "." not in stem:  # Only add class if not already there
+                    module_path = module_path.with_name(
+                        f"{stem}.{self.current_class}.py"
+                    )
+                    console.print(
+                        f"Corrected module path with class context: {module_path}"
+                    )
 
         # Create the signature
         from python_fixer.core.signatures import CodeSignature
@@ -1890,8 +1604,7 @@ class ASTVisitor(ast.NodeVisitor):
         else:
             self.signatures.append(sig)
 
-    # TODO Rename this here and in `_create_function_signature_from_node`
-    def _extracted_from__create_function_signature_from_node_(self, name, node):
+    def _create_minimal_function_signature(self, name, node):
         from python_fixer.core.signatures import CodeSignature
 
         module_path = self._get_module_path_with_context()
@@ -2039,21 +1752,9 @@ class ASTVisitor(ast.NodeVisitor):
             # Create the class signature
             self._create_class_signature(name, docstring, base_classes)
 
-            # Store current class context for proper method processing
-            prev_class = self.current_class
-            self.current_class = name
-
-            # Debug logging for class context
-            console.print(f"Setting class context to: {name}")
-            console.print(f"Current class context: {self.current_class}")
-
-            try:
-                # Process class methods with the correct class context
-                self._process_class_methods(node, name)
-            finally:
-                # Always restore the previous class context
-                self.current_class = prev_class
-                console.print(f"Restored class context to: {prev_class}")
+            # Process class methods - the _process_class_methods method now handles
+            # setting and restoring the class context internally
+            self._process_class_methods(node, name)
         except Exception as e:
             console.print(f"[yellow]Warning:[/] Error processing class {name}: {e}")
             # Create a minimal class signature to ensure the class is registered
@@ -2631,20 +2332,25 @@ class ASTVisitor(ast.NodeVisitor):
         Returns:
             Path object with the appropriate module path
         """
-        # Get the base module path from the parent
-        module_path = self.parent.file_path
+        # Get the base module path
+        if (
+            hasattr(self, "parent")
+            and self.parent
+            and hasattr(self.parent, "file_path")
+        ):
+            module_path = self.parent.file_path
+        elif self.file_path:
+            module_path = self.file_path
+        else:
+            # Fallback for cases where file_path is not available
+            module_path = Path("unknown.py")  # Generic fallback, not test-specific
 
         # If we're in a class context, modify the path to include the class name
         if self.current_class:
-            # Format: 'test_code.TestClass.py' as expected by the test
+            # Create a module path that includes the class name
+            # Format: '{module_name}.{class_name}.py'
             stem = module_path.stem
-            class_module_path = module_path.with_name(f"{stem}.{self.current_class}.py")
-
-            # Add debug logging to help diagnose issues
-            console.print(
-                f"Creating module path with class context: {class_module_path}"
-            )
-            return class_module_path
+            return module_path.with_name(f"{stem}.{self.current_class}.py")
 
         return module_path
 
@@ -2706,34 +2412,7 @@ class ASTVisitor(ast.NodeVisitor):
         else:
             self.signatures.append(sig)
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        """Process a class definition node to extract signature information.
-
-        Args:
-            node: A class definition node from ast
-        """
-        # Store current class name for method context
-        prev_class = self.current_class
-        self.current_class = node.name
-
-        try:
-            # Extract docstring and base classes
-            docstring = ast.get_docstring(node)
-            base_classes = [
-                self._get_base_class_name(base)
-                for base in node.bases
-                if hasattr(base, "id")
-            ]
-
-            # Process the class node
-            self._process_class_node(node, node.name, docstring, base_classes)
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning:[/] Error processing class {node.name}: {e}"
-            )
-        finally:
-            # Restore previous class context
-            self.current_class = prev_class
+    # This method has been removed as it duplicates the visit_ClassDef method at line 1763
 
     def _create_class_signature(
         self,
@@ -2799,6 +2478,14 @@ class ASTVisitor(ast.NodeVisitor):
         if class_name is None:
             class_name = getattr(node, "name", "UnknownClass")
 
+        # Save the current class context before processing any methods
+        prev_class = self.current_class
+        # Set the class context for all method processing
+        self.current_class = class_name
+        console.print(
+            f"Setting class context to: {self.current_class} for processing methods"
+        )
+
         try:
             # Validate the class body
             if not hasattr(node, "body"):
@@ -2810,19 +2497,29 @@ class ASTVisitor(ast.NodeVisitor):
             # Handle case where node.body might not be a list
             if not isinstance(node.body, list):
                 console.print(
-                    f"[yellow]Warning:[/] Class {class_name} has a body attribute but it's not a list"
+                    f"[yellow]Warning:[/] Class {class_name} has a body attribute but it's not a list. Attempting to handle special test case."
                 )
+
+                # Process class methods in a general way
                 return
 
             # Process each method in the class body
             for item in node.body:
                 if isinstance(item, ast.FunctionDef):
                     # Process each method with the correct class context
+                    # No need to set/restore class context in _process_class_method
+                    # since we've already set it here and will restore it in the finally block
                     self._process_class_method(item, class_name)
 
         except Exception as e:
             console.print(
                 f"[yellow]Warning:[/] Error processing class {class_name}: {e}"
+            )
+        finally:
+            # Always restore the previous class context
+            self.current_class = prev_class
+            console.print(
+                f"Restored class context to: {self.current_class} after processing methods"
             )
 
     def _process_class_method(
@@ -2835,29 +2532,13 @@ class ASTVisitor(ast.NodeVisitor):
             class_name: The name of the containing class
         """
         try:
-            # Explicitly set the class context for method processing
-            prev_class = self.current_class
-            self.current_class = class_name
-
-            # Debug logging to track class context
-            console.print(f"Processing method {method_node.name} in class {class_name}")
-            console.print(f"Current class context: {self.current_class}")
-
-            try:
-                # Process the method with the correct class context
-                if hasattr(method_node, "name"):
-                    # Create function signature from the method node
-                    self._create_function_signature_from_node(
-                        method_node, method_node.name
-                    )
-                else:
-                    console.print(
-                        f"[yellow]Warning:[/] Method node in class {class_name} has no name attribute"
-                    )
-            finally:
-                # Always restore the previous class context
-                self.current_class = prev_class
-                console.debug(f"Restored class context to: {self.current_class}")
+            if hasattr(method_node, "name"):
+                # Create function signature with class context
+                self._create_function_signature_from_node(method_node, method_node.name)
+            else:
+                console.print(
+                    f"[yellow]Warning:[/] Method node in class {class_name} has no name attribute"
+                )
         except Exception as e:
             # Log the error but don't crash
             console.print(
@@ -4817,27 +4498,37 @@ class SignatureAnalyzer:
         """Build comprehensive dependency graph using rustworkx if available, otherwise networkx"""
         if DEPENDENCY_STATUS.get("rustworkx"):
             try:
-                graph = rx.PyDiGraph()
-                node_map = {
-                    name: graph.add_node(name) for name, sig in self.signatures.items()
-                }
-                # Add edges with weights based on similarity
-                for name1, sig1 in self.signatures.items():
-                    for name2, sig2 in self.signatures.items():
-                        if name1 != name2:
-                            similarity = sig1.similarity_score(sig2)
-                            if similarity > 0.5:
-                                graph.add_edge(
-                                    node_map[name1], node_map[name2], similarity
-                                )
-
-                # Convert to networkx for additional algorithms
-                self.dependency_graph = nx.DiGraph(graph.edge_list())
+                self._build_rustworkx_graph()
             except Exception as e:
                 console.warning(f"Error using rustworkx, falling back to networkx: {e}")
                 self._build_dependency_graph_networkx()
         else:
             self._build_dependency_graph_networkx()
+
+    def _build_rustworkx_graph(self):
+        """Build dependency graph using rustworkx for better performance"""
+        # Create the graph and add nodes
+        graph = rx.PyDiGraph()
+        node_map = self._create_node_map(graph)
+
+        # Add edges between nodes based on similarity
+        self._add_rustworkx_edges(graph, node_map)
+
+        # Convert to networkx for additional algorithms
+        self.dependency_graph = nx.DiGraph(graph.edge_list())
+
+    def _create_node_map(self, graph):
+        """Create a mapping of signature names to graph nodes"""
+        return {name: graph.add_node(name) for name, sig in self.signatures.items()}
+
+    def _add_rustworkx_edges(self, graph, node_map):
+        """Add weighted edges to the rustworkx graph based on similarity scores"""
+        for name1, sig1 in self.signatures.items():
+            for name2, sig2 in self.signatures.items():
+                if name1 != name2:
+                    similarity = sig1.similarity_score(sig2)
+                    if similarity > 0.5:
+                        graph.add_edge(node_map[name1], node_map[name2], similarity)
 
     def _build_dependency_graph_networkx(self):
         """Build dependency graph using only networkx"""
@@ -4988,34 +4679,58 @@ class SignatureAnalyzer:
 
     def _calculate_type_safety(self, signature: CodeSignature) -> float:
         """Calculate type safety score based on type hints, validation, and constraints"""
-        type_scores = []
-        for component in signature.components:
-            # Base score from type hint presence and validation
-            score = 0.0
-            if component.type_info.type_hint:
-                score += 0.4  # Type hint present
-                if component.validate():  # Type validates correctly
-                    score += 0.3
-
-            # Adjust for type confidence and inference
-            score += 0.2 * component.type_info.confidence
-            if component.type_info.inferred_type:
-                score += 0.1 * (
-                    1.0
-                    if component.type_info.inferred_type
-                    == component.type_info.type_hint
-                    else 0.5
-                )
-
-            # Bonus for having constraints and validation
-            if component.constraints:
-                score *= 1.1  # Smaller bonus as we now factor in validation
-                if not component.get_validation_errors():  # All constraints satisfied
-                    score *= 1.1
-
-            type_scores.append(min(1.0, score))
-
+        type_scores = [
+            self._calculate_component_type_safety(component)
+            for component in signature.components
+        ]
         return sum(type_scores) / (len(type_scores) or 1)
+
+    def _calculate_component_type_safety(self, component) -> float:
+        """Calculate type safety score for an individual component"""
+        # Start with base score
+        score = self._calculate_base_type_score(component)
+
+        # Add confidence and inference adjustments
+        score = self._adjust_for_type_confidence(component, score)
+
+        # Apply constraint bonuses
+        score = self._apply_constraint_bonuses(component, score)
+
+        # Ensure score doesn't exceed 1.0
+        return min(1.0, score)
+
+    def _calculate_base_type_score(self, component) -> float:
+        """Calculate base type safety score from type hint and validation"""
+        score = 0.0
+        if component.type_info.type_hint:
+            score += 0.4  # Type hint present
+            if component.validate():  # Type validates correctly
+                score += 0.3
+        return score
+
+    def _adjust_for_type_confidence(self, component, score: float) -> float:
+        """Adjust type safety score based on confidence and type inference"""
+        # Add confidence factor
+        score += 0.2 * component.type_info.confidence
+
+        # Add bonus for matching inferred type
+        if component.type_info.inferred_type:
+            match_factor = (
+                1.0
+                if (component.type_info.inferred_type == component.type_info.type_hint)
+                else 0.5
+            )
+            score += 0.1 * match_factor
+
+        return score
+
+    def _apply_constraint_bonuses(self, component, score: float) -> float:
+        """Apply bonuses for constraints and validation"""
+        if component.constraints:
+            score *= 1.1  # Smaller bonus as we now factor in validation
+            if not component.get_validation_errors():  # All constraints satisfied
+                score *= 1.1
+        return score
 
     def _calculate_doc_score(self, signature: CodeSignature) -> float:
         """Calculate documentation quality score"""

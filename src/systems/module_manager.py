@@ -8,12 +8,12 @@ module registration, state management, and inter-module communication.
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable
+from typing import Callable, Dict, List, Optional
+
+# Third-party library imports
 
 
 # Module States

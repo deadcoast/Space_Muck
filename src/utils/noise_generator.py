@@ -8,16 +8,17 @@ that can be injected into generator classes.
 
 # Standard library imports
 import abc
+import contextlib
 import itertools
 import random
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
-import numpy as np
-
 # Local application imports
 from typing import List, Optional
-import contextlib
+
+import numpy as np
+
+# Third-party library imports
+from numpy.random import PCG64, Generator
 
 # Standard library imports
 

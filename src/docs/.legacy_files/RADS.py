@@ -16,12 +16,13 @@ import random
 import sys
 import time
 
-# Third-party library imports
-from perlin_noise import PerlinNoise
 import numpy as np
 import scipy.ndimage as ndimage
 import scipy.signal as signal
 import scipy.stats as stats
+
+# Third-party library imports
+from perlin_noise import PerlinNoise
 
 # Optional dependencies
 try:
@@ -32,11 +33,13 @@ except ImportError:
     PERLIN_AVAILABLE = False
     print("PerlinNoise package is not available. Using fallback noise generator.")
 
-# Local application imports
-from sklearn.cluster import KMeans
-from typing import List, Tuple, Dict, Any
+from typing import Any, Dict, List, Tuple
+
 import networkx as nx
 import pygame
+
+# Local application imports
+from sklearn.cluster import KMeans
 
 # Additional imports for advanced mathematical modeling
 
@@ -2696,7 +2699,9 @@ class Game:
                 hunger_status = (
                     "Starving"
                     if race.hunger > 0.8
-                    else "Hungry" if race.hunger > 0.4 else "Satiated"
+                    else "Hungry"
+                    if race.hunger > 0.4
+                    else "Satiated"
                 )
 
                 self.notifier.add(

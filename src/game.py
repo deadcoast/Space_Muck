@@ -5,17 +5,18 @@ This module implements the core Game class with enhanced state management,
 including state transitions, validation, and history tracking.
 """
 
-# Standard library imports
-from datetime import datetime
 import logging
 import time
+from dataclasses import dataclass
 
-# Third-party library imports
+# Standard library imports
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 # Local application imports
 from config import GAME_CONFIG
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, Callable
+
+# Third-party library imports
 
 
 @dataclass

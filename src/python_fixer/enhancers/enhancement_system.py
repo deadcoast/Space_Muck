@@ -11,15 +11,16 @@
 # EFFECT: Provides method enhancement capabilities with state preservation
 # NAMING: Enhancement[Type]
 
-# Standard library imports
-from functools import wraps
+import importlib
 import logging
 
-# Third-party library imports
+# Standard library imports
+from functools import wraps
 
 # Local application imports
 from typing import Dict, List, Optional, Type
-import importlib
+
+# Third-party library imports
 
 
 class EnhancementSystem:

@@ -8,15 +8,17 @@ following the observer pattern. It supports:
 - Event history tracking for debugging
 """
 
-# Standard library imports
-from collections import defaultdict
 import logging
 import time
 
-# Third-party library imports
+# Standard library imports
+from collections import defaultdict
 
 # Local application imports
 from typing import Any, Callable, Dict, List, Optional
+
+# Third-party library imports
+
 
 # Configure logging
 logger = logging.getLogger(__name__)

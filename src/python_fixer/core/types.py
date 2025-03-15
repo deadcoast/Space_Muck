@@ -4,12 +4,14 @@
 
 # Third-party library imports
 
-# Local application imports
-from dataclasses import dataclass, field
-from typeguard import typechecked
-from typing import Any, Dict, List, Optional, Protocol, Union, runtime_checkable
 import contextlib
 import importlib.util
+
+# Local application imports
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Protocol, Union, runtime_checkable
+
+from typeguard import typechecked
 
 # Dictionary to store optional dependencies
 OPTIONAL_DEPS: Dict[str, Any] = {}
@@ -93,9 +95,6 @@ def validate_type(
         TypeCheckResult with validation status and any errors
     """
     try:
-        # Import internal typeguard functions for type checking
-        from typeguard._checkers import check_type_internal, TypeCheckError
-
         # Get string representation of the expected type
         type_str = _get_type_representation(expected_type)
 
@@ -159,7 +158,7 @@ def _perform_type_check(
         TypeCheckResult with validation status and any errors
     """
     try:
-        from typeguard._checkers import check_type_internal, TypeCheckError
+        from typeguard._checkers import TypeCheckError, check_type_internal
 
         check_type_internal(value, expected_type, {})
         return TypeCheckResult(is_valid=True)
@@ -189,6 +188,51 @@ def _create_exception_result(
 
 
 @typechecked
+def _format_union_type(args: tuple) -> str:
+    """Format a Union type into a string representation.
+
+    Args:
+        args: The type arguments of the Union
+
+    Returns:
+        String representation of the Union type
+    """
+    type_strs = [_get_type_str(arg) for arg in args]
+    return f"Union[{', '.join(type_strs)}]"
+
+
+@typechecked
+def _format_list_type(args: tuple) -> str:
+    """Format a list type into a string representation.
+
+    Args:
+        args: The type arguments of the list
+
+    Returns:
+        String representation of the list type
+    """
+    if len(args) == 1:
+        inner_type = _get_type_str(args[0])
+        return f"<class 'list[{inner_type}]'>"
+    return f"<class 'list[{', '.join(_get_type_str(arg) for arg in args)}]'>"
+
+
+@typechecked
+def _format_class_type(cls: Any) -> str:
+    """Format a class type into a string representation.
+
+    Args:
+        cls: The class to format
+
+    Returns:
+        String representation of the class
+    """
+    if hasattr(cls, "__module__") and cls.__module__ != "builtins":
+        return f"<class '{cls.__module__}.{cls.__name__}'>"
+    return f"<class '{cls.__name__}'>"
+
+
+@typechecked
 def _get_type_str(type_obj: Any) -> str:
     """Get a string representation of a type object.
 
@@ -198,29 +242,20 @@ def _get_type_str(type_obj: Any) -> str:
     Returns:
         String representation of the type
     """
+    # Handle parameterized types (generics)
     if hasattr(type_obj, "__origin__"):
         origin = type_obj.__origin__
         args = type_obj.__args__
 
         if origin is Union:
-            type_strs = []
-            for arg in args:
-                type_str = _get_type_str(arg)
-                type_strs.append(type_str)
-            return f"Union[{', '.join(type_strs)}]"
+            return _format_union_type(args)
         elif origin is list:
-            if len(args) == 1:
-                inner_type = _get_type_str(args[0])
-                return f"<class 'list[{inner_type}]'>"
-            return f"<class 'list[{', '.join(_get_type_str(arg) for arg in args)}]'>"
+            return _format_list_type(args)
         else:
-            if hasattr(origin, "__module__") and origin.__module__ != "builtins":
-                return f"<class '{origin.__module__}.{origin.__name__}'>"
-            return f"<class '{origin.__name__}'>"
+            return _format_class_type(origin)
 
-    if hasattr(type_obj, "__module__") and type_obj.__module__ != "builtins":
-        return f"<class '{type_obj.__module__}.{type_obj.__name__}'>"
-    return f"<class '{type_obj.__name__}'>"
+    # Handle regular classes
+    return _format_class_type(type_obj)
 
 
 @typechecked
@@ -546,9 +581,11 @@ class ImportInfo:
         if full_module := self._resolve_relative_module_path(package_path):
             # Check if the module exists
             return (
-                True if check_dependency_available(full_module) else self._set_validation_result(
-                                    False, f"Cannot resolve relative import: {full_module}"
-                                )
+                True
+                if check_dependency_available(full_module)
+                else self._set_validation_result(
+                    False, f"Cannot resolve relative import: {full_module}"
+                )
             )
         else:
             return False  # Error already set in _resolve_relative_module_path

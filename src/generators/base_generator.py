@@ -2,20 +2,21 @@
 BaseGenerator class: The base class for all procedural generation entities in the game.
 """
 
+import contextlib
+
 # Standard library imports
 import logging
 import random
 import time
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from entities.base_entity import BaseEntity
-from typing import Any, Dict, List, Optional, Set, Tuple
 from utils.dependency_injection import inject
 from utils.noise_generator import NoiseGenerator, get_noise_generator
-import contextlib
 
 # Standard library imports
 
@@ -33,10 +34,10 @@ except ImportError:
 # GPU acceleration dependencies
 try:
     from utils.gpu_utils import (
-        is_gpu_available,
         get_available_backends,
-        to_gpu,
+        is_gpu_available,
         to_cpu,
+        to_gpu,
     )
 
     GPU_UTILS_AVAILABLE = True
@@ -237,8 +238,8 @@ class BaseGenerator(BaseEntity):
                 )
 
                 # Use optimized noise generation with parallel processing
-                from concurrent.futures import ThreadPoolExecutor
                 import math
+                from concurrent.futures import ThreadPoolExecutor
 
                 # Split the grid into chunks for parallel processing
                 chunk_size = math.ceil(self.height / 4)  # Process in 4 chunks
@@ -658,8 +659,8 @@ class BaseGenerator(BaseEntity):
         Returns:
             Tuple[int, int]: Number of workers and chunk size
         """
-        import multiprocessing
         import math
+        import multiprocessing
 
         # Determine number of workers based on CPU count
         num_workers = min(multiprocessing.cpu_count(), 8)  # Limit to 8 workers max
@@ -1057,8 +1058,7 @@ class BaseGenerator(BaseEntity):
             np.ndarray: Trimmed result chunk
         """
         return result_chunk[
-            process_start
-            - start_row : process_start
+            process_start - start_row : process_start
             - start_row
             + (end_row - start_row)
         ]
@@ -1635,9 +1635,9 @@ class BaseGenerator(BaseEntity):
         Returns:
             np.ndarray: Grid with clusters applied
         """
-        from concurrent.futures import ProcessPoolExecutor
         import math
         import multiprocessing
+        from concurrent.futures import ProcessPoolExecutor
 
         logging.info(
             f"Using parallel processing for clustering on {grid.shape} grid with {len(cluster_centers)} clusters"

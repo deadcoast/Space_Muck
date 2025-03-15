@@ -8,12 +8,12 @@ metrics collection, and real-time updates.
 # Standard library imports
 import time
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Any, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
+
+# Third-party library imports
 
 
 class EventType(Enum):

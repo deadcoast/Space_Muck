@@ -15,18 +15,18 @@ import logging
 import math
 import random
 import time
+from typing import Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
 import numpy as np
+import pygame
 import scipy
 
 # Local application imports
-from config import GRID_WIDTH, GRID_HEIGHT, VIEW_WIDTH, VIEW_HEIGHT
+from config import GRID_HEIGHT, GRID_WIDTH, VIEW_HEIGHT, VIEW_WIDTH
 from entities.miner_entity import MinerEntity
 from generators.procedural_generator import ProceduralGenerator
 from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
-from typing import Dict, List, Tuple, Set, Optional
-import pygame
 
 # Handle optional dependencies gracefully
 try:
@@ -50,9 +50,9 @@ except ImportError:
 
 from utils.logging_setup import (
     LogContext,
-    log_performance_start,
-    log_performance_end,
     log_exception,
+    log_performance_end,
+    log_performance_start,
 )
 
 # Try to import the optimized generators if available

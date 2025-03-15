@@ -6,12 +6,13 @@ Tests that the box drawing characters render correctly.
 # Standard library imports
 import os
 import sys
-
-# Third-party library imports
+import unittest
 
 # Local application imports
 import pygame
-import unittest
+
+# Third-party library imports
+
 
 # Add the src directory to the path so we can import modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
@@ -19,7 +20,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 # Use absolute imports for tests
 
 # Import the draw_text function directly from the module
-# Import draw_text directly from the module file, not the package
+from src.ui.ui_element.ascii_box import ASCIIBox, draw_text
+from src.ui.ui_style import UIStyle
 
 
 class TestASCIIBoxDrawing(unittest.TestCase):

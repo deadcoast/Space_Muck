@@ -5,17 +5,18 @@ This module provides a context for managing module states, dependencies,
 and lifecycle events within the game architecture.
 """
 
+import logging
+from dataclasses import dataclass
+
 # Standard library imports
 from datetime import datetime
-import logging
-
-# Third-party library imports
+from enum import Enum, auto
+from typing import Callable, Dict, List, Optional, Set
 
 # Local application imports
-from .game_context import GameContext, GameEventType, GameEvent
-from dataclasses import dataclass
-from enum import Enum, auto
-from typing import Dict, List, Optional, Set, Callable
+from .game_context import GameContext, GameEvent, GameEventType
+
+# Third-party library imports
 
 
 # Module States

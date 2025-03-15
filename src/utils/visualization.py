@@ -9,11 +9,11 @@ helping developers understand and debug procedural generation.
 import logging
 import os
 
-# Third-party library imports
-import numpy as np
-
 # Local application imports
 from typing import List, Optional
+
+# Third-party library imports
+import numpy as np
 
 # Constants
 MATPLOTLIB_NOT_AVAILABLE_MSG = "Cannot visualize: matplotlib not available"

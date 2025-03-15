@@ -4,27 +4,22 @@ Unit tests for the cellular automaton utilities module.
 """
 
 # Standard library imports
-import os
-import sys
+import unittest
+import inspect
+
+# Local application imports
+from typing import Any, Dict, Set
 
 # Third-party library imports
 import numpy as np
 
-# Local application imports
-from typing import Dict, Set, Any
 from utils.cellular_automaton_utils import (
-import unittest
-
-# Add the project root directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
-# Import the cellular automaton utilities
-
     apply_cellular_automaton,
     apply_cellular_automaton_optimized,
-    generate_cellular_automaton_rules,
     apply_environmental_effects,
+    generate_cellular_automaton_rules,
 )
+
 
 class TestCellularAutomatonUtils(unittest.TestCase):
     """Test cases for cellular automaton utility functions."""
@@ -137,24 +132,39 @@ class TestCellularAutomatonUtils(unittest.TestCase):
         # Add some minerals to specific areas
         mineral_map[1:4, 1:4] = 0.8  # High mineral concentration in center
 
-        # Set a random seed for reproducibility
-        np.random.seed(42)
+        # Create a random number generator with fixed seed for reproducibility
+        rng = np.random.default_rng(42)
 
         # Apply environmental effects with high hostility
-        result = apply_environmental_effects(grid, mineral_map, hostility=0.9)
+        # Pass the rng if the function accepts it, otherwise just ensure deterministic results
+        result = apply_environmental_effects(
+            grid,
+            mineral_map,
+            hostility=0.9,
+            rng=rng
+            if "rng" in inspect.signature(apply_environmental_effects).parameters
+            else None,
+        )
 
         # With high hostility, cells should mostly die except in high mineral areas
-        self.assertTrue(np.sum(result) < np.sum(grid))
-        self.assertTrue(np.sum(result[1:4, 1:4]) > np.sum(result) / 2)
+        self.assertLess(np.sum(result), np.sum(grid))
+        self.assertGreater(np.sum(result[1:4, 1:4]), np.sum(result) / 2)
 
-        # Apply with low hostility
-        np.random.seed(42)
+        # Apply with low hostility using the same RNG for consistency
+        # Create a new RNG with the same seed to reset the random state
+        rng = np.random.default_rng(42)
         result_low_hostility = apply_environmental_effects(
-            grid, mineral_map, hostility=0.1
+            grid,
+            mineral_map,
+            hostility=0.1,
+            rng=rng
+            if "rng" in inspect.signature(apply_environmental_effects).parameters
+            else None,
         )
 
         # With low hostility, more cells should survive
-        self.assertTrue(np.sum(result_low_hostility) > np.sum(result))
+        self.assertGreater(np.sum(result_low_hostility), np.sum(result))
+
 
 if __name__ == "__main__":
     unittest.main()

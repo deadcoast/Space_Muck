@@ -6,13 +6,14 @@ Unit tests for the BaseEntity class.
 # Standard library imports
 import os
 import sys
+import unittest
 import uuid
-
-# Third-party library imports
 
 # Local application imports
 from entities.base_entity import BaseEntity
-import unittest
+
+# Third-party library imports
+
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -241,7 +242,11 @@ class TestBaseEntity(unittest.TestCase):
             self.assertAlmostEqual(distance, 2.828, places=3)  # √8 ≈ 2.828
 
             # Test collision detection (collision)
-            self.assertTrue(distance <= collision_distance)
+            self.assertLessEqual(
+                distance,
+                collision_distance,
+                f"Distance {distance} should be less than or equal to collision distance {collision_distance}",
+            )
 
     def test_edge_cases(self):
         """Test edge cases and boundary conditions."""

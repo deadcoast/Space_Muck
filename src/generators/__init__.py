@@ -15,10 +15,10 @@ from generators.asteroid_generator import AsteroidGenerator
 from generators.procedural_generator import (
     ProceduralGenerator,
     create_field_with_multiple_algorithms,
-    generate_field,
     generate_asteroid_field,
-    generate_rare_minerals,
+    generate_field,
     generate_ore,
+    generate_rare_minerals,
     generate_rare_ore,
 )
 from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator

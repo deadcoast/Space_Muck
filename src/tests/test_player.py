@@ -5,26 +5,25 @@ Test module for the Player class.
 # Standard library imports
 import os
 import sys
+import unittest
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
-from entities.player import (
-import unittest
+from entities.player import (  # Use a simple mock object instead of importing MagicMock
+    SimpleMock,
+    Player,
+)
 
-# Use a simple mock object instead of importing MagicMock
-class SimpleMock:
-    """A simple mock object to avoid importing MagicMock."""
 
-    def __init__(self, *args, **kwargs):
-        pass
+def __call__(self, *args, **kwargs):
+    return self
 
-    def __call__(self, *args, **kwargs):
-        return self
 
-    def __getattr__(self, name):
-        return self
+def __getattr__(self, name):
+    return self
+
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -39,10 +38,6 @@ sys.modules["scipy"] = mock
 sys.modules["scipy.stats"] = mock
 sys.modules["scipy.ndimage"] = mock
 
-# Import after mocking dependencies
-
-    Player,
-)  # noqa: E402 - Import not at top of file is intentional for mocking
 
 class MockField:
     """Mock asteroid field for testing."""
@@ -61,6 +56,7 @@ class MockField:
         self.rare_grid[60, 60] = 1
         self.grid[70, 70] = 300  # Anomaly
         self.rare_grid[70, 70] = 2
+
 
 class TestPlayer(unittest.TestCase):
     """Test cases for the Player class."""
@@ -110,7 +106,7 @@ class TestPlayer(unittest.TestCase):
         # Test BaseEntity attributes
         self.assertIsNotNone(self.player.entity_id)
         self.assertEqual(self.player.entity_type, "miner")
-        self.assertEqual(self.player.active, True)
+        self.assertTrue(self.player.active)
         self.assertEqual(self.player.health, 100)
         self.assertEqual(self.player.max_health, 100)
         self.assertEqual(self.player.level, 1)
@@ -140,9 +136,9 @@ class TestPlayer(unittest.TestCase):
         result = self.player.mine(10, 10, self.field)
         self.assertFalse(result["success"])
 
-        result = self._rarity_handler(50, "common", 80)
+        self._rarity_handler(50, "common", 80)
         self._rarity_handler(60, "rare", 320)
-        result = self._rarity_handler(70, "anomaly", 960)
+        self._rarity_handler(70, "anomaly", 960)
         self.assertIn("anomaly_70_70", self.player.discovered_anomalies)
 
     def _rarity_handler(self, arg0, arg1, arg2):
@@ -253,7 +249,7 @@ class TestPlayer(unittest.TestCase):
         self.assertEqual(result["old_level"], 1)
         self.assertEqual(result["new_level"], 2)
         self._xp_calculation_handler(2, 120)
-        result = self._initial_credit_handler(50, "xp_gained", 9)
+        self._initial_credit_handler(50, "xp_gained", 9)
         # Test get_level_progress
         progress = self.player.get_level_progress()
         self.assertEqual(progress["level"], 2)
@@ -429,7 +425,7 @@ class TestPlayer(unittest.TestCase):
 
         # Test level cap
         # Add enough XP to reach level 5 and beyond, but should cap at 5
-        result = self.player._add_xp(1000)
+        self._add_xp_handler(1000)
         self.assertEqual(self.player.level, 5)  # Should be capped at level 5
         self.assertAlmostEqual(self.player.mining_efficiency, 1.0)  # 0.8 + 0.2
         self.assertAlmostEqual(self.player.mining_speed, 1.4)  # 1.0 + 0.4
@@ -496,14 +492,14 @@ class TestPlayer(unittest.TestCase):
 
         # Test bounds checking (lower bound)
         self.player.reputation["miners_guild"] = -90
-        result = self.player.change_reputation("miners_guild", -30)
+        self._change_reputation_handler(-30)
         self.assertEqual(
             self.player.reputation["miners_guild"], -100
         )  # Should be capped at -100
 
         # Test bounds checking (upper bound)
         self.player.reputation["miners_guild"] = 90
-        result = self.player.change_reputation("miners_guild", 30)
+        self._change_reputation_handler(30)
         self.assertEqual(
             self.player.reputation["miners_guild"], 100
         )  # Should be capped at 100
@@ -582,8 +578,8 @@ class TestPlayer(unittest.TestCase):
         # Verify reputation increased
         self.assertTrue(result["success"])
         self.assertEqual(result["faction"], "miners_guild")
-        self.assertTrue(result["reputation_change"] > 0)
-        self.assertTrue(self.player.reputation["miners_guild"] > initial_rep)
+        self.assertGreater(result["reputation_change"], 0)
+        self.assertGreater(self.player.reputation["miners_guild"], initial_rep)
         self.assertEqual(self.player.faction_quests_completed["miners_guild"], 1)
 
     def test_hostile_faction_quest_rejection(self):
@@ -597,6 +593,7 @@ class TestPlayer(unittest.TestCase):
         # Verify quest was rejected
         self.assertFalse(result["success"])
         self.assertIn("too low", result["reason"])
+
 
 if __name__ == "__main__":
     unittest.main()

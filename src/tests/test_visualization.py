@@ -9,12 +9,13 @@ import logging
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from generators.base_generator import BaseGenerator
 from utils.noise_generator import get_noise_generator
 from utils.visualization import GeneratorVisualizer, visualize_generator_output
+
+# Third-party library imports
+
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

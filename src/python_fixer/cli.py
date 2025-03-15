@@ -5,19 +5,21 @@ Main entry point for the Python Import Fixer tool.
 
 # Standard library imports
 import argparse
+import importlib.util
 import logging
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from pathlib import Path
+from typing import Any, List
+
 from python_fixer.core.analyzer import ProjectAnalyzer
 from python_fixer.core.signals import SignalManager
 from python_fixer.logging.structured import StructuredLogger
-from typing import Any, List
-import importlib.util
+
+# Third-party library imports
+
 
 # Import core dependencies
 
@@ -142,19 +144,19 @@ examples:
     print("Adding subparsers...")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    init_parser = _extracted_from_parse_args_26(
+    init_parser = _path_handler(
         "Setting up init command...",
         subparsers,
         "init",
         "Initialize a project",
     )
-    analyze_parser = _extracted_from_parse_args_26(
+    analyze_parser = _path_handler(
         "Setting up analyze command...",
         subparsers,
         "analyze",
         "Analyze project imports",
     )
-    fix_parser = _extracted_from_parse_args_26(
+    fix_parser = _path_handler(
         "Setting up fix command...", subparsers, "fix", "Fix import issues"
     )
     fix_parser.add_argument(
@@ -164,7 +166,7 @@ examples:
         help="Fix mode (default: interactive)",
     )
 
-    dashboard_parser = _extracted_from_parse_args_26(
+    dashboard_parser = _path_handler(
         "Setting up dashboard command...",
         subparsers,
         "dashboard",
@@ -205,8 +207,7 @@ examples:
         raise
 
 
-# TODO Rename this here and in `parse_args`
-def _extracted_from_parse_args_26(arg0, subparsers, arg2, help):
+def _path_handler(arg0, subparsers, arg2, help):
     print(arg0)
     result = subparsers.add_parser(arg2, help=help)
     result.add_argument("project_path", type=Path, help="Path to the project")
@@ -251,9 +252,7 @@ def print_error_section(error_msg: str, details: List[str] = None) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ ERROR OUTPUT ━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ⚠ {:<52} ┃   │""".format(
-            error_msg
-        )
+│  ┃  ⚠ {:<52} ┃   │""".format(error_msg)
     )
 
     if details:
@@ -298,9 +297,7 @@ def print_command_section(command: str) -> None:
 │  ┃  {:<54} ┃                                             ┃   │
 │  ┃                                                       ┃   │
 │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
-│                                                              │""".format(
-            command
-        )
+│                                                              │""".format(command)
     )
 
 
@@ -399,7 +396,6 @@ def setup_args_and_logging():
         raise
 
 
-# TODO Rename this here and in `setup_args_and_logging`
 def parse_and_validate_args():
     """Parse and validate command line arguments.
 
@@ -592,7 +588,6 @@ def main():
             return handle_error(e, args, logger)
 
 
-# TODO Rename this here and in `main`
 def initialize_project(args, config):
     """Initialize a project with proper error handling.
 

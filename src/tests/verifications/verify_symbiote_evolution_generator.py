@@ -15,14 +15,15 @@ The verification includes:
 6. Code review for best practices
 """
 
+# Local application imports
+import importlib.util
+
 # Standard library imports
 import os
 import sys
 
 # Third-party library imports
 
-# Local application imports
-import importlib.util
 
 # Try to import required packages, but don't fail if they're not available
 try:
@@ -54,19 +55,19 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
     try:
         # Try primary import path
+        from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
         from generators.symbiote_evolution_generator import (
             SymbioteEvolutionGenerator,
         )
-        from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
         SYMBIOTE_GENERATOR_AVAILABLE = True
     except ImportError:
         try:
             # Try alternative import path
+            from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
             from generators.symbiote_evolution_generator import (
                 SymbioteEvolutionGenerator,
             )
-            from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 
             SYMBIOTE_GENERATOR_AVAILABLE = True
         except ImportError as e:
@@ -94,20 +95,20 @@ def test_symbiote_evolution_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert (
-        generator.entity_type == "symbiote"
-    ), f"Expected entity_type 'symbiote', got {generator.entity_type}"
+    assert generator.entity_type == "symbiote", (
+        f"Expected entity_type 'symbiote', got {generator.entity_type}"
+    )
 
     # Verify SymbioteEvolutionAlgorithm integration
-    assert hasattr(
-        generator, "evolution_algorithm"
-    ), "Missing evolution_algorithm attribute"
-    assert isinstance(
-        generator.evolution_algorithm, SymbioteEvolutionAlgorithm
-    ), "evolution_algorithm is not an instance of SymbioteEvolutionAlgorithm"
-    assert (
-        generator.evolution_algorithm.aggression == 0.3
-    ), f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}"
+    assert hasattr(generator, "evolution_algorithm"), (
+        "Missing evolution_algorithm attribute"
+    )
+    assert isinstance(generator.evolution_algorithm, SymbioteEvolutionAlgorithm), (
+        "evolution_algorithm is not an instance of SymbioteEvolutionAlgorithm"
+    )
+    assert generator.evolution_algorithm.aggression == 0.3, (
+        f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}"
+    )
 
     # Test noise generation
     print("Testing noise generation...")
@@ -124,9 +125,9 @@ def test_symbiote_evolution_generator():
     assert np.sum(colony_grid > 0) > 0, "No colonies were generated"
     assert "seed" in metadata, "Metadata missing seed information"
     assert "num_colonies" in metadata, "Metadata missing num_colonies information"
-    assert (
-        "colony_population" in metadata
-    ), "Metadata missing colony_population information"
+    assert "colony_population" in metadata, (
+        "Metadata missing colony_population information"
+    )
 
     # Test mineral distribution generation
     print("Testing mineral distribution generation...")
@@ -135,12 +136,12 @@ def test_symbiote_evolution_generator():
         100,
         100,
     ), f"Expected shape (100, 100), got {mineral_grid.shape}"
-    assert (
-        np.min(mineral_grid) >= 0
-    ), f"Expected min value >= 0, got {np.min(mineral_grid)}"
-    assert (
-        np.max(mineral_grid) <= 1
-    ), f"Expected max value <= 1, got {np.max(mineral_grid)}"
+    assert np.min(mineral_grid) >= 0, (
+        f"Expected min value >= 0, got {np.min(mineral_grid)}"
+    )
+    assert np.max(mineral_grid) <= 1, (
+        f"Expected max value <= 1, got {np.max(mineral_grid)}"
+    )
 
     # Test evolution simulation
     print("Testing evolution simulation...")
@@ -151,9 +152,9 @@ def test_symbiote_evolution_generator():
         100,
         100,
     ), f"Expected shape (100, 100), got {evolved_grid.shape}"
-    assert (
-        len(evolution_history) == 5
-    ), f"Expected 5 evolution steps, got {len(evolution_history)}"
+    assert len(evolution_history) == 5, (
+        f"Expected 5 evolution steps, got {len(evolution_history)}"
+    )
 
     # Test mutation map generation
     print("Testing mutation map generation...")
@@ -191,9 +192,9 @@ def test_evolution_over_time():
     )
 
     # Check that evolution history contains expected data
-    assert (
-        len(evolution_history) == 10
-    ), f"Expected 10 evolution steps, got {len(evolution_history)}"
+    assert len(evolution_history) == 10, (
+        f"Expected 10 evolution steps, got {len(evolution_history)}"
+    )
 
     # Check that each step in history has required fields
     # This loop is necessary for validating the structure of each evolution step
@@ -215,9 +216,9 @@ def _extracted_from_test_evolution_over_time_24(step, i):
     assert "aggression" in step, f"Step {i} missing 'aggression' field"
     assert "genome" in step, f"Step {i} missing 'genome' field"
     assert "mutations" in step, f"Step {i} missing 'mutations' field"
-    assert (
-        "mineral_consumption" in step
-    ), f"Step {i} missing 'mineral_consumption' field"
+    assert "mineral_consumption" in step, (
+        f"Step {i} missing 'mineral_consumption' field"
+    )
 
 
 def test_mineral_consumption_impact():
@@ -549,10 +550,10 @@ def verify_file_structure():
             # Try to import the modules to check inheritance programmatically
             try:
                 sys.path.append(parent_dir)
+                from generators.base_generator import BaseGenerator
                 from generators.symbiote_evolution_generator import (
                     SymbioteEvolutionGenerator,
                 )
-                from generators.base_generator import BaseGenerator
 
                 if issubclass(SymbioteEvolutionGenerator, BaseGenerator):
                     print("✓ SymbioteEvolutionGenerator is a subclass of BaseGenerator")

@@ -2,11 +2,12 @@
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from pathlib import Path
+
 from project_analysis import ProjectAnalyzer
+
+# Third-party library imports
 
 
 def print_section(title: str, underline_char: str = "=") -> None:

@@ -11,12 +11,14 @@ import random
 import sys
 import time
 
-# Third-party library imports
+import pygame
 
 # Local application imports
-from systems.resource_manager import ResourceType, ResourceState
+from systems.resource_manager import ResourceState, ResourceType
 from ui.ui_element.ascii_resource_display import ASCIIResourceDisplay
-import pygame
+
+# Third-party library imports
+
 
 # Add the src directory to the path so we can import modules properly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

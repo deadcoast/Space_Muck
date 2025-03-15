@@ -2,13 +2,14 @@
 
 # Standard library imports
 
+import signal
+from unittest.mock import patch
+
 # Third-party library imports
 import pytest
 
 # Local application imports
 from python_fixer.core.signals import SignalManager
-from unittest.mock import patch
-import signal
 
 
 @pytest.fixture

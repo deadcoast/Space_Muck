@@ -1,19 +1,21 @@
 # Standard library imports
+import asyncio
 import json
 import os
-
-# Third-party library imports
+import tempfile
 
 # Local application imports
 from pathlib import Path
-from questionary import prompt
 from typing import Any, Dict, Optional
-from variant_loggers.log_analyzer import report_param
+
 import aiofiles
-import asyncio
 import patch
-import tempfile
 import variant_loggers
+from questionary import prompt
+from variant_loggers.log_analyzer import report_param
+
+# Third-party library imports
+
 
 # Configure variant_loggers
 variant_loggers.basicConfig(level=variant_loggers.INFO)

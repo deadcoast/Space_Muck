@@ -9,9 +9,10 @@ noise algorithms and cellular automaton rules.
 # Standard library imports
 import logging
 
+import numpy as np
+
 # Third-party library imports
 from scipy import stats
-import numpy as np
 
 # Optional dependencies
 try:
@@ -23,9 +24,10 @@ except ImportError:
     SCIPY_AVAILABLE = False
     print("scipy not available, using fallback implementation.")
 
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
+
 # Local application imports
 from generators.base_generator import BaseGenerator
-from typing import Dict, Tuple, Optional, TYPE_CHECKING
 from utils.dependency_injection import inject
 from utils.noise_generator import NoiseGenerator
 
@@ -35,9 +37,9 @@ if TYPE_CHECKING:
 
 # Local imports with correct paths
 from utils.logging_setup import (
-    log_performance_start,
-    log_performance_end,
     log_exception,
+    log_performance_end,
+    log_performance_start,
 )
 
 
@@ -600,9 +602,9 @@ class ProceduralGenerator(BaseGenerator):
             # Apply bonuses from rare minerals
             rare_mask = rare_grid > 0
             if np.any(rare_mask & energy_mask):
-                energy_grid[
-                    rare_mask & energy_mask
-                ] *= 2.0  # Double energy in rare mineral locations
+                energy_grid[rare_mask & energy_mask] *= (
+                    2.0  # Double energy in rare mineral locations
+                )
 
             log_performance_end("generate_energy_sources", start_time)
             return energy_grid

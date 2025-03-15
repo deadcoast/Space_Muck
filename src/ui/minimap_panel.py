@@ -8,14 +8,15 @@ This module provides a minimap component showing the player's position in the ga
 import math
 import random
 import time
+from typing import Any, Dict, List, Tuple
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from config import COLOR_TEXT
-from typing import Dict, List, Tuple, Any
 from src.ui.ui_base.ascii_base import UIStyle
-import pygame
+
+# Third-party library imports
 
 
 class ASCIIMinimapPanel:

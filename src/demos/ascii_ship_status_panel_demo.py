@@ -11,12 +11,14 @@ import random
 import sys
 import time
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from ui.ui_base.ascii_base import UIStyle
 from ui.ui_element.ascii_ship_status_panel import ASCIIShipStatusPanel
-import pygame
+
+# Third-party library imports
+
 
 # Add the src directory to the path so we can import modules properly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -76,54 +78,56 @@ def main():
     while running:
         # Handle events
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if (
+                event.type != pygame.QUIT
+                and event.type == pygame.KEYDOWN
+                and event.key == pygame.K_ESCAPE
+                or event.type == pygame.QUIT
+            ):
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.key == pygame.K_SPACE:
-                    # Simulate taking damage on spacebar press
-                    current_hull = ship_panel.current_hull
-                    current_shield = ship_panel.current_shield
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                # Simulate taking damage on spacebar press
+                current_hull = ship_panel.current_hull
+                current_shield = ship_panel.current_shield
 
-                    # Damage shields first, then hull
-                    damage = random.randint(10, 25)
-                    if current_shield > 0:
-                        new_shield = max(0, current_shield - damage)
-                        absorbed = current_shield - new_shield
-                        hull_damage = max(0, damage - absorbed)
-                        new_hull = max(0, current_hull - hull_damage)
-                    else:
-                        new_shield = 0
-                        new_hull = max(0, current_hull - damage)
+                # Damage shields first, then hull
+                damage = random.randint(10, 25)
+                if current_shield > 0:
+                    new_shield = max(0, current_shield - damage)
+                    absorbed = current_shield - new_shield
+                    hull_damage = max(0, damage - absorbed)
+                    new_hull = max(0, current_hull - hull_damage)
+                else:
+                    new_shield = 0
+                    new_hull = max(0, current_hull - damage)
 
-                    ship_panel.update_hull_shield(
-                        new_hull,
-                        ship_panel.max_hull,
-                        new_shield,
-                        ship_panel.max_shield,
-                        ship_panel.shield_recharge_rate,
+                ship_panel.update_hull_shield(
+                    new_hull,
+                    ship_panel.max_hull,
+                    new_shield,
+                    ship_panel.max_shield,
+                    ship_panel.shield_recharge_rate,
+                )
+
+                # Possibly damage a system
+                if random.random() < 0.3:
+                    systems = list(ship_panel.systems.keys())
+                    damaged_system = random.choice(systems)
+                    current_efficiency = ship_panel.systems[damaged_system][
+                        "efficiency"
+                    ]
+                    new_efficiency = max(
+                        30, current_efficiency - random.randint(10, 30)
                     )
 
-                    # Possibly damage a system
-                    if random.random() < 0.3:
-                        systems = list(ship_panel.systems.keys())
-                        damaged_system = random.choice(systems)
-                        current_efficiency = ship_panel.systems[damaged_system][
-                            "efficiency"
-                        ]
-                        new_efficiency = max(
-                            30, current_efficiency - random.randint(10, 30)
-                        )
+                    status = "damaged" if new_efficiency < 70 else "online"
+                    if new_efficiency < 40:
+                        status = "offline"
 
-                        status = "damaged" if new_efficiency < 70 else "online"
-                        if new_efficiency < 40:
-                            status = "offline"
-
-                        ship_panel.update_system_status(
-                            damaged_system,
-                            {"status": status, "efficiency": new_efficiency},
-                        )
+                    ship_panel.update_system_status(
+                        damaged_system,
+                        {"status": status, "efficiency": new_efficiency},
+                    )
 
         # Update simulation every second
         current_time = time.time()

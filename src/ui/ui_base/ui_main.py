@@ -10,15 +10,16 @@ COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 class SpaceMuckMainUI:
     """Main UI manager for Space Muck game"""
 
+# Local application imports
+import contextlib
+import curses
+
 # Standard library imports
 import random
 import time
 
 # Third-party library imports
 
-# Local application imports
-import contextlib
-import curses
 
     def __init__(self, stdscr):
         self.stdscr = stdscr

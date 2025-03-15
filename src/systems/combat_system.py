@@ -5,13 +5,13 @@ Combat system module: Handles combat encounters between the player and enemy shi
 # Standard library imports
 import logging
 import random
-
-# Third-party library imports
+from typing import Any, Dict, List, Optional, Tuple
 
 # Local application imports
 from entities.enemy_ship import EnemyShip
 from entities.player import Player
-from typing import Dict, Optional, Tuple, Any, List
+
+# Third-party library imports
 
 
 def print_combat_header() -> None:
@@ -30,9 +30,7 @@ def print_combat_error(error_msg: str, details: List[str] = None) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ COMBAT ERROR ━━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ⚠ {:<52} ┃   │""".format(
-            error_msg
-        )
+│  ┃  ⚠ {:<52} ┃   │""".format(error_msg)
     )
 
     if details:
@@ -52,9 +50,7 @@ def print_combat_success(message: str, details: List[str] = None) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ COMBAT ACTION ━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ✔ {:<52} ┃   │""".format(
-            message
-        )
+│  ┃  ✔ {:<52} ┃   │""".format(message)
     )
 
     if details:

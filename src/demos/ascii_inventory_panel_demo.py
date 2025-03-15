@@ -11,12 +11,14 @@ import random
 import sys
 import time
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from ui.ui_base.ascii_base import UIStyle
 from ui.ui_element.ascii_inventory_panel import ASCIIInventoryPanel
-import pygame
+
+# Third-party library imports
+
 
 # Add the src directory to the path so we can import modules properly
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

@@ -11,6 +11,8 @@ A space mining game featuring:
 - Advanced procedural generation with multiple algorithms
 """
 
+import gc
+
 # Standard library imports
 import itertools
 import logging
@@ -19,32 +21,33 @@ import os
 import random
 import sys
 import time
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
+import pygame
 
 # Local application imports
 from config import (
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    GRID_WIDTH,
-    GRID_HEIGHT,
-    MINIMAP_SIZE,
-    MINIMAP_PADDING,
-    VIEW_WIDTH,
-    VIEW_HEIGHT,
     COLOR_BG,
-    COLOR_TEXT,
+    COLOR_PLAYER,
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
+    COLOR_TEXT,
+    GRID_HEIGHT,
+    GRID_WIDTH,
+    MINIMAP_PADDING,
+    MINIMAP_SIZE,
     RACE_INITIAL_DENSITY,
-    COLOR_PLAYER,
+    SHOW_FPS,
     STATE_PLAY,
     STATE_SHOP,
-    SHOW_FPS,
+    VIEW_HEIGHT,
+    VIEW_WIDTH,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 )
-
 from entities.miner_entity import MinerEntity
 from entities.player import Player
 from events.event_bus import get_event_bus
@@ -53,27 +56,23 @@ from systems.combat_system import CombatSystem
 from systems.encounter_generator import EncounterGenerator
 from systems.event_system import get_event_batcher
 from systems.game_loop import get_game_loop
-from typing import Dict, List, Tuple, Any, Optional
 from ui.draw_utils import (
-    draw_text,
-    draw_panel,
     draw_button,
+    draw_panel,
     draw_progress_bar,
-    draw_minimap,
+    draw_text,
 )
 from ui.notification import NotificationManager
 from ui.renderers import AsteroidFieldRenderer
 from ui.shop import Shop
 from utils.logging_setup import (
-    log_exception,
-    log_performance_start,
-    log_performance_end,
     LogContext,
+    log_exception,
     log_memory_usage,
+    log_performance_end,
     log_performance_metric,
+    log_performance_start,
 )
-import gc
-import pygame
 
 # Standard library imports
 
@@ -81,6 +80,9 @@ import pygame
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, current_dir)
+
+# Constants for logging operations
+LOG_FLEET_UPDATE = "Fleet update"
 
 # Game configuration constants
 GAME_CONFIG = {
@@ -164,6 +166,15 @@ class GameInitializationError(GameStateError):
     log_memory_usage,
     log_performance_metric,
 )
+
+# Performance logging constants
+LOG_DISCOVERY_CHECK = "Discovery check"
+LOG_ENCOUNTER_PROCESSING = "Encounter processing"
+LOG_FORCE_ENCOUNTER = "Force encounter generation"
+LOG_COMBAT_RESULT = "Combat result processing"
+LOG_AUTO_MINING_CHECK = "Auto-mining check"
+LOG_ASTEROID_FIELD_UPDATE = "Asteroid field update"
+LOG_RACE_EVOLUTION_CHECK = "Race evolution check"
 
 
 class Game:
@@ -913,6 +924,44 @@ class Game:
         del old_field
         gc.collect()
 
+    def _handle_ui_component_events(self, event) -> bool:
+        """Handle events for UI components.
+
+        Args:
+            event: The pygame event to process
+
+        Returns:
+            bool: True if the event was handled by a UI component, False otherwise
+        """
+        # Check if notifier handled the event
+        if self.notifier.handle_event(event):
+            return True
+
+        # Check if shop handled the event
+        if self.state == STATE_SHOP and self.shop.handle_event(
+            event, self.player, self.field
+        ):
+            return True
+
+        # Check if ASCII UI components handled the event
+        if hasattr(self, "game_screen") and self.game_screen.handle_event(event):
+            return True
+
+        # Check if minimap handled the event
+        return bool(
+            (
+                hasattr(self, "minimap_panel")
+                and self.show_minimap
+                and self.minimap_panel.handle_event(event)
+            )
+        )
+
+    # Constants for event handling
+    EVENT_QUIT = "EVENT_QUIT"
+    EVENT_KEYDOWN = "EVENT_KEYDOWN"
+    EVENT_MOUSEMOTION = "EVENT_MOUSEMOTION"
+    EVENT_MOUSEBUTTONDOWN = "EVENT_MOUSEBUTTONDOWN"
+
     def handle_events(self) -> bool:
         """Process all pygame events.
 
@@ -921,43 +970,80 @@ class Game:
         """
         for event in pygame.event.get():
             # First, let UI components handle events
-            if self.notifier.handle_event(event):
+            if self._handle_ui_component_events(event):
                 continue
 
-            if self.state == STATE_SHOP and self.shop.handle_event(
-                event, self.player, self.field
-            ):
-                continue
-
-            # Let ASCII UI components handle events
-            if hasattr(self, "game_screen") and self.game_screen.handle_event(event):
-                continue
-
-            if (
-                hasattr(self, "minimap_panel")
-                and self.show_minimap
-                and self.minimap_panel.handle_event(event)
-            ):
-                continue
-
-            # Basic window events
-            if event.type == pygame.QUIT:
-                return self.quit_game()
-            elif event.type == pygame.KEYDOWN:
-                self.handle_key_press(event.key)
-            elif event.type == pygame.MOUSEMOTION:
-                self.handle_mouse_motion(event)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.handle_mouse_button_down(event)
+            # Process event based on type
+            event_result = self._process_event_by_type(event)
+            if event_result == self.EVENT_QUIT:
+                return False  # Stop the game
 
         return True
 
-    def quit_game(self) -> bool:
-        """Exit the game cleanly.
+    def _process_event_by_type(self, event) -> Optional[str]:
+        """Process an event based on its type.
+
+        Args:
+            event: The pygame event to process
 
         Returns:
-            bool: Always returns False to indicate the game should stop running.
+            Optional[str]: Event result code if special handling is needed, None otherwise
         """
+        # Map event types to their handler methods
+        event_handlers = {
+            pygame.QUIT: self._handle_quit_event,
+            pygame.KEYDOWN: self._handle_keydown_event,
+            pygame.MOUSEMOTION: self._handle_mousemotion_event,
+            pygame.MOUSEBUTTONDOWN: self._handle_mousebuttondown_event,
+        }
+
+        # Call the appropriate handler if available
+        if event.type in event_handlers:
+            return event_handlers[event.type](event)
+
+        return None
+
+    def _handle_quit_event(self, event) -> str:
+        """Handle quit event.
+
+        Args:
+            event: The pygame quit event
+
+        Returns:
+            str: EVENT_QUIT to signal game should stop
+        """
+        self.quit_game()
+        return self.EVENT_QUIT
+
+    def _handle_keydown_event(self, event) -> None:
+        """Handle key down event.
+
+        Args:
+            event: The pygame keydown event
+        """
+        self.handle_key_press(event.key)
+        return None
+
+    def _handle_mousemotion_event(self, event) -> None:
+        """Handle mouse motion event.
+
+        Args:
+            event: The pygame mouse motion event
+        """
+        self.handle_mouse_motion(event)
+        return None
+
+    def _handle_mousebuttondown_event(self, event) -> None:
+        """Handle mouse button down event.
+
+        Args:
+            event: The pygame mouse button down event
+        """
+        self.handle_mouse_button_down(event)
+        return None
+
+    def quit_game(self) -> None:
+        """Exit the game cleanly and perform cleanup operations."""
         try:
             # Start performance timing for exit process
             exit_start = log_performance_start("Game exit process")
@@ -979,10 +1065,8 @@ class Game:
             # Signal that the game should stop running
             logging.info("Quitting game")
             log_performance_end("Game exit process", exit_start)
-            return False
         except Exception as e:
             log_exception("Error during game exit", e)
-            return False  # Still exit even if there's an error
 
     def _log_game_statistics(self) -> None:
         """Log complete game statistics before quitting."""
@@ -1256,46 +1340,82 @@ class Game:
     def handle_mouse_click(self, pos: Tuple[int, int]) -> None:
         """Handle mouse clicks based on game state with validation."""
         try:
-            # Handle shop state
+            # Handle click based on current game state
             if self.state == GAME_CONFIG["states"]["shop"]:
-                self.shop.handle_click(pos)
-                logging.debug(f"Shop click at position {pos}")
-                return
-
-            # Handle play state
-            if self.state == GAME_CONFIG["states"]["play"]:
-                # Check if click was on UI element
-                if self.check_cursor_over_ui():
-                    logging.debug("Click ignored - over UI element")
-                    return
-
-                # Convert screen position to grid position
-                grid_x, grid_y = self.screen_to_grid(pos[0], pos[1])
-
-                # Check if position is valid
-                if 0 <= grid_x < self.field.width and 0 <= grid_y < self.field.height:
-                    # Calculate movement delta
-                    dx = grid_x - self.player.x
-                    dy = grid_y - self.player.y
-
-                    # Move player there
-                    self.player.move(dx, dy, self.field)
-                    self.player.has_moved = True  # For encounter checks
-                    logging.debug(f"Player moved to grid position ({grid_x}, {grid_y})")
-                else:
-                    logging.debug(f"Invalid grid position: ({grid_x}, {grid_y})")
-
-            # Other states ignore clicks
+                self._handle_shop_state_click(pos)
+            elif self.state == GAME_CONFIG["states"]["play"]:
+                self._handle_play_state_click(pos)
             elif self.state == GAME_CONFIG["states"]["paused"]:
-                logging.debug("Click ignored in paused state")
+                self._handle_paused_state_click(pos)
             elif self.state == GAME_CONFIG["states"]["game_over"]:
-                logging.debug("Click ignored in game over state")
+                self._handle_game_over_state_click(pos)
 
         except GameStateError as e:
             logging.warning(f"Invalid mouse click in state {self.state}: {e}")
             self.notifier.add_notification(
                 "Cannot interact in the current state", notification_type="warning"
             )
+
+    def _handle_shop_state_click(self, pos: Tuple[int, int]) -> None:
+        """Handle mouse clicks in shop state.
+
+        Args:
+            pos: The mouse position (x, y)
+        """
+        self.shop.handle_click(pos)
+        logging.debug(f"Shop click at position {pos}")
+
+    def _handle_play_state_click(self, pos: Tuple[int, int]) -> None:
+        """Handle mouse clicks in play state.
+
+        Args:
+            pos: The mouse position (x, y)
+        """
+        # Check if click was on UI element
+        if self.check_cursor_over_ui():
+            logging.debug("Click ignored - over UI element")
+            return
+
+        # Try to move player to clicked position
+        self._attempt_player_movement(pos)
+
+    def _attempt_player_movement(self, pos: Tuple[int, int]) -> None:
+        """Attempt to move the player to the clicked position.
+
+        Args:
+            pos: The mouse position (x, y)
+        """
+        # Convert screen position to grid position
+        grid_x, grid_y = self.screen_to_grid(pos[0], pos[1])
+
+        # Check if position is valid
+        if 0 <= grid_x < self.field.width and 0 <= grid_y < self.field.height:
+            # Calculate movement delta
+            dx = grid_x - self.player.x
+            dy = grid_y - self.player.y
+
+            # Move player there
+            self.player.move(dx, dy, self.field)
+            self.player.has_moved = True  # For encounter checks
+            logging.debug(f"Player moved to grid position ({grid_x}, {grid_y})")
+        else:
+            logging.debug(f"Invalid grid position: ({grid_x}, {grid_y})")
+
+    def _handle_paused_state_click(self, _: Tuple[int, int]) -> None:
+        """Handle mouse clicks in paused state.
+
+        Args:
+            _: The mouse position (x, y) - unused in this state
+        """
+        logging.debug("Click ignored in paused state")
+
+    def _handle_game_over_state_click(self, _: Tuple[int, int]) -> None:
+        """Handle mouse clicks in game over state.
+
+        Args:
+            _: The mouse position (x, y) - unused in this state
+        """
+        logging.debug("Click ignored in game over state")
 
     def check_cursor_over_ui(self) -> bool:
         """Check if the cursor is over a UI element."""
@@ -1458,47 +1578,62 @@ class Game:
             # Start performance timing
             update_start = log_performance_start("Update frame")
 
-            # Update delta time
-            self.delta_time = self.clock.get_time() / 1000.0  # Convert ms to seconds
-            self.game_time += self.delta_time
-            self.frame_counter += 1
+            # Update time-related state
+            self._update_time_tracking()
 
-            # Update game time in stats
-            self.stats["time_played"] = self.game_time
-
-            # Periodic memory check
-            current_time = time.time()
-            if current_time - self.last_memory_check > 60:  # Every minute
-                log_memory_usage(f"Game running for {int(self.game_time)}s")
-                self.last_memory_check = current_time
-
-            # Update UI components (must be done regardless of game state)
-            self.notifier.update(self.delta_time)
-
-            # Update ASCII UI components animations
-            if hasattr(self, "game_screen"):
-                self.game_screen.update_animations(self.delta_time)
-            if hasattr(self, "minimap_panel") and self.show_minimap:
-                self.minimap_panel.update_animations(self.delta_time)
-
-            # Clear tooltip if not updated this frame
-            self.tooltip_text = None
+            # Update UI components
+            self._update_ui_components()
 
             # State-specific updates
-            if self.state == STATE_PLAY:
-                self.update_play_state()
-            elif self.state == STATE_SHOP:
-                self.shop.update(self.delta_time)
-
-            # Auto-upgrade if enabled
-            if self.auto_upgrade:
-                self.handle_auto_upgrade()
+            self._update_current_game_state()
 
             # End performance timing
             log_performance_end("Update frame", update_start)
         except Exception as e:
             log_exception("Error in update process", e)
             self.notifier.add(f"Error: {str(e)}", category="error", importance=3)
+
+    def _update_time_tracking(self) -> None:
+        """Update time-related tracking and statistics."""
+        # Update delta time
+        self.delta_time = self.clock.get_time() / 1000.0  # Convert ms to seconds
+        self.game_time += self.delta_time
+        self.frame_counter += 1
+
+        # Update game time in stats
+        self.stats["time_played"] = self.game_time
+
+        # Periodic memory check
+        current_time = time.time()
+        if current_time - self.last_memory_check > 60:  # Every minute
+            log_memory_usage(f"Game running for {int(self.game_time)}s")
+            self.last_memory_check = current_time
+
+    def _update_ui_components(self) -> None:
+        """Update UI components that need to be updated regardless of game state."""
+        # Update notification system
+        self.notifier.update(self.delta_time)
+
+        # Update ASCII UI components animations
+        if hasattr(self, "game_screen"):
+            self.game_screen.update_animations(self.delta_time)
+        if hasattr(self, "minimap_panel") and self.show_minimap:
+            self.minimap_panel.update_animations(self.delta_time)
+
+        # Clear tooltip if not updated this frame
+        self.tooltip_text = None
+
+    def _update_current_game_state(self) -> None:
+        """Update the current game state based on the active state."""
+        # State-specific updates
+        if self.state == STATE_PLAY:
+            self.update_play_state()
+        elif self.state == STATE_SHOP:
+            self.shop.update(self.delta_time)
+
+        # Auto-upgrade if enabled (applies to multiple states)
+        if self.auto_upgrade:
+            self.handle_auto_upgrade()
 
     def update_play_state(self) -> None:
         """Update game elements during play state.
@@ -1674,15 +1809,68 @@ class Game:
                 f"Game system error: {str(e)}", category="error", importance=3
             )
 
-    def _update_entity_lifecycle(self, update_context):
-        # Update symbiote races, evolutions, and discoveries
-        entity_start = log_performance_start("Entity lifecycle processing")
-        self.check_race_evolutions()
-        self.check_for_discoveries()
-        log_performance_end("Entity lifecycle processing", entity_start)
+    def _update_entity_lifecycle(self, update_context: Dict[str, Any]) -> None:
+        """Update entity lifecycle including races, evolutions, and discoveries.
 
+        This method orchestrates the lifecycle management of game entities,
+        including race evolutions and resource discoveries.
+
+        Args:
+            update_context: Dictionary containing the current update context
+        """
+        # Start performance timing
+        entity_start = log_performance_start("Entity lifecycle processing")
+
+        try:
+            # Process race evolutions
+            self._process_race_evolutions()
+
+            # Process resource discoveries
+            self._process_discoveries()
+
+            # Update entity-related context
+            self._update_entity_context(update_context)
+
+        except Exception as e:
+            log_exception("Error in entity lifecycle processing", e)
+            self.notifier.add("Entity system error", category="error", importance=2)
+        finally:
+            # End performance timing
+            log_performance_end("Entity lifecycle processing", entity_start)
+
+    def _process_race_evolutions(self) -> None:
+        """Process race evolutions with performance tracking."""
+        evolution_start = log_performance_start("Race evolution processing")
+        try:
+            self.check_race_evolutions()
+            log_performance_metric("race_evolutions_checked", 1)
+        except Exception as e:
+            log_exception("Error processing race evolutions", e)
+            log_performance_metric("race_evolution_errors", 1)
+        finally:
+            log_performance_end("Race evolution processing", evolution_start)
+
+    def _process_discoveries(self) -> None:
+        """Process resource discoveries with performance tracking."""
+        discovery_start = log_performance_start("Resource discovery processing")
+        try:
+            self.check_for_discoveries()
+            log_performance_metric("discoveries_checked", 1)
+        except Exception as e:
+            log_exception("Error processing discoveries", e)
+            log_performance_metric("discovery_errors", 1)
+        finally:
+            log_performance_end("Resource discovery processing", discovery_start)
+
+    def _update_entity_context(self, update_context: Dict[str, Any]) -> None:
+        """Update the entity-related context in the update context dictionary.
+
+        Args:
+            update_context: Dictionary containing the current update context
+        """
         # Generate entity-related context
         entity_stats = {
+            "race_count": len(getattr(self.field, "races", [])),
             "active_races": getattr(self, "race_count", 0),
             "evolution_stage": getattr(self, "evolution_stage", 1),
             "discovery_count": self.stats.get("discoveries", 0),
@@ -1699,7 +1887,29 @@ class Game:
             context: Dictionary containing state information from all game systems
         """
         try:
-            # Example of cross-system state evaluation
+            # Start performance timing
+            eval_start = log_performance_start("Game state evaluation")
+
+            # Evaluate different aspects of game state
+            self._check_for_encounter_triggers(context)
+            self._track_progression_milestones(context)
+            self._analyze_environmental_dangers(context)
+
+            # End performance timing
+            log_performance_end("Game state evaluation", eval_start)
+
+        except Exception as e:
+            log_exception("Error in game state evaluation", e)
+            # Non-critical, so just log but don't notify player
+
+    def _check_for_encounter_triggers(self, context: Dict[str, Any]) -> None:
+        """Check if conditions are met to trigger an encounter.
+
+        Args:
+            context: Dictionary containing state information from all game systems
+        """
+        try:
+            # Get relevant context data
             player_pos = context.get("player", {}).get("position", (0, 0))
             last_encounter = context.get("encounters", {}).get("last_encounter_time", 0)
             current_time = self.game_time
@@ -1716,8 +1926,17 @@ class Game:
                         f"Extended peace period detected in {zone} ({current_time - last_encounter:.1f}s)"
                     )
                     self.force_encounter("dynamic", player_pos, zone)
+        except Exception as e:
+            log_exception("Error checking for encounter triggers", e)
 
-            # Track progression milestones
+    def _track_progression_milestones(self, context: Dict[str, Any]) -> None:
+        """Track and notify about progression milestones.
+
+        Args:
+            context: Dictionary containing state information from all game systems
+        """
+        try:
+            # Track currency milestones
             player_currency = context.get("economy", {}).get("player_currency", 0)
             currency_milestone = (player_currency // 1000) * 1000
             last_milestone = self.stats.get("last_currency_milestone", 0)
@@ -1730,7 +1949,18 @@ class Game:
                     importance=2,
                 )
 
-            # Example: Analyze environmental dangers
+            # Additional milestone checks can be added here
+        except Exception as e:
+            log_exception("Error tracking progression milestones", e)
+
+    def _analyze_environmental_dangers(self, context: Dict[str, Any]) -> None:
+        """Analyze environmental conditions for potential dangers.
+
+        Args:
+            context: Dictionary containing state information from all game systems
+        """
+        try:
+            # Check asteroid density
             asteroid_count = context.get("environment", {}).get("asteroid_count", 0)
             if asteroid_count > 200:  # High density field
                 player_health = context.get("player", {}).get("health", 100)
@@ -1741,253 +1971,663 @@ class Game:
                         importance=2,
                     )
 
+            # Additional environmental danger checks can be added here
         except Exception as e:
-            log_exception("Error in game state evaluation", e)
-            # Non-critical, so just log but don't notify player
+            log_exception("Error analyzing environmental dangers", e)
 
     def handle_player_movement(self) -> None:
         """Handle player movement based on keyboard input."""
+        try:
+            # Start performance timing
+            movement_start = log_performance_start("Player keyboard movement")
+
+            # Get movement direction from keyboard input
+            dx, dy = self._get_movement_direction()
+
+            # Apply movement if direction is non-zero
+            if dx != 0 or dy != 0:
+                self._apply_player_movement(dx, dy)
+
+            # End performance timing
+            log_performance_end("Player keyboard movement", movement_start)
+
+        except Exception as e:
+            log_exception("Error handling player movement", e)
+
+    def _get_movement_direction(self) -> Tuple[int, int]:
+        """Get movement direction based on keyboard input.
+
+        Returns:
+            Tuple containing x and y direction (-1, 0, or 1 for each)
+        """
         keys = pygame.key.get_pressed()
         dx, dy = 0, 0
 
+        # Horizontal movement
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             dx = -1
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             dx = 1
+
+        # Vertical movement
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             dy = -1
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             dy = 1
 
-        if dx != 0 or dy != 0:
-            self.player.move(dx, dy, self.field)
-            # Set a flag to indicate the player has moved (for encounter checks)
-            self.player.has_moved = True
+        return dx, dy
+
+    def _apply_player_movement(self, dx: int, dy: int) -> None:
+        """Apply movement to player with the given direction.
+
+        Args:
+            dx: Horizontal direction (-1, 0, or 1)
+            dy: Vertical direction (-1, 0, or 1)
+        """
+        # Move the player in the field
+        self.player.move(dx, dy, self.field)
+
+        # Set a flag to indicate the player has moved (for encounter checks)
+        self.player.has_moved = True
+
+        # Log movement for analytics
+        log_performance_metric("player_movement", 1)
 
     def handle_auto_mining(self) -> None:
         """Handle auto-mining if enabled."""
         try:
-            # Check if auto-mining is enabled and if it's time to mine
-            if not (
-                self.auto_mine and self.frame_counter % 30 == 0
-            ):  # Every half second at 60 FPS
+            # Start performance timing
+            mining_start = log_performance_start(LOG_AUTO_MINING_CHECK)
+
+            # Check if auto-mining should be performed this frame
+            if not self._should_perform_auto_mining():
+                log_performance_end(LOG_AUTO_MINING_CHECK, mining_start, "skipped")
                 return
 
-            # Try to mine with error handling
-            with LogContext("Auto-mining operation"):
-                minerals_mined = self.player.mine(self.field)
+            # Perform the auto-mining operation
+            self._perform_auto_mining_operation()
 
-                # Update statistics and notify if successful
-                if minerals_mined > 0:
-                    self.stats["total_mined"] += minerals_mined
+            # End performance timing
+            log_performance_end(LOG_AUTO_MINING_CHECK, mining_start, "complete")
 
-                    # Only notify occasionally to avoid spamming
-                    if self.frame_counter % 120 == 0:  # Once every 2 seconds
-                        self.notifier.add(
-                            f"Auto-mined {minerals_mined} minerals",
-                            category="mining",
-                            importance=1,
-                        )
         except Exception as e:
             log_exception("Error in auto-mining", e)
 
+    def _should_perform_auto_mining(self) -> bool:
+        """Check if auto-mining should be performed this frame.
+
+        Returns:
+            True if auto-mining should be performed, False otherwise
+        """
+        # Check if auto-mining is enabled
+        return self.frame_counter % 30 == 0 if self.auto_mine else False
+
+    def _perform_auto_mining_operation(self) -> None:
+        """Perform the auto-mining operation and handle the results."""
+        # Try to mine with error handling
+        with LogContext("Auto-mining operation"):
+            minerals_mined = self.player.mine(self.field)
+
+            # Update statistics and notify if successful
+            if minerals_mined > 0:
+                self._process_successful_mining(minerals_mined)
+
+    def _process_successful_mining(self, minerals_mined: int) -> None:
+        """Process the results of a successful mining operation.
+
+        Args:
+            minerals_mined: The number of minerals mined
+        """
+        # Update statistics
+        self.stats["total_mined"] += minerals_mined
+
+        # Log performance metric
+        log_performance_metric("minerals_mined", minerals_mined)
+
+        # Only notify occasionally to avoid spamming
+        if self.frame_counter % 120 == 0:  # Once every 2 seconds
+            self.notifier.add(
+                f"Auto-mined {minerals_mined} minerals",
+                category="mining",
+                importance=1,
+            )
+
     def update_asteroid_field(self) -> None:
         """Update asteroid field at intervals."""
-        current_time = time.time()
-        if current_time - self.last_field_update_time <= self.update_interval / 60:
-            return
+        try:
+            # Start performance timing
+            field_update_start = log_performance_start(LOG_ASTEROID_FIELD_UPDATE)
 
+            # Check if it's time to update the field
+            if not self._should_update_asteroid_field():
+                log_performance_end(
+                    LOG_ASTEROID_FIELD_UPDATE, field_update_start, "skipped"
+                )
+                return
+
+            # Update the field and process results
+            race_incomes = self._perform_asteroid_field_update()
+
+            # Process significant race incomes
+            self._process_significant_race_incomes(race_incomes)
+
+            # End performance timing
+            log_performance_end(
+                LOG_ASTEROID_FIELD_UPDATE, field_update_start, "complete"
+            )
+
+        except Exception as e:
+            log_exception("Error updating asteroid field", e)
+
+    def _should_update_asteroid_field(self) -> bool:
+        """Check if the asteroid field should be updated based on elapsed time.
+
+        Returns:
+            True if the field should be updated, False otherwise
+        """
+        current_time = time.time()
+        return current_time - self.last_field_update_time > self.update_interval / 60
+
+    def _perform_asteroid_field_update(self) -> Dict[int, int]:
+        """Update the asteroid field and track the update time.
+
+        Returns:
+            Dictionary mapping race IDs to their income from the update
+        """
         race_incomes = self.field.update()
-        self.last_field_update_time = current_time
+        self.last_field_update_time = time.time()
+        return race_incomes
+
+    def _process_significant_race_incomes(self, race_incomes: Dict[int, int]) -> None:
+        """Process race incomes and notify about significant events.
+
+        Args:
+            race_incomes: Dictionary mapping race IDs to their income
+        """
+        # Define threshold for significant income
+        SIGNIFICANT_INCOME_THRESHOLD = 500
 
         # Process race incomes and notify about significant events
         for race_id, income in race_incomes.items():
-            if income <= 500:
+            # Skip insignificant incomes
+            if income <= SIGNIFICANT_INCOME_THRESHOLD:
                 continue
 
             if race := next(
                 (r for r in self.field.races if r.race_id == race_id), None
             ):
+                # Notify about the significant income
                 self.notifier.add(
                     f"Race {race_id} ({race.trait}) found a large mineral deposit!",
                     category="race",
                     importance=2,
                 )
 
+                # Log the event for analytics
+                log_performance_metric("significant_race_income", income)
+
     def check_race_evolutions(self) -> None:
         """Check for race evolutions."""
-        for race in self.field.races:
-            if (
-                race.evolution_points >= race.evolution_threshold
-                and self.frame_counter % 300 == race.race_id % 300
-            ):  # Stagger evolutions
-                # Race evolves
-                metrics = race.evolve()
+        try:
+            # Start performance timing
+            evolution_start = log_performance_start(LOG_RACE_EVOLUTION_CHECK)
 
-                # Notify the player
-                self.notifier.notify_event(
-                    "race",
-                    f"Race {race.race_id} ({race.trait}) has evolved to stage {race.evolution_stage}!",
-                    importance=2,
-                )
+            # Check each race for potential evolution
+            evolution_count = 0
+            for race in self.field.races:
+                if self._should_race_evolve(race):
+                    self._process_race_evolution(race)
+                    evolution_count += 1
 
-                # Track in stats
-                self.stats["race_evolutions"] += 1
+            # Log evolution statistics
+            if evolution_count > 0:
+                log_performance_metric("race_evolutions_processed", evolution_count)
 
-                # Analyze territory control
-                if metrics and metrics["center"]:
-                    logging.info(
-                        f"Race {race.race_id} territory: "
-                        + f"center={metrics['center']}, radius={metrics['radius']}, "
-                        + f"density={metrics['density']:.4f}"
-                    )
+            # End performance timing
+            log_performance_end(
+                LOG_RACE_EVOLUTION_CHECK,
+                evolution_start,
+                "evolved" if evolution_count > 0 else "none",
+            )
+
+        except Exception as e:
+            log_exception("Error checking race evolutions", e)
+
+    def _should_race_evolve(self, race: Any) -> bool:
+        """Determine if a race should evolve based on evolution points and timing.
+
+        Args:
+            race: The race to check for evolution eligibility
+
+        Returns:
+            True if the race should evolve, False otherwise
+        """
+        # Check if race has enough evolution points
+        if race.evolution_points < race.evolution_threshold:
+            return False
+
+        # Stagger evolutions based on race ID to prevent all races evolving at once
+        return self.frame_counter % 300 == race.race_id % 300
+
+    def _process_race_evolution(self, race: Any) -> None:
+        """Process the evolution of a race and handle related events.
+
+        Args:
+            race: The race to evolve
+        """
+        # Race evolves and get metrics
+        metrics = race.evolve()
+
+        # Notify the player
+        self.notifier.notify_event(
+            "race",
+            f"Race {race.race_id} ({race.trait}) has evolved to stage {race.evolution_stage}!",
+            importance=2,
+        )
+
+        # Track in stats
+        self.stats["race_evolutions"] = self.stats.get("race_evolutions", 0) + 1
+
+        # Analyze and log territory control
+        self._log_territory_metrics(race, metrics)
+
+    def _log_territory_metrics(
+        self, race: Any, metrics: Optional[Dict[str, Any]]
+    ) -> None:
+        """Log territory metrics for a race if available.
+
+        Args:
+            race: The race whose territory to log
+            metrics: Dictionary containing territory metrics, or None
+        """
+        if metrics and metrics.get("center"):
+            logging.info(
+                f"Race {race.race_id} territory: "
+                + f"center={metrics['center']}, radius={metrics.get('radius', 0)}, "
+                + f"density={metrics.get('density', 0):.4f}"
+            )
+
+            # Log metrics for performance tracking
+            log_performance_metric(
+                f"race_{race.race_id}_territory_radius", metrics.get("radius", 0)
+            )
+            log_performance_metric(
+                f"race_{race.race_id}_territory_density", metrics.get("density", 0)
+            )
 
     def check_for_discoveries(self) -> None:
         """Check for new resource discoveries by player."""
         try:
             # Start performance timing for discovery check
-            discovery_start = log_performance_start("Discovery check")
+            discovery_start = log_performance_start(LOG_DISCOVERY_CHECK)
 
-            # Only run this check periodically to avoid performance impact
-            if self.frame_counter % 120 != 0:  # Every 2 seconds at 60 FPS
-                log_performance_end("Discovery check", discovery_start, "skipped")
+            # Check if discovery scan should be performed this frame
+            if not self._should_perform_discovery_scan():
+                log_performance_end(LOG_DISCOVERY_CHECK, discovery_start, "skipped")
                 return
 
-            # Track whether anything was discovered in this check
-            discoveries_made = False
+            # Perform the discovery scan and track results
+            discoveries_made = self._perform_discovery_scan()
 
-            # Use LogContext for proper error handling and tracking
-            with LogContext("Resource discovery check"):
-                # Safety check for player position
-                if not hasattr(self.player, "x") or not hasattr(self.player, "y"):
-                    logging.error("Player position attributes missing")
-                    return
-
-                # Ensure field dimensions are valid
-                if not hasattr(self.field, "width") or not hasattr(
-                    self.field, "height"
-                ):
-                    logging.error("Field dimension attributes missing")
-                    return
-
-                # Validate player is within field bounds
-                if not (
-                    0 <= self.player.x < self.field.width
-                    and 0 <= self.player.y < self.field.height
-                ):
-                    logging.warning(
-                        f"Player outside field bounds: ({self.player.x}, {self.player.y})"
-                    )
-                    return
-
-                # Check for nearby anomalies in a square area around the player
-                discovery_range = 3  # How far to look for discoveries
-                for dy, dx in itertools.product(
-                    range(-discovery_range, discovery_range + 1),
-                    range(-discovery_range, discovery_range + 1),
-                ):
-                    nx, ny = self.player.x + dx, self.player.y + dy
-
-                    # Validate coordinates are within bounds
-                    if not (0 <= nx < self.field.width and 0 <= ny < self.field.height):
-                        continue
-
-                    # Check if this is an anomaly worth reporting
-                    if (
-                        self.field.grid[ny, nx] > 0
-                        and self.field.rare_grid[ny, nx] == 3  # Anomaly
-                    ):
-                        discoveries_made = True
-                        # Only notify if not already discovered
-                        if (nx, ny) not in getattr(self, "discovered_anomalies", set()):
-                            # Initialize the set if it doesn't exist
-                            if not hasattr(self, "discovered_anomalies"):
-                                self.discovered_anomalies = set()
-
-                            # Add to discovered set
-                            self.discovered_anomalies.add((nx, ny))
-
-                            # Notify the player
-                            self.notifier.notify_event(
-                                "discovery",
-                                f"Found an anomaly at ({nx}, {ny})!",
-                                importance=3,
-                            )
-                            logging.info(f"Player discovered anomaly at ({nx}, {ny})")
-
-                            # Update stats
-                            self.stats["total_anomalies_discovered"] = (
-                                self.stats.get("total_anomalies_discovered", 0) + 1
-                            )
-
-            # End performance timing
+            # End performance timing with appropriate result status
             log_performance_end(
-                "Discovery check",
+                LOG_DISCOVERY_CHECK,
                 discovery_start,
                 "found" if discoveries_made else "none",
             )
 
+            # Track metrics for analytics
+            log_performance_metric("discovery_scan_completed", 1)
+            if discoveries_made:
+                log_performance_metric("discoveries_made", 1)
+
         except Exception as e:
             log_exception("Error checking for discoveries", e)
+            log_performance_metric("discovery_scan_errors", 1)
+
+    def _should_perform_discovery_scan(self) -> bool:
+        """Determine if a discovery scan should be performed this frame.
+
+        Returns:
+            bool: True if a discovery scan should be performed, False otherwise
+        """
+        # Only run this check periodically to avoid performance impact
+        return self.frame_counter % 120 == 0  # Every 2 seconds at 60 FPS
+
+    def _perform_discovery_scan(self) -> bool:
+        """Perform a discovery scan around the player.
+
+        Returns:
+            bool: True if any discoveries were made, False otherwise
+        """
+        # Track whether anything was discovered in this scan
+        discoveries_made = False
+
+        # Use LogContext for proper error handling and tracking
+        with LogContext("Resource discovery scan"):
+            # Validate player and field before proceeding
+            if not self._validate_discovery_prerequisites():
+                return False
+
+            # Check for nearby anomalies
+            discoveries_made = self._scan_for_anomalies()
+
+        return discoveries_made
+
+    def _validate_discovery_prerequisites(self) -> bool:
+        """Validate that all prerequisites for discovery scanning are met.
+
+        Returns:
+            bool: True if all prerequisites are valid, False otherwise
+        """
+        # Safety check for player position
+        if not hasattr(self.player, "x") or not hasattr(self.player, "y"):
+            logging.error("Player position attributes missing")
+            return False
+
+        # Ensure field dimensions are valid
+        if not hasattr(self.field, "width") or not hasattr(self.field, "height"):
+            logging.error("Field dimension attributes missing")
+            return False
+
+        # Validate player is within field bounds
+        if not (
+            0 <= self.player.x < self.field.width
+            and 0 <= self.player.y < self.field.height
+        ):
+            logging.warning(
+                f"Player outside field bounds: ({self.player.x}, {self.player.y})"
+            )
+            return False
+
+        return True
+
+    def _scan_for_anomalies(self) -> bool:
+        """Scan the area around the player for anomalies.
+
+        Returns:
+            bool: True if any discoveries were made, False otherwise
+        """
+        discoveries_made = False
+        discovery_range = 3  # How far to look for discoveries
+
+        for dy, dx in itertools.product(
+            range(-discovery_range, discovery_range + 1),
+            range(-discovery_range, discovery_range + 1),
+        ):
+            nx, ny = self.player.x + dx, self.player.y + dy
+
+            # Validate coordinates are within bounds
+            if not (0 <= nx < self.field.width and 0 <= ny < self.field.height):
+                continue
+
+            # Check if this is an anomaly worth reporting
+            if self._is_reportable_anomaly(nx, ny):
+                discoveries_made = True
+                # Process the discovery if it's new
+                self._process_new_discovery(nx, ny)
+
+        return discoveries_made
+
+    def _is_reportable_anomaly(self, x: int, y: int) -> bool:
+        """Check if the given coordinates contain a reportable anomaly.
+
+        Args:
+            x: X-coordinate to check
+            y: Y-coordinate to check
+
+        Returns:
+            bool: True if the location contains a reportable anomaly
+        """
+        try:
+            # Define anomaly type constant
+            ANOMALY_TYPE = 3
+
+            # Check if there's an asteroid at this location
+            has_asteroid = self.field.grid[y, x] > 0
+
+            # Check if there's an anomaly at this location
+            is_anomaly = self.field.rare_grid[y, x] == ANOMALY_TYPE
+
+            # Both conditions must be true for a reportable anomaly
+            return has_asteroid and is_anomaly
+
+        except (IndexError, AttributeError) as e:
+            # Log the error and return False for safety
+            logging.warning(f"Error checking anomaly at ({x}, {y}): {e}")
+            return False
+
+    def _process_new_discovery(self, x: int, y: int) -> None:
+        """Process a newly discovered anomaly.
+
+        Args:
+            x: X-coordinate of the discovery
+            y: Y-coordinate of the discovery
+        """
+        try:
+            # Check if this anomaly has already been discovered
+            if self._is_already_discovered(x, y):
+                return
+
+            # Record the new discovery
+            self._record_discovery(x, y)
+
+            # Notify the player about the discovery
+            self._notify_discovery(x, y)
+
+            # Update game statistics
+            self._update_discovery_statistics()
+
+        except Exception as e:
+            logging.error(f"Error processing discovery at ({x}, {y}): {e}")
+
+    def _is_already_discovered(self, x: int, y: int) -> bool:
+        """Check if the given coordinates have already been discovered.
+
+        Args:
+            x: X-coordinate to check
+            y: Y-coordinate to check
+
+        Returns:
+            bool: True if already discovered, False otherwise
+        """
+        # Initialize the set if it doesn't exist
+        if not hasattr(self, "discovered_anomalies"):
+            self.discovered_anomalies = set()
+
+        # Check if the coordinates are in the discovered set
+        return (x, y) in self.discovered_anomalies
+
+    def _record_discovery(self, x: int, y: int) -> None:
+        """Record a new discovery in the discovered set.
+
+        Args:
+            x: X-coordinate of the discovery
+            y: Y-coordinate of the discovery
+        """
+        # Add to discovered set
+        self.discovered_anomalies.add((x, y))
+
+    def _notify_discovery(self, x: int, y: int) -> None:
+        """Notify the player about a new discovery.
+
+        Args:
+            x: X-coordinate of the discovery
+            y: Y-coordinate of the discovery
+        """
+        # Notify the player
+        self.notifier.notify_event(
+            "discovery",
+            f"Found an anomaly at ({x}, {y})!",
+            importance=3,
+        )
+
+        # Log the discovery
+        logging.info(f"Player discovered anomaly at ({x}, {y})")
+
+    def _update_discovery_statistics(self) -> None:
+        """Update game statistics related to discoveries."""
+        # Update total discoveries counter
+        self.stats["total_anomalies_discovered"] = (
+            self.stats.get("total_anomalies_discovered", 0) + 1
+        )
+
+        # Track for analytics
+        log_performance_metric("anomaly_discovered", 1)
 
     def update_player_fleet(self) -> None:
         """Update the player's fleet status and process results."""
         try:
-            # Only update fleet periodically to avoid performance impact
-            if self.frame_counter % 60 != 0:  # Once per second at 60 FPS
+            # Start performance timing
+            fleet_update_start = log_performance_start(LOG_FLEET_UPDATE)
+
+            # Check if we should update the fleet this frame
+            if not self._should_update_fleet():
+                log_performance_end(LOG_FLEET_UPDATE, fleet_update_start, "skipped")
                 return
 
+            if fleet_results := self._perform_fleet_update():
+                self._process_fleet_update_results(fleet_results)
+
+            # End performance timing
+            log_performance_end(LOG_FLEET_UPDATE, fleet_update_start, "complete")
+
+        except Exception as e:
+            log_exception("Error updating player fleet", e)
+            self.notifier.add("Fleet system error", category="error", importance=2)
+
+    def _should_update_fleet(self) -> bool:
+        """Determine if the fleet should be updated this frame.
+
+        Returns:
+            True if the fleet should be updated, False otherwise
+        """
+        # Only update fleet periodically to avoid performance impact
+        return self.frame_counter % 60 == 0  # Once per second at 60 FPS
+
+    def _perform_fleet_update(self) -> Optional[Dict[str, Any]]:
+        """Perform the fleet update operation.
+
+        Returns:
+            Dictionary containing fleet update results, or None if no update occurred
+        """
+        with LogContext(f"{LOG_FLEET_UPDATE} operation"):
             # Update the fleet and get results
-            with LogContext("Fleet update operation"):
-                fleet_results = self.player.update_fleet(self.field)
+            fleet_results = self.player.update_fleet(self.field)
 
-                # Process fleet update results
-                if fleet_results is None:
-                    logging.debug("No fleet update results to process")
-                    return
+            # Log the update for analytics
+            log_performance_metric("fleet_update_performed", 1)
 
-                # Handle damaged ships
-                if fleet_results.get("ships_damaged", 0) > 0:
-                    damaged_count = fleet_results["ships_damaged"]
-                    self.notifier.add(
-                        f"{damaged_count} ships damaged!",
-                        category="fleet",
-                        importance=2,
-                    )
-                    logging.info(f"Player fleet update: {damaged_count} ships damaged")
+            if fleet_results is None:
+                logging.debug("No fleet update results to process")
 
-                # Handle lost ships
-                if fleet_results.get("ships_lost", 0) > 0:
-                    lost_count = fleet_results["ships_lost"]
-                    self.notifier.add(
-                        f"{lost_count} ships lost in dangerous territory!",
-                        category="fleet",
-                        importance=3,
-                    )
-                    self.stats["ships_lost"] += lost_count
-                    logging.warning(f"Player lost {lost_count} ships in fleet update")
+            return fleet_results
 
-                # Handle mining income
-                if fleet_results.get("minerals_mined", 0) > 0:
-                    minerals_gained = fleet_results["minerals_mined"]
-                    self.stats["total_mined"] += minerals_gained
+    def _process_fleet_update_results(self, fleet_results: Dict[str, Any]) -> None:
+        """Process the results of a fleet update.
 
-                    # Log all mining activity but only notify player of significant amounts
-                    logging.info(f"Fleet mined {minerals_gained} minerals")
-                    if minerals_gained > 100:
-                        self.notifier.add(
-                            f"Fleet mined {minerals_gained} minerals",
-                            category="mining",
-                            importance=1,
-                        )
+        Args:
+            fleet_results: Dictionary containing fleet update results
+        """
+        # Process damaged ships
+        self._handle_damaged_ships(fleet_results)
+
+        # Process lost ships
+        self._handle_lost_ships(fleet_results)
+
+        # Log overall fleet status
+        self._log_fleet_status(fleet_results)
+
+    def _handle_damaged_ships(self, fleet_results: Dict[str, Any]) -> None:
+        """Handle damaged ships from fleet update results.
+
+        Args:
+            fleet_results: Dictionary containing fleet update results
+        """
+        damaged_count = fleet_results.get("ships_damaged", 0)
+
+        if damaged_count > 0:
+            # Notify the player
+            self.notifier.add(
+                f"{damaged_count} ships damaged!",
+                category="fleet",
+                importance=2,
+            )
+
+            # Log the event
+            logging.info(f"Player fleet update: {damaged_count} ships damaged")
+
+            # Track for analytics
+            log_performance_metric("ships_damaged", damaged_count)
+
+    def _handle_lost_ships(self, fleet_results: Dict[str, Any]) -> None:
+        """Handle lost ships from fleet update results.
+
+        Args:
+            fleet_results: Dictionary containing fleet update results
+        """
+        lost_count = fleet_results.get("ships_lost", 0)
+
+        if lost_count > 0:
+            # Notify the player
+            self.notifier.add(
+                f"{lost_count} ships lost in dangerous territory!",
+                category="fleet",
+                importance=3,
+            )
+
+            # Update statistics
+            self.stats["ships_lost"] = self.stats.get("ships_lost", 0) + lost_count
+
+            # Track for analytics
+            log_performance_metric("ships_lost", lost_count)
+
+    def _log_fleet_status(self, fleet_results: Dict[str, Any]) -> None:
+        """Log the current fleet status for analytics and debugging.
+
+        Args:
+            fleet_results: Dictionary containing fleet update results
+        """
+        # Log overall fleet status
+        current_fleet_size = getattr(self.player, "fleet_size", 1)
+        fleet_health = fleet_results.get("fleet_health", 100)
+
+        logging.debug(
+            f"Fleet status: Size={current_fleet_size}, Health={fleet_health}%, "
+            f"Damaged={fleet_results.get('ships_damaged', 0)}, "
+            f"Lost={fleet_results.get('ships_lost', 0)}"
+        )
+
+        # Log specific fleet events
+        if fleet_results.get("ships_damaged", 0) > 0:
+            logging.warning(
+                f"Player fleet update: {fleet_results.get('ships_damaged', 0)} ships damaged"
+            )
+
+        if fleet_results.get("ships_lost", 0) > 0:
+            logging.warning(
+                f"Player fleet update: {fleet_results.get('ships_lost', 0)} ships lost"
+            )
+
+        # Handle mining income
+        if fleet_results.get("minerals_mined", 0) > 0:
+            minerals_gained = fleet_results["minerals_mined"]
+            self.stats["total_mined"] += minerals_gained
+
+            # Log all mining activity but only notify player of significant amounts
+            logging.info(f"Fleet mined {minerals_gained} minerals")
+            if minerals_gained > 100:
+                self.notifier.add(
+                    f"Fleet mined {minerals_gained} minerals",
+                    category="mining",
+                    importance=1,
+                )
 
                 # Track performance metrics if available
                 if "processing_time" in fleet_results:
                     log_performance_metric(
                         "fleet_update_processing", fleet_results["processing_time"]
                     )
-        except Exception as e:
-            log_exception("Error during fleet update", e)
 
     def process_encounters(self) -> None:
         """Process potential encounters based on player movement and location.
@@ -1997,7 +2637,7 @@ class Game:
         detection through resolution, with comprehensive performance tracking.
         """
         # Start performance timing for encounter processing
-        encounter_start = log_performance_start("Encounter processing")
+        encounter_start = log_performance_start(LOG_ENCOUNTER_PROCESSING)
 
         try:
             # Track last encounter check time for throttling
@@ -2013,7 +2653,7 @@ class Game:
 
             if not (player_moved or time_to_check):
                 log_performance_end(
-                    "Encounter processing", encounter_start, "throttled"
+                    LOG_ENCOUNTER_PROCESSING, encounter_start, "throttled"
                 )
                 return
 
@@ -2117,7 +2757,7 @@ class Game:
 
             # End performance timing with encounter details
             log_performance_end(
-                "Encounter processing",
+                LOG_ENCOUNTER_PROCESSING,
                 encounter_start,
                 f"{encounter_type}_{encounter_rarity}",
             )
@@ -2125,7 +2765,7 @@ class Game:
         except Exception as e:
             logging.error(f"Error processing encounters: {str(e)}")
             log_exception("Encounter processing error", e)
-            log_performance_end("Encounter processing", encounter_start, "error")
+            log_performance_end(LOG_ENCOUNTER_PROCESSING, encounter_start, "error")
 
     def get_current_zone(self, position: Tuple[int, int]) -> str:
         """Determine which zone the player is currently in based on position.
@@ -2316,7 +2956,7 @@ class Game:
         """
         try:
             # Start performance timing
-            force_encounter_start = log_performance_start("Force encounter generation")
+            force_encounter_start = log_performance_start(LOG_FORCE_ENCOUNTER)
 
             # Log the forced encounter request
             logging.info(
@@ -2327,97 +2967,153 @@ class Game:
             if zone is None:
                 zone = self.get_current_zone(position)
 
-            # Create appropriate context for encounter generation
-            context = {
-                "player_health": self.player.health,
-                "player_level": getattr(self.player, "level", 1),
-                "player_currency": self.player.currency,
-                "game_time": self.game_time,
-                "zone": zone,
-                "forced": True,  # Flag that this was a forced encounter
-                "encounter_type": encounter_type,
-            }
+            # Create encounter context and determine the actual encounter type
+            context = self._create_encounter_context(encounter_type, zone)
+            chosen_type = self._resolve_encounter_type(encounter_type, context)
 
-            # Handle "dynamic" type by choosing based on game state
-            if encounter_type == "dynamic":
-                # Dynamic selection based on current game state
-                hour = int(self.game_time / 60) % 24  # Game time hour (0-23)
-                player_health_pct = self.player.health / 100.0
-
-                # Evening hours tend toward combat, daytime toward discoveries
-                if 18 <= hour <= 23 or 0 <= hour <= 5:  # Night hours
-                    combat_weight = 0.7
-                    discovery_weight = 0.1
-                else:  # Day hours
-                    combat_weight = 0.3
-                    discovery_weight = 0.5
-                trader_weight = 0.2
-                # Adjust weights based on player health
-                if player_health_pct < 0.3:  # Low health, reduce combat chance
-                    combat_weight *= 0.5
-                    trader_weight *= 1.5
-
-                # Normalize weights
-                total_weight = combat_weight + discovery_weight + trader_weight
-                combat_weight /= total_weight
-                discovery_weight /= total_weight
-                trader_weight /= total_weight
-
-                # Determine encounter type based on weights
-                rand_val = random.random()
-                if rand_val < combat_weight:
-                    chosen_type = "combat"
-                elif rand_val < combat_weight + discovery_weight:
-                    chosen_type = "discovery"
-                else:
-                    chosen_type = "trader"
-
-                # Update context with chosen type
-                context["encounter_type"] = chosen_type
-                logging.info(f"Dynamic encounter resolved to {chosen_type} encounter")
-            else:
-                chosen_type = encounter_type
-
-            # Generate the encounter through the encounter generator
-            encounter_result = self.encounter_generator.generate_encounter(
-                position, chosen_type, context
-            )
-
-            if not encounter_result:
-                logging.warning(f"Failed to generate forced {chosen_type} encounter")
-                log_performance_end(
-                    "Force encounter generation", force_encounter_start, "failed"
-                )
+            # Generate and process the encounter
+            if not self._generate_and_process_encounter(
+                chosen_type, position, context, force_encounter_start
+            ):
                 return
 
-            # Process the generated encounter immediately
-            if chosen_type == "combat":
-                self._handle_combat_encounter(encounter_result)
-            elif chosen_type == "discovery":
-                self._handle_discovery_encounter(encounter_result)
-            elif chosen_type == "trader":
-                self._handle_trader_encounter(encounter_result)
-
             # Update statistics for forced encounters
-            self.stats["forced_encounters"] = self.stats.get("forced_encounters", 0) + 1
-            self.stats[f"forced_{chosen_type}_encounters"] = (
-                self.stats.get(f"forced_{chosen_type}_encounters", 0) + 1
-            )
+            self._update_forced_encounter_stats(chosen_type)
 
             # Complete performance timing
-            log_performance_end(
-                "Force encounter generation", force_encounter_start, "success"
-            )
+            log_performance_end(LOG_FORCE_ENCOUNTER, force_encounter_start, "success")
 
         except Exception as e:
             log_exception("Error forcing encounter", e)
-            log_performance_end(
-                "Force encounter generation", force_encounter_start, "error"
-            )
+            log_performance_end(LOG_FORCE_ENCOUNTER, force_encounter_start, "error")
             self.notifier.add(
                 "Error generating encounter", category="error", importance=2
             )
             log_exception("Error processing encounters", e)
+
+    def _create_encounter_context(
+        self, encounter_type: str, zone: str
+    ) -> Dict[str, Any]:
+        """Create the context dictionary for encounter generation.
+
+        Args:
+            encounter_type: The type of encounter to generate
+            zone: The zone where the encounter will occur
+
+        Returns:
+            Dict containing the encounter context
+        """
+        return {
+            "player_health": self.player.health,
+            "player_level": getattr(self.player, "level", 1),
+            "player_currency": self.player.currency,
+            "game_time": self.game_time,
+            "zone": zone,
+            "forced": True,  # Flag that this was a forced encounter
+            "encounter_type": encounter_type,
+        }
+
+    def _resolve_encounter_type(
+        self, encounter_type: str, context: Dict[str, Any]
+    ) -> str:
+        """Resolve the actual encounter type, handling 'dynamic' type specially.
+
+        Args:
+            encounter_type: The requested encounter type
+            context: The encounter context dictionary
+
+        Returns:
+            str: The resolved encounter type
+        """
+        if encounter_type != "dynamic":
+            return encounter_type
+
+        # Dynamic selection based on current game state
+        hour = int(self.game_time / 60) % 24  # Game time hour (0-23)
+        player_health_pct = self.player.health / 100.0
+
+        # Evening hours tend toward combat, daytime toward discoveries
+        if 18 <= hour <= 23 or 0 <= hour <= 5:  # Night hours
+            combat_weight = 0.7
+            discovery_weight = 0.1
+        else:  # Day hours
+            combat_weight = 0.3
+            discovery_weight = 0.5
+        trader_weight = 0.2
+
+        # Adjust weights based on player health
+        if player_health_pct < 0.3:  # Low health, reduce combat chance
+            combat_weight *= 0.5
+            trader_weight *= 1.5
+
+        # Normalize weights
+        total_weight = combat_weight + discovery_weight + trader_weight
+        combat_weight /= total_weight
+        discovery_weight /= total_weight
+        trader_weight /= total_weight
+
+        # Determine encounter type based on weights
+        rand_val = random.random()
+        if rand_val < combat_weight:
+            chosen_type = "combat"
+        elif rand_val < combat_weight + discovery_weight:
+            chosen_type = "discovery"
+        else:
+            chosen_type = "trader"
+
+        # Update context with chosen type
+        context["encounter_type"] = chosen_type
+        logging.info(f"Dynamic encounter resolved to {chosen_type} encounter")
+        return chosen_type
+
+    def _generate_and_process_encounter(
+        self,
+        encounter_type: str,
+        position: Tuple[int, int],
+        context: Dict[str, Any],
+        timing_start: float,
+    ) -> bool:
+        """Generate and process an encounter of the specified type.
+
+        Args:
+            encounter_type: The type of encounter to generate
+            position: The position where the encounter occurs
+            context: The encounter context
+            timing_start: The start time for performance logging
+
+        Returns:
+            bool: True if encounter was successfully generated and processed, False otherwise
+        """
+        # Generate the encounter through the encounter generator
+        encounter_result = self.encounter_generator.generate_encounter(
+            position, encounter_type, context
+        )
+
+        if not encounter_result:
+            logging.warning(f"Failed to generate forced {encounter_type} encounter")
+            log_performance_end(LOG_FORCE_ENCOUNTER, timing_start, "failed")
+            return False
+
+        # Process the generated encounter immediately
+        if encounter_type == "combat":
+            self._handle_combat_encounter(encounter_result)
+        elif encounter_type == "discovery":
+            self._handle_discovery_encounter(encounter_result)
+        elif encounter_type == "trader":
+            self._handle_trader_encounter(encounter_result)
+
+        return True
+
+    def _update_forced_encounter_stats(self, encounter_type: str) -> None:
+        """Update statistics for forced encounters.
+
+        Args:
+            encounter_type: The type of encounter that was forced
+        """
+        self.stats["forced_encounters"] = self.stats.get("forced_encounters", 0) + 1
+        self.stats[f"forced_{encounter_type}_encounters"] = (
+            self.stats.get(f"forced_{encounter_type}_encounters", 0) + 1
+        )
 
     def process_combat_result(self, combat_result: Dict[str, Any]) -> None:
         """Process the results of a combat encounter.
@@ -2426,12 +3122,12 @@ class Game:
             combat_result: Dictionary containing combat results
         """
         # Start performance monitoring for combat result processing
-        combat_processing_start = log_performance_start("Combat result processing")
+        combat_processing_start = log_performance_start(LOG_COMBAT_RESULT)
 
         try:
             if not combat_result:
                 log_performance_end(
-                    "Combat result processing", combat_processing_start, "empty_result"
+                    LOG_COMBAT_RESULT, combat_processing_start, "empty_result"
                 )
                 return
 
@@ -2461,13 +3157,11 @@ class Game:
                 f"Combat result: {outcome} with {len(combat_result.get('log', []))} actions"
             )
 
-            log_performance_end("Combat result processing", combat_processing_start)
+            log_performance_end(LOG_COMBAT_RESULT, combat_processing_start)
 
         except Exception as e:
             log_exception("Error processing combat result", e)
-            log_performance_end(
-                "Combat result processing", combat_processing_start, "error"
-            )
+            log_performance_end(LOG_COMBAT_RESULT, combat_processing_start, "error")
             # Attempt recovery
             try:
                 self.player.reset_fleet_state()
@@ -2697,86 +3391,112 @@ class Game:
             # Start performance timing
             render_start = log_performance_start("Render frame")
 
-            # Fill background
-            self.screen.fill(COLOR_BG)
-
-            # Draw background pattern
-            for y in range(0, WINDOW_HEIGHT, self.bg_pattern.get_height()):
-                for x in range(0, WINDOW_WIDTH, self.bg_pattern.get_width()):
-                    self.screen.blit(self.bg_pattern, (x, y))
-
-            # State-specific rendering
-            if self.state == STATE_PLAY:
-                self.draw_play_state()
-            elif self.state == STATE_SHOP:
-                self.draw_shop_state()
-
-            # Draw notifications (always shown)
-            self.notifier.draw(self.screen)
-
-            # Draw active tooltip if any
-            if self.tooltip_text and self.show_tooltips:
-                from ui.draw_utils import draw_tooltip
-
-                draw_tooltip(
-                    self.screen,
-                    self.tooltip_text,
-                    self.tooltip_position[0],
-                    self.tooltip_position[1],
-                )
-
-            # Draw controls help if requested
-            if self.display_controls_help:
-                self.notifier.draw_tooltips(self.screen, WINDOW_WIDTH - 270, 50)
-
-            # Draw FPS counter if enabled
-            if (
-                SHOW_FPS and not self.show_debug
-            ):  # Only show simple FPS if debug info is off
-                fps = self.clock.get_fps()
-                self.fps_history.append(fps)
-                if len(self.fps_history) > 60:
-                    self.fps_history.pop(0)
-                avg_fps = (
-                    sum(self.fps_history) / len(self.fps_history)
-                    if self.fps_history
-                    else 0
-                )
-
-                draw_text(self.screen, f"FPS: {avg_fps:.1f}", 10, 10, 14, COLOR_TEXT)
-
-            # Draw debug info if enabled
-            if self.show_debug:
-                self.draw_debug_info()
-
-            # Draw paused indicator
-            if self.paused:
-                draw_panel(
-                    self.screen,
-                    pygame.Rect(
-                        WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 - 30, 200, 60
-                    ),
-                    color=(30, 30, 40, 200),
-                    header="PAUSED",
-                )
-                draw_text(
-                    self.screen,
-                    "Press ESC to resume",
-                    WINDOW_WIDTH // 2,
-                    WINDOW_HEIGHT // 2 + 5,
-                    16,
-                    COLOR_TEXT,
-                    align="center",
-                )
+            # Draw the core elements
+            self._draw_background()
+            self._draw_current_state()
+            self._draw_ui_overlays()
 
             # End performance timing
             log_performance_end("Render frame", render_start)
 
-            # Update display - moved to game loop
-            # pygame.display.flip()
-
         except Exception as e:
             log_exception("Error in render process", e)
+
+    def _draw_background(self) -> None:
+        """Draw the background elements."""
+        # Fill background with base color
+        self.screen.fill(COLOR_BG)
+
+        # Draw tiled background pattern
+        for y in range(0, WINDOW_HEIGHT, self.bg_pattern.get_height()):
+            for x in range(0, WINDOW_WIDTH, self.bg_pattern.get_width()):
+                self.screen.blit(self.bg_pattern, (x, y))
+
+    def _draw_current_state(self) -> None:
+        """Draw the current game state content."""
+        # Render content based on current game state
+        if self.state == STATE_PLAY:
+            self.draw_play_state()
+        elif self.state == STATE_SHOP:
+            self.draw_shop_state()
+
+    def _draw_ui_overlays(self) -> None:
+        """Draw UI overlays that appear on top of the game content."""
+        # Draw notifications (always shown)
+        self.notifier.draw(self.screen)
+
+        # Draw optional UI elements
+        self._draw_tooltip()
+        self._draw_controls_help()
+        self._draw_performance_info()
+        self._draw_pause_indicator()
+
+    def _draw_tooltip(self) -> None:
+        """Draw the active tooltip if enabled."""
+        if self.tooltip_text and self.show_tooltips:
+            from ui.draw_utils import draw_tooltip
+
+            draw_tooltip(
+                self.screen,
+                self.tooltip_text,
+                self.tooltip_position[0],
+                self.tooltip_position[1],
+            )
+
+    def _draw_controls_help(self) -> None:
+        """Draw the controls help if requested."""
+        if self.display_controls_help:
+            self.notifier.draw_tooltips(self.screen, WINDOW_WIDTH - 270, 50)
+
+    def _draw_performance_info(self) -> None:
+        """Draw performance information (FPS counter and debug info)."""
+        # Draw FPS counter if enabled and debug info is off
+        if SHOW_FPS and not self.show_debug:
+            self._draw_fps_counter()
+
+        # Draw detailed debug info if enabled
+        if self.show_debug:
+            self.draw_debug_info()
+
+    def _draw_fps_counter(self) -> None:
+        """Draw the FPS counter with averaged values."""
+        # Calculate current FPS and update history
+        fps = self.clock.get_fps()
+        self.fps_history.append(fps)
+
+        # Keep history at a reasonable size
+        if len(self.fps_history) > 60:
+            self.fps_history.pop(0)
+
+        # Calculate average FPS
+        avg_fps = (
+            sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
+        )
+
+        # Draw the FPS text
+        draw_text(self.screen, f"FPS: {avg_fps:.1f}", 10, 10, 14, COLOR_TEXT)
+
+    def _draw_pause_indicator(self) -> None:
+        """Draw the pause indicator when the game is paused."""
+        if self.paused:
+            # Draw pause panel
+            draw_panel(
+                self.screen,
+                pygame.Rect(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 - 30, 200, 60),
+                color=(30, 30, 40, 200),
+                header="PAUSED",
+            )
+
+            # Draw pause instructions
+            draw_text(
+                self.screen,
+                "Press ESC to resume",
+                WINDOW_WIDTH // 2,
+                WINDOW_HEIGHT // 2 + 5,
+                16,
+                COLOR_TEXT,
+                align="center",
+            )
 
     def draw_play_state(self) -> None:
         """Render the play state elements."""
@@ -2899,7 +3619,7 @@ class Game:
             f"FPS: {fps:.1f} (Avg: {avg_fps:.1f})",
             f"Frame: {self.frame_counter} (GL: {game_loop.frame_counter})",
             f"Game Time: {self.game_time:.1f}s",
-            f"Delta: {self.delta_time*1000:.1f}ms",
+            f"Delta: {self.delta_time * 1000:.1f}ms",
             f"Memory: {log_memory_usage(return_value=True):.1f} MB",
         ]
 

@@ -7,14 +7,17 @@ and the status of various ship systems.
 
 # Standard library imports
 import logging
+from typing import Any, Dict, Tuple
+
+import pygame
+
+# Local application imports
+from config import COLOR_HIGHLIGHT, COLOR_TEXT
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ascii_panel import ASCIIPanel
 
 # Third-party library imports
 
-# Local application imports
-from typing import Dict, Tuple, Any
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
 
 # Type definitions for better type checking
 Color = Tuple[int, int, int]

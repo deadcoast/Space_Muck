@@ -11,21 +11,23 @@ This test suite covers:
 # Standard library imports
 import os
 import sys
+from pathlib import Path
+from typing import List, Optional
+
+import nonexistent_package
 
 # Third-party library imports
 import pytest
+from another_nonexistent_package import SomeClass
+
+from python_fixer.core.analyzer import ImportAnalyzer
+from python_fixer.core.types import ImportInfo
 
 # Local application imports
 from ...invalid_pkg import AnotherClass
 from ..parent_pkg.nonexistent import AnotherClass
 from ..pkg import SomeClass
 from .nonexistent_module import NonexistentClass
-from another_nonexistent_package import SomeClass
-from pathlib import Path
-from python_fixer.core.analyzer import ImportAnalyzer
-from python_fixer.core.types import ImportInfo
-from typing import List, Optional
-import nonexistent_package
 
 
 # Test fixtures
@@ -82,12 +84,12 @@ def test_valid_import_validation(invalid_import_structure: Path) -> None:
     analyzer.analyze_imports()  # Call the method without storing the unused result
 
     # Check that all imports are valid
-    assert (
-        analyzer.validate_all_imports()
-    ), "Valid imports should be validated successfully"
-    assert (
-        len(analyzer.get_invalid_imports()) == 0
-    ), "There should be no invalid imports"
+    assert analyzer.validate_all_imports(), (
+        "Valid imports should be validated successfully"
+    )
+    assert len(analyzer.get_invalid_imports()) == 0, (
+        "There should be no invalid imports"
+    )
     assert len(analyzer.get_import_errors()) == 0, "There should be no import errors"
 
 
@@ -105,12 +107,12 @@ def test_invalid_relative_import_validation(invalid_import_structure: Path) -> N
 
     # Check error messages
     error_messages = analyzer.get_import_errors()
-    assert any(
-        "nonexistent_module" in msg for msg in error_messages
-    ), "Error for nonexistent_module not found"
-    assert any(
-        "parent_pkg" in msg for msg in error_messages
-    ), "Error for parent_pkg not found"
+    assert any("nonexistent_module" in msg for msg in error_messages), (
+        "Error for nonexistent_module not found"
+    )
+    assert any("parent_pkg" in msg for msg in error_messages), (
+        "Error for parent_pkg not found"
+    )
 
     # Check that the invalid imports have error messages
     for imp in invalid_imports:
@@ -132,12 +134,12 @@ def test_invalid_absolute_import_validation(invalid_import_structure: Path) -> N
 
     # Check error messages
     error_messages = analyzer.get_import_errors()
-    assert any(
-        "nonexistent_package" in msg for msg in error_messages
-    ), "Error for nonexistent_package not found"
-    assert any(
-        "another_nonexistent_package" in msg for msg in error_messages
-    ), "Error for another_nonexistent_package not found"
+    assert any("nonexistent_package" in msg for msg in error_messages), (
+        "Error for nonexistent_package not found"
+    )
+    assert any("another_nonexistent_package" in msg for msg in error_messages), (
+        "Error for another_nonexistent_package not found"
+    )
 
     # Check that the invalid imports have error messages
     for imp in invalid_imports:
@@ -164,9 +166,9 @@ def test_package_path_resolution(invalid_import_structure: Path) -> None:
     analyzer.analyze_imports()  # Call the method without storing the unused result
 
     # Check that the package path is correctly resolved
-    assert (
-        analyzer._package_path == "invalid_pkg.nested.pkg"
-    ), "Package path should be correctly resolved"
+    assert analyzer._package_path == "invalid_pkg.nested.pkg", (
+        "Package path should be correctly resolved"
+    )
 
     # Check that the relative imports are validated correctly
     invalid_imports = analyzer.get_invalid_imports()
@@ -175,28 +177,28 @@ def test_package_path_resolution(invalid_import_structure: Path) -> None:
     # Check error messages
     error_messages = analyzer.get_import_errors()
     assert any("pkg" in msg for msg in error_messages), "Error for pkg not found"
-    assert any(
-        "invalid_pkg" in msg for msg in error_messages
-    ), "Error for invalid_pkg not found"
+    assert any("invalid_pkg" in msg for msg in error_messages), (
+        "Error for invalid_pkg not found"
+    )
 
 
 def test_direct_import_info_validation() -> None:
     """Test direct validation of ImportInfo objects."""
     # Test absolute import validation
     abs_import = ImportInfo(module="nonexistent_package", is_relative=False)
-    assert (
-        not abs_import.validate()
-    ), "Nonexistent absolute import should fail validation"
+    assert not abs_import.validate(), (
+        "Nonexistent absolute import should fail validation"
+    )
     assert abs_import.error_message is not None, "Error message should be set"
-    assert (
-        "Cannot resolve absolute import" in abs_import.error_message
-    ), "Error message should mention absolute import"
+    assert "Cannot resolve absolute import" in abs_import.error_message, (
+        "Error message should mention absolute import"
+    )
 
     # Test relative import validation without package path
     rel_import = ImportInfo(module="module", is_relative=True, level=1)
-    assert (
-        not rel_import.validate()
-    ), "Relative import without package path should fail validation"
+    assert not rel_import.validate(), (
+        "Relative import without package path should fail validation"
+    )
     assert rel_import.error_message is not None, "Error message should be set"
     assert (
         "Cannot resolve relative import without package path"
@@ -205,13 +207,13 @@ def test_direct_import_info_validation() -> None:
 
     # Test relative import validation with invalid level
     rel_import2 = ImportInfo(module="module", is_relative=True, level=3)
-    assert not rel_import2.validate(
-        "pkg.subpkg"
-    ), "Relative import with excessive level should fail validation"
+    assert not rel_import2.validate("pkg.subpkg"), (
+        "Relative import with excessive level should fail validation"
+    )
     assert rel_import2.error_message is not None, "Error message should be set"
-    assert (
-        "Relative import level" in rel_import2.error_message
-    ), "Error message should mention level issue"
+    assert "Relative import level" in rel_import2.error_message, (
+        "Error message should mention level issue"
+    )
 
     # Test valid import
     valid_import = ImportInfo(module="os", is_relative=False)

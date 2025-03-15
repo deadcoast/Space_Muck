@@ -9,12 +9,13 @@ different colonies. It uses cellular automaton principles for growth simulation.
 # Standard library imports
 import itertools
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
+# Local application imports
+from typing import List, Tuple, cast
+
 import numpy as np
 
-# Local application imports
-from typing import Tuple, List, cast
+# Third-party library imports
+from numpy.random import PCG64, Generator
 
 # Standard library imports
 

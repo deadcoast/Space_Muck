@@ -7,16 +7,17 @@
 # Parent: analysis.parsers
 # Dependencies: ast, pathlib, typing, logging
 
+import ast
+
 # Standard library imports
 import logging
 import re
 
-# Third-party library imports
-
 # Local application imports
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-import ast
+
+# Third-party library imports
 
 
 class HeaderMapParser:
@@ -160,9 +161,8 @@ class HeaderMapParser:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     imports.extend(n.name for n in node.names)
-                elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        imports.append(node.module)
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    imports.append(node.module)
 
             return sorted(set(imports))
 
