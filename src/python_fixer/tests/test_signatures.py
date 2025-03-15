@@ -2,17 +2,19 @@
 
 # Standard library imports
 
-# Third-party library imports
-import pytest
 import unittest
 
 # Local application imports
 from pathlib import Path
+
+# Third-party library imports
+import pytest
+
 from python_fixer.core.signatures import (
-    TypeInfo,
-    SignatureMetrics,
-    SignatureComponent,
     CodeSignature,
+    SignatureComponent,
+    SignatureMetrics,
+    TypeInfo,
 )
 
 

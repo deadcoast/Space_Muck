@@ -11,11 +11,12 @@ class UIStyle(Enum):
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from enum import Enum, auto
 from typing import Dict, Optional
+
+# Third-party library imports
+
 
     SYMBIOTIC = auto()  # Organic, evolving patterns
     ASTEROID = auto()  # Rough, mineral-like patterns

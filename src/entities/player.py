@@ -5,28 +5,30 @@ Player class: Represents the player character in the game, extends MinerEntity.
 # Standard library imports
 import logging
 import random
-from typing import Dict, Tuple, Any, Optional, Set
+from typing import Any, Dict, Optional, Set, Tuple
 
-# Third-party library imports
+from config import (
+    COLOR_PLAYER,
+    COMBAT_BASE_ARMOR,
+    COMBAT_BASE_ATTACK_POWER,
+    COMBAT_BASE_ATTACK_SPEED,
+    COMBAT_BASE_CRIT_CHANCE,
+    COMBAT_BASE_EVASION,
+    COMBAT_BASE_HULL_STRENGTH,
+    COMBAT_BASE_SHIELD_RECHARGE,
+    COMBAT_BASE_SHIELD_STRENGTH,
+    COMBAT_BASE_WEAPON_RANGE,
+    COMBAT_CRIT_MULTIPLIER,
+    COMBAT_HULL_UPGRADE_COST,
+    COMBAT_SHIELD_UPGRADE_COST,
+    COMBAT_WEAPON_UPGRADE_COST,
+)
 
 # Local application imports
 from .miner_entity import MinerEntity
-from config import (
-    COLOR_PLAYER,
-    COMBAT_BASE_ATTACK_POWER,
-    COMBAT_BASE_ATTACK_SPEED,
-    COMBAT_BASE_WEAPON_RANGE,
-    COMBAT_BASE_CRIT_CHANCE,
-    COMBAT_BASE_SHIELD_STRENGTH,
-    COMBAT_BASE_SHIELD_RECHARGE,
-    COMBAT_BASE_HULL_STRENGTH,
-    COMBAT_BASE_EVASION,
-    COMBAT_BASE_ARMOR,
-    COMBAT_WEAPON_UPGRADE_COST,
-    COMBAT_SHIELD_UPGRADE_COST,
-    COMBAT_HULL_UPGRADE_COST,
-    COMBAT_CRIT_MULTIPLIER,
-)
+
+# Third-party library imports
+
 
 # Reputation constants
 REPUTATION_LEVELS = {

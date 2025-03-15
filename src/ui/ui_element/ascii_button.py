@@ -1,6 +1,23 @@
-
-
 # Import directly from the module file
+
+
+# Standard library imports
+import logging
+import math
+import time
+
+# Local application imports
+from typing import Callable, Optional, Tuple, TypeVar, cast
+
+import pygame
+
+from config import COLOR_TEXT
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ui_element import UIElement
+
+# Third-party library imports
+
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -8,6 +25,7 @@ Color = Tuple[int, int, int]
 ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
+
 
 class ASCIIButton(UIElement):
     """Interactive button with ASCII styling.
@@ -17,17 +35,6 @@ class ASCIIButton(UIElement):
 
     Inherits from UIElement to leverage standardized animation framework and styling.
     """
-
-# Standard library imports
-import logging
-import math
-import time
-
-# Third-party library imports
-
-# Local application imports
-from typing import Tuple, Optional, Callable, TypeVar, cast
-import pygame
 
     def __init__(
         self,

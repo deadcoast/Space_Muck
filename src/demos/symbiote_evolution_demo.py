@@ -11,10 +11,11 @@ import random
 import sys
 import time
 
-# Third-party library imports
-
 # Local application imports
 from pprint import pprint
+
+# Third-party library imports
+
 
 # Add the parent directory to the path to make imports work
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

@@ -5,13 +5,13 @@ Crew Management System: Manages the player's crew members and their assignments.
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Use absolute imports for consistency
-from src.entities.crew_member import CrewMember, STATION_TYPES
+from src.entities.crew_member import STATION_TYPES, CrewMember
+
+# Third-party library imports
 
 
 class CrewManagementSystem:

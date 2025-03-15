@@ -9,14 +9,16 @@ but gain additional capabilities when registered.
 
 # Standard library imports
 import logging
-
-# Third-party library imports
+import weakref
 
 # Local application imports
 from enum import Enum, auto
-from typing import Dict, List, Set, Optional, TypeVar, Type
+from typing import Dict, List, Optional, Set, Type, TypeVar
+
 from src.ui.ui_base.ascii_base import UIElement
-import weakref
+
+# Third-party library imports
+
 
 # Type variable for generic component types
 T = TypeVar("T", bound=UIElement)

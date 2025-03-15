@@ -9,24 +9,26 @@ import random
 import sys
 import time
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from config import COLOR_BG
 from ui.ascii_ui import (
+    ASCIIBox,
+    ASCIIButton,
+    ASCIIChainVisualizer,
+    ASCIIEfficiencyMonitor,
     ASCIIGameScreen,
+    ASCIIMetricsPanel,
     ASCIIMinimapPanel,
     ASCIIPanel,
-    ASCIIBox,
     ASCIIProgressBar,
-    ASCIIButton,
-    ASCIIMetricsPanel,
-    ASCIIChainVisualizer,
     ASCIIRecipePanel,
-    ASCIIEfficiencyMonitor,
     UIStyle,
 )
-import pygame
+
+# Third-party library imports
+
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -243,6 +245,7 @@ class ASCIIUIDemo:
         self.demo_box.start_animation()
 
     def update(self):
+        """Update the demo state."""
         if self.paused:
             return
 
@@ -250,15 +253,34 @@ class ASCIIUIDemo:
         dt = current_time - self.animation_time
         self.animation_time = current_time
 
-        # Update pulse effect for selected items
-        self.pulse_state = (self.pulse_state + dt * 3) % (2 * 3.14159)
-        pulse_alpha = int(128 + 127 * math.sin(self.pulse_state))
+        # Calculate pulse effect for animations
+        pulse_alpha = self._update_pulse_effect(dt)
 
-        # Update progress bar with pulse effect
+        # Update UI components
+        self._update_progress_bar()
+        self._update_metrics(dt)
+
+        # Update converters and production chain
+        self._update_converters(dt, pulse_alpha)
+        self._update_flow_rates(dt)
+        self._update_efficiency_monitor()
+
+        # Update selected recipe highlighting
+        if self.selected_recipe_idx is not None:
+            self.recipe_panel.highlight_alpha = pulse_alpha
+
+    def _update_pulse_effect(self, dt):
+        """Update the pulse animation effect and return the current alpha value."""
+        self.pulse_state = (self.pulse_state + dt * 3) % (2 * math.pi)
+        return int(128 + 127 * math.sin(self.pulse_state))
+
+    def _update_progress_bar(self):
+        """Update the demo progress bar."""
         progress = (pygame.time.get_ticks() % 3000) / 3000
         self.demo_progress.set_progress(progress)
 
-        # Update metrics with realistic fluctuations
+    def _update_metrics(self, dt):
+        """Update the metrics panel with realistic fluctuations."""
         self.metrics.update(
             {
                 "throughput": 45.5 + random.uniform(-2, 2),
@@ -279,60 +301,71 @@ class ASCIIUIDemo:
         )
         self.metrics_panel.update_metrics(self.metrics)
 
-        # Update chain data with dynamic flow rates and efficiencies
+    def _update_converters(self, dt, pulse_alpha):
+        """Update all converters in the production chain."""
         for i, conv in enumerate(self.chain_data["converters"]):
-            # Apply visual effects and handle active converters
+            # Apply visual effects for selected converter
             conv["highlight_alpha"] = (
                 pulse_alpha if i == self.selected_converter_idx else 0
             )
 
+            # Only process active converters
             if conv["status"] == "active":
-                # Update active converter stats
-                conv["efficiency"] = min(
-                    1.0, max(0.0, conv["efficiency"] + random.uniform(-0.01, 0.01))
-                )
-                conv["uptime"] += dt
+                self._update_active_converter(i, conv, dt)
 
-                # Process queue and update flow rates
-                if conv["queue_size"] > 0 and random.random() < 0.1:
-                    conv["queue_size"] -= 1
-                    # Boost connected flow rates
-                    for connection in self.chain_data["connections"]:
-                        if connection[0] == i:
-                            self.chain_data["flow_rates"][connection] *= 1.2
+    def _update_active_converter(self, converter_index, conv, dt):
+        """Update an active converter's stats and process its queue."""
+        # Update efficiency with small random fluctuations
+        conv["efficiency"] = min(
+            1.0, max(0.0, conv["efficiency"] + random.uniform(-0.01, 0.01))
+        )
+        conv["uptime"] += dt
 
-                # Check recipe completion
-                if (
-                    "start_time" in conv
-                    and time.time() - conv["start_time"] > conv["recipe_duration"]
-                ):
-                    conv["status"] = "idle"
-                    conv["current_recipe"] = None
-                    self.metrics["utilization"] = max(
-                        0.0, self.metrics["utilization"] - 0.1
-                    )
+        # Process items in the queue
+        self._process_converter_queue(converter_index, conv)
 
-        # Update flow rates with realistic fluctuations
+        # Check if current recipe is complete
+        self._check_recipe_completion(conv)
+
+    def _process_converter_queue(self, converter_index, conv):
+        """Process items in a converter's queue and update flow rates."""
+        if conv["queue_size"] > 0 and random.random() < 0.1:
+            conv["queue_size"] -= 1
+            # Boost connected flow rates
+            for connection in self.chain_data["connections"]:
+                if connection[0] == converter_index:
+                    self.chain_data["flow_rates"][connection] *= 1.2
+
+    def _check_recipe_completion(self, conv):
+        """Check if a recipe has completed and update converter status."""
+        if (
+            "start_time" in conv
+            and time.time() - conv["start_time"] > conv["recipe_duration"]
+        ):
+            conv["status"] = "idle"
+            conv["current_recipe"] = None
+            self.metrics["utilization"] = max(0.0, self.metrics["utilization"] - 0.1)
+
+    def _update_flow_rates(self, dt):
+        """Update flow rates between converters with realistic fluctuations."""
         for connection in self.chain_data["connections"]:
             if current_rate := self.chain_data["flow_rates"].get(connection, 0):
-                # Smoother rate changes
+                # Calculate target rate with small random fluctuation
                 target_rate = current_rate * (1 + random.uniform(-0.05, 0.05))
+                # Smooth transition to target rate
                 self.chain_data["flow_rates"][connection] = current_rate + (
                     target_rate - current_rate
                 ) * min(1.0, dt * 2)
 
-        # Update efficiency monitor with trend analysis
+    def _update_efficiency_monitor(self):
+        """Update the efficiency monitor with average efficiency of active converters."""
         if active_converters := [
             conv for conv in self.chain_data["converters"] if conv["status"] == "active"
         ]:
-            self.efficiency_monitor.update_efficiency(
-                sum(conv["efficiency"] for conv in active_converters)
-                / len(active_converters)
-            )
-
-        # Update recipe panel animations
-        if self.selected_recipe_idx is not None:
-            self.recipe_panel.highlight_alpha = pulse_alpha
+            avg_efficiency = sum(
+                conv["efficiency"] for conv in active_converters
+            ) / len(active_converters)
+            self.efficiency_monitor.update_efficiency(avg_efficiency)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -347,44 +380,74 @@ class ASCIIUIDemo:
                 self.recipe_panel.handle_event(event)
 
     def handle_keyboard_event(self, event):
-        if event.key == pygame.K_h:
+        """Handle keyboard events for the demo."""
+        # Handle global controls that work even when paused
+        if self._handle_global_controls(event.key):
+            return
+
+        # Handle gameplay controls that only work when not paused
+        if not self.paused:
+            self._handle_gameplay_controls(event.key)
+
+    def _handle_global_controls(self, key):
+        """Handle global controls that work regardless of pause state.
+        Returns True if a control was handled."""
+        if key == pygame.K_h:
             self.show_help = not self.show_help
-        elif event.key == pygame.K_p:
+            return True
+        elif key == pygame.K_p:
             self.paused = not self.paused
-        elif event.key == pygame.K_c:
+            return True
+        elif key == pygame.K_c:
             self.high_contrast = not self.high_contrast
-        elif event.key == pygame.K_q:
+            return True
+        elif key == pygame.K_q:
             self.running = False
-        elif event.key == pygame.K_r:
+            return True
+        elif key == pygame.K_r:
             self.setup_demo_data()  # Reset demo data
+            return True
+        return False
 
-        # Handle recipe selection
-        elif event.key in (pygame.K_UP, pygame.K_DOWN) and not self.paused:
-            direction = -1 if event.key == pygame.K_UP else 1
-            if self.selected_recipe_idx is None:
-                self.selected_recipe_idx = 0
-            else:
-                self.selected_recipe_idx = (self.selected_recipe_idx + direction) % len(
-                    self.recipes
-                )
+    def _handle_gameplay_controls(self, key):
+        """Handle gameplay controls that only work when not paused."""
+        # Handle recipe selection (up/down keys)
+        if key in (pygame.K_UP, pygame.K_DOWN):
+            self._handle_recipe_selection(key)
+        # Handle converter selection (left/right keys)
+        elif key in (pygame.K_LEFT, pygame.K_RIGHT):
+            self._handle_converter_selection(key)
+        # Start selected recipe (space key)
+        elif key == pygame.K_SPACE:
+            self._start_selected_recipe()
 
-        # Handle converter selection
-        elif event.key in (pygame.K_LEFT, pygame.K_RIGHT) and not self.paused:
-            direction = -1 if event.key == pygame.K_LEFT else 1
-            if self.selected_converter_idx is None:
-                self.selected_converter_idx = 0
-            else:
-                self.selected_converter_idx = (
-                    self.selected_converter_idx + direction
-                ) % len(self.chain_data["converters"])
+    def _handle_recipe_selection(self, key):
+        """Handle recipe selection with up/down keys."""
+        direction = -1 if key == pygame.K_UP else 1
+        if self.selected_recipe_idx is None:
+            self.selected_recipe_idx = 0
+        else:
+            self.selected_recipe_idx = (self.selected_recipe_idx + direction) % len(
+                self.recipes
+            )
 
-        # Start selected recipe
-        elif event.key == pygame.K_SPACE and not self.paused:
-            if (
-                self.selected_recipe_idx is not None
-                and self.selected_converter_idx is not None
-            ):
-                self.start_recipe(self.selected_recipe_idx, self.selected_converter_idx)
+    def _handle_converter_selection(self, key):
+        """Handle converter selection with left/right keys."""
+        direction = -1 if key == pygame.K_LEFT else 1
+        if self.selected_converter_idx is None:
+            self.selected_converter_idx = 0
+        else:
+            self.selected_converter_idx = (
+                self.selected_converter_idx + direction
+            ) % len(self.chain_data["converters"])
+
+    def _start_selected_recipe(self):
+        """Start the selected recipe if both recipe and converter are selected."""
+        if (
+            self.selected_recipe_idx is not None
+            and self.selected_converter_idx is not None
+        ):
+            self.start_recipe(self.selected_recipe_idx, self.selected_converter_idx)
 
     def start_recipe(self, recipe_idx, converter_idx):
         recipe = self.recipes[recipe_idx]
@@ -442,7 +505,7 @@ class ASCIIUIDemo:
         lines = [
             f"Status: {conv['status'].title()}",
             f"Efficiency: {conv['efficiency']:.1%}",
-            f"Uptime: {conv['uptime']/3600:.1f}h",
+            f"Uptime: {conv['uptime'] / 3600:.1f}h",
             f"Queue: {conv['queue_size']} items",
         ]
         if conv.get("current_recipe"):

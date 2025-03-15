@@ -8,33 +8,27 @@ import os
 import sys
 
 # Third-party library imports
-import matplotlib
 import numpy as np
 
 # Local application imports
 from generators.asteroid_field import AsteroidField
 from generators.base_generator import BaseGenerator
 from generators.procedural_generator import (
-from typing import List, Optional
-from utils.noise_generator import (
-import unittest
-
-matplotlib.use("Agg")  # Use non-interactive backend for testing
-# .pyplot as plt  # Commented out - not used in this file
-# import random  # Commented out - not used in this file
+    List,
+    Optional,
+    ProceduralGenerator,
+    SimplexNoiseGenerator,
+)
+from generators.procedural_generator import (
+    create_field_with_multiple_algorithms as original_create_field,  # Use non-interactive backend for testing
+)
+from generators.procedural_generator import (
+    unittest,
+)
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Import the classes to test
-
-    ProceduralGenerator,
-    # Imported but redefined below for testing purposes
-    create_field_with_multiple_algorithms as original_create_field,
-)
-
-    SimplexNoiseGenerator,
-)  # NoiseGenerator is not used directly
 
 class TestNoiseGenerator(SimplexNoiseGenerator):
     """
@@ -110,6 +104,7 @@ class TestNoiseGenerator(SimplexNoiseGenerator):
 
         return 0.9 + (base_noise * 0.1)
 
+
 class TestProceduralGenerator(unittest.TestCase):
     """Test cases for the ProceduralGenerator class."""
 
@@ -172,15 +167,16 @@ class TestProceduralGenerator(unittest.TestCase):
         self.assertEqual(asteroid_grid.shape, (60, 50))  # (height, width)
 
         # Verify that some asteroids were generated
-        self.assertTrue(np.sum(asteroid_grid > 0) > 0, "No asteroids were generated")
+        self.assertGreater(np.sum(asteroid_grid > 0), 0, "No asteroids were generated")
 
         # Test with different parameters
         asteroid_grid = self.generator_small.generate_asteroid_field(
             density=0.5, noise_scale=0.1, threshold=0.4
         )
         self.assertEqual(asteroid_grid.shape, (60, 50))
-        self.assertTrue(
-            np.sum(asteroid_grid > 0) > 0,
+        self.assertGreater(
+            np.sum(asteroid_grid > 0),
+            0,
             "No asteroids were generated with different parameters",
         )
 
@@ -242,8 +238,9 @@ class TestProceduralGenerator(unittest.TestCase):
         self.assertEqual(asteroid_grid.shape, (60, 50))
 
         # Verify that some asteroids were generated
-        self.assertTrue(
-            np.sum(asteroid_grid > 0) > 0,
+        self.assertGreater(
+            np.sum(asteroid_grid > 0),
+            0,
             "No asteroids were generated in multi-layer field",
         )
 
@@ -252,8 +249,9 @@ class TestProceduralGenerator(unittest.TestCase):
             density=0.5, noise_scale=0.2, threshold=0.3, octaves=[3, 5, 8]
         )
         self.assertEqual(asteroid_grid.shape, (60, 50))
-        self.assertTrue(
-            np.sum(asteroid_grid > 0) > 0,
+        self.assertGreater(
+            np.sum(asteroid_grid > 0),
+            0,
             "No asteroids were generated in multi-layer field with custom octaves",
         )
 
@@ -322,9 +320,9 @@ class TestProceduralGenerator(unittest.TestCase):
             )
 
             # Check that we have asteroids and rare minerals
-            self.assertTrue(np.sum(field.grid > 0) > 0, "No asteroids were generated")
-            self.assertTrue(
-                np.sum(field.rare_grid > 0) > 0, "No rare minerals were generated"
+            self.assertGreater(np.sum(field.grid > 0), 0, "No asteroids were generated")
+            self.assertGreater(
+                np.sum(field.rare_grid > 0), 0, "No rare minerals were generated"
             )
 
             # Test with different parameters
@@ -345,6 +343,7 @@ class TestProceduralGenerator(unittest.TestCase):
         finally:
             # Restore original method
             ProceduralGenerator.__init__ = original_init
+
 
 # This is a test implementation for local testing
 # Adding a more descriptive comment to explain why we have a local implementation
@@ -376,7 +375,6 @@ def create_field_with_multiple_algorithms(
     """
     # Create the asteroid field
     # Import here to avoid circular imports
-    
 
     # Create the field
     field = AsteroidField(width=width, height=height)
@@ -406,6 +404,7 @@ def create_field_with_multiple_algorithms(
     )
 
     return field
+
 
 class TestProceduralGeneratorVerification(unittest.TestCase):
     """Verification tests for the ProceduralGenerator class that were previously in verify_procedural_generator.py."""
@@ -576,7 +575,7 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
         )
 
         # Test that rare minerals only appear where there are asteroids
-        rare_points = np.where(rare_grid_high > 0)
+        rare_points = np.nonzero(rare_grid_high > 0)
         for y, x in zip(rare_points[0], rare_points[1]):
             self.assertGreater(
                 asteroid_grid[y, x], 0, "Rare minerals should only appear on asteroids"
@@ -700,9 +699,12 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
             # With TestNoiseGenerator, seed differences still create variations
             # but they're subtle to maintain test stability
             # We need to check if at least some values are different
-            self.assertTrue(
-                np.any(field1.grid != field2.grid),
-                "Fields with different seeds should have some differences",
+            # Check that fields with different seeds have different grid values
+            differences = np.sum(field1.grid != field2.grid)
+            self.assertGreater(
+                differences,
+                0,
+                f"Fields with different seeds should have differences (found {differences} different cells)",
             )
         finally:
             # Restore original method
@@ -712,7 +714,7 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
         """Test that the generator can create visualizations."""
         # Skip this test if matplotlib is not available
         try:
-            .pyplot as plt
+            import matplotlib.pyplot as plt
         except ImportError:
             self.skipTest("Matplotlib is not available")
 
@@ -745,8 +747,15 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             plt.savefig(tmp.name)
             # Check that the file exists and has content
-            self.assertTrue(os.path.exists(tmp.name))
-            self.assertGreater(os.path.getsize(tmp.name), 0)
+            self.assertTrue(
+                os.path.exists(tmp.name), f"Generated file {tmp.name} should exist"
+            )
+            file_size = os.path.getsize(tmp.name)
+            self.assertGreater(
+                file_size,
+                0,
+                f"Generated file should have content (size: {file_size} bytes)",
+            )
 
         # Close the figure to avoid warnings
         plt.close("all")
@@ -774,6 +783,7 @@ class TestProceduralGeneratorVerification(unittest.TestCase):
             unique_values_2tiers,
             "More tiers should result in more unique mineral values",
         )
+
 
 if __name__ == "__main__":
     unittest.main()

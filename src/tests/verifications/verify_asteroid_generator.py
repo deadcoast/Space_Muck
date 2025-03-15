@@ -62,7 +62,8 @@ class BaseGenerator:
 
         # Set the random seed
         random.seed(self.seed)
-        np.random.seed(self.seed)
+        # Use modern numpy.random.Generator API for deterministic testing
+        self.rng = np.random.default_rng(self.seed)
 
         # Initialize caches
         self._cache = {}
@@ -82,8 +83,8 @@ class BaseGenerator:
         if cache_key in self._cache:
             return self._cache[cache_key]
 
-        # Generate noise using numpy's random functions
-        noise = np.random.rand(self.height, self.width)
+        # Generate noise using the modern numpy random Generator API
+        noise = self.rng.random((self.height, self.width))
 
         # Apply smoothing if scipy is available
         if SCIPY_AVAILABLE:
@@ -261,7 +262,7 @@ class BaseGenerator:
             return grid
 
         # Use scipy's label function to identify clusters
-        labeled_array, num_features = ndimage.label(grid)
+        labeled_array, _ = ndimage.label(grid)
 
         # Count the size of each cluster
         cluster_sizes = np.bincount(labeled_array.ravel())
@@ -289,7 +290,7 @@ class AsteroidGenerator(BaseGenerator):
         super().__init__(seed=seed, width=width, height=height)
         self.entity_type = "asteroid"
 
-    def generate_field(self, pattern_weights=None):
+    def generate_field(self):
         """Generate an asteroid field."""
         # Create a noise layer
         grid = self.generate_noise_layer("medium", scale=0.1)
@@ -307,17 +308,13 @@ class AsteroidGenerator(BaseGenerator):
 
     def generate_values(self, grid):
         """Generate values for asteroids."""
-        value_grid = np.zeros_like(grid)
         value_noise = self.generate_noise_layer("fine", scale=0.2)
-        value_grid = np.where(grid > 0, value_noise * 10, 0)
-        return value_grid
+        return np.where(grid > 0, value_noise * 10, 0)
 
     def generate_rare_resources(self, grid):
         """Generate rare resources."""
-        rare_grid = np.zeros_like(grid)
         rare_noise = self.generate_noise_layer("very_fine", scale=0.3)
-        rare_grid = np.where(grid > 0, rare_noise > 0.8, 0).astype(float)
-        return rare_grid
+        return np.where(grid > 0, rare_noise > 0.8, 0).astype(float)
 
     def _spiral_pattern(self):
         """Generate a spiral pattern."""
@@ -353,7 +350,7 @@ try:
 except ImportError:
     # Create a simple visualizer if the module is not available
     class GeneratorVisualizer:
-        def visualize_multiple_grids(self, grids, layout, figsize, show=True):
+        def visualize_multiple_grids(self, grids, layout, figsize):
             fig, axes = plt.subplots(layout[0], layout[1], figsize=figsize)
             axes = axes.flatten()
 
@@ -401,9 +398,9 @@ def test_asteroid_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert (
-        generator.entity_type == "asteroid"
-    ), f"Expected entity_type 'asteroid', got {generator.entity_type}"
+    assert generator.entity_type == "asteroid", (
+        f"Expected entity_type 'asteroid', got {generator.entity_type}"
+    )
 
     # Test noise generation with performance measurement
     print("Testing noise generation performance...")
@@ -467,12 +464,9 @@ def test_pattern_generation():
     # Create a generator with a fixed seed for reproducibility
     generator = AsteroidGenerator(seed=123, width=80, height=80)
 
-    # Test with different pattern weights and measure performance
-    pattern_weights = [0.3, 0.2, 0.4, 0.1]  # Weights for each pattern
-
-    # Measure performance of pattern-based field generation
+    # Measure performance of field generation
     start_time = time.time()
-    asteroid_grid, metadata = generator.generate_field(pattern_weights=pattern_weights)
+    asteroid_grid = generator.generate_field()
     pattern_time = time.time() - start_time
     print(f"Pattern-based field generation time: {pattern_time:.4f} seconds")
 
@@ -480,9 +474,9 @@ def test_pattern_generation():
         80,
         80,
     ), f"Expected shape (80, 80), got {asteroid_grid.shape}"
-    assert (
-        np.sum(asteroid_grid > 0) > 0
-    ), "No asteroids were generated with pattern weights"
+    assert np.sum(asteroid_grid > 0) > 0, (
+        "No asteroids were generated with pattern weights"
+    )
 
     # Test individual pattern generation performance
     print("Testing individual pattern generation performance...")
@@ -506,15 +500,15 @@ def test_pattern_generation():
         f"Cached spiral pattern time: {spiral_time2:.4f} seconds (Speed improvement: {spiral_time / spiral_time2:.2f}x if > 1)"
     )
 
-    assert np.array_equal(
-        spiral, spiral2
-    ), "Cached spiral pattern does not match original"
+    assert np.array_equal(spiral, spiral2), (
+        "Cached spiral pattern does not match original"
+    )
 
     print("Pattern generation tests passed!")
     return asteroid_grid, spiral, rings
 
 
-def visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_data):
+def visualize_results(asteroid_grid, value_grid, rare_grid, pattern_data):
     """Visualize the results of the tests using the new visualization module."""
     if not MATPLOTLIB_AVAILABLE:
         print("\nSkipping visualization as matplotlib is not available.")
@@ -549,6 +543,118 @@ def visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_d
     print("Visualization saved as 'asteroid_generator_test.png'")
 
 
+def _check_file_exists(file_path, file_name):
+    """Check if a file exists and print the result.
+
+    Args:
+        file_path: Path to the file
+        file_name: Name of the file for display purposes
+
+    Returns:
+        bool: True if file exists, False otherwise
+    """
+    import os
+
+    if not os.path.isfile(file_path):
+        print(f"Error: {file_name} file does not exist at {file_path}")
+        return False
+    else:
+        print(f"✓ {file_name} file exists at {file_path}")
+        return True
+
+
+def _check_file_content(file_path):
+    """Check the content of the asteroid generator file for proper imports and inheritance.
+
+    Args:
+        file_path: Path to the asteroid generator file
+
+    Returns:
+        bool: True if content checks pass, False otherwise
+    """
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        success = True
+
+        # Check imports
+        if (
+            "from generators.base_generator import BaseGenerator" in content
+            or "from entities.base_generator import BaseGenerator" in content
+        ):
+            print("✓ AsteroidGenerator imports BaseGenerator")
+        else:
+            print("✗ AsteroidGenerator does not import BaseGenerator correctly")
+            success = False
+
+        # Check inheritance
+        if "class AsteroidGenerator(BaseGenerator):" in content:
+            print("✓ AsteroidGenerator inherits from BaseGenerator")
+        else:
+            print("✗ AsteroidGenerator does not inherit from BaseGenerator")
+            success = False
+
+        return success
+    except Exception as e:
+        print(f"Error checking file contents: {e}")
+        return False
+
+
+def _check_programmatic_inheritance(parent_dir):
+    """Check inheritance and required methods programmatically.
+
+    Args:
+        parent_dir: Parent directory path for imports
+
+    Returns:
+        bool: True if inheritance checks pass, False otherwise
+    """
+    try:
+        sys.path.append(parent_dir)
+        from generators.asteroid_field import AsteroidField
+        from generators.base_generator import BaseGenerator
+
+        success = True
+
+        # Check inheritance
+        if issubclass(AsteroidField, BaseGenerator):
+            print("✓ AsteroidField is a subclass of BaseGenerator")
+        else:
+            print("✗ AsteroidField is not a subclass of BaseGenerator")
+            success = False
+
+        # Check for required methods
+        success = _check_required_methods(AsteroidField) and success
+
+        return success
+    except ImportError as e:
+        print(f"Error importing modules: {e}")
+        return False
+
+
+def _check_required_methods(class_obj):
+    """Check if a class has the required methods.
+
+    Args:
+        class_obj: Class object to check
+
+    Returns:
+        bool: True if all required methods exist, False otherwise
+    """
+    required_methods = ["generate", "apply_cellular_automaton"]
+    success = True
+
+    for method in required_methods:
+        if hasattr(class_obj, method) and callable(getattr(class_obj, method)):
+            print(f"✓ AsteroidField has required method: {method}")
+        else:
+            print(f"✗ AsteroidField is missing required method: {method}")
+            success = False
+
+    return success
+
+
 def verify_file_structure():
     """Verify the file structure and inheritance of AsteroidGenerator."""
     import os
@@ -558,7 +664,7 @@ def verify_file_structure():
     # Get the parent directory to access the src folder
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
-    # Check if the files exist
+    # Define file paths
     base_generator_path = os.path.join(
         parent_dir, "src", "entities", "base_generator.py"
     )
@@ -566,74 +672,19 @@ def verify_file_structure():
         parent_dir, "src", "generators", "asteroid_generator.py"
     )
 
-    success = True
+    # Check if files exist
+    base_exists = _check_file_exists(base_generator_path, "BaseGenerator")
+    asteroid_exists = _check_file_exists(asteroid_generator_path, "AsteroidGenerator")
 
-    if not os.path.isfile(base_generator_path):
-        print(f"Error: BaseGenerator file does not exist at {base_generator_path}")
-        success = False
-    else:
-        print(f"✓ BaseGenerator file exists at {base_generator_path}")
+    success = base_exists and asteroid_exists
 
-    if not os.path.isfile(asteroid_generator_path):
-        print(
-            f"Error: AsteroidGenerator file does not exist at {asteroid_generator_path}"
-        )
-        success = False
-    else:
-        print(f"✓ AsteroidGenerator file exists at {asteroid_generator_path}")
-
-    # Only proceed with inheritance check if both files exist
+    # Only proceed with further checks if both files exist
     if success:
-        # Check file contents to verify inheritance
-        try:
-            with open(asteroid_generator_path, "r") as f:
-                content = f.read()
+        # Check file contents and inheritance
+        content_check = _check_file_content(asteroid_generator_path)
+        inheritance_check = _check_programmatic_inheritance(parent_dir)
 
-            if (
-                "from generators.base_generator import BaseGenerator" in content
-                or "from entities.base_generator import BaseGenerator" in content
-            ):
-                print("✓ AsteroidGenerator imports BaseGenerator")
-            else:
-                print("✗ AsteroidGenerator does not import BaseGenerator correctly")
-                success = False
-
-            if "class AsteroidGenerator(BaseGenerator):" in content:
-                print("✓ AsteroidGenerator inherits from BaseGenerator")
-            else:
-                print("✗ AsteroidGenerator does not inherit from BaseGenerator")
-                success = False
-
-            # Try to import the modules to check inheritance programmatically
-            try:
-                sys.path.append(parent_dir)
-                from generators.asteroid_field import AsteroidField
-                from generators.base_generator import BaseGenerator
-
-                if issubclass(AsteroidField, BaseGenerator):
-                    print("✓ AsteroidField is a subclass of BaseGenerator")
-                else:
-                    print("✗ AsteroidField is not a subclass of BaseGenerator")
-                    success = False
-
-                # Check for required methods
-                required_methods = ["generate", "apply_cellular_automaton"]
-                for method in required_methods:
-                    if hasattr(AsteroidField, method) and callable(
-                        getattr(AsteroidField, method)
-                    ):
-                        print(f"✓ AsteroidField has required method: {method}")
-                    else:
-                        print(f"✗ AsteroidField is missing required method: {method}")
-                        success = False
-
-            except ImportError as e:
-                print(f"Error importing modules: {e}")
-                success = False
-
-        except Exception as e:
-            print(f"Error checking file contents: {e}")
-            success = False
+        success = content_check and inheritance_check
 
     print(f"File structure verification {'successful' if success else 'failed'}")
     return success
@@ -660,7 +711,7 @@ if __name__ == "__main__":
     pattern_data = test_pattern_generation()
 
     # Visualize the results if matplotlib is available
-    visualize_results(generator, asteroid_grid, value_grid, rare_grid, pattern_data)
+    visualize_results(asteroid_grid, value_grid, rare_grid, pattern_data)
 
     print("\n=== All tests completed successfully! ===")
     print(

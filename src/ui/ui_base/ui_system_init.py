@@ -10,11 +10,13 @@ optional integration.
 # Standard library imports
 import logging
 
+# Local application imports
+from typing import Any, Dict
+
+from src.ui.ui_base.component_event_bridge import connect_systems
+
 # Third-party library imports
 
-# Local application imports
-from typing import Dict, Any
-from src.ui.ui_base.component_event_bridge import connect_systems
 
 # Track initialization status
 _initialization_status = {"initialized": False, "error": None, "timestamp": None}

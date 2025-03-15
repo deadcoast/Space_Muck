@@ -17,22 +17,22 @@ Options:
 Author: Space Muck Team
 """
 
+import argparse
+import glob
 import os
 import sys
-import glob
-import argparse
 from pathlib import Path
 
 try:
-    from rich.tree import Tree
     from rich.console import Console
+    from rich.tree import Tree
 except ImportError:
     print("This script requires the Rich library. Installing it now...")
     import subprocess
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
-    from rich.tree import Tree
     from rich.console import Console
+    from rich.tree import Tree
 
 # Default patterns to ignore
 DEFAULT_IGNORE = [

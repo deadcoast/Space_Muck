@@ -10,19 +10,20 @@ This test suite covers:
 
 # Standard library imports
 
-# Third-party library imports
-import pytest
-from typing import Any, Dict
-
 # Local application imports
 from pathlib import Path
+from typing import Any, Dict
+
+# Third-party library imports
+import pytest
+
 from python_fixer.core.signatures import (
-    SignatureComponent,
-    TypeInfo,
     DEPENDENCY_STATUS,
-    ASTVisitor,
-    SignatureVisitor,
+    # ASTVisitor removed - not used in tests
     CodeSignature,
+    SignatureComponent,
+    SignatureVisitor,
+    TypeInfo,
 )
 
 
@@ -162,9 +163,9 @@ def test_signature_visitor_class_parsing(temp_py_file, monkeypatch):
     # Verify class context is properly managed
     for sig in test_class_methods:
         expected_name = "test_code.TestClass.py"
-        assert (
-            sig.module_path.name == expected_name
-        ), f"Class context missing for {sig.name}. Got {sig.module_path.name}, expected {expected_name}"
+        assert sig.module_path.name == expected_name, (
+            f"Class context missing for {sig.name}. Got {sig.module_path.name}, expected {expected_name}"
+        )
 
 
 @pytest.mark.unit
@@ -282,9 +283,11 @@ def test_type_inference_with_torch(
     # Mock console methods
     class MockConsole:
         def debug(self, msg):
+            # Empty implementation - debug messages are intentionally suppressed in tests
             pass
 
         def warning(self, msg):
+            # Empty implementation - warning messages are intentionally suppressed in tests
             pass
 
     monkeypatch.setattr("python_fixer.core.signatures.console", MockConsole())
@@ -431,9 +434,9 @@ def another_valid(x: int) -> str:
     # Verify class context is tracked
     method_sig = next(sig for sig in visitor.signatures if sig.name == "method")
     expected_name = "partial_parse.TestClass.py"
-    assert (
-        method_sig.module_path.name == expected_name
-    ), f"Class context missing. Got {method_sig.module_path.name}, expected {expected_name}"
+    assert method_sig.module_path.name == expected_name, (
+        f"Class context missing. Got {method_sig.module_path.name}, expected {expected_name}"
+    )
 
     # Check that complex type hints were parsed correctly
     valid_func = next(sig for sig in visitor.signatures if sig.name == "valid_func")
@@ -586,6 +589,7 @@ def test_type_inference_errors(tmp_path, mock_type_inference_model, monkeypatch)
             warnings.append(msg)
 
         def debug(self, msg):
+            # Empty implementation - debug messages are intentionally suppressed while warnings are collected
             pass
 
     monkeypatch.setattr("python_fixer.core.signatures.console", MockConsole())
@@ -607,7 +611,8 @@ def func_with_errors(a, b, c):
     sig = visitor.signatures[0]
     for comp in sig.components:
         assert comp.type_info.inferred_type is None
-        assert comp.type_info.confidence == 0.0
+        # Use assertAlmostEqual approach for floating point comparison
+        assert abs(comp.type_info.confidence) < 1e-10
 
     # Should have logged warnings
     assert warnings

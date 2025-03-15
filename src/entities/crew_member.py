@@ -7,10 +7,11 @@ import logging
 import random
 import uuid
 
+# Local application imports
+from typing import Any, Dict, List, Optional
+
 # Third-party library imports
 
-# Local application imports
-from typing import Dict, List, Optional, Any
 
 # Skill level constants
 SKILL_LEVELS = {

@@ -1,14 +1,16 @@
 # Standard library imports
-from datetime import datetime
 import json
+from datetime import datetime
+from typing import Any, Dict
 
-# Third-party library imports
+import variant_loggers
 
 # Local application imports
 from rich.console import Console
-from typing import Any, Dict
 from variant_loggers import LogRecord
-import variant_loggers
+
+# Third-party library imports
+
 
 console = Console()
 

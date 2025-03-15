@@ -10,6 +10,7 @@ and mutations based on environmental factors.
 import logging
 import math
 import random
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
@@ -17,24 +18,23 @@ import numpy as np
 # Local application imports
 from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
 from generators.base_generator import BaseGenerator
-from typing import Any, Dict, List, Optional, Tuple
 from utils.cellular_automaton_utils import (
-    generate_cellular_automaton_rules,
     apply_cellular_automaton,
     apply_cellular_automaton_optimized,
     apply_environmental_effects,
+    generate_cellular_automaton_rules,
 )
 from utils.dependency_injection import inject
 from utils.logging_setup import (
-    log_performance_start,
-    log_performance_end,
     log_exception,
+    log_performance_end,
+    log_performance_start,
 )
 from utils.noise_generator import NoiseGenerator
 from utils.pattern_generator import (
+    apply_weighted_patterns,
     generate_gradient_pattern,
     generate_void_pattern,
-    apply_weighted_patterns,
 )
 from utils.value_generator import (
     add_value_clusters,

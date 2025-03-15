@@ -23,14 +23,16 @@ class QualityAnalyzer:
 
 # Standard library imports
 import logging
+from typing import Any, Dict, List
 
-# Third-party library imports
+import networkx as nx
 
 # Local application imports
 from radon.complexity import cc_visit
 from radon.metrics import h_visit
-from typing import Any, Dict, List
-import networkx as nx
+
+# Third-party library imports
+
 
     def __init__(self):
         """Initialize the quality analyzer."""

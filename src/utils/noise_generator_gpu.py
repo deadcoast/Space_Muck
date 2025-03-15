@@ -15,20 +15,20 @@ import random
 import numpy as np
 
 # Local application imports
-from .gpu_utils import (
-from .noise_generator import NoiseGenerator, get_noise_generator
-from typing import List, Optional, Tuple
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local imports
-
-    is_gpu_available,
-    get_available_backends,
-    to_cpu,
+from .gpu_utils import (  # Standard library imports; Third-party library imports; Local imports
+    List,
+    NoiseGenerator,
+    Optional,
+    Tuple,
+    .noise_generator,
     apply_noise_generation_gpu,
+    from,
+    get_available_backends,
+    get_noise_generator,
+    import,
+    is_gpu_available,
+    to_cpu,
+    typing,
 )
 
 # Optional dependencies

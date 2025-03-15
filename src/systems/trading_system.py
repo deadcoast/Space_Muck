@@ -9,12 +9,13 @@ market events, and integration with the player's inventory and economy.
 import logging
 import math
 import random
-
-# Third-party library imports
+from typing import Any, Dict, List, Optional, Tuple
 
 # Local application imports
 from config import GAME_MAP_SIZE
-from typing import Dict, List, Tuple, Any, Optional
+
+# Third-party library imports
+
 
 # Standard library imports
 
@@ -256,7 +257,6 @@ class TradingSystem:
             station: Trading station data dictionary
         """
         location_factor = station.get("location_factor", 1.0)
-        faction_id = station.get("faction_id")
 
         # Update each commodity price for this station
         for commodity_id in self.commodities:
@@ -839,41 +839,102 @@ class TradingSystem:
 
         quest_type = quest["type"]
 
+        # Dispatch to appropriate handler based on quest type
         if quest_type in ["trading_delivery", "trading_procurement"]:
             return self._process_standard_delivery_quest_reward(player, quest)
         elif quest_type == "trading_market_manipulation":
-            # Check if player has bought low and sold high
-            if not hasattr(player, "trading_history"):
-                return False
-
-            # Look for buy and sell transactions of the required commodity
-            buy_transactions = [
-                t
-                for t in player.trading_history
-                if t["type"] == "buy" and t["commodity_id"] == quest["commodity_id"]
-            ]
-            sell_transactions = [
-                t
-                for t in player.trading_history
-                if t["type"] == "sell" and t["commodity_id"] == quest["commodity_id"]
-            ]
-
-            # Check if player bought below threshold and sold with required profit margin
-            for buy in buy_transactions:
-                if buy["unit_price"] <= quest["buy_price_threshold"]:
-                    for sell in sell_transactions:
-                        if sell["transaction_time"] > buy["transaction_time"]:
-                            profit_margin = (
-                                sell["unit_price"] - buy["unit_price"]
-                            ) / buy["unit_price"]
-                            if profit_margin >= quest["target_profit_margin"]:
-                                return self._apply_quest_rewards_and_reputation(
-                                    quest, player, 8, 3
-                                )
-            return False
-
+            return self._process_market_manipulation_quest(player, quest)
         elif quest_type == "trading_rare_commodity":
             return self._process_rare_commodity_quest_reward(player, quest)
+
+        return False
+
+    def _process_market_manipulation_quest(self, player, quest: Dict[str, Any]) -> bool:
+        """
+        Process a market manipulation quest where player must buy low and sell high.
+
+        Args:
+            player: Player object
+            quest: Quest data dictionary
+
+        Returns:
+            bool: True if quest completed successfully, False otherwise
+        """
+        # Check if player has trading history
+        if not hasattr(player, "trading_history"):
+            return False
+
+        # Get relevant transactions
+        buy_transactions, sell_transactions = self._get_commodity_transactions(
+            player.trading_history, quest["commodity_id"]
+        )
+
+        # Check for successful trades meeting quest criteria
+        return self._check_for_profitable_trades(
+            buy_transactions, sell_transactions, quest, player
+        )
+
+    def _get_commodity_transactions(
+        self, trading_history, commodity_id: str
+    ) -> Tuple[list, list]:
+        """
+        Extract buy and sell transactions for a specific commodity.
+
+        Args:
+            trading_history: List of trading transactions
+            commodity_id: ID of the commodity to filter for
+
+        Returns:
+            Tuple containing lists of buy and sell transactions
+        """
+        buy_transactions = [
+            t
+            for t in trading_history
+            if t["type"] == "buy" and t["commodity_id"] == commodity_id
+        ]
+
+        sell_transactions = [
+            t
+            for t in trading_history
+            if t["type"] == "sell" and t["commodity_id"] == commodity_id
+        ]
+
+        return buy_transactions, sell_transactions
+
+    def _check_for_profitable_trades(
+        self, buy_transactions, sell_transactions, quest, player
+    ) -> bool:
+        """
+        Check if any buy-sell pair meets the profit margin requirements.
+
+        Args:
+            buy_transactions: List of buy transactions
+            sell_transactions: List of sell transactions
+            quest: Quest data dictionary
+            player: Player object
+
+        Returns:
+            bool: True if a qualifying trade was found, False otherwise
+        """
+        for buy in buy_transactions:
+            # Skip if buy price is above threshold
+            if buy["unit_price"] > quest["buy_price_threshold"]:
+                continue
+
+            # Check each sell transaction that happened after this buy
+            for sell in sell_transactions:
+                if sell["transaction_time"] <= buy["transaction_time"]:
+                    continue
+
+                # Calculate profit margin
+                profit_margin = (sell["unit_price"] - buy["unit_price"]) / buy[
+                    "unit_price"
+                ]
+
+                # If profit margin meets or exceeds target, quest is complete
+                if profit_margin >= quest["target_profit_margin"]:
+                    return self._apply_quest_rewards_and_reputation(quest, player, 8, 3)
+
         return False
 
     def _process_rare_commodity_quest_reward(self, player, quest):

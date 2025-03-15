@@ -9,12 +9,13 @@ by different generator classes to avoid code duplication.
 # Standard library imports
 import itertools
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
-import numpy as np
-
 # Local application imports
 from typing import Any, Dict, Set, Tuple
+
+import numpy as np
+
+# Third-party library imports
+from numpy.random import PCG64, Generator
 
 # Standard library imports
 

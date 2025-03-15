@@ -13,25 +13,28 @@ The test suite includes:
 4. Optional dependency detection and reporting
 """
 
+import importlib
+
 # Standard library imports
 import sys
+import unittest
+from pathlib import Path
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
-from multiple import test files. It verifies that imports are working correctly and tests
-from pathlib import Path
-import importlib
-import unittest
-
-# import os  # Commented out unused import
-
-# import traceback  # Commented out unused import
-
-# Typing imports removed as they were unused
-# If needed in the future, uncomment the following:
-# from typing import Dict, List, Tuple, Optional, Any
+# from multiple import (
+#     are,
+#     correctly,
+#     files,
+#     imports,
+#     test,
+#     tests,
+#     that,
+#     verifies,
+#     working,
+# )
 
 # Add project root to path if needed
 project_root = Path(__file__).parent.parent
@@ -44,6 +47,7 @@ if str(project_root) not in sys.path:
 # from generators.asteroid_field import AsteroidField  # noqa: E402, F401
 # from entities.player import Player  # noqa: E402, F401
 # from config import GRID_WIDTH, GRID_HEIGHT  # noqa: E402, F401
+
 
 class TestImports(unittest.TestCase):
     """Test class to verify imports are working correctly."""
@@ -80,7 +84,8 @@ class TestImports(unittest.TestCase):
             del sys.modules["src.config"]
 
         # Import directly to get fresh values
-        from config import GRID_WIDTH as fresh_width, GRID_HEIGHT as fresh_height
+        from config import GRID_HEIGHT as fresh_height
+        from config import GRID_WIDTH as fresh_width
 
         self.assertIsInstance(fresh_width, int, "GRID_WIDTH should be an integer")
         self.assertIsInstance(fresh_height, int, "GRID_HEIGHT should be an integer")
@@ -208,6 +213,7 @@ class TestImports(unittest.TestCase):
             except Exception as e:
                 self.fail(f"Failed to import advanced module '{module}': {e}")
 
+
 def run_tests():
     """Run the import tests and print results."""
     print("\n==== SPACE MUCK IMPORT VERIFICATION TOOL ====\n")
@@ -231,6 +237,7 @@ def run_tests():
     # Run the unittest tests
     unittest.main(verbosity=2)
 
+
 def display_import_error(e):
     """Display helpful error message for import failures."""
     print(f"✗ Basic imports are failing: {e}")
@@ -239,6 +246,7 @@ def display_import_error(e):
     print("2. Check if 'src' directory is in your Python path")
     print("3. Try running with: PYTHONPATH=. python src/tests/test_imports.py")
     sys.exit(1)
+
 
 if __name__ == "__main__":
     run_tests()

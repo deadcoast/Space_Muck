@@ -8,28 +8,31 @@ maintain backward compatibility with existing code.
 
 # Standard library imports
 import logging
-import src.uuid
-
-# Third-party library imports
+import uuid
 
 # Local application imports
-from typing import (
-    Optional,
+from typing import (  # Removed Dict, Union as they're unused
     Any,
     Callable,
     List,
+    Optional,
     Tuple,
-)  # Removed Dict, Union as they're unused
+)
+
+# Import statements removed to maintain strict modularity
+
+# Third-party library imports
+
 
 # Import UI components with fallback for backward compatibility
 try:
-    from ..ui_element.ascii_box import ASCIIBox
-    from ..ui_base.event_system import (
-        UIEventType,
-        UIEventData,
-    )  # Removed UIEventSystem as it's unused
-    from ..ui_base.component_registry import ComponentRegistry
     from ..ui_base.ascii_base import UIElement
+    from ..ui_base.component_registry import ComponentRegistry
+    from ..ui_base.event_system import (  # Removed UIEventSystem as it's unused
+        UIEventData,
+        UIEventType,
+    )
+    from ..ui_element.ascii_box import ASCIIBox
     from .event_integration import (
         register_with_events,
         unregister_from_events,

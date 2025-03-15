@@ -11,12 +11,13 @@ existing event infrastructure.
 import logging
 import time
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Any, Callable, Set
+from typing import Any, Callable, Dict, List, Set
+
+# Third-party library imports
+
 
 # Use absolute imports for consistency
 

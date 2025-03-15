@@ -32,11 +32,12 @@ NAMING CONVENTION:
 import logging
 import re
 
-# Third-party library imports
-
 # Local application imports
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
+
+# Third-party library imports
+
 
 # Implementation map for tracking module enhancements
 IMPLEMENTATION_MAP = {
@@ -388,90 +389,211 @@ class ProjectMapParser:
         try:
             sections: List[str] = []
 
-            # Project Structure
-            if not isinstance(self.structure, dict):
-                raise ValueError("Project structure must be a dictionary")
-
-            sections.append("Project Structure:")
-            structure_lines: List[str] = []
-
-            def format_structure(
-                structure: Dict, prefix: str = "", is_dir: bool = False
-            ) -> None:
-                if not isinstance(structure, dict):
-                    raise ValueError("Structure must be a dictionary")
-                if not isinstance(prefix, str):
-                    raise ValueError("Prefix must be a string")
-                if not isinstance(is_dir, bool):
-                    raise ValueError("is_dir must be a boolean")
-
-                items = sorted(
-                    structure.items(),
-                    key=lambda x: (
-                        not bool(x[1]),
-                        x[0],
-                    ),  # Directories first, then files
-                )
-
-                for i, (name, substructure) in enumerate(items):
-                    if not isinstance(name, str):
-                        raise ValueError("Structure keys must be strings")
-
-                    is_last = i == len(items) - 1
-                    marker = "└── " if is_last else "├── "
-
-                    # Add directory marker
-                    display_name = f"{name}/" if bool(substructure) else name
-                    line = prefix + marker + display_name
-                    structure_lines.append(line)
-
-                    if substructure:
-                        if not isinstance(substructure, dict):
-                            raise ValueError("Substructure must be a dictionary")
-                        new_prefix = prefix + ("    " if is_last else "│   ")
-                        format_structure(substructure, new_prefix, True)
-
-            format_structure(self.structure)
-            sections.extend(structure_lines)
-
-            # Enhancement Targets
-            if not isinstance(self.enhancements, list):
-                raise ValueError("Enhancements must be a list")
-
-            sections.append("\nEnhancement Targets:")
-            for i, enhancement in enumerate(self.enhancements, 1):
-                if not isinstance(enhancement, dict) or any(
-                    k not in enhancement or not isinstance(enhancement[k], str)
-                    for k in ["module", "enhancement"]
-                ):
-                    raise ValueError("Invalid enhancement format")
-                sections.append(
-                    f"{i}. {enhancement['module']}: {enhancement['enhancement']}"
-                )
-
-            # Dependencies
-            if (
-                not isinstance(self.dependencies, dict)
-                or any(k not in self.dependencies for k in ["primary", "secondary"])
-                or any(
-                    not isinstance(deps, list) for deps in self.dependencies.values()
-                )
-            ):
-                raise ValueError("Invalid dependencies structure")
-
-            sections.append("\nDependencies Found:")
-            sections.append("Primary:")
-            for dep in self.dependencies["primary"]:
-                if not isinstance(dep, str):
-                    raise ValueError("Dependencies must be strings")
-                sections.append(f"- {dep}")
-            sections.append("\nSecondary:")
-            for dep in self.dependencies["secondary"]:
-                if not isinstance(dep, str):
-                    raise ValueError("Dependencies must be strings")
-                sections.append(f"- {dep}")
+            # Process each section of the map
+            self._validate_structure()
+            self._add_structure_section(sections)
+            self._add_enhancement_section(sections)
+            self._add_dependencies_section(sections)
 
             return "\n".join(sections)
         except Exception as e:
             self.logger.error(f"Failed to generate map: {str(e)}")
-            raise ValueError(f"Failed to generate map: {str(e)}")
+            raise ValueError(f"Failed to generate map: {str(e)}") from e
+
+    def _validate_structure(self) -> None:
+        """Validate the project structure data.
+
+        Raises:
+            ValueError: If structure is invalid
+        """
+        if not isinstance(self.structure, dict):
+            raise ValueError("Project structure must be a dictionary")
+
+    def _add_structure_section(self, sections: List[str]) -> None:
+        """Add project structure section to the map.
+
+        Args:
+            sections: List of sections to append to
+        """
+        sections.append("Project Structure:")
+        structure_lines: List[str] = []
+        self._format_structure(self.structure, "", False, structure_lines)
+        sections.extend(structure_lines)
+
+    def _format_structure(
+        self, structure: Dict, prefix: str, is_dir: bool, structure_lines: List[str]
+    ) -> None:
+        """Format the project structure recursively.
+
+        Args:
+            structure: Dictionary representing the structure
+            prefix: Prefix for the current level
+            is_dir: Whether the current item is a directory
+            structure_lines: List of formatted structure lines
+
+        Raises:
+            ValueError: If structure format is invalid
+        """
+        self._validate_structure_format(structure, prefix, is_dir)
+        items = self._sort_structure_items(structure)
+
+        for i, (name, substructure) in enumerate(items):
+            if not isinstance(name, str):
+                raise ValueError("Structure keys must be strings")
+
+            self._add_structure_item(
+                name, substructure, i, len(items), prefix, structure_lines
+            )
+
+    def _validate_structure_format(
+        self, structure: Dict, prefix: str, is_dir: bool
+    ) -> None:
+        """Validate the format of structure components.
+
+        Args:
+            structure: Dictionary representing the structure
+            prefix: Prefix for the current level
+            is_dir: Whether the current item is a directory
+
+        Raises:
+            ValueError: If format is invalid
+        """
+        if not isinstance(structure, dict):
+            raise ValueError("Structure must be a dictionary")
+        if not isinstance(prefix, str):
+            raise ValueError("Prefix must be a string")
+        if not isinstance(is_dir, bool):
+            raise ValueError("is_dir must be a boolean")
+
+    def _sort_structure_items(self, structure: Dict) -> List[Tuple[str, Dict]]:
+        """Sort structure items with directories first, then alphabetically.
+
+        Args:
+            structure: Dictionary representing the structure
+
+        Returns:
+            Sorted list of structure items
+        """
+        return sorted(
+            structure.items(),
+            key=lambda x: (
+                not bool(x[1]),  # Directories first
+                x[0],  # Then alphabetically
+            ),
+        )
+
+    def _add_structure_item(
+        self,
+        name: str,
+        substructure: Dict,
+        index: int,
+        total: int,
+        prefix: str,
+        structure_lines: List[str],
+    ) -> None:
+        """Add a single structure item to the output.
+
+        Args:
+            name: Name of the item
+            substructure: Substructure of the item
+            index: Index of the item
+            total: Total number of items
+            prefix: Prefix for the current level
+            structure_lines: List of formatted structure lines
+        """
+        is_last = index == total - 1
+        marker = "└── " if is_last else "├── "
+
+        # Add directory marker
+        display_name = f"{name}/" if bool(substructure) else name
+        line = prefix + marker + display_name
+        structure_lines.append(line)
+
+        if substructure:
+            if not isinstance(substructure, dict):
+                raise ValueError("Substructure must be a dictionary")
+            new_prefix = prefix + ("    " if is_last else "│   ")
+            self._format_structure(substructure, new_prefix, True, structure_lines)
+
+    def _add_enhancement_section(self, sections: List[str]) -> None:
+        """Add enhancement targets section to the map.
+
+        Args:
+            sections: List of sections to append to
+        """
+        self._validate_enhancements()
+        sections.append("\nEnhancement Targets:")
+
+        for i, enhancement in enumerate(self.enhancements, 1):
+            self._validate_enhancement_format(enhancement)
+            sections.append(
+                f"{i}. {enhancement['module']}: {enhancement['enhancement']}"
+            )
+
+    def _validate_enhancements(self) -> None:
+        """Validate the enhancements data.
+
+        Raises:
+            ValueError: If enhancements format is invalid
+        """
+        if not isinstance(self.enhancements, list):
+            raise ValueError("Enhancements must be a list")
+
+    def _validate_enhancement_format(self, enhancement: Dict) -> None:
+        """Validate the format of a single enhancement.
+
+        Args:
+            enhancement: Enhancement dictionary
+
+        Raises:
+            ValueError: If enhancement format is invalid
+        """
+        if not isinstance(enhancement, dict) or any(
+            k not in enhancement or not isinstance(enhancement[k], str)
+            for k in ["module", "enhancement"]
+        ):
+            raise ValueError("Invalid enhancement format")
+
+    def _add_dependencies_section(self, sections: List[str]) -> None:
+        """Add dependencies section to the map.
+
+        Args:
+            sections: List of sections to append to
+        """
+        self._validate_dependencies()
+
+        sections.append("\nDependencies Found:")
+        self._add_dependency_type(sections, "Primary", "primary")
+        sections.append("\nSecondary:")
+        self._add_dependency_type(sections, "", "secondary")
+
+    def _validate_dependencies(self) -> None:
+        """Validate the dependencies data.
+
+        Raises:
+            ValueError: If dependencies format is invalid
+        """
+        if (
+            not isinstance(self.dependencies, dict)
+            or any(k not in self.dependencies for k in ["primary", "secondary"])
+            or any(not isinstance(deps, list) for deps in self.dependencies.values())
+        ):
+            raise ValueError("Invalid dependencies structure")
+
+    def _add_dependency_type(
+        self, sections: List[str], header: str, dep_type: str
+    ) -> None:
+        """Add a specific type of dependencies to the map.
+
+        Args:
+            sections: List of sections to append to
+            header: Header for the dependency section
+            dep_type: Type of dependency (primary or secondary)
+        """
+        if header:
+            sections.append(f"{header}:")
+
+        for dep in self.dependencies[dep_type]:
+            if not isinstance(dep, str):
+                raise ValueError("Dependencies must be strings")
+            sections.append(f"- {dep}")

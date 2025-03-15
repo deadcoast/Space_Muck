@@ -1,12 +1,12 @@
 # Standard library imports
 from collections import Counter
-
-# Third-party library imports
+from dataclasses import dataclass, field
 
 # Local application imports
 from altair import Dict
-from dataclasses import dataclass, field
 from prometheus_client import Gauge, Histogram
+
+# Third-party library imports
 
 
 @dataclass

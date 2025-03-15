@@ -1,4 +1,15 @@
+# Standard library imports
 
+# Third-party library imports
+
+# Local application imports
+from typing import List, Tuple, TypeVar
+
+import pygame
+
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ascii_ui import ASCIIPanel
 
 # Type definitions for better type checking
 T = TypeVar("T")
@@ -7,19 +18,9 @@ ColorWithAlpha = Tuple[int, int, int, int]
 Point = Tuple[int, int]
 Rect = Tuple[int, int, int, int]  # x, y, width, height
 
+
 class ASCIIEfficiencyMonitor:
     """Panel for monitoring and displaying efficiency metrics over time."""
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-from typing import Tuple, List, TypeVar
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.draw_utils import draw_text
-from src.ui.ui_base.ascii_ui import ASCIIPanel
-import pygame
 
     def __init__(
         self,
@@ -185,7 +186,7 @@ import pygame
             eff_color = (255, 255, 100)  # Yellow for medium efficiency
         else:
             eff_color = (255, 100, 100)  # Red for low efficiency
-        current_text = f"Current: {self.current_efficiency*100:.1f}%"
+        current_text = f"Current: {self.current_efficiency * 100:.1f}%"
         draw_text(
             surface,
             current_text,
@@ -218,7 +219,7 @@ import pygame
         avg_y = content_y + margin
         draw_text(
             surface,
-            f"24h Average: {self.daily_average*100:.1f}%",
+            f"24h Average: {self.daily_average * 100:.1f}%",
             content_x,
             avg_y,
             size=font.get_height(),

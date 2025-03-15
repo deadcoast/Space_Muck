@@ -15,13 +15,14 @@
 import inspect
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass, field
-from graphviz import Digraph
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from graphviz import Digraph
+
+# Third-party library imports
 
 
 @dataclass
@@ -64,7 +65,7 @@ class DocGenerator:
         method_name: str,
         examples: Optional[List[str]] = None,
         notes: Optional[List[str]] = None,
-    ) -> MethodDoc:
+    ) -> Optional[MethodDoc]:
         """Generate documentation for a method.
 
         Args:
@@ -125,7 +126,7 @@ class DocGenerator:
         self,
         module_dependencies: Dict[str, List[str]],
         output_file: str = "dependencies",
-    ) -> Path:
+    ) -> Optional[Path]:
         """Generate a dependency graph using Graphviz.
 
         Args:

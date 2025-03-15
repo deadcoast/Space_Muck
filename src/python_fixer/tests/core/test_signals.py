@@ -6,11 +6,12 @@ Tests for the signal handling utilities.
 
 # Third-party library imports
 
-# Local application imports
-from python_fixer.core.signals import SignalManager
-from unittest.mock import patch, MagicMock
 import signal
 import unittest
+from unittest.mock import MagicMock, patch
+
+# Local application imports
+from python_fixer.core.signals import SignalManager
 
 
 class TestSignalManager(unittest.TestCase):

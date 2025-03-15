@@ -4,12 +4,12 @@ Test suite for the trading system functionality.
 
 # Standard library imports
 import random
-
-# Third-party library imports
+import unittest
 
 # Local application imports
 from systems.trading_system import TradingSystem
-import unittest
+
+# Third-party library imports
 
 
 class MockPlayer:

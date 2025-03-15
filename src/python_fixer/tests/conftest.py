@@ -4,12 +4,12 @@
 import os
 import sys
 
-# Third-party library imports
-import pytest
-
 # Local application imports
 from pathlib import Path
 from typing import Generator
+
+# Third-party library imports
+import pytest
 
 # Get the project root directory and source root
 TESTS_DIR = Path(__file__).parent.resolve()

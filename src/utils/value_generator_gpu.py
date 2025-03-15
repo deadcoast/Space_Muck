@@ -10,12 +10,13 @@ that can be used by different generator classes to improve performance.
 import logging
 import math
 
-# Third-party library imports
-from numpy.random import Generator, PCG64
 import numpy as np
 
+# Third-party library imports
+from numpy.random import PCG64, Generator
+
 # Local application imports
-from utils.value_generator import generate_value_distribution, add_value_clusters
+from utils.value_generator import add_value_clusters, generate_value_distribution
 
 # Standard library imports
 
@@ -257,9 +258,7 @@ def add_value_clusters_gpu(
                         ),
                     ][mask]
                     * multipliers[mask]
-                ).astype(
-                    cp.int32
-                )
+                ).astype(cp.int32)
 
             # Transfer back to CPU
             return cp.asnumpy(result_grid_gpu)

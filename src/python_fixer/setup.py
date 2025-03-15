@@ -3,7 +3,7 @@
 # Third-party library imports
 
 # Local application imports
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="python_fixer",

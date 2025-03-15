@@ -10,35 +10,37 @@ Features:
 - Type annotation addition
 """
 
-# Standard library imports
-from collections import defaultdict
+import ast
+import difflib
 import itertools
 
-# Third-party library imports
-from scipy.optimize import linear_sum_assignment
-import numpy as np
-
-# Local application imports
-from cli import console
+# Standard library imports
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+import black
+import git
+import isort
+import libcst as cst
+import networkx as nx
+import numpy as np
+import rope.base.project
+import yaml
+
+# Local application imports
+from cli import console
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn
+
+# Third-party library imports
+from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import SpectralClustering
-from typing import Any, Dict, List, Optional, Set, Tuple
-import ast
-import black
-import difflib
-import git
-import isort
-import libcst as cst
-import networkx as nx
-import rope.base.project
-import yaml
 
 
 @dataclass

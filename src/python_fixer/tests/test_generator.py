@@ -15,12 +15,12 @@
 import inspect
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
+
+# Third-party library imports
 
 
 @dataclass
@@ -122,7 +122,9 @@ class TestGenerator:
                 return {"key": "value"}
         return None
 
-    def generate_test_file(self, target_class: Type, output_dir: Path) -> Path:
+    def generate_test_file(
+        self, target_class: Type, output_dir: Path
+    ) -> Optional[Path]:
         """Generate a test file for a class.
 
         Args:
@@ -135,7 +137,7 @@ class TestGenerator:
         class_name = target_class.__name__
         if class_name not in self.test_cases:
             self.logger.warning(f"No test cases found for {class_name}")
-            return None
+            return None  # Return None when no test cases are found
 
         test_file = output_dir / f"test_{class_name.lower()}.py"
 
@@ -206,11 +208,11 @@ class TestGenerator:
                 method_name=method_name,
                 inputs=inputs,
                 expected_output=output,
-                description=f"Test case {case_num+1} for {method_name}",
+                description=f"Test case {case_num + 1} for {method_name}",
             )
         except Exception as e:
             self.logger.warning(
-                f"Failed to generate test case {case_num+1} for {method_name}: {str(e)}"
+                f"Failed to generate test case {case_num + 1} for {method_name}: {str(e)}"
             )
             return None
 

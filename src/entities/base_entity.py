@@ -6,10 +6,10 @@ BaseEntity class: The root class for all entities in the game.
 import logging
 import uuid
 
-# Third-party library imports
-
 # Local application imports
-from typing import Tuple, Optional, Dict, Any
+from typing import Any, Dict, Optional, Tuple
+
+# Third-party library imports
 
 
 class BaseEntity:

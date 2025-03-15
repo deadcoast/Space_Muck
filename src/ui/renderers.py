@@ -13,25 +13,24 @@ import random
 # Third-party library imports
 import numpy as np
 
-# Local application imports
-from .draw_utils import draw_text, draw_minimap
-from config import (
-from typing import List, Tuple
-import pygame
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-
+from config import (  # Standard library imports; Third-party library imports; Local application imports
     COLOR_ASTEROID_RARE,
     COLOR_BG,
     COLOR_GRID,
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
+    List,
+    Tuple,
+    from,
+    import,
+    pygame,
+    typing,
 )
+
+# Local application imports
+from .draw_utils import draw_minimap, draw_text
+
 
 class AsteroidFieldRenderer:
     """Handles rendering of the asteroid field with optimized performance."""

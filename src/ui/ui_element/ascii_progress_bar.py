@@ -3,13 +3,16 @@ import logging
 import math
 import time
 
-# Third-party library imports
-
 # Local application imports
-from typing import Tuple, Optional, TypeVar
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.draw_utils import draw_text
+from typing import Optional, Tuple, TypeVar
+
 import pygame
+
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ui_element import UIElement
+
+# Third-party library imports
 
 
 # Type definitions for better type checking

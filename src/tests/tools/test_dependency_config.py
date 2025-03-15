@@ -10,23 +10,26 @@ ensuring that it correctly loads and applies configuration settings.
 import os
 import sys
 
-# Third-party library imports
-
 # Local application imports
 from unittest.mock import patch
-from utils.dependency_config import (
-from utils.noise_generator import NoiseGenerator
-import unittest
 
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# Import the modules after path setup
+from utils.dependency_config import (
+    NoiseGenerator,
     DependencyConfig,
     app_container,
     configure_dependencies,
     register_noise_generator,
     load_config_from_file,
 )
+
+import unittest
+
+# Third-party library imports
+
 
 class TestDependencyConfig(unittest.TestCase):
     """Tests for the DependencyConfig class."""
@@ -58,8 +61,8 @@ class TestDependencyConfig(unittest.TestCase):
 
         # Check that configuration was updated
         self.assertEqual(DependencyConfig.NOISE_GENERATOR_TYPE, "simplex")
-        self.assertEqual(DependencyConfig.NOISE_GENERATOR_SINGLETON, False)
-        self.assertEqual(DependencyConfig.LOGGING_SINGLETON, False)
+        self.assertFalse(DependencyConfig.NOISE_GENERATOR_SINGLETON)
+        self.assertFalse(DependencyConfig.LOGGING_SINGLETON)
 
     def test_to_dict(self):
         """Test converting configuration to a dictionary."""
@@ -73,8 +76,8 @@ class TestDependencyConfig(unittest.TestCase):
 
         # Check that dictionary contains expected values
         self.assertEqual(config_dict["NOISE_GENERATOR_TYPE"], "perlin")
-        self.assertEqual(config_dict["NOISE_GENERATOR_SINGLETON"], True)
-        self.assertEqual(config_dict["LOGGING_SINGLETON"], True)
+        self.assertTrue(config_dict["NOISE_GENERATOR_SINGLETON"])
+        self.assertTrue(config_dict["LOGGING_SINGLETON"])
 
     def test_unknown_config_option(self):
         """Test handling of unknown configuration options."""
@@ -86,6 +89,7 @@ class TestDependencyConfig(unittest.TestCase):
             self.assertIn(
                 "WARNING:root:Unknown configuration option: UNKNOWN_OPTION", cm.output
             )
+
 
 class TestNoiseGeneratorRegistration(unittest.TestCase):
     """Tests for noise generator registration."""
@@ -166,6 +170,7 @@ class TestNoiseGeneratorRegistration(unittest.TestCase):
         # Check that get_noise_generator was called
         mock_get_noise.assert_called_once()
 
+
 class TestConfigFileLoading(unittest.TestCase):
     """Tests for loading configuration from files."""
 
@@ -201,7 +206,7 @@ class TestConfigFileLoading(unittest.TestCase):
 
         # Check that configuration was updated
         self.assertEqual(DependencyConfig.NOISE_GENERATOR_TYPE, "simplex")
-        self.assertEqual(DependencyConfig.NOISE_GENERATOR_SINGLETON, False)
+        self.assertFalse(DependencyConfig.NOISE_GENERATOR_SINGLETON)
 
     def test_load_config_from_nonexistent_file(self):
         """Test handling of nonexistent configuration files."""
@@ -217,6 +222,7 @@ class TestConfigFileLoading(unittest.TestCase):
                     for msg in cm.output
                 )
             )
+
 
 if __name__ == "__main__":
     unittest.main()

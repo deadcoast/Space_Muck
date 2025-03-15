@@ -2,23 +2,25 @@
 
 # Standard library imports
 import argparse
+import asyncio
 import json
 import logging
 import os
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-# Third-party library imports
+import aiofiles
+import patch
+import variant_loggers
 
 # Local application imports
 from core import analyzer
 from fixers import fix_manager
-from pathlib import Path
 from questionary import prompt
-from typing import Any, Dict, List, Optional
-import aiofiles
-import asyncio
-import patch
-import tempfile
-import variant_loggers
+
+# Third-party library imports
+
 
 # Configure variant_loggers
 variant_loggers.basicConfig(

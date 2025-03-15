@@ -5,16 +5,17 @@ This module provides the core game context that manages game state,
 coordinates between different managers, and handles event propagation.
 """
 
-# Standard library imports
-from datetime import datetime
 import logging
-
-# Third-party library imports
 
 # Local application imports
 from dataclasses import dataclass
+
+# Standard library imports
+from datetime import datetime
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set, Callable, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
+
+# Third-party library imports
 
 
 # Game States

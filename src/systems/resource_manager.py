@@ -8,12 +8,12 @@ tracking resource levels, handling resource flows, and managing resource operati
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple
+
+# Third-party library imports
 
 
 # Resource Types and Categories
@@ -75,9 +75,9 @@ class ResourceManager:
 
         # Flow management
         self.flows: List[ResourceFlow] = []
-        self.flow_history: Dict[str, List[Tuple[float, float]]] = (
-            {}
-        )  # (timestamp, amount)
+        self.flow_history: Dict[
+            str, List[Tuple[float, float]]
+        ] = {}  # (timestamp, amount)
 
         # System state
         self.active = True

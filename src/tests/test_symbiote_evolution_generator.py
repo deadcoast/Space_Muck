@@ -15,17 +15,17 @@ The test suite includes:
 7. Mineral consumption impact analysis
 """
 
+# Local application imports
+import importlib.util
+
 # Standard library imports
 import logging
 import os
 import sys
+import unittest
 
 # Third-party library imports
 import numpy as np
-
-# Local application imports
-import importlib.util
-import unittest
 
 # Standard libraries
 
@@ -50,39 +50,35 @@ except ImportError:
     MATPLOTLIB_AVAILABLE = False
     logger.info("Matplotlib not available - visualization tests will be skipped")
 
-try:
-    import perlin_noise
+# Check for perlin_noise module availability using importlib
 
-    PERLIN_NOISE_AVAILABLE = True
-except ImportError:
-    PERLIN_NOISE_AVAILABLE = False
+perlin_spec = importlib.util.find_spec("perlin_noise")
+PERLIN_NOISE_AVAILABLE = perlin_spec is not None
+
+if not PERLIN_NOISE_AVAILABLE:
     logger.warning("perlin_noise module not available - some tests may fail")
 
-# Try importing scipy (optional dependency for advanced statistical processing)
-try:
-    import scipy
+# Check for scipy availability using importlib
+scipy_spec = importlib.util.find_spec("scipy")
+SCIPY_AVAILABLE = scipy_spec is not None
 
-    SCIPY_AVAILABLE = True
-except ImportError:
-    SCIPY_AVAILABLE = False
+if not SCIPY_AVAILABLE:
     logger.info("SciPy not available - some advanced tests will be skipped")
 
-# Try importing scikit-image (optional dependency for image processing)
-try:
-    import skimage
+# Check for scikit-image availability using importlib
+skimage_spec = importlib.util.find_spec("skimage")
+SKIMAGE_AVAILABLE = skimage_spec is not None
 
-    SKIMAGE_AVAILABLE = True
-except ImportError:
-    SKIMAGE_AVAILABLE = False
+if not SKIMAGE_AVAILABLE:
     logger.info("scikit-image not available - some tests will be skipped")
 
 # Import actual logging_setup module (no mocking)
 try:
     from utils.logging_setup import (
-        log_performance_start,
-        log_performance_end,
-        log_exception,
         LogContext,
+        log_exception,
+        log_performance_end,
+        log_performance_start,
     )
 
     LOGGING_SETUP_AVAILABLE = True
@@ -116,8 +112,8 @@ except ImportError:
 
 # Import the classes to test
 try:
-    from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
     from generators.base_generator import BaseGenerator
+    from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
     # Check if the algorithm module is available without importing unused class
     ALGORITHM_AVAILABLE = (
@@ -245,8 +241,9 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         mineral_grid = np.zeros((60, 50), dtype=float)
         mineral_grid[15:35, 15:35] = 0.5  # Add minerals around the colony
 
-        # Set fixed random seed for deterministic testing
-        np.random.seed(42)
+        # Set numpy's global random state using Generator API
+        # We don't need to store the generator since the simulation doesn't accept it directly
+        np.random.default_rng(42)
 
         # Simulate evolution with actual implementation
         evolved_grid, evolution_history = self.generator.simulate_evolution(
@@ -312,13 +309,30 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         # Create a generator with a fixed seed for reproducibility
         generator = SymbioteEvolutionGenerator(seed=123, width=80, height=80)
 
-        # Generate initial colonies
+        # Generate initial colonies and mineral distribution
         colony_grid, _ = generator.generate_initial_colonies(num_colonies=5)
         mineral_grid = generator.generate_mineral_distribution()
 
-        # Run evolution for more iterations
+        # Run evolution and get history
+        _, evolution_history = self._run_evolution_simulation(
+            generator, colony_grid, mineral_grid
+        )
+
+        # Skip if there was an error in the simulation
+        if self._check_for_simulation_errors(evolution_history):
+            return
+
+        # Validate the evolution history data
+        self._validate_evolution_history_fields(evolution_history)
+
+        # Verify population changes over time
+        self._verify_population_changes(evolution_history)
+
+    def _run_evolution_simulation(self, generator, colony_grid, mineral_grid):
+        """Run the evolution simulation with the given parameters."""
+        # Run evolution for multiple iterations
         # Note: The actual implementation may not respect the iterations parameter exactly
-        # depending on convergence criteria or other factors, so we don't assert the exact count
+        # depending on convergence criteria or other factors
         evolved_grid, evolution_history = generator.simulate_evolution(
             colony_grid, mineral_grid, iterations=10
         )
@@ -328,17 +342,23 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
             len(evolution_history), 0, "Expected at least one evolution step"
         )
 
-        # Check if there's an error in the evolution history
-        if len(evolution_history) == 1 and "error" in evolution_history[0]:
-            print(
-                f"Evolution simulation reported an error: {evolution_history[0]['error']}"
-            )
-            self.skipTest(
-                f"Skipping due to evolution simulation error: {evolution_history[0]['error']}"
-            )
-            return
+        return evolved_grid, evolution_history
 
-        # Check for expected fields in each step, with more robust error handling
+    def _check_for_simulation_errors(self, evolution_history):
+        """Check if there are any errors in the evolution history.
+
+        Returns:
+            bool: True if test should be skipped due to errors, False otherwise
+        """
+        if len(evolution_history) == 1 and "error" in evolution_history[0]:
+            error_msg = evolution_history[0]["error"]
+            print(f"Evolution simulation reported an error: {error_msg}")
+            self.skipTest(f"Skipping due to evolution simulation error: {error_msg}")
+            return True
+        return False
+
+    def _validate_evolution_history_fields(self, evolution_history):
+        """Validate that the evolution history contains the expected fields."""
         expected_fields = [
             "iteration",
             "population",
@@ -349,6 +369,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         ]
         missing_fields = {}
 
+        # Check each step for missing fields
         for i, step in enumerate(evolution_history):
             for field in expected_fields:
                 if field not in step:
@@ -356,19 +377,21 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
                         missing_fields[field] = []
                     missing_fields[field].append(i)
 
-        # If any fields are missing, log them but don't fail the test
+        # Log missing fields but don't fail the test
         if missing_fields:
             print("Warning: Some expected fields are missing from evolution history:")
             for field, steps in missing_fields.items():
                 print(f"  - '{field}' missing in steps: {steps}")
 
-        # Try to verify population changes if population data is available
+    def _verify_population_changes(self, evolution_history):
+        """Verify that the population changes over time during evolution."""
         try:
             populations = [
                 step.get("population", 0)
                 for step in evolution_history
                 if "population" in step
             ]
+
             if len(populations) > 1:
                 self.assertGreater(
                     len(set(populations)),
@@ -413,7 +436,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         # Compare population and mineral consumption between the two scenarios
         # Extract population data if available
         try:
-            self._extracted_from_test_mineral_consumption_impact_34(history1, history2)
+            self._compare_population_histories(history1, history2)
         except (IndexError, KeyError, AttributeError) as e:
             logger.warning(f"Could not extract population data: {e}")
 
@@ -458,8 +481,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         # Return the results for potential use in visualization tests
         return (evolved_grid1, evolved_grid2), (mineral_grid1, mineral_grid2)
 
-    # TODO Rename this here and in `test_mineral_consumption_impact`
-    def _extracted_from_test_mineral_consumption_impact_34(self, history1, history2):
+    def _compare_population_histories(self, history1, history2):
         final_pop1 = history1[-1].get("population", 0)
         final_pop2 = history2[-1].get("population", 0)
 
@@ -591,7 +613,7 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         self.assertEqual(generator.evolution_algorithm.growth_rate, 0.15)
         self.assertEqual(generator.evolution_algorithm.base_mutation_rate, 0.03)
         self.assertEqual(generator.evolution_algorithm.carrying_capacity, 150)
-        self.assertEqual(generator.evolution_algorithm.learning_enabled, False)
+        self.assertFalse(generator.evolution_algorithm.learning_enabled)
 
     def _visualize_colorbar(self, data, cmap, label, title):
         """Helper method to visualize data with a colorbar."""
@@ -729,15 +751,8 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         plt.close(fig)
 
 
-def run_comprehensive_tests():
-    """Run all tests for the SymbioteEvolutionGenerator class.
-
-    This function provides a comprehensive test suite that runs all tests
-    and reports the results. It's designed to be run directly from the command line.
-    """
-    print("=== SymbioteEvolutionGenerator Comprehensive Test Suite ===")
-
-    # Check dependencies
+def _check_dependencies():
+    """Check and print the status of all dependencies."""
     print("\nChecking dependencies:")
     print(f"  - numpy: {'✓' if 'numpy' in sys.modules else '✗'}")
     print(f"  - perlin_noise: {'✓' if PERLIN_NOISE_AVAILABLE else '✗'} (required)")
@@ -755,39 +770,64 @@ def run_comprehensive_tests():
         f"  - logging_setup: {'✓' if LOGGING_SETUP_AVAILABLE else '✗'} (using fallback if not available)"
     )
 
-    # Run the tests using unittest
+
+def _run_test_suite():
+    """Run the test suite and return the test result."""
     print("\nRunning tests...")
     test_suite = unittest.TestLoader().loadTestsFromTestCase(
         TestSymbioteEvolutionGenerator
     )
-    test_result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return unittest.TextTestRunner(verbosity=2).run(test_suite)
 
-    # Report results
+
+def _print_test_summary(test_result):
+    """Print a summary of the test results."""
     print("\nTest Results:")
     print(f"  - Ran {test_result.testsRun} tests")
     print(f"  - Failures: {len(test_result.failures)}")
     print(f"  - Errors: {len(test_result.errors)}")
     print(f"  - Skipped: {len(test_result.skipped)}")
 
+
+def _print_failure_details(test_result):
+    """Print detailed information about test failures and errors."""
+    if test_result.failures:
+        print("\nFailure details:")
+        for i, (test, traceback) in enumerate(test_result.failures):
+            print(f"\nFailure {i + 1}: {test}")
+            print(f"{traceback}")
+
+    if test_result.errors:
+        print("\nError details:")
+        for i, (test, traceback) in enumerate(test_result.errors):
+            print(f"\nError {i + 1}: {test}")
+            print(f"{traceback}")
+
+
+def run_comprehensive_tests():
+    """Run all tests for the SymbioteEvolutionGenerator class.
+
+    This function provides a comprehensive test suite that runs all tests
+    and reports the results. It's designed to be run directly from the command line.
+    """
+    print("=== SymbioteEvolutionGenerator Comprehensive Test Suite ===")
+
+    # Check dependencies
+    _check_dependencies()
+
+    # Run the tests
+    test_result = _run_test_suite()
+
+    # Print test summary
+    _print_test_summary(test_result)
+
+    # Handle success or failure
     if test_result.wasSuccessful():
         print("\n✓ All tests passed successfully!")
         return 0
     else:
         print("\n✗ Some tests failed.")
-
-        # Print detailed failure information for debugging
-        if test_result.failures:
-            print("\nFailure details:")
-            for i, (test, traceback) in enumerate(test_result.failures):
-                print(f"\nFailure {i + 1}: {test}")
-                print(f"{traceback}")
-
-        if test_result.errors:
-            print("\nError details:")
-            for i, (test, traceback) in enumerate(test_result.errors):
-                print(f"\nError {i + 1}: {test}")
-                print(f"{traceback}")
-
+        _print_failure_details(test_result)
         return 1
 
 

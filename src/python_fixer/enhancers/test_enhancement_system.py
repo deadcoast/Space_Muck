@@ -4,10 +4,11 @@
 
 # Third-party library imports
 
+import unittest
+
 # Local application imports
 from enhancement_system import EnhancementSystem
-from event_system import EventSystem, EventType, Event
-import unittest
+from event_system import Event, EventSystem, EventType
 
 
 class TestShip:

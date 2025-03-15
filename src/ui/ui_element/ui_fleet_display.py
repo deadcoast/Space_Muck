@@ -2,21 +2,17 @@
 
 # Third-party library imports
 
-# Local application imports
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_base import UIElement
-from typing import List, Dict, Any
 import contextlib
 import curses
+from typing import Any, Dict, List
 
+# Import config constants if needed in the future
+
+# Local application imports
+from src.ui.ui_base.ascii_base import UIElement, UIStyle
 
 # Ship pattern constants
 CAPITAL_SHIP_PATTERN = "<[≡≡≡≡≡]>"
-
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
 
 
 class FleetDisplay(UIElement):

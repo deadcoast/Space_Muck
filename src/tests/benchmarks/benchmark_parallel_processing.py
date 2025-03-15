@@ -9,6 +9,7 @@ import logging
 import os
 import sys
 import time
+from typing import List, Optional
 
 # Third-party library imports
 import matplotlib.pyplot as plt
@@ -16,7 +17,6 @@ import numpy as np
 
 # Local application imports
 from entities.base_generator import BaseGenerator
-from typing import List, Optional
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -83,7 +83,7 @@ class BenchmarkResults:
         speedups = [self.speedup_factors[size] for size in sorted_sizes]
 
         # Create subplots
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+        _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
         # Plot execution times
         ax1.plot(sorted_sizes, seq_times, "o-", label="Sequential", color="blue")
@@ -134,8 +134,9 @@ def benchmark_cellular_automaton(
     for size in grid_sizes:
         logging.info(f"Benchmarking cellular automaton with grid size {size}x{size}")
 
-        # Create a grid with random values
-        grid = np.random.random((size, size))
+        # Create a grid with random values using the newer Generator API
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        grid = rng.random((size, size))
         grid = (grid > 0.7).astype(
             np.float64
         )  # Convert to binary grid with ~30% filled
@@ -225,8 +226,9 @@ def benchmark_clustering(
     for size in grid_sizes:
         logging.info(f"Benchmarking clustering with grid size {size}x{size}")
 
-        # Create a grid with random values
-        grid = np.random.random((size, size))
+        # Create a grid with random values using the newer Generator API
+        rng = np.random.default_rng(seed=42)  # Using a fixed seed for reproducibility
+        grid = rng.random((size, size))
         grid = (grid > 0.5).astype(
             np.float64
         )  # Convert to binary grid with ~50% filled

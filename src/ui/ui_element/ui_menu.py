@@ -1,28 +1,25 @@
 # Use absolute imports for consistency
 
-# Use TYPE_CHECKING to avoid circular imports
-if TYPE_CHECKING:
-    from typing import Tuple
-
 # Standard library imports
 import random
 
-# Third-party library imports
-
 # Local application imports
-from typing import List, Optional, Tuple, TYPE_CHECKING, Any
-import contextlib
+from typing import List, Optional, Tuple
+
 import pygame
 
+from config import COLOR_BG, COLOR_TEXT
+
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ascii_box import ASCIIBox
+from src.ui.ui_helpers import draw_utils
+
+
+# Third-party library imports
+
+
 # For backward compatibility, keep Menu as an alias of UIMenu
-Menu = UIMenu
-
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
-
-# Import at runtime to avoid circular imports
+Menu = UIStyle
 
 
 class UIMenu(ASCIIBox):

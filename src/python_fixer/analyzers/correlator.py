@@ -4,6 +4,7 @@
 
 # Local application imports
 from typing import Any, Dict, List
+
 from variant_loggers import LogRecord
 
 

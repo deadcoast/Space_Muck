@@ -18,11 +18,12 @@ class IntegrationTest:
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Type, Callable
+from typing import Any, Callable, Dict, List, Optional, Type
+
+# Third-party library imports
+
 
     name: str
     components: List[Type]

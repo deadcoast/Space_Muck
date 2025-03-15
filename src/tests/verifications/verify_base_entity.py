@@ -5,12 +5,13 @@ Verification script for BaseEntity class.
 # Standard library imports
 import os
 import sys
-
-# Third-party library imports
+from unittest.mock import MagicMock
 
 # Local application imports
 from entities.base_entity import BaseEntity
-from unittest.mock import MagicMock
+
+# Third-party library imports
+
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -28,9 +29,9 @@ sys.modules["sklearn.cluster"] = MagicMock()
 
 # Mock src modules
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
-    MagicMock()
-)
+sys.modules[
+    "src.algorithms.symbiote_algorithm"
+].SymbioteEvolutionAlgorithm = MagicMock()
 sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
@@ -64,9 +65,9 @@ def verify_base_entity():
     entity = BaseEntity(entity_type="test", color=(255, 0, 0), position=(10, 20))
 
     # Verify basic attributes
-    assert (
-        entity.entity_type == "test"
-    ), f"Expected entity_type 'test', got {entity.entity_type}"
+    assert entity.entity_type == "test", (
+        f"Expected entity_type 'test', got {entity.entity_type}"
+    )
     assert entity.color == (
         255,
         0,
@@ -106,14 +107,14 @@ def verify_base_entity():
 
     # Test serialization
     data = entity.to_dict()
-    assert (
-        data["entity_type"] == "test"
-    ), f"Expected entity_type 'test', got {data['entity_type']}"
+    assert data["entity_type"] == "test", (
+        f"Expected entity_type 'test', got {data['entity_type']}"
+    )
 
     new_entity = BaseEntity.from_dict(data)
-    assert (
-        new_entity.entity_type == entity.entity_type
-    ), "Entity types should match after deserialization"
+    assert new_entity.entity_type == entity.entity_type, (
+        "Entity types should match after deserialization"
+    )
 
     print("BaseEntity tests passed!")
     return True
@@ -129,32 +130,32 @@ def verify_inheritance():
     player = MockPlayer()
 
     # Verify inheritance
-    assert isinstance(
-        miner, BaseEntity
-    ), "MockMinerEntity should be an instance of BaseEntity"
-    assert isinstance(
-        player, MockMinerEntity
-    ), "MockPlayer should be an instance of MockMinerEntity"
-    assert isinstance(
-        player, BaseEntity
-    ), "MockPlayer should be an instance of BaseEntity"
+    assert isinstance(miner, BaseEntity), (
+        "MockMinerEntity should be an instance of BaseEntity"
+    )
+    assert isinstance(player, MockMinerEntity), (
+        "MockPlayer should be an instance of MockMinerEntity"
+    )
+    assert isinstance(player, BaseEntity), (
+        "MockPlayer should be an instance of BaseEntity"
+    )
 
     # Verify entity types
-    assert (
-        base.entity_type == "base"
-    ), f"Expected entity_type 'base', got {base.entity_type}"
-    assert (
-        miner.entity_type == "miner"
-    ), f"Expected entity_type 'miner', got {miner.entity_type}"
+    assert base.entity_type == "base", (
+        f"Expected entity_type 'base', got {base.entity_type}"
+    )
+    assert miner.entity_type == "miner", (
+        f"Expected entity_type 'miner', got {miner.entity_type}"
+    )
 
     # Verify player-specific attributes
     assert player.is_player is True, "Player should have is_player=True"
-    assert (
-        player.credits == 1000
-    ), f"Player should start with 1000 credits, got {player.credits}"
-    assert (
-        player.trait == "adaptive"
-    ), f"Player should have 'adaptive' trait, got {player.trait}"
+    assert player.credits == 1000, (
+        f"Player should start with 1000 credits, got {player.credits}"
+    )
+    assert player.trait == "adaptive", (
+        f"Player should have 'adaptive' trait, got {player.trait}"
+    )
 
     print("Inheritance tests passed!")
     return True

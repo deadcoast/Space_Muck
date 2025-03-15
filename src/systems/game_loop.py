@@ -11,17 +11,18 @@ into distinct phases for better maintainability and performance monitoring.
 # Standard library imports
 import logging
 
-# Third-party library imports
-
 # Local application imports
-from typing import Dict, List, Callable, Any, Optional, TypeVar
-from utils.logging_setup import (
-    # Local application imports
-    log_performance_start,
-    log_performance_end,
+from typing import Any, Callable, Dict, List, Optional, TypeVar
+
+from utils.logging_setup import (  # Local application imports
     LogContext,
     log_memory_usage,
+    log_performance_end,
+    log_performance_start,
 )
+
+# Third-party library imports
+
 
 # Type definitions
 T = TypeVar("T")
@@ -219,11 +220,9 @@ class GameLoop:
             clock_func: Function that returns the current time in seconds
             frame_limit: Optional limit on the number of frames to run (mainly for testing)
         """
-        self.is_running = True
+        self._initialize_game_loop()
         frame_count = 0
         previous_time = clock_func()
-
-        logging.info("Starting game loop")
 
         try:
             while self.is_running:
@@ -232,42 +231,117 @@ class GameLoop:
                 delta_time = current_time - previous_time
                 previous_time = current_time
 
-                # Check for exit condition
-                if self.handle_events():
-                    self.is_running = False
-                    break
+                # Process a single frame
+                self._process_frame(delta_time)
 
-                # Skip updates if paused but still render
-                if not self.is_paused:
-                    self.update(delta_time)
-
-                # Always render
-                self.render()
-
-                # Memory usage logging (every 100 frames)
-                if self.frame_counter % 100 == 0:
-                    log_memory_usage()
-
-                # FPS calculation
-                if delta_time > 0:
-                    current_fps = 1.0 / delta_time
-                    self.fps_history.append(current_fps)
-                    if len(self.fps_history) > 100:
-                        self.fps_history.pop(0)
-
-                frame_count += 1
-                if frame_limit and frame_count >= frame_limit:
-                    self.is_running = False
+                # Update frame count and check limit
+                frame_count = self._update_frame_count(frame_count, frame_limit)
 
         except Exception as e:
-            logging.error(f"Fatal error in game loop: {e}")
-            # Force exit the loop
-            self.is_running = False
+            self._handle_game_loop_exception(e)
 
         finally:
-            # Cleanup resources
-            logging.info("Game loop terminated")
-            self.cleanup()
+            self._finalize_game_loop()
+
+    def _initialize_game_loop(self) -> None:
+        """
+        Initialize the game loop state.
+        """
+        self.is_running = True
+        logging.info("Starting game loop")
+
+    def _process_frame(self, delta_time: float) -> None:
+        """
+        Process a single frame of the game loop.
+
+        Args:
+            delta_time: Time elapsed since last frame
+        """
+        # Check for exit condition
+        if self.handle_events():
+            self.is_running = False
+            return
+
+        # Handle game state updates and rendering
+        self._update_and_render(delta_time)
+
+        # Process performance monitoring
+        self._monitor_performance(delta_time)
+
+    def _update_and_render(self, delta_time: float) -> None:
+        """
+        Update game state and render the frame.
+
+        Args:
+            delta_time: Time elapsed since last frame
+        """
+        # Skip updates if paused but still render
+        if not self.is_paused:
+            self.update(delta_time)
+
+        # Always render
+        self.render()
+
+    def _monitor_performance(self, delta_time: float) -> None:
+        """
+        Monitor and log performance metrics.
+
+        Args:
+            delta_time: Time elapsed since last frame
+        """
+        # Memory usage logging (every 100 frames)
+        if self.frame_counter % 100 == 0:
+            log_memory_usage()
+
+        # FPS calculation
+        if delta_time > 0:
+            self._update_fps_history(delta_time)
+
+    def _update_fps_history(self, delta_time: float) -> None:
+        """
+        Update the FPS history with the current frame rate.
+
+        Args:
+            delta_time: Time elapsed since last frame
+        """
+        current_fps = 1.0 / delta_time
+        self.fps_history.append(current_fps)
+        if len(self.fps_history) > 100:
+            self.fps_history.pop(0)
+
+    def _update_frame_count(self, frame_count: int, frame_limit: Optional[int]) -> int:
+        """
+        Update the frame count and check if we've reached the limit.
+
+        Args:
+            frame_count: Current frame count
+            frame_limit: Optional maximum number of frames to process
+
+        Returns:
+            int: Updated frame count
+        """
+        frame_count += 1
+        if frame_limit and frame_count >= frame_limit:
+            self.is_running = False
+        return frame_count
+
+    def _handle_game_loop_exception(self, exception: Exception) -> None:
+        """
+        Handle exceptions that occur during the game loop.
+
+        Args:
+            exception: The exception that was raised
+        """
+        logging.error(f"Fatal error in game loop: {exception}")
+        # Force exit the loop
+        self.is_running = False
+
+    def _finalize_game_loop(self) -> None:
+        """
+        Perform cleanup after the game loop ends.
+        """
+        logging.info("Game loop terminated")
+        self.cleanup()
 
     def request_exit(self) -> None:
         """Request the game loop to exit on the next iteration."""

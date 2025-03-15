@@ -1,14 +1,14 @@
 # Standard library imports
+import inspect
+import logging
 from datetime import datetime, timezone
 from functools import wraps
 from logging import LogRecord, getLogger
-import inspect
-import logging
-
-# Third-party library imports
 
 # Local application imports
 from python_fixer.logging.correlator import log_correlator
+
+# Third-party library imports
 
 
 # Configure the basic logger

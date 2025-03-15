@@ -7,40 +7,41 @@ across different backends, grid sizes, and configurations. It generates detailed
 performance metrics and visualizations to help optimize GPU acceleration usage.
 """
 
+import contextlib
+import importlib.util
+
 # Standard library imports
 import logging
 import os
+import platform
 import sys
 import time
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import matplotlib.pyplot as plt
 import numpy as np
-import contextlib
-import importlib.util
-import platform
 
 # Local application imports
 from entities.base_generator import BaseGenerator  # noqa: E402
-from typing import Dict, List, Any, Optional, Tuple, TYPE_CHECKING
 from utils.cellular_automaton_utils import apply_cellular_automaton  # noqa: E402
 from utils.gpu_utils import (
-    get_available_backends,
     apply_cellular_automaton_gpu,
-    apply_noise_generation_gpu,
-    apply_kmeans_clustering_gpu,
     apply_dbscan_clustering_gpu,
+    apply_kmeans_clustering_gpu,
+    apply_noise_generation_gpu,
+    get_available_backends,
 )
 from utils.value_generator import (
-    generate_value_distribution,
     add_value_clusters,
+    generate_value_distribution,
 )
 from utils.value_generator_gpu import (
-    generate_value_distribution_gpu,
     add_value_clusters_gpu,
+    generate_value_distribution_gpu,
 )
-import importlib.util
-import platform
+
+rng = np.random.default_rng(seed=42)
 
 # For type checking only - these imports are not executed at runtime
 if TYPE_CHECKING:
@@ -126,7 +127,7 @@ def generate_terrain_cpu(width, height):
     """Generate terrain using CPU implementation."""
     # Use value_generator for CPU implementation
     # Create base grid and grid for terrain generation
-    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    base_grid = rng.random((height, width))  # Simplified for benchmark
     grid = np.ones((height, width))  # All cells active for terrain
     return generate_value_distribution(grid, base_grid)
 
@@ -135,7 +136,7 @@ def generate_terrain_gpu(width, height, backend="cuda"):
     """Generate terrain using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
     # Create base grid and grid for terrain generation
-    base_grid = np.random.rand(height, width)  # Simplified for benchmark
+    base_grid = rng.random((height, width))  # Simplified for benchmark
     grid = np.ones((height, width))  # All cells active for terrain
     return generate_value_distribution_gpu(grid, base_grid, backend=backend)
 
@@ -145,8 +146,8 @@ def generate_resource_distribution_cpu(width, height):
     """Generate resource distribution using CPU implementation."""
     # Use value_generator for CPU implementation
     # Create base grid and value grid
-    base_grid = np.random.rand(height, width)  # Simplified for benchmark
-    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
+    base_grid = rng.random((height, width))  # Simplified for benchmark
+    grid = rng.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
     value_grid = generate_value_distribution(grid, base_grid)
     return add_value_clusters(value_grid, num_clusters=10, cluster_value_multiplier=1.5)
 
@@ -155,12 +156,84 @@ def generate_resource_distribution_gpu(width, height, backend="cuda"):
     """Generate resource distribution using GPU implementation."""
     # Use value_generator_gpu for GPU implementation
     # Create base grid and value grid
-    base_grid = np.random.rand(height, width)  # Simplified for benchmark
-    grid = np.random.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
+    base_grid = rng.random((height, width))  # Simplified for benchmark
+    grid = rng.choice([0, 1], size=(height, width), p=[0.3, 0.7])  # Binary grid
     value_grid = generate_value_distribution_gpu(grid, base_grid, backend=backend)
     return add_value_clusters_gpu(
         value_grid, num_clusters=10, cluster_value_multiplier=1.5, backend=backend
     )
+
+
+def _initialize_benchmark_results(
+    backends: List[str], grid_sizes: List[int]
+) -> Dict[str, Dict[str, List[float]]]:
+    """Initialize the results dictionary for benchmarking.
+
+    Args:
+        backends: List of backends to benchmark
+        grid_sizes: List of grid sizes to test
+
+    Returns:
+        Dict: Initialized results dictionary
+    """
+    return {
+        "operation": "cellular_automaton",
+        "grid_sizes": grid_sizes,
+        "times": {backend: [] for backend in backends},
+        "memory": {backend: [] for backend in backends},
+        "speedup": {backend: [] for backend in backends},
+    }
+
+
+def _run_cellular_automaton(grid: np.ndarray, backend: str, iterations: int) -> None:
+    """Run cellular automaton using the specified backend.
+
+    Args:
+        grid: Input grid for cellular automaton
+        backend: Backend to use ("cpu" or GPU backend)
+        iterations: Number of iterations to run
+    """
+    if backend == "cpu":
+        apply_cellular_automaton(grid, iterations=iterations)
+    else:
+        apply_cellular_automaton_gpu(grid, backend=backend, iterations=iterations)
+
+
+def _measure_execution_time(func, *args, **kwargs) -> float:
+    """Measure the execution time of a function.
+
+    Args:
+        func: Function to measure
+        *args: Arguments to pass to the function
+        **kwargs: Keyword arguments to pass to the function
+
+    Returns:
+        float: Execution time in seconds
+    """
+    start_time = time.time()
+    func(*args, **kwargs)
+    end_time = time.time()
+    return end_time - start_time
+
+
+def _calculate_and_log_speedup(
+    results: Dict, backend: str, avg_time: float, cpu_time: float
+) -> None:
+    """Calculate speedup relative to CPU and log results.
+
+    Args:
+        results: Results dictionary to update
+        backend: Current backend being benchmarked
+        avg_time: Average execution time for the current backend
+        cpu_time: CPU execution time for comparison
+    """
+    if backend != "cpu" and cpu_time > 0:
+        speedup = cpu_time / avg_time
+        results["speedup"][backend].append(speedup)
+        logging.info(f"  {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)")
+    else:
+        results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
+        logging.info(f"  {backend}: {avg_time:.4f} seconds")
 
 
 def benchmark_cellular_automaton(
@@ -183,39 +256,28 @@ def benchmark_cellular_automaton(
         backends.append("cpu")
 
     # Initialize results dictionary
-    results = {
-        "operation": "cellular_automaton",
-        "grid_sizes": grid_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
+    results = _initialize_benchmark_results(backends, grid_sizes)
 
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking cellular automaton on grid size {size}x{size}...")
 
         # Create a random grid
-        grid = np.random.randint(0, 2, (size, size), dtype=np.int8)
+        grid = rng.integers(0, 2, size=(size, size), dtype=np.int8)
 
         # Track CPU time for speedup calculations
         cpu_time = 0
 
         # Benchmark each backend
-        for backend in backends:
+        for backend_index, backend in enumerate(backends):
             times = []
 
             for _ in range(repetitions):
-                # Benchmark CPU implementation
-                start_time = time.time()
-                if backend == "cpu":
-                    apply_cellular_automaton(grid, iterations=iterations)
-                else:
-                    apply_cellular_automaton_gpu(
-                        grid, backend=backend, iterations=iterations
-                    )
-                end_time = time.time()
-                times.append(end_time - start_time)
+                # Measure execution time
+                execution_time = _measure_execution_time(
+                    _run_cellular_automaton, grid, backend, iterations
+                )
+                times.append(execution_time)
 
             # Record average time
             avg_time = sum(times) / len(times)
@@ -225,18 +287,170 @@ def benchmark_cellular_automaton(
             if backend == "cpu":
                 cpu_time = avg_time
 
-            # Calculate speedup relative to CPU
-            if backend != "cpu" and cpu_time > 0:
-                speedup = cpu_time / avg_time
-                results["speedup"][backend].append(speedup)
-                logging.info(
-                    f"  {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                )
-            else:
-                results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
-                logging.info(f"  {backend}: {avg_time:.4f} seconds")
+            # Calculate speedup relative to CPU and log results
+            _calculate_and_log_speedup(results, backend, avg_time, cpu_time)
 
     return results
+
+
+def _initialize_clustering_results(
+    algorithm_name: str, backends: List[str], data_sizes: List[int]
+) -> Dict:
+    """Initialize results dictionary for clustering benchmarks.
+
+    Args:
+        algorithm_name: Name of the clustering algorithm
+        backends: List of backends to benchmark
+        data_sizes: List of data sizes to test
+
+    Returns:
+        Dict: Initialized results dictionary
+    """
+    return {
+        "operation": f"{algorithm_name}_clustering",
+        "data_sizes": data_sizes,
+        "times": {backend: [] for backend in backends},
+        "memory": {backend: [] for backend in backends},
+        "speedup": {backend: [] for backend in backends},
+    }
+
+
+def _run_kmeans_clustering(data: np.ndarray, n_clusters: int, backend: str) -> None:
+    """Run K-means clustering using the specified backend.
+
+    Args:
+        data: Input data for clustering
+        n_clusters: Number of clusters
+        backend: Backend to use ("cpu" or GPU backend)
+    """
+    if backend == "cpu":
+        # Use sklearn for CPU implementation
+        from sklearn.cluster import KMeans
+
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        _ = kmeans.fit_predict(data)
+        _ = kmeans.cluster_centers_
+    else:
+        # Use GPU implementation
+        _, _ = apply_kmeans_clustering_gpu(
+            data=data, n_clusters=n_clusters, backend=backend
+        )
+
+
+def _run_dbscan_clustering(data: np.ndarray, backend: str) -> None:
+    """Run DBSCAN clustering using the specified backend.
+
+    Args:
+        data: Input data for clustering
+        backend: Backend to use ("cpu" or GPU backend)
+    """
+    if backend == "cpu":
+        # Use sklearn for CPU implementation
+        from sklearn.cluster import DBSCAN
+
+        dbscan = DBSCAN(eps=0.3, min_samples=5)
+        dbscan.fit_predict(data)
+    else:
+        # Use GPU implementation
+        apply_dbscan_clustering_gpu(data=data, eps=0.3, min_samples=5, backend=backend)
+
+
+def _calculate_average_time(times: List[float]) -> float:
+    """Calculate average execution time, filtering out failed runs.
+
+    Args:
+        times: List of execution times, with float("inf") representing failed runs
+
+    Returns:
+        float: Average execution time or float("inf") if all runs failed
+    """
+    if not times or all(t == float("inf") for t in times):
+        return float("inf")
+
+    valid_times = [t for t in times if t != float("inf")]
+    return sum(valid_times) / len(valid_times) if valid_times else float("inf")
+
+
+def _process_benchmark_results(
+    results: Dict, backend: str, avg_time: float, cpu_time: float, algorithm_name: str
+) -> None:
+    """Process benchmark results and calculate speedups.
+
+    Args:
+        results: Results dictionary to update
+        backend: Current backend being benchmarked
+        avg_time: Average execution time for the current backend
+        cpu_time: CPU execution time for comparison
+        algorithm_name: Name of the algorithm (for logging)
+    """
+    results["times"][backend].append(avg_time)
+
+    # Calculate speedup relative to CPU
+    if backend != "cpu" and cpu_time > 0 and avg_time != float("inf"):
+        speedup = cpu_time / avg_time
+        results["speedup"][backend].append(speedup)
+        logging.info(
+            f"  {algorithm_name} {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
+        )
+    else:
+        results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
+        logging.info(f"  {algorithm_name} {backend}: {avg_time:.4f} seconds")
+
+
+def _benchmark_algorithm(
+    data: np.ndarray,
+    backends: List[str],
+    repetitions: int,
+    algorithm_func: Callable,
+    algorithm_name: str,
+    results: Dict,
+    **kwargs,
+) -> float:
+    """Benchmark a clustering algorithm across different backends.
+
+    Args:
+        data: Input data for clustering
+        backends: List of backends to benchmark
+        repetitions: Number of times to repeat each test for averaging
+        algorithm_func: Function to run the clustering algorithm
+        algorithm_name: Name of the algorithm (for logging)
+        results: Results dictionary to update
+        **kwargs: Additional arguments to pass to algorithm_func
+
+    Returns:
+        float: CPU execution time for speedup calculations
+    """
+    cpu_time = 0
+
+    for backend in backends:
+        times = []
+
+        for _ in range(repetitions):
+            try:
+                start_time = time.time()
+                algorithm_func(data, backend=backend, **kwargs)
+                end_time = time.time()
+                times.append(end_time - start_time)
+            except Exception as e:
+                logging.warning(
+                    f"{algorithm_name} clustering failed with backend {backend}: {e}"
+                )
+                times.append(float("inf"))
+
+        avg_time = _calculate_average_time(times)
+
+        if avg_time != float("inf"):
+            # Store CPU time for speedup calculations
+            if backend == "cpu":
+                cpu_time = avg_time
+
+            _process_benchmark_results(
+                results, backend, avg_time, cpu_time, algorithm_name
+            )
+        else:
+            _handle_failed_benchmark(results, backend, f"  {algorithm_name} ")
+
+    return cpu_time
 
 
 def benchmark_clustering(
@@ -258,153 +472,82 @@ def benchmark_clustering(
     if "cpu" not in backends:
         backends.append("cpu")
 
-    # Initialize results dictionary for K-means
-    kmeans_results = {
-        "operation": "kmeans_clustering",
-        "data_sizes": data_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
-
-    # Initialize results dictionary for DBSCAN
-    dbscan_results = {
-        "operation": "dbscan_clustering",
-        "data_sizes": data_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
+    # Initialize results dictionaries
+    kmeans_results = _initialize_clustering_results("kmeans", backends, data_sizes)
+    dbscan_results = _initialize_clustering_results("dbscan", backends, data_sizes)
 
     # Run benchmarks for each data size
     for size in data_sizes:
         logging.info(f"Benchmarking clustering algorithms on data size {size}...")
 
         # Create random data points
-        data = np.random.random((size, 2))
+        data = rng.random((size, 2))
 
-        # Track CPU times for speedup calculations
-        kmeans_cpu_time = 0
-        dbscan_cpu_time = 0
+        # Benchmark K-means clustering
+        _benchmark_algorithm(
+            data=data,
+            backends=backends,
+            repetitions=repetitions,
+            algorithm_func=_run_kmeans_clustering,
+            algorithm_name="K-means",
+            results=kmeans_results,
+            n_clusters=n_clusters,
+        )
 
-        # Benchmark each backend
-        for backend in backends:
-            # K-means benchmarking
-            kmeans_times = []
-            for _ in range(repetitions):
-                try:
-                    start_time = time.time()
+        # Benchmark DBSCAN clustering
+        _benchmark_algorithm(
+            data=data,
+            backends=backends,
+            repetitions=repetitions,
+            algorithm_func=_run_dbscan_clustering,
+            algorithm_name="DBSCAN",
+            results=dbscan_results,
+        )
 
-                    if backend == "cpu":
-                        # Use sklearn or a CPU implementation
-                        from sklearn.cluster import KMeans
-
-                        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-                        labels = kmeans.fit_predict(data)
-                        centroids = kmeans.cluster_centers_
-                    else:
-                        # Use GPU implementation
-                        centroids, labels = apply_kmeans_clustering_gpu(
-                            data=data, n_clusters=n_clusters, backend=backend
-                        )
-
-                    end_time = time.time()
-                    kmeans_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"K-means clustering failed with backend {backend}: {e}"
-                    )
-                    kmeans_times.append(float("inf"))
-
-            # Record average time for K-means
-            if kmeans_times and any(t != float("inf") for t in kmeans_times):
-                valid_times = [t for t in kmeans_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                kmeans_results["times"][backend].append(avg_time)
-
-                # Store CPU time for speedup calculations
-                if backend == "cpu":
-                    kmeans_cpu_time = avg_time
-
-                # Calculate speedup relative to CPU
-                if (
-                    backend != "cpu"
-                    and kmeans_cpu_time > 0
-                    and avg_time != float("inf")
-                ):
-                    speedup = kmeans_cpu_time / avg_time
-                    kmeans_results["speedup"][backend].append(speedup)
-                    logging.info(
-                        f"  K-means {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                    )
-                else:
-                    kmeans_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
-                    logging.info(f"  K-means {backend}: {avg_time:.4f} seconds")
-            else:
-                _speed_handler(kmeans_results, backend, "  K-means ")
-            # DBSCAN benchmarking
-            dbscan_times = []
-            for _ in range(repetitions):
-                try:
-                    start_time = time.time()
-
-                    if backend == "cpu":
-                        # Use sklearn for CPU implementation
-                        from sklearn.cluster import DBSCAN
-
-                        dbscan = DBSCAN(eps=0.3, min_samples=5)
-                        dbscan.fit_predict(data)
-                    else:
-                        # Use GPU implementation
-                        apply_dbscan_clustering_gpu(
-                            data=data, eps=0.3, min_samples=5, backend=backend
-                        )
-
-                    end_time = time.time()
-                    dbscan_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"DBSCAN clustering failed with backend {backend}: {e}"
-                    )
-                    dbscan_times.append(float("inf"))
-
-            # Record average time for DBSCAN
-            if dbscan_times and any(t != float("inf") for t in dbscan_times):
-                valid_times = [t for t in dbscan_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                dbscan_results["times"][backend].append(avg_time)
-
-                # Store CPU time for speedup calculations
-                if backend == "cpu":
-                    dbscan_cpu_time = avg_time
-
-                # Calculate speedup relative to CPU
-                if (
-                    backend != "cpu"
-                    and dbscan_cpu_time > 0
-                    and avg_time != float("inf")
-                ):
-                    speedup = dbscan_cpu_time / avg_time
-                    dbscan_results["speedup"][backend].append(speedup)
-                    logging.info(
-                        f"  DBSCAN {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                    )
-                else:
-                    dbscan_results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
-                    logging.info(f"  DBSCAN {backend}: {avg_time:.4f} seconds")
-            else:
-                _speed_handler(dbscan_results, backend, "  DBSCAN ")
     return {"kmeans": kmeans_results, "dbscan": dbscan_results}
 
 
-def _speed_handler(arg0, backend, arg2):
-    arg0["times"][backend].append(float("inf"))
-    arg0["speedup"][backend].append(0.0)
-    logging.info(f"{arg2}{backend}: Failed")
+def _handle_failed_benchmark(results: Dict, backend: str, algorithm_name: str) -> None:
+    """Handle the case when a benchmark fails.
+
+    Args:
+        results: Results dictionary to update
+        backend: Current backend being benchmarked
+        algorithm_name: Name of the algorithm (for logging)
+    """
+    results["times"][backend].append(float("inf"))
+    results["speedup"][backend].append(0.0)
+    logging.info(f"{algorithm_name}{backend}: Failed")
+
+
+def _run_terrain_generation(size: int, backend: str) -> None:
+    """Run terrain generation using the specified backend.
+
+    Args:
+        size: Grid size for terrain generation
+        backend: Backend to use ("cpu" or GPU backend)
+    """
+    if backend == "cpu":
+        # Use CPU implementation for terrain generation
+        generate_terrain_cpu(size, size)
+    else:
+        # Use GPU implementation for terrain generation
+        generate_terrain_gpu(size, size, backend=backend)
+
+
+def _run_resource_distribution(size: int, backend: str) -> None:
+    """Run resource distribution using the specified backend.
+
+    Args:
+        size: Grid size for resource distribution
+        backend: Backend to use ("cpu" or GPU backend)
+    """
+    if backend == "cpu":
+        # Use CPU implementation for resource distribution
+        generate_resource_distribution_cpu(size, size)
+    else:
+        # Use GPU implementation for resource distribution
+        generate_resource_distribution_gpu(size, size, backend=backend)
 
 
 def benchmark_value_generation(
@@ -427,153 +570,42 @@ def benchmark_value_generation(
     if "cpu" not in backends:
         backends.append("cpu")
 
-    # Initialize results dictionary for terrain generation
-    terrain_results = {
-        "operation": "terrain_generation",
-        "grid_sizes": grid_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
+    # Initialize results dictionaries
+    terrain_results = _initialize_clustering_results("terrain", backends, grid_sizes)
+    resource_results = _initialize_clustering_results("resource", backends, grid_sizes)
 
-    # Initialize results dictionary for resource distribution
-    resource_results = {
-        "operation": "resource_distribution",
-        "grid_sizes": grid_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
+    # Override operation names to be more specific
+    terrain_results["operation"] = "terrain_generation"
+    resource_results["operation"] = "resource_distribution"
 
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking value generation on grid size {size}x{size}...")
 
-        # Track CPU times for speedup calculations
-        terrain_cpu_time = 0
-        resource_cpu_time = 0
+        # Benchmark terrain generation
+        _benchmark_algorithm(
+            data=size,  # Just passing the size as data
+            backends=backends,
+            repetitions=repetitions,
+            algorithm_func=_run_terrain_generation,
+            algorithm_name="Terrain",
+            results=terrain_results,
+        )
 
-        # Benchmark each backend
-        for backend in backends:
-            # Terrain generation benchmarking
-            terrain_times = []
-            for _ in range(repetitions):
-                try:
-                    start_time = time.time()
+        # Benchmark resource distribution
+        _benchmark_algorithm(
+            data=size,  # Just passing the size as data
+            backends=backends,
+            repetitions=repetitions,
+            algorithm_func=_run_resource_distribution,
+            algorithm_name="Resources",
+            results=resource_results,
+        )
 
-                    if backend == "cpu":
-                        # Use CPU implementation for terrain generation
-                        generate_terrain_cpu(size, size)
-                    else:
-                        # Use GPU implementation for terrain generation
-                        generate_terrain_gpu(size, size, backend=backend)
-
-                    end_time = time.time()
-                    terrain_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"Terrain generation failed with backend {backend}: {e}"
-                    )
-                    terrain_times.append(float("inf"))
-
-            # Record average time for terrain generation
-            if terrain_times and any(t != float("inf") for t in terrain_times):
-                valid_times = [t for t in terrain_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                terrain_results["times"][backend].append(avg_time)
-
-                # Store CPU time for speedup calculations
-                if backend == "cpu":
-                    terrain_cpu_time = avg_time
-
-                # Calculate speedup relative to CPU
-                if (
-                    backend != "cpu"
-                    and terrain_cpu_time > 0
-                    and avg_time != float("inf")
-                ):
-                    speedup = terrain_cpu_time / avg_time
-                    terrain_results["speedup"][backend].append(speedup)
-                    logging.info(
-                        f"  Terrain {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                    )
-                else:
-                    terrain_results["speedup"][backend].append(
-                        1.0
-                    )  # CPU speedup is 1.0
-                    logging.info(f"  Terrain {backend}: {avg_time:.4f} seconds")
-            else:
-                _handle_benchmark_failure(terrain_results, backend, "  Terrain ")
-            # Resource distribution benchmarking
-            resource_times = []
-            for _ in range(repetitions):
-                try:
-                    start_time = time.time()
-
-                    if backend == "cpu":
-                        # Use CPU implementation for resource distribution
-                        generate_resource_distribution_cpu(size, size)
-                    else:
-                        # Use GPU implementation for resource distribution
-                        generate_resource_distribution_gpu(size, size, backend=backend)
-
-                    end_time = time.time()
-                    resource_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"Resource distribution failed with backend {backend}: {e}"
-                    )
-                    resource_times.append(float("inf"))
-
-            # Record average time for resource distribution
-            if resource_times and any(t != float("inf") for t in resource_times):
-                valid_times = [t for t in resource_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                resource_results["times"][backend].append(avg_time)
-
-                # Store CPU time for speedup calculations
-                if backend == "cpu":
-                    resource_cpu_time = avg_time
-
-                # Calculate speedup relative to CPU
-                if (
-                    backend != "cpu"
-                    and resource_cpu_time > 0
-                    and avg_time != float("inf")
-                ):
-                    speedup = resource_cpu_time / avg_time
-                    resource_results["speedup"][backend].append(speedup)
-                    logging.info(
-                        f"  Resources {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                    )
-                else:
-                    resource_results["speedup"][backend].append(
-                        1.0
-                    )  # CPU speedup is 1.0
-                    logging.info(f"  Resources {backend}: {avg_time:.4f} seconds")
-            else:
-                _handle_benchmark_failure(resource_results, backend, "  Resources ")
     return {"terrain": terrain_results, "resources": resource_results}
 
 
-def _handle_benchmark_failure(results_dict, backend, operation_prefix):
-    """Handle benchmark failure by setting appropriate values in the results dictionary.
-
-    Args:
-        results_dict: Dictionary containing benchmark results
-        backend: The backend that failed (e.g., 'cuda', 'cupy')
-        operation_prefix: Prefix string for logging the operation type
-
-    Returns:
-        None: Updates the results_dict in-place
-    """
-    results_dict["times"][backend].append(float("inf"))
-    results_dict["speedup"][backend].append(0.0)
-    logging.info(f"{operation_prefix}{backend}: Failed")
+# This function is replaced by _handle_failed_benchmark
 
 
 def benchmark_memory_transfer(
@@ -599,141 +631,180 @@ def benchmark_memory_transfer(
         logging.warning("No GPU backends available for memory transfer benchmark")
         return {}
 
-    # Initialize results dictionary for host to device transfer
-    h2d_results = {
-        "operation": "host_to_device_transfer",
-        "data_sizes": data_sizes,
-        "times": {backend: [] for backend in backends},
-        "bandwidth": {backend: [] for backend in backends},
-    }
-
-    # Initialize results dictionary for device to host transfer
-    d2h_results = {
-        "operation": "device_to_host_transfer",
-        "data_sizes": data_sizes,
-        "times": {backend: [] for backend in backends},
-        "bandwidth": {backend: [] for backend in backends},
-    }
+    # Initialize results dictionaries
+    h2d_results = _initialize_bandwidth_results(
+        "host_to_device_transfer", backends, data_sizes
+    )
+    d2h_results = _initialize_bandwidth_results(
+        "device_to_host_transfer", backends, data_sizes
+    )
 
     # Run benchmarks for each data size
     for size in data_sizes:
         logging.info(f"Benchmarking memory transfer for data size {size} elements...")
 
         # Create random data array
-        data = np.random.random(size).astype(np.float32)
+        data = rng.random(size).astype(np.float32)
         data_size_bytes = data.nbytes
 
         # Benchmark each backend
         for backend in backends:
             # Host to device transfer benchmarking
-            h2d_times = []
-            for _ in range(repetitions):
-                try:
-                    if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
-                        # Ensure we're starting from CPU memory
-                        cpu_data = np.array(data)
-                        # Time the transfer
-                        start_time = time.time()
-                        gpu_data = cp.array(cpu_data)
-                        # Force synchronization to ensure transfer is complete
-                        cp.cuda.stream.get_current_stream().synchronize()
-                        end_time = time.time()
-                    elif backend == "mps" and TORCH_AVAILABLE:
-                        # Ensure we're starting from CPU memory
-                        cpu_data = torch.tensor(data)
-                        # Time the transfer
-                        start_time = time.time()
-                        gpu_data = cpu_data.to("mps")
-                        # Force synchronization
-                        torch.mps.synchronize()
-                        end_time = time.time()
-                    else:
-                        # Unknown backend
-                        raise ValueError(
-                            f"Unsupported backend for memory transfer: {backend}"
-                        )
+            h2d_times = [
+                _run_host_to_device_transfer(data, backend) for _ in range(repetitions)
+            ]
+            _process_bandwidth_results(
+                h2d_results, backend, h2d_times, data_size_bytes, "H2D"
+            )
 
-                    h2d_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"Host to device transfer failed with backend {backend}: {e}"
-                    )
-                    h2d_times.append(float("inf"))
-
-            # Record average time and calculate bandwidth for host to device
-            if h2d_times and any(t != float("inf") for t in h2d_times):
-                valid_times = [t for t in h2d_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                h2d_results["times"][backend].append(avg_time)
-
-                # Calculate bandwidth in GB/s
-                if avg_time > 0:
-                    bandwidth = (data_size_bytes / (1024**3)) / avg_time  # GB/s
-                    h2d_results["bandwidth"][backend].append(bandwidth)
-                    logging.info(
-                        f"  H2D {backend}: {avg_time:.6f} seconds ({bandwidth:.2f} GB/s)"
-                    )
-                else:
-                    h2d_results["bandwidth"][backend].append(0.0)
-                    logging.info(f"  H2D {backend}: {avg_time:.6f} seconds")
-            else:
-                _handle_bandwidth_benchmark_failure(h2d_results, backend, "  H2D ")
             # Device to host transfer benchmarking
-            d2h_times = []
-            for _ in range(repetitions):
-                try:
-                    if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
-                        # Create data on GPU
-                        gpu_data = cp.random.random(size).astype(cp.float32)
-                        # Time the transfer
-                        start_time = time.time()
-                        cpu_data = cp.asnumpy(gpu_data)
-                        end_time = time.time()
-                    elif backend == "mps" and TORCH_AVAILABLE:
-                        # Create data on GPU
-                        gpu_data = torch.rand(size, device="mps")
-                        # Time the transfer
-                        start_time = time.time()
-                        cpu_data = gpu_data.to("cpu")
-                        # Force synchronization
-                        torch.mps.synchronize()
-                        end_time = time.time()
-                    else:
-                        # Unknown backend
-                        raise ValueError(
-                            f"Unsupported backend for memory transfer: {backend}"
-                        )
+            d2h_times = [
+                _run_device_to_host_transfer(size, backend) for _ in range(repetitions)
+            ]
+            _process_bandwidth_results(
+                d2h_results, backend, d2h_times, data_size_bytes, "D2H"
+            )
 
-                    d2h_times.append(end_time - start_time)
-                except Exception as e:
-                    logging.warning(
-                        f"Device to host transfer failed with backend {backend}: {e}"
-                    )
-                    d2h_times.append(float("inf"))
-
-            # Record average time and calculate bandwidth for device to host
-            if d2h_times and any(t != float("inf") for t in d2h_times):
-                valid_times = [t for t in d2h_times if t != float("inf")]
-                avg_time = (
-                    sum(valid_times) / len(valid_times) if valid_times else float("inf")
-                )
-                d2h_results["times"][backend].append(avg_time)
-
-                # Calculate bandwidth in GB/s
-                if avg_time > 0:
-                    bandwidth = (data_size_bytes / (1024**3)) / avg_time  # GB/s
-                    d2h_results["bandwidth"][backend].append(bandwidth)
-                    logging.info(
-                        f"  D2H {backend}: {avg_time:.6f} seconds ({bandwidth:.2f} GB/s)"
-                    )
-                else:
-                    d2h_results["bandwidth"][backend].append(0.0)
-                    logging.info(f"  D2H {backend}: {avg_time:.6f} seconds")
-            else:
-                _handle_bandwidth_benchmark_failure(d2h_results, backend, "  D2H ")
     return {"host_to_device": h2d_results, "device_to_host": d2h_results}
+
+
+def _initialize_bandwidth_results(
+    operation_name: str, backends: List[str], data_sizes: List[int]
+) -> Dict:
+    """Initialize results dictionary for bandwidth benchmarks.
+
+    Args:
+        operation_name: Name of the transfer operation
+        backends: List of backends to benchmark
+        data_sizes: List of data sizes to test
+
+    Returns:
+        Dict: Initialized results dictionary
+    """
+    return {
+        "operation": operation_name,
+        "data_sizes": data_sizes,
+        "times": {backend: [] for backend in backends},
+        "bandwidth": {backend: [] for backend in backends},
+    }
+
+
+def _run_host_to_device_transfer(data: np.ndarray, backend: str) -> float:
+    """Run host to device memory transfer using the specified backend.
+
+    Args:
+        data: Input data to transfer
+        backend: Backend to use ("cuda", "cupy", or "mps")
+
+    Returns:
+        float: Transfer time in seconds or float("inf") if failed
+    """
+    try:
+        if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
+            # Ensure we're starting from CPU memory
+            cpu_data = np.array(data)
+            # Time the transfer
+            start_time = time.time()
+            _ = cp.array(
+                cpu_data
+            )  # We don't need to store the result, just measure time
+            # Force synchronization to ensure transfer is complete
+            cp.cuda.stream.get_current_stream().synchronize()
+            end_time = time.time()
+        elif backend == "mps" and TORCH_AVAILABLE:
+            # Ensure we're starting from CPU memory
+            cpu_data = torch.tensor(data)
+            # Time the transfer
+            start_time = time.time()
+            _ = cpu_data.to(
+                "mps"
+            )  # We don't need to store the result, just measure time
+            # Force synchronization
+            torch.mps.synchronize()
+            end_time = time.time()
+        else:
+            # Unknown backend
+            raise ValueError(f"Unsupported backend for memory transfer: {backend}")
+
+        return end_time - start_time
+    except Exception as e:
+        logging.warning(f"Host to device transfer failed with backend {backend}: {e}")
+        return float("inf")
+
+
+def _run_device_to_host_transfer(size: int, backend: str) -> float:
+    """Run device to host memory transfer using the specified backend.
+
+    Args:
+        size: Size of data to transfer
+        backend: Backend to use ("cuda", "cupy", or "mps")
+
+    Returns:
+        float: Transfer time in seconds or float("inf") if failed
+    """
+    try:
+        if backend in ["cuda", "cupy"] and CUPY_AVAILABLE:
+            # Create data on GPU
+            gpu_data = cp.random.random(size).astype(cp.float32)
+            # Time the transfer
+            start_time = time.time()
+            _ = cp.asnumpy(
+                gpu_data
+            )  # We don't need to store the result, just measure time
+            end_time = time.time()
+        elif backend == "mps" and TORCH_AVAILABLE:
+            # Create data on GPU
+            gpu_data = torch.rand(size, device="mps")
+            # Time the transfer
+            start_time = time.time()
+            _ = gpu_data.to(
+                "cpu"
+            )  # We don't need to store the result, just measure time
+            # Force synchronization
+            torch.mps.synchronize()
+            end_time = time.time()
+        else:
+            # Unknown backend
+            raise ValueError(f"Unsupported backend for memory transfer: {backend}")
+
+        return end_time - start_time
+    except Exception as e:
+        logging.warning(f"Device to host transfer failed with backend {backend}: {e}")
+        return float("inf")
+
+
+def _process_bandwidth_results(
+    results: Dict,
+    backend: str,
+    times: List[float],
+    data_size_bytes: int,
+    direction_prefix: str,
+) -> None:
+    """Process bandwidth benchmark results and calculate bandwidth.
+
+    Args:
+        results: Results dictionary to update
+        backend: Current backend being benchmarked
+        times: List of execution times
+        data_size_bytes: Size of data in bytes
+        direction_prefix: Prefix string for logging the direction (H2D or D2H)
+    """
+    if times and any(t != float("inf") for t in times):
+        avg_time = _calculate_average_time(times)
+        results["times"][backend].append(avg_time)
+
+        # Calculate bandwidth in GB/s
+        if avg_time > 0:
+            bandwidth = (data_size_bytes / (1024**3)) / avg_time  # GB/s
+            results["bandwidth"][backend].append(bandwidth)
+            logging.info(
+                f"  {direction_prefix} {backend}: {avg_time:.6f} seconds ({bandwidth:.2f} GB/s)"
+            )
+        else:
+            results["bandwidth"][backend].append(0.0)
+            logging.info(f"  {direction_prefix} {backend}: {avg_time:.6f} seconds")
+    else:
+        _handle_bandwidth_benchmark_failure(results, backend, f"  {direction_prefix} ")
 
 
 def _handle_bandwidth_benchmark_failure(results_dict, backend, operation_prefix):
@@ -1059,6 +1130,80 @@ def run_all_benchmarks(
     logging.info(f"Results saved to {output_dir}")
 
 
+def _initialize_noise_benchmark_results(backends, grid_sizes):
+    """Initialize the results dictionary for noise benchmark.
+
+    Args:
+        backends: List of available backends
+        grid_sizes: List of grid sizes to test
+
+    Returns:
+        Dict: Initialized results dictionary
+    """
+    return {
+        "operation": "noise_generation",
+        "grid_sizes": grid_sizes,
+        "times": {backend: [] for backend in backends},
+        "memory": {backend: [] for backend in backends},
+        "speedup": {backend: [] for backend in backends},
+    }
+
+
+def _run_noise_benchmark_iteration(backend, size, octaves):
+    """Run a single noise benchmark iteration.
+
+    Args:
+        backend: The backend to use (cpu or gpu backend name)
+        size: Grid size
+        octaves: Number of octaves for noise generation
+
+    Returns:
+        float: Time taken for the operation
+    """
+    start_time = time.time()
+
+    if backend == "cpu":
+        # Use BaseGenerator with GPU disabled for CPU benchmark
+        generator = BaseGenerator(width=size, height=size, use_gpu=False)
+        generator.generate_noise_layer(scale=0.1)
+    else:
+        # Use apply_noise_generation_gpu directly
+        apply_noise_generation_gpu(
+            width=size,
+            height=size,
+            scale=0.1,
+            octaves=octaves,
+            backend=backend,
+        )
+
+    return time.time() - start_time
+
+
+def _record_benchmark_results(results, backend, avg_time, cpu_time):
+    """Record benchmark results and calculate speedup.
+
+    Args:
+        results: Results dictionary
+        backend: Current backend
+        avg_time: Average time for the current backend
+        cpu_time: CPU time for speedup calculation
+
+    Returns:
+        float: CPU time (unchanged if backend is not CPU, updated if it is)
+    """
+    # Calculate and log speedup relative to CPU
+    if backend != "cpu" and cpu_time > 0:
+        speedup = cpu_time / avg_time
+        results["speedup"][backend].append(speedup)
+        logging.info(f"  {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)")
+    else:
+        results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
+        logging.info(f"  {backend}: {avg_time:.4f} seconds")
+
+    # Return updated CPU time if this is the CPU backend, otherwise return unchanged
+    return avg_time if backend == "cpu" else cpu_time
+
+
 def benchmark_noise_generation(
     grid_sizes: List[int], octaves: int = 4, repetitions: int = 3
 ) -> Dict[str, Dict[str, List[float]]]:
@@ -1079,62 +1224,26 @@ def benchmark_noise_generation(
         backends.append("cpu")
 
     # Initialize results dictionary
-    results = {
-        "operation": "noise_generation",
-        "grid_sizes": grid_sizes,
-        "times": {backend: [] for backend in backends},
-        "memory": {backend: [] for backend in backends},
-        "speedup": {backend: [] for backend in backends},
-    }
+    results = _initialize_noise_benchmark_results(backends, grid_sizes)
 
     # Run benchmarks for each grid size
     for size in grid_sizes:
         logging.info(f"Benchmarking noise generation on grid size {size}x{size}...")
-
-        # Track CPU time for speedup calculations
-        cpu_time = 0
+        cpu_time = 0  # Track CPU time for speedup calculations
 
         # Benchmark each backend
         for backend in backends:
-            times = []
-
-            for _ in range(repetitions):
-                start_time = time.time()
-
-                if backend == "cpu":
-                    # Use BaseGenerator with GPU disabled for CPU benchmark
-                    generator = BaseGenerator(width=size, height=size, use_gpu=False)
-                    generator.generate_noise_layer(scale=0.1)
-                else:
-                    # Use apply_noise_generation_gpu directly
-                    apply_noise_generation_gpu(
-                        width=size,
-                        height=size,
-                        scale=0.1,
-                        octaves=octaves,
-                        backend=backend,
-                    )
-
-                end_time = time.time()
-                times.append(end_time - start_time)
+            # Run multiple iterations and collect times
+            times = [
+                _run_noise_benchmark_iteration(backend, size, octaves)
+                for _ in range(repetitions)
+            ]
 
             # Record average time
             avg_time = sum(times) / len(times)
             results["times"][backend].append(avg_time)
 
-            # Store CPU time for speedup calculations
-            if backend == "cpu":
-                cpu_time = avg_time
-
-            # Calculate speedup relative to CPU
-            if backend != "cpu" and cpu_time > 0:
-                speedup = cpu_time / avg_time
-                results["speedup"][backend].append(speedup)
-                logging.info(
-                    f"  {backend}: {avg_time:.4f} seconds (speedup: {speedup:.2f}x)"
-                )
-            else:
-                results["speedup"][backend].append(1.0)  # CPU speedup is 1.0
-                logging.info(f"  {backend}: {avg_time:.4f} seconds")
+            # Record results and update CPU time if needed
+            cpu_time = _record_benchmark_results(results, backend, avg_time, cpu_time)
 
     return results

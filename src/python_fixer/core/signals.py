@@ -10,14 +10,14 @@ This module provides a robust signal handling system that supports:
 
 # Standard library imports
 import logging
+import signal
 import sys
 
-# Third-party library imports
-
 # Local application imports
-from contextlib import contextmanager, ExitStack
-from typing import Callable, Dict, List, Optional, Set, NoReturn
-import signal
+from contextlib import ExitStack, contextmanager
+from typing import Callable, Dict, List, NoReturn, Optional, Set
+
+# Third-party library imports
 
 
 class SignalManager:

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # Standard library imports
-import logging
-import random
+from pathlib import Path
 
 # Third-party library imports
-import numpy as np
 
 # Local application imports
 from header_map_parser import HeaderMapParser
-from pathlib import Path
 
 
 def main():

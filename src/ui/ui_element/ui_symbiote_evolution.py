@@ -2,18 +2,15 @@
 
 # Third-party library imports
 
-# Local application imports
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_base import UIElement
-from typing import List
 import contextlib
+from typing import List
+
 import pygame
 
+from config import COLOR_BG, COLOR_TEXT
 
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+# Local application imports
+from src.ui.ui_base.ascii_base import UIElement, UIStyle
 
 
 class SymbioteEvolutionMonitor(UIElement):
@@ -56,16 +53,21 @@ class SymbioteEvolutionMonitor(UIElement):
         super().draw(stdscr)
 
         # Draw title
-        with contextlib.suppress(curses.error):
+        with contextlib.suppress(pygame.error):
             stdscr.addstr(
                 self.y + 1,
                 self.x + 2,
                 f"SYMBIOTE EVOLUTION - GEN {self.generation}",
-                curses.A_BOLD,
+                pygame.font.Font(None, 24).render(
+                    f"SYMBIOTE EVOLUTION - GEN {self.generation}",
+                    True,
+                    COLOR_TEXT,
+                    COLOR_BG,
+                ),
             )
         # Draw evolution stage and pattern
         stage_text = f"Stage: {self.evolution_stage}/5"
-        with contextlib.suppress(curses.error):
+        with contextlib.suppress(pygame.error):
             stdscr.addstr(self.y + 3, self.x + 2, stage_text)
 
             pattern = self.symbiote_patterns[min(5, self.evolution_stage)]
@@ -75,7 +77,7 @@ class SymbioteEvolutionMonitor(UIElement):
             current_pattern = pattern[pattern_index] * 3
             stdscr.addstr(self.y + 3, self.x + 2 + len(stage_text) + 2, current_pattern)
         # Draw fitness trend
-        with contextlib.suppress(curses.error):
+        with contextlib.suppress(pygame.error):
             stdscr.addstr(self.y + 5, self.x + 2, "Fitness trend:")
 
             # Calculate trend line using simple bars
@@ -86,12 +88,12 @@ class SymbioteEvolutionMonitor(UIElement):
                     if self.x + 2 + i < self.x + self.width - 1:
                         stdscr.addstr(self.y + 10 - j, self.x + 2 + i, char)
         # Draw mutation rate
-        with contextlib.suppress(curses.error):
+        with contextlib.suppress(pygame.error):
             stdscr.addstr(
                 self.y + 12, self.x + 2, f"Mutation rate: {self.mutation_rate:.2f}"
             )
         # Draw generation count
-        with contextlib.suppress(curses.error):
+        with contextlib.suppress(pygame.error):
             stdscr.addstr(self.y + 14, self.x + 2, f"Generation: {self.generation}")
 
     def update_evolution(self, fitness: float):

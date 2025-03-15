@@ -12,30 +12,29 @@ import logging
 import math
 import random
 import time
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from generators.base_generator import BaseGenerator
-from typing import Any, Dict, List, Optional, Tuple
 from utils.dependency_injection import inject
+from utils.logging_setup import (
+    log_exception,
+    log_performance_end,
+    log_performance_start,
+)
 from utils.noise_generator import NoiseGenerator
 from utils.pattern_generator import (
-    generate_spiral_pattern,
-    generate_ring_pattern,
-    generate_gradient_pattern,
-    generate_void_pattern,
-    apply_weighted_patterns,
-    generate_value_distribution,
     add_value_clusters,
+    apply_weighted_patterns,
+    generate_gradient_pattern,
     generate_rare_resource_distribution,
-)
-
-from utils.logging_setup import (
-    log_performance_start,
-    log_performance_end,
-    log_exception,
+    generate_ring_pattern,
+    generate_spiral_pattern,
+    generate_value_distribution,
+    generate_void_pattern,
 )
 
 # Import AsteroidField for create_asteroid_field method

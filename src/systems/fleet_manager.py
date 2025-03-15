@@ -5,18 +5,20 @@ This module provides functionality for creating and managing fleets of ships,
 including formation management, movement coordination, and fleet-wide operations.
 """
 
+import heapq
+
 # Standard library imports
 import logging
 import math
 import random
-
-# Third-party library imports
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 # Local application imports
 from config import GAME_MAP_SIZE
 from entities.enemy_ship import EnemyShip
-from typing import Dict, List, Tuple, Any, Optional, Set, Callable
-import heapq
+
+# Third-party library imports
+
 
 # Fleet formation types
 FLEET_FORMATIONS = {
@@ -271,10 +273,7 @@ class Fleet:
             # Calculate position in line
             # If odd number of ships, flagship is in the middle
             # If even number, flagship is slightly to the left of middle
-            if ship_count % 2 == 1:  # Odd number of ships
-                offset = i - ship_count // 2
-                offset = i - ship_count // 2
-            elif i < ship_count // 2:
+            if ship_count % 2 == 1 or i < ship_count // 2:  # Odd number of ships
                 offset = i - ship_count // 2
             else:
                 offset = i - ship_count // 2 + 1
@@ -567,7 +566,7 @@ class Fleet:
         }
 
         # Sort ships by role priority
-        sorted(
+        self.ships = sorted(
             self.ships,
             key=lambda s: role_priority.get(getattr(s, "role", "support"), 9),
         )
@@ -1057,10 +1056,29 @@ class Fleet:
         if self.position == destination:
             return True
 
-        # A* pathfinding implementation
+        # Initialize A* algorithm data structures
         start = self.position
         goal = destination
+        open_set, came_from, g_score, f_score, closed_set = (
+            self._initialize_pathfinding(start, goal)
+        )
 
+        # Main pathfinding loop
+        return self._execute_pathfinding_loop(
+            open_set, closed_set, came_from, g_score, f_score, goal, obstacle_check
+        )
+
+    def _initialize_pathfinding(self, start: Tuple[int, int], goal: Tuple[int, int]):
+        """
+        Initialize data structures for A* pathfinding.
+
+        Args:
+            start: Starting position
+            goal: Goal position
+
+        Returns:
+            Tuple containing open_set, came_from, g_score, f_score, and closed_set
+        """
         # Priority queue for open set
         open_set = []
         heapq.heappush(open_set, (0, start))  # (f_score, position)
@@ -1077,7 +1095,33 @@ class Fleet:
         # Set of visited nodes
         closed_set: Set[Tuple[int, int]] = set()
 
-        # Main loop
+        return open_set, came_from, g_score, f_score, closed_set
+
+    def _execute_pathfinding_loop(
+        self,
+        open_set,
+        closed_set,
+        came_from,
+        g_score,
+        f_score,
+        goal: Tuple[int, int],
+        obstacle_check: Callable[[Tuple[int, int]], bool],
+    ) -> bool:
+        """
+        Execute the main A* pathfinding loop.
+
+        Args:
+            open_set: Priority queue of nodes to evaluate
+            closed_set: Set of already evaluated nodes
+            came_from: Dictionary mapping each node to its predecessor
+            g_score: Dictionary of costs from start to each node
+            f_score: Dictionary of estimated total costs
+            goal: Target position
+            obstacle_check: Function to check if a position has an obstacle
+
+        Returns:
+            bool: True if path found, False otherwise
+        """
         while open_set:
             # Get node with lowest f_score
             _, current = heapq.heappop(open_set)
@@ -1090,33 +1134,107 @@ class Fleet:
             # Add current to closed set
             closed_set.add(current)
 
-            # Check all neighbors
-            for neighbor in self._get_neighbors(current):
-                # Skip if neighbor is an obstacle or already evaluated
-                if neighbor in closed_set or obstacle_check(neighbor):
-                    continue
-
-                # Calculate tentative g_score
-                tentative_g_score = g_score.get(current, float("inf")) + self._distance(
-                    current, neighbor
-                )
-
-                # If this path is better than any previous one
-                if tentative_g_score < g_score.get(neighbor, float("inf")):
-                    # Record this path
-                    came_from[neighbor] = current
-                    g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + self._heuristic(
-                        neighbor, goal
-                    )
-
-                    # Add to open set if not already there
-                    if neighbor not in [pos for _, pos in open_set]:
-                        heapq.heappush(open_set, (f_score[neighbor], neighbor))
+            # Process all neighbors
+            if not self._process_neighbors(
+                current,
+                goal,
+                open_set,
+                closed_set,
+                came_from,
+                g_score,
+                f_score,
+                obstacle_check,
+            ):
+                continue
 
         # No path found
-        logging.warning(f"Fleet {self.fleet_id} could not find path to {destination}")
+        logging.warning(f"Fleet {self.fleet_id} could not find path to {goal}")
         return False
+
+    def _process_neighbors(
+        self,
+        current: Tuple[int, int],
+        goal: Tuple[int, int],
+        open_set,
+        closed_set,
+        came_from,
+        g_score,
+        f_score,
+        obstacle_check: Callable[[Tuple[int, int]], bool],
+    ) -> bool:
+        """
+        Process all neighbors of the current node in pathfinding.
+
+        Args:
+            current: Current position being evaluated
+            goal: Target position
+            open_set: Priority queue of nodes to evaluate
+            closed_set: Set of already evaluated nodes
+            came_from: Dictionary mapping each node to its predecessor
+            g_score: Dictionary of costs from start to each node
+            f_score: Dictionary of estimated total costs
+            obstacle_check: Function to check if a position has an obstacle
+
+        Returns:
+            bool: True if processing should continue, False otherwise
+        """
+        for neighbor in self._get_neighbors(current):
+            # Skip if neighbor is an obstacle or already evaluated
+            if neighbor in closed_set or obstacle_check(neighbor):
+                continue
+
+            # Calculate tentative g_score
+            tentative_g_score = g_score.get(current, float("inf")) + self._distance(
+                current, neighbor
+            )
+
+            # If this path is better than any previous one
+            if tentative_g_score < g_score.get(neighbor, float("inf")):
+                self._update_path_data(
+                    neighbor,
+                    current,
+                    tentative_g_score,
+                    goal,
+                    came_from,
+                    g_score,
+                    f_score,
+                    open_set,
+                )
+
+        return True
+
+    def _update_path_data(
+        self,
+        neighbor: Tuple[int, int],
+        current: Tuple[int, int],
+        tentative_g_score: float,
+        goal: Tuple[int, int],
+        came_from,
+        g_score,
+        f_score,
+        open_set,
+    ) -> None:
+        """
+        Update pathfinding data for a better path.
+
+        Args:
+            neighbor: Neighbor node being evaluated
+            current: Current node
+            tentative_g_score: New g_score for neighbor
+            goal: Target position
+            came_from: Dictionary mapping each node to its predecessor
+            g_score: Dictionary of costs from start to each node
+            f_score: Dictionary of estimated total costs
+            open_set: Priority queue of nodes to evaluate
+        """
+        # Record this path
+        came_from[neighbor] = current
+        g_score[neighbor] = tentative_g_score
+        f_score[neighbor] = tentative_g_score + self._heuristic(neighbor, goal)
+
+        # Add to open set if not already there
+        if neighbor not in [pos for _, pos in open_set]:
+            heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
     def _heuristic(self, a: Tuple[int, int], b: Tuple[int, int]) -> float:
         """

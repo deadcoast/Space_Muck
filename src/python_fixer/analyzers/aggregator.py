@@ -1,18 +1,18 @@
 # Standard library imports
-from collections import defaultdict
-from datetime import datetime, timezone
-from functools import wraps
+import importlib.util
 import inspect
 import logging as _logging
+from collections import defaultdict
+
+# Local application imports
+from contextlib import suppress
+from datetime import datetime, timezone
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Dict, List
 
 # Third-party library imports
 import numpy as np
 import pandas as pd
-
-# Local application imports
-from contextlib import suppress
-from typing import Any, Dict, List, TYPE_CHECKING
-import importlib.util
 
 # Check for optional dependencies
 VARIANT_LOGGERS_AVAILABLE = importlib.util.find_spec("variant_loggers") is not None

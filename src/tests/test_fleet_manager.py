@@ -7,13 +7,14 @@ Unit tests for the Fleet Manager class.
 import math
 import os
 import sys
-
-# Third-party library imports
+import unittest
+from unittest.mock import MagicMock
 
 # Local application imports
 from systems.fleet_manager import Fleet  # noqa: E402
-from unittest.mock import MagicMock
-import unittest
+
+# Third-party library imports
+
 
 # No typing imports needed for this file
 
@@ -157,86 +158,151 @@ class TestFleetManager(unittest.TestCase):
 
     def test_ship_positioning(self):
         """Test that ships are positioned correctly based on formation."""
+        # Setup mock and run tests
+        original_update_positions = self._setup_position_mock()
+
+        try:
+            # Test line formation
+            self._test_line_formation()
+
+            # Test column formation
+            self._test_column_formation()
+        finally:
+            # Restore the original method
+            self.fleet._update_ship_positions = original_update_positions
+
+    def _setup_position_mock(self):
+        """Set up mock for _update_ship_positions method."""
 
         # Mock the _update_ship_positions method to actually update ship positions
         def mock_update_positions():
             # Update ship positions based on formation
-            if self.fleet.formation == "line":
-                # Position ships in a horizontal line
-                for i, ship in enumerate(self.fleet.ships):
-                    if ship != self.fleet.flagship:
-                        ship.position = (50 + (i * 10), 50)  # Spread horizontally
-            elif self.fleet.formation == "column":
-                # Position ships in a vertical column
-                for i, ship in enumerate(self.fleet.ships):
-                    if ship != self.fleet.flagship:
-                        ship.position = (50, 50 + (i * 10))  # Spread vertically
+            self._position_ships_by_formation()
 
         # Replace the method with our mock
         original_update_positions = self.fleet._update_ship_positions
         self.fleet._update_ship_positions = mock_update_positions
+        return original_update_positions
 
-        # Test line formation
+    def _position_ships_by_formation(self):
+        """Position ships according to the current formation."""
+        formation_handlers = {
+            "line": self._position_ships_in_line,
+            "column": self._position_ships_in_column,
+        }
+
+        if handler := formation_handlers.get(self.fleet.formation):
+            handler()
+
+    def _position_ships_in_line(self):
+        """Position ships in a horizontal line formation."""
+        self._position_ships_along_axis(is_horizontal=True)
+
+    def _position_ships_in_column(self):
+        """Position ships in a vertical column formation."""
+        self._position_ships_along_axis(is_horizontal=False)
+
+    def _position_ships_along_axis(self, is_horizontal):
+        """Position ships along either horizontal or vertical axis.
+
+        Args:
+            is_horizontal: If True, position horizontally; otherwise, vertically
+        """
+        for i, ship in enumerate(self.fleet.ships):
+            if ship != self.fleet.flagship:
+                ship.position = (
+                    (50 + (i * 10), 50) if is_horizontal else (50, 50 + (i * 10))
+                )
+
+    def _test_line_formation(self):
+        """Test ships in line formation."""
         self.fleet.set_formation("line")
         self.fleet._update_ship_positions()
 
-        # In line formation, ships should be positioned horizontally
-        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
-        if self.fleet.flagship:  # Type guard
-            self.assertIsNotNone(
-                self.fleet.flagship.position, "Flagship position should not be None"
-            )
-            if self.fleet.flagship.position:  # Type guard
-                flagship_x = self.fleet.flagship.position[0]
-                flagship_y = self.fleet.flagship.position[1]
+        # Get flagship position
+        flagship_position = self._get_flagship_position()
+        if not flagship_position:
+            return
 
-                # Check that non-flagship ships are positioned horizontally
-                for ship in self.fleet.ships:
-                    if ship != self.fleet.flagship:
-                        self.assertIsNotNone(
-                            ship.position,
-                            f"Ship {ship.entity_id} position should not be None",
-                        )
-                        if ship.position:  # Type guard
-                            # Y coordinate should be the same as flagship
-                            self.assertEqual(ship.position[1], flagship_y)
-                            # X coordinate should be different
-                            self.assertNotEqual(ship.position[0], flagship_x)
+        flagship_x, flagship_y = flagship_position
 
-        # Test column formation
+        # Check that non-flagship ships are positioned horizontally
+        for ship in self.fleet.ships:
+            if ship != self.fleet.flagship:
+                self._verify_ship_position(
+                    ship,
+                    expected_same_coordinate=("y", flagship_y),
+                    expected_different_coordinate=("x", flagship_x),
+                )
+
+    def _test_column_formation(self):
+        """Test ships in column formation."""
         self.fleet.set_formation("column")
         self.fleet._update_ship_positions()
 
-        # Initialize flagship position variables to default values
-        flagship_x = 0
-        flagship_y = 0
+        # Get flagship position
+        flagship_position = self._get_flagship_position()
+        if not flagship_position:
+            return
 
-        # In column formation, ships should be positioned vertically
-        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
-        if self.fleet.flagship:  # Type guard
-            self.assertIsNotNone(
-                self.fleet.flagship.position, "Flagship position should not be None"
-            )
-            if self.fleet.flagship.position:  # Type guard
-                flagship_x = self.fleet.flagship.position[0]
-                flagship_y = self.fleet.flagship.position[1]
+        flagship_x, flagship_y = flagship_position
 
         # Check that non-flagship ships are positioned vertically
         for ship in self.fleet.ships:
             if ship != self.fleet.flagship:
-                self.assertIsNotNone(ship.position, "Ship position should not be None")
-                if (
-                    ship.position
-                    and "flagship_x" in locals()
-                    and "flagship_y" in locals()
-                ):  # Type guard
-                    # X coordinate should be the same as flagship
-                    self.assertEqual(ship.position[0], flagship_x)
-                    # Y coordinate should be different
-                    self.assertNotEqual(ship.position[1], flagship_y)
+                self._verify_ship_position(
+                    ship,
+                    expected_same_coordinate=("x", flagship_x),
+                    expected_different_coordinate=("y", flagship_y),
+                )
 
-        # Restore the original method
-        self.fleet._update_ship_positions = original_update_positions
+    def _get_flagship_position(self):
+        """Get the flagship position if available."""
+        self.assertIsNotNone(self.fleet.flagship, "Fleet flagship should not be None")
+        if not self.fleet.flagship:
+            return None
+
+        self.assertIsNotNone(
+            self.fleet.flagship.position, "Flagship position should not be None"
+        )
+        return self.fleet.flagship.position or None
+
+    def _verify_ship_position(
+        self, ship, expected_same_coordinate, expected_different_coordinate
+    ):
+        """Verify a ship's position against expected coordinates."""
+        self.assertIsNotNone(
+            ship.position,
+            f"Ship {ship.entity_id} position should not be None",
+        )
+        if not ship.position:
+            return
+
+        # Check the coordinate that should be the same
+        self._verify_coordinate(
+            ship.position, expected_same_coordinate, should_equal=True
+        )
+
+        # Check the coordinate that should be different
+        self._verify_coordinate(
+            ship.position, expected_different_coordinate, should_equal=False
+        )
+
+    def _verify_coordinate(self, position, coordinate_info, should_equal):
+        """Verify a specific coordinate matches or differs from expected value.
+
+        Args:
+            position: The position tuple to check
+            coordinate_info: Tuple of (coordinate_type, value)
+            should_equal: If True, check equality; otherwise check inequality
+        """
+        coord_type, coord_value = coordinate_info
+        coord_index = 0 if coord_type == "x" else 1
+
+        if should_equal:
+            self.assertEqual(position[coord_index], coord_value)
+        else:
+            self.assertNotEqual(position[coord_index], coord_value)
 
     def test_move_to(self):
         """Test fleet movement to a destination."""
@@ -312,54 +378,79 @@ class TestFleetManager(unittest.TestCase):
 
     def test_patrol_between(self):
         """Test fleet patrol between waypoints."""
-        # Mock the update method to actually move the fleet and update waypoint index
+        # Setup mock and run tests
+        original_update = self._setup_patrol_mock()
+
+        try:
+            # Test valid patrol points
+            self._test_valid_patrol_points()
+
+            # Test invalid patrol points
+            self._test_invalid_patrol_points()
+        finally:
+            # Restore the original method
+            self.fleet.update = original_update
+
+    def _setup_patrol_mock(self):
+        """Set up mock for the update method for patrol testing."""
         original_update = self.fleet.update
 
         def mock_update(delta_time: float) -> None:
             # Only move if we have a destination
             if not hasattr(self.fleet, "destination") or not self.fleet.destination:
                 return
-            # Calculate direction vector
-            if self.fleet.destination and self.fleet.position:  # Type guard
-                dx = self.fleet.destination[0] - self.fleet.position[0]
-                dy = self.fleet.destination[1] - self.fleet.position[1]
-                distance = math.sqrt(dx * dx + dy * dy)
-            else:
+
+            # Calculate distance to destination
+            distance = self._calculate_distance_to_destination()
+            if distance is None:
                 return  # Skip if position or destination is None
 
-            # If we're close enough to the waypoint, move to the next one
-            if (
-                distance < 1.0
-                and self.fleet.current_orders
-                and self.fleet.current_orders.get("type") == "patrol"
-            ):
-                current_index = 0
-                if self.fleet.current_orders:  # Type guard
-                    current_index = self.fleet.current_orders.get(
-                        "current_waypoint_index", 0
-                    )
-
-                if self.fleet.waypoints:  # Type guard
-                    next_index = (current_index + 1) % len(self.fleet.waypoints)
-                    if self.fleet.current_orders:  # Type guard
-                        self.fleet.current_orders["current_waypoint_index"] = next_index
-
-                    if self.fleet.waypoints:  # Type guard
-                        self.fleet.destination = self.fleet.waypoints[next_index]
+            # Handle waypoint transition if needed
+            if self._should_transition_waypoint(distance):
+                self._update_waypoint_index()
                 return
 
-            # Normalize and scale by speed
-            if distance > 0:
-                dx /= distance
-                dy /= distance
-
-                # Update position - move directly to waypoint for testing
-                if self.fleet.destination:  # Type guard
-                    self.fleet.position = self.fleet.destination
+            # Move directly to waypoint for testing
+            if self.fleet.destination:  # Type guard
+                self.fleet.position = self.fleet.destination
 
         # Replace the method with our mock
         self.fleet.update = mock_update
+        return original_update
 
+    def _calculate_distance_to_destination(self):
+        """Calculate distance to the current destination."""
+        if not (self.fleet.destination and self.fleet.position):  # Type guard
+            return None
+
+        dx = self.fleet.destination[0] - self.fleet.position[0]
+        dy = self.fleet.destination[1] - self.fleet.position[1]
+        return math.sqrt(dx * dx + dy * dy)
+
+    def _should_transition_waypoint(self, distance):
+        """Determine if we should transition to the next waypoint."""
+        return (
+            distance < 1.0
+            and self.fleet.current_orders
+            and self.fleet.current_orders.get("type") == "patrol"
+        )
+
+    def _update_waypoint_index(self):
+        """Update the waypoint index and set the new destination."""
+        if not self.fleet.current_orders or not self.fleet.waypoints:  # Type guard
+            return
+
+        current_index = self.fleet.current_orders.get("current_waypoint_index", 0)
+        next_index = (current_index + 1) % len(self.fleet.waypoints)
+
+        if self.fleet.current_orders:  # Type guard
+            self.fleet.current_orders["current_waypoint_index"] = next_index
+
+        if self.fleet.waypoints:  # Type guard
+            self.fleet.destination = self.fleet.waypoints[next_index]
+
+    def _test_valid_patrol_points(self):
+        """Test patrol with valid patrol points."""
         # Set patrol points
         patrol_points = [(60, 60), (70, 70), (60, 70), (70, 60)]
         result = self.fleet.patrol_between(patrol_points)
@@ -368,55 +459,64 @@ class TestFleetManager(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(self.fleet.waypoints, patrol_points)
 
-        self.assertIsNotNone(
-            self.fleet.destination, "Fleet destination should not be None"
-        )
-        if self.fleet.destination and patrol_points:  # Type guard
-            self.assertEqual(self.fleet.destination, patrol_points[0])
+        # Verify initial waypoint
+        self._verify_fleet_destination(patrol_points[0])
+        self._verify_patrol_orders("patrol")
 
-        self.assertIsNotNone(
-            self.fleet.current_orders, "Fleet current_orders should not be None"
-        )
-        if self.fleet.current_orders:  # Type guard
-            self.assertEqual(self.fleet.current_orders["type"], "patrol")
+        # Manually advance to next waypoint
+        self._advance_to_next_waypoint(patrol_points, 1)
 
-        # Instead of relying on the mock update, directly set the current_waypoint_index
-        # This ensures the test is more reliable
-        self.assertIsNotNone(
-            self.fleet.current_orders, "Fleet current_orders should not be None"
-        )
-        if self.fleet.current_orders:  # Type guard
-            self.fleet.current_orders["current_waypoint_index"] = 1
+        # Verify waypoint transition
+        self._verify_waypoint_index(1)
+        self._verify_fleet_destination(patrol_points[1])
 
-        self.assertIsNotNone(patrol_points, "Patrol points should not be None")
-        if patrol_points and len(patrol_points) > 1:  # Type guard
-            self.fleet.destination = patrol_points[1]
-
-        # Check that we've moved to the next waypoint
-        self.assertIsNotNone(
-            self.fleet.current_orders, "Fleet current_orders should not be None"
-        )
-        if self.fleet.current_orders:  # Type guard
-            self.assertEqual(self.fleet.current_orders["current_waypoint_index"], 1)
-
-        self.assertIsNotNone(
-            self.fleet.destination, "Fleet destination should not be None"
-        )
-        self.assertIsNotNone(patrol_points, "Patrol points should not be None")
-        if (
-            self.fleet.destination and patrol_points and len(patrol_points) > 1
-        ):  # Type guard
-            self.assertEqual(self.fleet.destination, patrol_points[1])
-
-        # Test with invalid patrol points (less than 2)
+    def _test_invalid_patrol_points(self):
+        """Test patrol with invalid patrol points."""
+        # Test with empty patrol points
         result = self.fleet.patrol_between([])
         self.assertFalse(result)
 
+        # Test with only one patrol point
         result = self.fleet.patrol_between([(80, 80)])
         self.assertFalse(result)
 
-        # Restore the original method
-        self.fleet.update = original_update
+    def _verify_fleet_destination(self, expected_destination):
+        """Verify that the fleet destination is set correctly."""
+        self.assertIsNotNone(
+            self.fleet.destination, "Fleet destination should not be None"
+        )
+        if self.fleet.destination:  # Type guard
+            self.assertEqual(self.fleet.destination, expected_destination)
+
+    def _verify_patrol_orders(self, expected_type):
+        """Verify that patrol orders are set correctly."""
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.assertEqual(self.fleet.current_orders["type"], expected_type)
+
+    def _advance_to_next_waypoint(self, patrol_points, next_index):
+        """Manually advance to the next waypoint."""
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.fleet.current_orders["current_waypoint_index"] = next_index
+
+        self.assertIsNotNone(patrol_points, "Patrol points should not be None")
+        if patrol_points and len(patrol_points) > next_index:  # Type guard
+            self.fleet.destination = patrol_points[next_index]
+
+    def _verify_waypoint_index(self, expected_index):
+        """Verify that the current waypoint index is set correctly."""
+        self.assertIsNotNone(
+            self.fleet.current_orders, "Fleet current_orders should not be None"
+        )
+        if self.fleet.current_orders:  # Type guard
+            self.assertEqual(
+                self.fleet.current_orders["current_waypoint_index"], expected_index
+            )
 
     def test_combat_engagement(self):
         """Test engaging another fleet in combat."""

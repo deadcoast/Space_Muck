@@ -43,6 +43,7 @@ import abc
 import logging
 import math
 import random
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 # Third-party library imports
 import numpy as np
@@ -50,8 +51,6 @@ import numpy as np
 # Local application imports
 from config import *  # Config imports
 from entities.base_entity import BaseEntity
-from typing import Dict, List, Optional, Set, Tuple, Union
-from typing import List
 from utils.dependency_injection import inject
 from utils.noise_generator import NoiseGenerator, get_noise_generator
 

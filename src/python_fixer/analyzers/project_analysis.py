@@ -4,17 +4,19 @@
 # PROJECT ANALYSIS MODULE
 # -----------------------------
 
+import ast
+
 # Standard library imports
 import logging
-
-# Third-party library imports
 
 # Local application imports
 from pathlib import Path
 from typing import Dict, List
-import ast
+
 import networkx as nx
 import toml
+
+# Third-party library imports
 
 
 class ProjectAnalyzer:

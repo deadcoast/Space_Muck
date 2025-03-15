@@ -15,16 +15,17 @@ class SymbioteEvolutionAlgorithm:
     described in algorithm_design.md.
     """
 
-# Standard library imports
-from collections import deque
 import logging
 import math
 import random
 
-# Third-party library imports
-from scipy import ndimage
-from scipy import stats
+# Standard library imports
+from collections import deque
+
 import numpy as np
+
+# Third-party library imports
+from scipy import ndimage, stats
 
 # Optional dependencies
 try:
@@ -42,7 +43,7 @@ except ImportError:
     print("scipy not available, using fallback implementation.")
 
 # Local application imports
-from typing import Dict, Tuple, List, Set, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
     def __init__(
         self,

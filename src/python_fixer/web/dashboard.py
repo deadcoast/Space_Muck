@@ -1,22 +1,19 @@
 """Web dashboard for Python Import Fixer."""
 
 # Standard library imports
+import asyncio
 import logging
-
-# Third-party library imports
 
 # Local application imports
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
-from python_fixer.core.project_analysis import ProjectAnalyzer
-from typing import Dict, List, Optional
-import asyncio
-import uvicorn
-
 
 from python_fixer.base import (
     DEFAULT_DASHBOARD_HOST,
@@ -24,6 +21,10 @@ from python_fixer.base import (
     DEFAULT_DASHBOARD_RELOAD,
     LogRecord,
 )
+from python_fixer.core.project_analysis import ProjectAnalyzer
+
+# Third-party library imports
+
 
 logger = logging.getLogger(__name__)
 

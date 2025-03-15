@@ -4,14 +4,15 @@ Tests for the encounter generator module.
 
 # Standard library imports
 import random
-
-# Third-party library imports
+import unittest
 
 # Local application imports
 from entities.player import Player
 from systems.combat_system import CombatSystem
 from systems.encounter_generator import EncounterGenerator
-import unittest
+
+# Third-party library imports
+
 
 # No mocking needed in this test
 

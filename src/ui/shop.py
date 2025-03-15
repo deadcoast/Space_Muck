@@ -8,29 +8,34 @@ and customizable upgrade options that affect different aspects of gameplay.
 # Standard library imports
 import random
 
-# Third-party library imports
-
-# Local application imports
-from .draw_utils import draw_button, draw_panel, draw_text
 from config import (
-from typing import Any, Dict, List, Tuple
-import pygame
-
-# Standard library imports
-
-# Third-party library imports
-
-# Local application imports
-
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
     COLOR_TEXT,
-    COLOR_UI_BUTTON as COLOR_BUTTON,
-    COLOR_UI_BUTTON_HOVER as COLOR_BUTTON_HOVER,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
 )
+from config import (
+    COLOR_UI_BUTTON as COLOR_BUTTON,  # Standard library imports; Third-party library imports; Local application imports
+)
+from config import COLOR_UI_BUTTON_HOVER as COLOR_BUTTON_HOVER
+from config import (
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+    Any,
+    Dict,
+    List,
+    Tuple,
+    from,
+    import,
+    pygame,
+    typing,
+)
+
+# Local application imports
+from .draw_utils import draw_button, draw_panel, draw_text
+
+# Third-party library imports
+
 
 # Forward references for type hints
 class AsteroidField:

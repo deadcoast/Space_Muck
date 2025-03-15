@@ -7,25 +7,29 @@ properly integrate with the UI event system.
 
 # Standard library imports
 import time
-
-# Third-party library imports
+import unittest
 
 # Local application imports
 from unittest.mock import MagicMock, patch
-import unittest
-
-# No typing imports needed
 
 from ui.ui_helpers.ascii_box_event_helper import (
-    register_ascii_box,
-    unregister_ascii_box,
+    ASCIIBox,
+    UIEventData,
+    UIEventType,
     add_click_handler,
     add_hover_handlers,
     create_interactive_box,
-    handle_mouse_events,
     get_box_by_id,
+    handle_mouse_events,
     is_registered_with_events,
+    register_ascii_box,
+    unregister_ascii_box,
 )
+
+# Third-party library imports
+
+
+# No typing imports needed
 
 
 class TestASCIIBoxEventIntegration(unittest.TestCase):
@@ -164,6 +168,18 @@ class TestASCIIBoxEventIntegration(unittest.TestCase):
         self.assertIn(UIEventType.MOUSE_CLICK, box._event_handlers)
         self.assertIn(UIEventType.MOUSE_ENTER, box._event_handlers)
         self.assertIn(UIEventType.MOUSE_LEAVE, box._event_handlers)
+        self.assertEqual(len(box._event_handlers[UIEventType.MOUSE_CLICK]), 1)
+        self.assertEqual(len(box._event_handlers[UIEventType.MOUSE_ENTER]), 1)
+        self.assertEqual(len(box._event_handlers[UIEventType.MOUSE_LEAVE]), 1)
+        self.assertEqual(
+            box._event_handlers[UIEventType.MOUSE_CLICK][0], self.click_handler
+        )
+        self.assertEqual(
+            box._event_handlers[UIEventType.MOUSE_ENTER][0], self.hover_enter_handler
+        )
+        self.assertEqual(
+            box._event_handlers[UIEventType.MOUSE_LEAVE][0], self.hover_leave_handler
+        )
 
     def test_handle_mouse_events(self):
         """Test handling mouse events for multiple boxes."""

@@ -1,15 +1,18 @@
 # Standard library imports
 import logging
+from typing import Any, List, Optional, Tuple, TypeVar
 
-# Third-party library imports
+import pygame
+
+from config import COLOR_TEXT
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ui_element import UIElement
+from src.ui.ui_element.ascii_box import ASCIIBox
 
 # Local application imports
 from ..draw_utils import draw_panel
-from src.ui.ui_base.ascii_base import UIStyle
-from .ascii_box import ASCIIBox
-from config import COLOR_TEXT
-from typing import Tuple, List, Optional, Any, TypeVar
-import pygame
+
+# Third-party library imports
 
 
 # Type definitions for better type checking

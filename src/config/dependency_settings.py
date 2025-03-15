@@ -14,7 +14,7 @@ which implementations are used when multiple options are available.
 # Third-party library imports
 
 # Local application imports
-from typing import Dict, Any, Literal
+from typing import Any, Dict, Literal
 
 # Noise generator configuration
 NOISE_GENERATOR_TYPE: Literal["perlin", "simplex", "fallback", "auto"] = "perlin"

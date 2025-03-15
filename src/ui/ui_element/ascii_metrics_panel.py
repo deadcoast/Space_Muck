@@ -3,11 +3,13 @@
 # Third-party library imports
 
 # Local application imports
-from typing import Tuple, List, Dict, Optional, Any, TypeVar
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.draw_utils import draw_text
-from src.ui.ui_base.ascii_ui import ASCIIPanel
+from typing import Any, Dict, List, Optional, Tuple, TypeVar
+
 import pygame
+
+from src.ui.draw_utils import draw_text
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ascii_ui import ASCIIPanel
 
 # Type definitions for better type checking
 T = TypeVar("T")

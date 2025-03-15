@@ -7,16 +7,17 @@ for integrating all UI components with proper layout management.
 
 # Standard library imports
 import time
+from typing import Any, Dict, Optional
 
-# Third-party library imports
+import pygame
+
+from config import COLOR_TEXT
 
 # Local application imports
 from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_ui import ASCIIBox
-from src.ui.ui_base.ascii_ui import ASCIIButton
-from config import COLOR_TEXT
-from typing import Dict, Optional, Any
-import pygame
+from src.ui.ui_base.ascii_ui import ASCIIBox, ASCIIButton
+
+# Third-party library imports
 
 
 class ASCIIGameScreen:

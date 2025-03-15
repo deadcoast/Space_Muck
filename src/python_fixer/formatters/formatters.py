@@ -3,16 +3,17 @@ Complete set of log formatters for structured logging with different output form
 Includes JSON, colored console output, and detailed error formatting.
 """
 
-# Standard library imports
-from datetime import datetime
 import json
 import logging
 
-# Third-party library imports
+# Standard library imports
+from datetime import datetime
 
 # Local application imports
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+# Third-party library imports
 
 
 class ColorFormatter(logging.Formatter):

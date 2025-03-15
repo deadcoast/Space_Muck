@@ -8,48 +8,45 @@ including the main dashboard, detailed views, chain management and efficiency mo
 # Standard library imports
 import time
 
-# Third-party library imports
-
 # Local application imports
-from typing import Dict, List, Optional, Tuple, Any, Callable
-from src.ui.draw_utils import draw_text, draw_panel
-from src.ui.event_system import (
-    EventSystem,
-    EventType,
-    EventData,
-    MetricType,
-    MetricData,
-)
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import pygame
 
-
-from src.ui.ui_element.ui_ascii import (
-    ASCIIBox,
-    ASCIIPanel,
-    ASCIIProgressBar,
-    ASCIIButton,
-    ASCIIChainVisualizer,
-    draw_ascii_table,
-)
+from config import COLOR_BG, COLOR_TEXT
 
 # Removed unused import
 from src.converters.converter_models import (
-    Converter,
-    Recipe,
-    ConversionProcess,
-    ProductionChain,
     ChainStep,
-    ConverterType,
+    ConversionProcess,
+    Converter,
     ConverterTier,
-    ResourceType,
+    ConverterType,
     EfficiencyFactor,
     OptimizationSuggestion,
+    ProductionChain,
+    Recipe,
+    ResourceType,
 )
+from src.ui.draw_utils import draw_panel, draw_text
+from src.ui.event_system import (
+    EventData,
+    EventSystem,
+    EventType,
+    MetricData,
+    MetricType,
+)
+from src.ui.ui_element.ui_ascii import (
+    ASCIIBox,
+    ASCIIButton,
+    ASCIIChainVisualizer,
+    ASCIIPanel,
+    ASCIIProgressBar,
+    draw_ascii_table,
+)
+# Import render helper only when needed
 
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
+# Third-party library imports
 
 
 class ConverterDashboard:
@@ -652,48 +649,75 @@ class ChainManagementInterface:
         self.chain_details_box.content = []
 
         if not self.selected_chain_id:
-            self.chain_details_box.add_text(1, 1, "No chain selected")
-            self.chain_visualizer.set_chain([], [])
+            self._display_no_chain_selected()
             return
 
         # Find selected chain
-        selected_chain = next(
-            (c for c in self.chains if c.id == self.selected_chain_id), None
-        )
+        selected_chain = self._get_selected_chain()
         if not selected_chain:
             return
 
-        # Basic info with color-coded status
-        self.chain_details_box.add_text(1, 1, f"Name: {selected_chain.name}")
-        status = "Active" if selected_chain.active else "Inactive"
-        status_color = (100, 255, 100) if selected_chain.active else (255, 100, 100)
+        # Display basic chain information
+        self._display_chain_basic_info(selected_chain)
+
+        # Prepare and update chain visualization
+        visualization_data = self._prepare_chain_visualization(selected_chain)
+        self.chain_visualizer.set_chain(
+            visualization_data["converters"],
+            visualization_data["connections"],
+            visualization_data["flow_rates"],
+        )
+
+        # Display converter type distribution
+        self._display_converter_distribution(selected_chain)
+
+    def _display_no_chain_selected(self) -> None:
+        """Display message when no chain is selected."""
+        self.chain_details_box.add_text(1, 1, "No chain selected")
+        self.chain_visualizer.set_chain([], [])
+
+    def _get_selected_chain(self) -> Optional[ProductionChain]:
+        """Get the currently selected chain.
+
+        Returns:
+            Optional[ProductionChain]: The selected chain or None if not found
+        """
+        return next((c for c in self.chains if c.id == self.selected_chain_id), None)
+
+    def _display_chain_basic_info(self, chain: ProductionChain) -> None:
+        """Display basic information about the chain.
+
+        Args:
+            chain: The production chain to display information for
+        """
+        self.chain_details_box.add_text(1, 1, f"Name: {chain.name}")
+        status = "Active" if chain.active else "Inactive"
+        status_color = (100, 255, 100) if chain.active else (255, 100, 100)
         self.chain_details_box.add_text(
             1, 2, f"Status: {status}", {"color": status_color}
         )
 
-        # Prepare chain visualization data
+    def _prepare_chain_visualization(self, chain: ProductionChain) -> Dict:
+        """Prepare visualization data for the chain.
+
+        Args:
+            chain: The production chain to visualize
+
+        Returns:
+            Dict: Dictionary containing converters, connections, and flow rates
+        """
         converters = []
         connections = []
         flow_rates = {}
 
-        # Convert chain steps to visualization format
-        for i, step in enumerate(selected_chain.steps):
+        for i, step in enumerate(chain.steps):
             converter = next(
                 (c for c in self.converters if c.id == step.converter_id), None
             )
             recipe = next((r for r in self.recipes if r.id == step.recipe_id), None)
 
             if converter and recipe:
-                # Add converter node
-                converter_info = {
-                    "name": converter.name,
-                    "type": converter.type.value,
-                    "tier": getattr(converter, "tier", 1),
-                    "efficiency": getattr(converter, "efficiency", 100.0),
-                    "rate": getattr(step, "rate", 1.0),
-                    "queue_size": len(getattr(converter, "active_processes", [])),
-                }
-                converters.append(converter_info)
+                converters.append(self._create_converter_info(converter, step))
 
                 # Add connection to previous step
                 if i > 0:
@@ -702,22 +726,43 @@ class ChainManagementInterface:
                     if hasattr(step, "flow_rate"):
                         flow_rates[(i - 1, i)] = step.flow_rate
 
-        # Update chain visualization
-        self.chain_visualizer.set_chain(converters, connections, flow_rates)
+        return {
+            "converters": converters,
+            "connections": connections,
+            "flow_rates": flow_rates,
+        }
 
-        # Display converter type distribution
+    def _create_converter_info(self, converter: Converter, step: ChainStep) -> Dict:
+        """Create converter info dictionary for visualization.
+
+        Args:
+            converter: Converter object
+            step: Chain step object
+
+        Returns:
+            Dict: Converter information dictionary
+        """
+        return {
+            "name": converter.name,
+            "type": converter.type.value,
+            "tier": getattr(converter, "tier", 1),
+            "efficiency": getattr(converter, "efficiency", 100.0),
+            "rate": getattr(step, "rate", 1.0),
+            "queue_size": len(getattr(converter, "active_processes", [])),
+        }
+
+    def _display_converter_distribution(self, chain: ProductionChain) -> None:
+        """Display the distribution of converter types in the chain.
+
+        Args:
+            chain: The production chain to analyze
+        """
         y_pos = 4
         self.chain_details_box.add_text(1, y_pos, "Converter Types:")
         y_pos += 1
 
-        # Group converters by type and display distribution
-        type_counts: Dict[ConverterType, int] = {}
-        for step in selected_chain.steps:
-            if converter := next(
-                (c for c in self.converters if c.id == step.converter_id), None
-            ):
-                conv_type = converter.type
-                type_counts[conv_type] = type_counts.get(conv_type, 0) + 1
+        # Get type counts
+        type_counts = self._get_converter_type_counts(chain)
 
         # Display type counts with colors
         for conv_type, count in type_counts.items():
@@ -729,6 +774,28 @@ class ChainManagementInterface:
                 {"color": color},
             )
             y_pos += 1
+
+    def _get_converter_type_counts(
+        self, chain: ProductionChain
+    ) -> Dict[ConverterType, int]:
+        """Count the number of converters of each type in the chain.
+
+        Args:
+            chain: The production chain to analyze
+
+        Returns:
+            Dict[ConverterType, int]: Dictionary mapping converter types to counts
+        """
+        type_counts: Dict[ConverterType, int] = {}
+
+        for step in chain.steps:
+            if converter := next(
+                (c for c in self.converters if c.id == step.converter_id), None
+            ):
+                conv_type = converter.type
+                type_counts[conv_type] = type_counts.get(conv_type, 0) + 1
+
+        return type_counts
 
     def _wrap_text(self, text: str, width: int) -> List[str]:
         """

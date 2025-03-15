@@ -8,14 +8,14 @@ crew members across different ship stations.
 # Standard library imports
 import logging
 
+# Local application imports
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 # Third-party library imports
 import pygame
 
-# Local application imports
-from typing import Dict, List, Tuple, Any, Optional, Callable
-
 # Use absolute imports for consistency
-from src.ui.ui_base.ascii_base import UIStyle, COLOR_HIGHLIGHT
+from src.ui.ui_base.ascii_base import COLOR_HIGHLIGHT, UIStyle
 from src.ui.ui_element.ascii_button import ASCIIButton
 from src.ui.ui_element.ascii_panel import ASCIIPanel
 

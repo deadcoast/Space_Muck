@@ -10,19 +10,19 @@ compared to their CPU counterparts across different grid sizes and configuration
 import argparse
 import time
 
+# Local application imports
+from typing import Dict, List
+
 # Third-party library imports
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Local application imports
-from typing import Dict, List
 from utils.cellular_automaton_utils import apply_cellular_automaton
-from utils.gpu_utils import (
-    # Import utilities
-    is_gpu_available,
-    get_available_backends,
+from utils.gpu_utils import (  # Import utilities
     apply_cellular_automaton_gpu,
     apply_noise_generation_gpu,
+    get_available_backends,
+    is_gpu_available,
 )
 
 
@@ -52,8 +52,11 @@ def benchmark_cellular_automaton(
     for size in grid_sizes:
         print(f"Benchmarking grid size {size}x{size}...")
 
-        # Create a random grid
-        grid = np.random.randint(0, 2, (size, size), dtype=np.int8)
+        # Create a random grid using the newer Generator API with a fixed seed for reproducibility
+        rng = np.random.default_rng(
+            seed=42
+        )  # Using a fixed seed for consistent benchmarks
+        grid = rng.integers(0, 2, (size, size), dtype=np.int8)
 
         # Benchmark each backend
         for backend in backends:
@@ -139,7 +142,7 @@ def plot_results(
         output_file: Output file path for the plot
     """
     # Create subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    _, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
     _plot_results(ca_results, ax1, grid_sizes, "Cellular Automaton Performance")
     _plot_results(noise_results, ax2, grid_sizes, "Noise Generation Performance")

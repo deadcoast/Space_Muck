@@ -6,14 +6,15 @@ Test module for the Game class state management functionality.
 import os
 import sys
 import time
+import unittest
+from unittest.mock import MagicMock, patch
+
+# Local application imports
+from events.event_bus import EventBus, clear_event_buses
+from main import Game, GameStateError, InvalidStateTransitionError  # noqa: E402
 
 # Third-party library imports
 
-# Local application imports
-from events.event_bus import clear_event_buses, EventBus
-from main import Game, GameStateError, InvalidStateTransitionError  # noqa: E402
-from unittest.mock import MagicMock, patch
-import unittest
 
 # Add the src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -6,25 +6,20 @@ This module contains comprehensive tests for the pattern generation utilities.
 
 # Standard library imports
 import math
-import os
-import sys
+import unittest
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from utils.pattern_generator import (
-import unittest
-
-# Add parent directory to path to import modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-    generate_spiral_pattern,
-    generate_ring_pattern,
-    generate_gradient_pattern,
-    generate_void_pattern,
     apply_weighted_patterns,
+    generate_gradient_pattern,
+    generate_ring_pattern,
+    generate_spiral_pattern,
+    generate_void_pattern,
 )
+
 
 class TestPatternGenerator(unittest.TestCase):
     """Test cases for pattern_generator module."""
@@ -35,7 +30,8 @@ class TestPatternGenerator(unittest.TestCase):
         self.height = 40
         self.center = (25, 20)
         self.seed = 42
-        np.random.seed(self.seed)
+        # Use modern numpy.random.Generator API for deterministic testing
+        self.rng = np.random.default_rng(self.seed)
 
     def test_spiral_pattern_shape(self):
         """Test that spiral pattern has correct shape."""
@@ -45,8 +41,14 @@ class TestPatternGenerator(unittest.TestCase):
     def test_spiral_pattern_range(self):
         """Test that spiral pattern values are in [0, 1] range."""
         pattern = generate_spiral_pattern(self.width, self.height)
-        self.assertTrue(np.all(pattern >= 0))
-        self.assertTrue(np.all(pattern <= 1))
+        # Check that all values are within the [0, 1] range
+        self.assertTrue(
+            (pattern >= 0).all(),
+            "All pattern values should be greater than or equal to 0",
+        )
+        self.assertTrue(
+            (pattern <= 1).all(), "All pattern values should be less than or equal to 1"
+        )
 
     def test_spiral_pattern_center(self):
         """Test that spiral pattern respects custom center."""
@@ -57,8 +59,8 @@ class TestPatternGenerator(unittest.TestCase):
         max_y, max_x = np.unravel_index(np.argmax(pattern), pattern.shape)
 
         # Should be close to the center (within a few pixels)
-        self.assertTrue(abs(max_x - custom_center[0]) < 5)
-        self.assertTrue(abs(max_y - custom_center[1]) < 5)
+        self.assertLess(abs(max_x - custom_center[0]), 5)
+        self.assertLess(abs(max_y - custom_center[1]), 5)
 
     def test_spiral_pattern_density(self):
         """Test that density parameter affects spiral pattern."""
@@ -66,7 +68,7 @@ class TestPatternGenerator(unittest.TestCase):
         high_density = generate_spiral_pattern(self.width, self.height, density=1.0)
 
         # Higher density should have more variation
-        self.assertTrue(np.std(high_density) > np.std(low_density))
+        self.assertGreater(np.std(high_density), np.std(low_density))
 
     def test_ring_pattern_shape(self):
         """Test that ring pattern has correct shape."""
@@ -76,8 +78,14 @@ class TestPatternGenerator(unittest.TestCase):
     def test_ring_pattern_range(self):
         """Test that ring pattern values are in [0, 1] range."""
         pattern = generate_ring_pattern(self.width, self.height)
-        self.assertTrue(np.all(pattern >= 0))
-        self.assertTrue(np.all(pattern <= 1))
+        # Check that all values are within the [0, 1] range
+        self.assertTrue(
+            (pattern >= 0).all(),
+            "All pattern values should be greater than or equal to 0",
+        )
+        self.assertTrue(
+            (pattern <= 1).all(), "All pattern values should be less than or equal to 1"
+        )
 
     def test_ring_pattern_num_rings(self):
         """Test that number of rings parameter affects pattern."""
@@ -107,7 +115,7 @@ class TestPatternGenerator(unittest.TestCase):
                     many_rings_count += 1
 
         # Many rings should have more local maxima than few rings
-        self.assertTrue(many_rings_count >= few_rings_count)
+        self.assertGreaterEqual(many_rings_count, few_rings_count)
 
     def test_gradient_pattern_shape(self):
         """Test that gradient pattern has correct shape."""
@@ -117,8 +125,14 @@ class TestPatternGenerator(unittest.TestCase):
     def test_gradient_pattern_range(self):
         """Test that gradient pattern values are in [0, 1] range."""
         pattern = generate_gradient_pattern(self.width, self.height)
-        self.assertTrue(np.all(pattern >= 0))
-        self.assertTrue(np.all(pattern <= 1))
+        # Check that all values are within the [0, 1] range
+        self.assertTrue(
+            (pattern >= 0).all(),
+            "All pattern values should be greater than or equal to 0",
+        )
+        self.assertTrue(
+            (pattern <= 1).all(), "All pattern values should be less than or equal to 1"
+        )
 
     def test_gradient_pattern_direction(self):
         """Test that direction parameter affects gradient pattern."""
@@ -138,8 +152,8 @@ class TestPatternGenerator(unittest.TestCase):
         v_x_variation = np.mean(np.abs(np.diff(vertical, axis=1)))
         v_y_variation = np.mean(np.abs(np.diff(vertical, axis=0)))
 
-        self.assertTrue(h_x_variation > h_y_variation)
-        self.assertTrue(v_y_variation > v_x_variation)
+        self.assertGreater(h_x_variation, h_y_variation)
+        self.assertGreater(v_y_variation, v_x_variation)
 
     def test_void_pattern_shape(self):
         """Test that void pattern has correct shape."""
@@ -149,8 +163,14 @@ class TestPatternGenerator(unittest.TestCase):
     def test_void_pattern_range(self):
         """Test that void pattern values are in [0, 1] range."""
         pattern = generate_void_pattern(self.width, self.height)
-        self.assertTrue(np.all(pattern >= 0))
-        self.assertTrue(np.all(pattern <= 1))
+        # Check that all values are within the [0, 1] range
+        self.assertTrue(
+            (pattern >= 0).all(),
+            "All pattern values should be greater than or equal to 0",
+        )
+        self.assertTrue(
+            (pattern <= 1).all(), "All pattern values should be less than or equal to 1"
+        )
 
     def test_void_pattern_num_voids(self):
         """Test that number of voids parameter affects pattern."""
@@ -161,7 +181,7 @@ class TestPatternGenerator(unittest.TestCase):
         few_voids_low = np.sum(few_voids < 0.2)
         many_voids_low = np.sum(many_voids < 0.2)
 
-        self.assertTrue(many_voids_low >= few_voids_low)
+        self.assertGreaterEqual(many_voids_low, few_voids_low)
 
     def test_apply_weighted_patterns(self):
         """Test applying weighted patterns."""
@@ -202,8 +222,16 @@ class TestPatternGenerator(unittest.TestCase):
 
     def _pattern_handler(self, combined):
         self.assertEqual(combined.shape, (self.height, self.width))
-        self.assertTrue(np.all(combined >= 0))
-        self.assertTrue(np.all(combined <= 1))
+        # Check that all values are within the [0, 1] range
+        self.assertTrue(
+            (combined >= 0).all(),
+            "All combined pattern values should be greater than or equal to 0",
+        )
+        self.assertTrue(
+            (combined <= 1).all(),
+            "All combined pattern values should be less than or equal to 1",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

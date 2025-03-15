@@ -5,26 +5,27 @@ EnemyShip class: Represents enemy ships that the player can encounter and engage
 # Standard library imports
 import logging
 import random
-from typing import Dict, Optional, Tuple, Any
+from typing import Any, Dict, Optional, Tuple
 
-# Third-party library imports
+from config import (
+    COLOR_HIGHLIGHT,
+    COMBAT_BASE_ARMOR,
+    COMBAT_BASE_ATTACK_POWER,
+    COMBAT_BASE_ATTACK_SPEED,
+    COMBAT_BASE_CRIT_CHANCE,
+    COMBAT_BASE_EVASION,
+    COMBAT_BASE_HULL_STRENGTH,
+    COMBAT_BASE_SHIELD_RECHARGE,
+    COMBAT_BASE_SHIELD_STRENGTH,
+    COMBAT_BASE_WEAPON_RANGE,
+    COMBAT_DIFFICULTY_MULTIPLIER,
+    COMBAT_ENEMY_TYPES,
+)
 
 # Local application imports
 from .base_entity import BaseEntity
-from config import (
-    COMBAT_BASE_ATTACK_POWER,
-    COMBAT_BASE_ATTACK_SPEED,
-    COMBAT_BASE_WEAPON_RANGE,
-    COMBAT_BASE_CRIT_CHANCE,
-    COMBAT_BASE_SHIELD_STRENGTH,
-    COMBAT_BASE_SHIELD_RECHARGE,
-    COMBAT_BASE_HULL_STRENGTH,
-    COMBAT_BASE_EVASION,
-    COMBAT_BASE_ARMOR,
-    COMBAT_DIFFICULTY_MULTIPLIER,
-    COMBAT_ENEMY_TYPES,
-    COLOR_HIGHLIGHT,
-)
+
+# Third-party library imports
 
 
 class EnemyShip(BaseEntity):

@@ -11,16 +11,19 @@ import logging
 import os
 import sys
 import time
+from typing import Callable, Dict, List
+
+# Add the src directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Third-party library imports
 import numpy as np
 
+# Create a random number generator with a fixed seed for reproducibility
+rng = np.random.default_rng(42)
+
 # Local application imports
 from entities.base_generator import BaseGenerator
-from typing import Dict, List, Callable
-
-# Add the src directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the classes to benchmark
 
@@ -66,7 +69,7 @@ def benchmark_cellular_automaton(
 
     for size in grid_sizes:
         # Create a random grid
-        grid = np.random.choice([0, 1], size=(size, size), p=[0.7, 0.3])
+        grid = rng.choice([0, 1], size=(size, size), p=[0.7, 0.3])
 
         # Time the cellular automaton operation
         execution_time = time_function(
@@ -102,7 +105,7 @@ def benchmark_clustering(
 
     for size in grid_sizes:
         # Create a random grid
-        grid = np.random.random((size, size))
+        grid = rng.random((size, size))
 
         # Time the clustering operation
         execution_time = time_function(
@@ -118,16 +121,13 @@ def benchmark_clustering(
     return results
 
 
-def print_results(
-    results_dict: Dict[str, Dict[str, List[float]]], title: str, ylabel: str
-):
+def print_results(results_dict: Dict[str, Dict[str, List[float]]], title: str):
     """
     Print benchmark results in a table format.
 
     Args:
         results_dict: Dictionary of benchmark results
         title: Table title
-        ylabel: Y-axis label description
     """
     print(f"\n{title}")
     print("-" * 60)
@@ -170,17 +170,9 @@ def main():
     cluster_results = benchmark_clustering(generator, grid_sizes)
 
     # Print results
-    print_results(
-        {"Cellular Automaton": ca_results},
-        "Cellular Automaton Performance",
-        "Execution Time (seconds)",
-    )
+    print_results({"Cellular Automaton": ca_results}, "Cellular Automaton Performance")
 
-    print_results(
-        {"Clustering": cluster_results},
-        "Clustering Performance",
-        "Execution Time (seconds)",
-    )
+    print_results({"Clustering": cluster_results}, "Clustering Performance")
 
 
 if __name__ == "__main__":

@@ -6,10 +6,11 @@
 
 # Third-party library imports
 
+from src..ui_element.ui_mining_status import MiningStatus
+from src.ui.ui_base.ascii_base import UIStyle
+
 # Local application imports
 from .game_screen import ASCIIGameScreen
-from src.ui.ui_base.ascii_base import UIStyle
-from src..ui_element.ui_mining_status import MiningStatus
 
 __all__ = [
     # Base components - these are directly imported below

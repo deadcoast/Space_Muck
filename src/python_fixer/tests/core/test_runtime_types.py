@@ -11,14 +11,15 @@ This test suite covers:
 
 # Standard library imports
 
+import importlib.util
+from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+
 # Third-party library imports
 import pytest
+from typeguard import typechecked
 
 # Local application imports
-from python_fixer.core.types import validate_type, validate_protocol
-from typeguard import typechecked
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
-import importlib.util
+from python_fixer.core.types import validate_protocol, validate_type
 
 # Check for optional dependencies
 NUMPY_AVAILABLE = importlib.util.find_spec("numpy") is not None
@@ -159,9 +160,9 @@ def test_protocol_implementation(
         and "expected Union[<class 'float'>, <class 'NoneType'>]" in msg
         for msg in error_messages
     ), "Missing Optional type error for method_b parameter"
-    assert any(
-        "method_c" in msg for msg in error_messages
-    ), "Missing error for missing method_c implementation"
+    assert any("method_c" in msg for msg in error_messages), (
+        "Missing error for missing method_c implementation"
+    )
 
     # Test method calls with runtime type checking
     result = validate_type(valid_implementation, sample_protocol_class)
@@ -169,9 +170,9 @@ def test_protocol_implementation(
 
     result = validate_type(invalid_implementation, sample_protocol_class)
     assert not result.is_valid, "Invalid implementation should fail type check"
-    assert (
-        "Object does not implement protocol" in result.errors[0]
-    ), "Missing or incorrect error message for protocol implementation failure"
+    assert "Object does not implement protocol" in result.errors[0], (
+        "Missing or incorrect error message for protocol implementation failure"
+    )
 
 
 # Edge cases and error handling
@@ -345,7 +346,7 @@ def test_torch_type_inference_fallback():
 @pytest.mark.integration
 def test_complex_type_validation():
     """Test runtime type checking with complex type annotations."""
-    from typing import Union, TypeVar, Generic
+    from typing import Generic, TypeVar, Union
 
     T = TypeVar("T")
 

@@ -5,13 +5,14 @@ Verification script for Fleet class.
 # Standard library imports
 import os
 import sys
-
-# Third-party library imports
+from unittest.mock import MagicMock
 
 # Local application imports
 from entities.base_entity import BaseEntity
 from entities.fleet import Fleet
-from unittest.mock import MagicMock
+
+# Third-party library imports
+
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -29,9 +30,9 @@ sys.modules["sklearn.cluster"] = MagicMock()
 
 # Mock src modules
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
-    MagicMock()
-)
+sys.modules[
+    "src.algorithms.symbiote_algorithm"
+].SymbioteEvolutionAlgorithm = MagicMock()
 sys.modules["src.utils.logging_setup"] = MagicMock()
 sys.modules["src.utils.logging_setup"].log_exception = MagicMock()
 sys.modules["src.config"] = MagicMock()
@@ -51,18 +52,18 @@ def verify_fleet():
     )
 
     # Verify basic attributes
-    assert (
-        fleet.entity_type == "fleet"
-    ), f"Expected entity_type 'fleet', got {fleet.entity_type}"
-    assert (
-        fleet.entity_id == "fleet-001"
-    ), f"Expected entity_id 'fleet-001', got {fleet.entity_id}"
-    assert (
-        fleet.owner_id == "player-001"
-    ), f"Expected owner_id 'player-001', got {fleet.owner_id}"
-    assert (
-        fleet.fleet_name == "Alpha Squadron"
-    ), f"Expected fleet_name 'Alpha Squadron', got {fleet.fleet_name}"
+    assert fleet.entity_type == "fleet", (
+        f"Expected entity_type 'fleet', got {fleet.entity_type}"
+    )
+    assert fleet.entity_id == "fleet-001", (
+        f"Expected entity_id 'fleet-001', got {fleet.entity_id}"
+    )
+    assert fleet.owner_id == "player-001", (
+        f"Expected owner_id 'player-001', got {fleet.owner_id}"
+    )
+    assert fleet.fleet_name == "Alpha Squadron", (
+        f"Expected fleet_name 'Alpha Squadron', got {fleet.fleet_name}"
+    )
     assert fleet.color == (
         100,
         150,
@@ -86,14 +87,14 @@ def verify_fleet():
     result = fleet.remove_ship("ship-001")
     assert result is True, "remove_ship should return True for existing ship"
     assert "ship-001" not in fleet.ships, "ship-001 should be removed from the fleet"
-    assert (
-        len(fleet.ships) == 1
-    ), f"Expected 1 ship after removal, got {len(fleet.ships)}"
+    assert len(fleet.ships) == 1, (
+        f"Expected 1 ship after removal, got {len(fleet.ships)}"
+    )
 
     # Test fleet strength calculation
-    assert (
-        fleet.get_fleet_strength() == 25
-    ), f"Expected fleet strength 25, got {fleet.get_fleet_strength()}"
+    assert fleet.get_fleet_strength() == 25, (
+        f"Expected fleet strength 25, got {fleet.get_fleet_strength()}"
+    )
 
     # Test setting destination and path calculation
     fleet.set_destination(60, 60)
@@ -106,27 +107,27 @@ def verify_fleet():
 
     # Test serialization
     data = fleet.to_dict()
-    assert (
-        data["entity_type"] == "fleet"
-    ), f"Expected entity_type 'fleet', got {data['entity_type']}"
-    assert (
-        data["fleet_name"] == "Alpha Squadron"
-    ), f"Expected fleet_name 'Alpha Squadron', got {data['fleet_name']}"
-    assert (
-        data["owner_id"] == "player-001"
-    ), f"Expected owner_id 'player-001', got {data['owner_id']}"
+    assert data["entity_type"] == "fleet", (
+        f"Expected entity_type 'fleet', got {data['entity_type']}"
+    )
+    assert data["fleet_name"] == "Alpha Squadron", (
+        f"Expected fleet_name 'Alpha Squadron', got {data['fleet_name']}"
+    )
+    assert data["owner_id"] == "player-001", (
+        f"Expected owner_id 'player-001', got {data['owner_id']}"
+    )
 
     # Test deserialization
     new_fleet = Fleet.from_dict(data)
-    assert (
-        new_fleet.entity_type == fleet.entity_type
-    ), "Entity types should match after deserialization"
-    assert (
-        new_fleet.fleet_name == fleet.fleet_name
-    ), "Fleet names should match after deserialization"
-    assert (
-        new_fleet.owner_id == fleet.owner_id
-    ), "Owner IDs should match after deserialization"
+    assert new_fleet.entity_type == fleet.entity_type, (
+        "Entity types should match after deserialization"
+    )
+    assert new_fleet.fleet_name == fleet.fleet_name, (
+        "Fleet names should match after deserialization"
+    )
+    assert new_fleet.owner_id == fleet.owner_id, (
+        "Owner IDs should match after deserialization"
+    )
 
     print("Fleet tests passed!")
     return True
@@ -144,9 +145,9 @@ def verify_inheritance():
 
     # Test inherited methods
     fleet.add_tag("important")
-    assert fleet.has_tag(
-        "important"
-    ), "Fleet should have tag 'important' (inherited method)"
+    assert fleet.has_tag("important"), (
+        "Fleet should have tag 'important' (inherited method)"
+    )
 
     fleet.set_position(10, 20)
     assert fleet.get_position() == (
@@ -155,14 +156,14 @@ def verify_inheritance():
     ), f"Expected position (10, 20), got {fleet.get_position()} (inherited method)"
 
     fleet.deactivate()
-    assert (
-        not fleet.is_active()
-    ), "Fleet should be inactive after deactivate() (inherited method)"
+    assert not fleet.is_active(), (
+        "Fleet should be inactive after deactivate() (inherited method)"
+    )
 
     fleet.activate()
-    assert (
-        fleet.is_active()
-    ), "Fleet should be active after activate() (inherited method)"
+    assert fleet.is_active(), (
+        "Fleet should be active after activate() (inherited method)"
+    )
 
     print("Fleet inheritance tests passed!")
     return True

@@ -8,13 +8,13 @@ import logging
 import os
 import random
 import sys
+import unittest
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from entities.miner_entity import MinerEntity
-import unittest
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -228,7 +228,8 @@ class TestMinerEntity(unittest.TestCase):
         """Set up test fixtures."""
         # Set random seed for reproducibility
         random.seed(42)
-        np.random.seed(42)
+        # Use modern numpy.random.Generator API for deterministic testing
+        self.rng = np.random.default_rng(42)
 
         # Create a miner entity for testing with fixed parameters
         self.miner = MinerEntity(
@@ -809,7 +810,9 @@ class TestMinerEntity(unittest.TestCase):
 
         # Set a fixed random seed to ensure deterministic population
         random.seed(42)
-        np.random.seed(42)
+        # Set numpy's global random state using Generator API
+        # We don't need to store the generator since the populate method doesn't accept it directly
+        np.random.default_rng(42)
 
         # Directly configure the miner's initial_density to ensure population
         test_miner.initial_density = 0.05  # Higher density for guaranteed population

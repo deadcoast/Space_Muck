@@ -2,17 +2,18 @@
 Complete, working structured logger with JSON formatting and file output.
 """
 
-# Standard library imports
-from datetime import datetime
 import json
 import logging
 import sys
 
-# Third-party library imports
+# Standard library imports
+from datetime import datetime
 
 # Local application imports
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+# Third-party library imports
 
 
 class JSONFormatter(logging.Formatter):
@@ -50,6 +51,60 @@ class JSONFormatter(logging.Formatter):
 
 class StructuredLogger:
     """Enhanced logger with structured output and convenience methods"""
+    
+    _loggers = {}
+    
+    @classmethod
+    def get_logger(cls, name: str, log_level: str = "INFO") -> logging.Logger:
+        """Get a configured logger instance.
+        
+        Args:
+            name: Name of the logger
+            log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            
+        Returns:
+            logging.Logger: Configured logger instance
+        """
+        if name in cls._loggers:
+            return cls._loggers[name]
+            
+        # Create logger
+        logger = logging.getLogger(name)
+        level = getattr(logging, log_level.upper())
+        logger.setLevel(level)
+        
+        # Remove existing handlers
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+            
+        # Create console handler with JSON formatter
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(JSONFormatter())
+        logger.addHandler(console_handler)
+        
+        # Store logger in cache
+        cls._loggers[name] = logger
+        
+        return logger
+        
+    @classmethod
+    def setup_file_logging(cls, log_dir: Path, name: str = "python_fixer") -> None:
+        """Set up file logging.
+        
+        Args:
+            log_dir: Directory to store log files
+            name: Base name for log files
+        """
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f"{name}.log"
+        
+        # Get root logger
+        root_logger = logging.getLogger()
+        
+        # Add file handler with JSON formatter
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(JSONFormatter())
+        root_logger.addHandler(file_handler)
 
     def __init__(self, name: str, log_file: Optional[Path] = None, level: str = "INFO"):
         self.logger = logging.getLogger(name)

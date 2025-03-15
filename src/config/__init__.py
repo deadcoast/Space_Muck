@@ -8,42 +8,37 @@ This file defines all constants for the Space Muck game.
 # Third-party library imports
 
 # Local application imports
-from .config import (
-    # Grid and window configuration
+from .config import (  # Grid and window configuration; UI Colors; Game States; Game Configuration; Race Configuration
     CELL_SIZE,
-    GRID_WIDTH,
-    GRID_HEIGHT,
-    GAME_MAP_SIZE,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    VIEW_WIDTH,
-    VIEW_HEIGHT,
-    FPS,
-    MINIMAP_SIZE,
-    MINIMAP_PADDING,
-    # UI Colors
-    COLOR_UI_BG,
-    COLOR_UI_BORDER,
-    COLOR_UI_HIGHLIGHT,
-    COLOR_UI_TEXT,
-    COLOR_UI_BUTTON,
-    COLOR_UI_BUTTON_HOVER,
-    COLOR_UI_BUTTON_DISABLED,
-    COLOR_SUCCESS,
-    COLOR_WARNING,
     COLOR_ERROR,
     COLOR_INFO,
-    # Game States
-    STATE_PLAY,
-    STATE_SHOP,
+    COLOR_SUCCESS,
+    COLOR_UI_BG,
+    COLOR_UI_BORDER,
+    COLOR_UI_BUTTON,
+    COLOR_UI_BUTTON_DISABLED,
+    COLOR_UI_BUTTON_HOVER,
+    COLOR_UI_HIGHLIGHT,
+    COLOR_UI_TEXT,
+    COLOR_WARNING,
+    FPS,
+    GAME_CONFIG,
+    GAME_MAP_SIZE,
+    GRID_HEIGHT,
+    GRID_WIDTH,
+    MINIMAP_PADDING,
+    MINIMAP_SIZE,
+    RACE_INITIAL_DENSITY,
+    STATE_GAMEOVER,
     STATE_MAP,
     STATE_MENU,
     STATE_PAUSE,
-    STATE_GAMEOVER,
-    # Game Configuration
-    GAME_CONFIG,
-    # Race Configuration
-    RACE_INITIAL_DENSITY,
+    STATE_PLAY,
+    STATE_SHOP,
+    VIEW_HEIGHT,
+    VIEW_WIDTH,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 )
 
 # Re-export all constants

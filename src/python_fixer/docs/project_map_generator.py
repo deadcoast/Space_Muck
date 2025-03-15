@@ -14,18 +14,18 @@
 # Standard library imports
 import logging
 
-# Third-party library imports
-
-
 # Local application imports
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Optional, Set
+
+import networkx as nx
 from docutils import nodes
 from graphviz import Digraph
-from pathlib import Path
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
-from typing import Dict, List, Optional, Set
-import networkx as nx
+
+# Third-party library imports
 
 
 @dataclass
@@ -205,7 +205,7 @@ class ProjectMapGenerator:
         dependencies: Dict[str, List[str]],
         enhancement_targets: Optional[List[str]] = None,
         notes: Optional[List[str]] = None,
-    ) -> ProjectMap:
+    ) -> Optional[ProjectMap]:
         """Create a project map.
 
         Args:

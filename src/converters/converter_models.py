@@ -8,11 +8,11 @@ to represent different types of converters, recipes, and resource chains.
 # Standard library imports
 import uuid
 
-# Third-party library imports
-
 # Local application imports
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
+
+# Third-party library imports
 
 
 class ConverterType(Enum):

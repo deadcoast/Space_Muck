@@ -10,8 +10,18 @@ import os
 import sys
 import time
 
+# Add the src directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 # Third-party library imports
 import numpy as np
+
+# Create a random number generator with a fixed seed for reproducibility
+rng = np.random.default_rng(42)
+
+# Constants for output messages
+RESULTS_MATCH = "  ✓ Results match"
+RESULTS_DONT_MATCH = "  ✗ Results don't match"
 
 # Local application imports
 from entities.base_generator import BaseGenerator
@@ -103,7 +113,7 @@ def test_cellular_automaton():
         print(f"\nTesting cellular automaton for {width}x{height} grid:")
 
         # Create a random grid
-        grid = np.random.binomial(1, 0.4, (height, width))
+        grid = rng.binomial(1, 0.4, (height, width))
 
         # Time standard CA
         start_time = time.time()
@@ -127,16 +137,16 @@ def test_cellular_automaton():
 
         # Verify results are the same
         if np.array_equal(ca_grid, ca_grid_cached):
-            print("  ✓ Results match")
+            print(RESULTS_MATCH)
         else:
-            print("  ✗ Results don't match")
+            print(RESULTS_DONT_MATCH)
 
     # Visualize a sample CA evolution
     visualizer = GeneratorVisualizer()
     medium_generator = generators[1]  # 100x100
 
     # Create a random grid
-    grid = np.random.binomial(1, 0.4, (100, 100))
+    grid = rng.binomial(1, 0.4, (100, 100))
 
     # Apply CA for multiple iterations
     evolution_grids = []
@@ -182,7 +192,7 @@ def test_clustering():
         print(f"\nTesting clustering for {width}x{height} grid:")
 
         # Create a random grid
-        grid = np.random.binomial(1, 0.3, (height, width))
+        grid = rng.binomial(1, 0.3, (height, width))
 
         # Time standard clustering
         start_time = time.time()
@@ -202,16 +212,16 @@ def test_clustering():
 
         # Verify results are the same
         if np.array_equal(clustered_grid, clustered_grid_cached):
-            print("  ✓ Results match")
+            print(RESULTS_MATCH)
         else:
-            print("  ✗ Results don't match")
+            print(RESULTS_DONT_MATCH)
 
     # Visualize clusters
     visualizer = GeneratorVisualizer()
     medium_generator = generators[1]  # 100x100
 
     # Create a random grid
-    grid = np.random.binomial(1, 0.3, (100, 100))
+    grid = rng.binomial(1, 0.3, (100, 100))
 
     # Apply CA to make more coherent clusters
     grid = medium_generator.apply_cellular_automaton(
@@ -260,7 +270,7 @@ def test_thresholding():
         print(f"\nTesting thresholding for {width}x{height} grid:")
 
         # Create a random grid with float values
-        grid = np.random.random((height, width))
+        grid = rng.random((height, width))
 
         # Time standard thresholding
         start_time = time.time()
@@ -280,9 +290,9 @@ def test_thresholding():
 
         # Verify results are the same
         if np.array_equal(threshold_grid, threshold_grid_cached):
-            print("  ✓ Results match")
+            print(RESULTS_MATCH)
         else:
-            print("  ✗ Results don't match")
+            print(RESULTS_DONT_MATCH)
 
     # Visualize thresholding
     visualizer = GeneratorVisualizer()

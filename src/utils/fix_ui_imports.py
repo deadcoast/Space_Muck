@@ -21,10 +21,11 @@ import os
 import re
 import sys
 
+# Local application imports
+from typing import Dict, List, Optional, Set, Tuple
+
 # Third-party library imports
 
-# Local application imports
-from typing import List, Dict, Set, Tuple, Optional
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))

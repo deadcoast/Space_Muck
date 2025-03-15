@@ -7,9 +7,12 @@ These tests verify that different components work together correctly.
 # Standard library imports
 import os
 import sys
+import unittest
+from unittest.mock import patch
 
 # Third-party library imports
 import numpy as np
+import pygame
 
 # Local application imports
 from entities.miner_entity import MinerEntity
@@ -17,9 +20,6 @@ from entities.player import Player
 from generators.asteroid_field import AsteroidField
 from ui.notification import NotificationManager
 from ui.shop import Shop
-from unittest.mock import patch
-import pygame
-import unittest
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

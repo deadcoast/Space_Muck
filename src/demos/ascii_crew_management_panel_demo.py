@@ -5,20 +5,23 @@ This demo showcases the crew management panel's functionality with a simulated
 crew management system.
 """
 
+import contextlib
+
 # Standard library imports
 import logging
 import os
 import random
 import sys
 
-# Third-party library imports
+import pygame
 
 # Local application imports
 from systems.crew_management_system import CrewManagementSystem
 from ui.ui_base.ascii_base import UIStyle
 from ui.ui_element.ascii_crew_management_panel import ASCIICrewManagementPanel
-import contextlib
-import pygame
+
+# Third-party library imports
+
 
 # No typing imports needed
 
