@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Optional, Set
 
-from rich import Console
+from rich.console import Console
 
 # Third-party library imports
 

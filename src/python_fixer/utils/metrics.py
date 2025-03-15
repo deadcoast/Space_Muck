@@ -1,9 +1,9 @@
 # Standard library imports
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Dict
 
 # Local application imports
-from altair import Dict
 from prometheus_client import Gauge, Histogram
 
 # Third-party library imports
@@ -19,7 +19,7 @@ class LogMetrics:
     import_fixes: int = 0
     files_processed: int = 0
     average_processing_time: float = 0.0
-    pattern_frequencies: Dict[str, int] = field(default_factory=dict)
+    pattern_frequencies: dict[str, int] = field(default_factory=dict)
 
 
 class MetricsCollector:
