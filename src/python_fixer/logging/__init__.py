@@ -9,12 +9,14 @@ Logging and reporting functionality for Python Import Fixer.
 from typing import Any, Dict
 
 # Local application imports
-from .structured import StructuredLogger
+from .enhanced import StructuredLogger
+from . import variant_loggers
 
 __all__ = [
     "get_formatters",
     "get_structured",
     "StructuredLogger",
+    "variant_loggers",
 ]
 
 

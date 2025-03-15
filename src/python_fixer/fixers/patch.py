@@ -1,40 +1,67 @@
-# Ensure you have python-patch installed: pip install python-patch
-
 # Standard library imports
 import json
 import os
 import tempfile
+import importlib.util
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
+# Check for optional dependencies
+PATCH_AVAILABLE = importlib.util.find_spec("patch") is not None
+
+# Third-party library imports
 import aiofiles
-import patch
-import variant_loggers
+
+# Import optional dependencies at runtime
+import contextlib
+patch = None  # Define at module level
+if PATCH_AVAILABLE:
+    with contextlib.suppress(ImportError):
+        import patch
+
+# Use local variant_loggers if available, otherwise use standard logging
+with contextlib.suppress(ImportError):
+    from ..logging import variant_loggers
+if 'variant_loggers' not in locals():
+    import logging as variant_loggers
 
 # Local application imports
 from filelock import asyncio
-from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
-from fixers.fix_smart_fixer import SmartFixer, main
 
-# Third-party library imports
+# Handle optional dependencies properly
+if TYPE_CHECKING:
+    from ..analyzers.enhanced_analyzer import EnhancedAnalyzer
+    from ..analyzers.smart_fixer import SmartFixer
+    # Import main function only if needed for type checking
+    from ..analyzers.smart_fixer import main
+else:
+    # At runtime, use Any as a placeholder
+    EnhancedAnalyzer = Any
+    SmartFixer = Any
+    main = None
 
 
 # Configure variant_loggers
-variant_loggers.basicConfig(level=variant_loggers.INFO)
-logger = variant_loggers.getLogger(__name__)
+variant_loggers.basic_config(level=variant_loggers.INFO)
+logger = variant_loggers.get_logger(__name__)
 
 
 class PatchHandler:
-    def __init__(self, patches_dir: str):
+    def __init__(self, patches_dir: str = "patches"):
         """
         Initializes the PatchHandler with the directory where patch files are stored.
 
-        :param patches_dir: Path to the directory containing patch files.
+        :param patches_dir: Path to the directory containing patch files. Defaults to 'patches'.
         """
 
         self.patches_dir = patches_dir
+        # Create the patches directory if it doesn't exist
         if not os.path.isdir(self.patches_dir):
-            raise ValueError(f"Patches directory '{self.patches_dir}' does not exist.")
+            try:
+                os.makedirs(self.patches_dir, exist_ok=True)
+                logger.info(f"Created patches directory at '{self.patches_dir}'")
+            except Exception as e:
+                logger.warning(f"Could not create patches directory: {e}")
 
     def _fetch_patch(self, fix_id: str) -> Optional[str]:
         """

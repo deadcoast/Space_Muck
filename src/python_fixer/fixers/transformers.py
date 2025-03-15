@@ -1,16 +1,25 @@
 # Standard library imports
-
-# Third-party library imports
-
 import ast
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING, Any
 
+# Third-party library imports
 import astor
-import variant_loggers
+
+# Use local variant_loggers if available, otherwise use standard logging
+import contextlib
+with contextlib.suppress(ImportError):
+    from ..logging import variant_loggers
+if 'variant_loggers' not in locals():
+    import logging as variant_loggers
 
 # Local application imports
-from fixers.fix_enhanced_analyzer import EnhancedAnalyzer
+# Use TYPE_CHECKING to avoid circular imports
+if TYPE_CHECKING:
+    from ..analyzers.enhanced_analyzer import EnhancedAnalyzer
+else:
+    # At runtime, use Any as a placeholder
+    EnhancedAnalyzer = Any
 
 
 # Base Transformer Class

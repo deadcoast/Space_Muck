@@ -21,7 +21,7 @@ from python_fixer.base import (
     DEFAULT_DASHBOARD_RELOAD,
     LogRecord,
 )
-from python_fixer.core.project_analysis import ProjectAnalyzer
+from python_fixer.analyzers.project_analysis import ProjectAnalyzer
 
 # Third-party library imports
 
