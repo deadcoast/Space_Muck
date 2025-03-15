@@ -1,0 +1,8 @@
+{"timestamp": "2025-03-15 10:34:58,607", "level": "INFO", "name": "test_logger", "message": "Test message", "module": "enhanced", "function": "info", "line": 181, "process": 24346, "thread": 8664125952}
+{"timestamp": "2025-03-15 10:36:54,549", "level": "INFO", "name": "test_logger", "message": "Test message", "module": "enhanced", "function": "info", "line": 181, "process": 25060, "thread": 8659849728}
+{"timestamp": "2025-03-15 10:40:17,972", "level": "INFO", "name": "test_logger", "message": "Test message", "module": "enhanced", "function": "info", "line": 191, "process": 25816, "thread": 8605127168}
+{"timestamp": "2025-03-15 10:40:17,978", "level": "WARNING", "name": "test_logger", "message": "Warning message", "module": "enhanced", "function": "warning", "line": 205, "process": 25816, "thread": 8605127168}
+{"timestamp": "2025-03-15 10:40:17,983", "level": "ERROR", "name": "test_logger", "message": "Error message", "module": "enhanced", "function": "error", "line": 201, "process": 25816, "thread": 8605127168}
+{"timestamp": "2025-03-15 10:40:54,933", "level": "INFO", "name": "test_logger", "message": "Test message", "module": "enhanced", "function": "info", "line": 191, "process": 26492, "thread": 8663970304}
+{"timestamp": "2025-03-15 10:40:54,940", "level": "WARNING", "name": "test_logger", "message": "Warning message", "module": "enhanced", "function": "warning", "line": 205, "process": 26492, "thread": 8663970304}
+{"timestamp": "2025-03-15 10:40:54,944", "level": "ERROR", "name": "test_logger", "message": "Error message", "module": "enhanced", "function": "error", "line": 201, "process": 26492, "thread": 8663970304}

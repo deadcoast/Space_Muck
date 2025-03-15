@@ -1,75 +1,22 @@
 # Standard library imports
 import json
+import logging
 import os
 import sys
+import threading
 import uuid
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from logging import INFO
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL, FileHandler, StreamHandler, LogRecord, getLevelName
+from pathlib import Path
+from typing import Dict, Any, Optional, List, Union, NamedTuple
 
-# Local application imports
-from formatters.json import JsonFormatter
-from logger_refactor.logger_analysis import Aggregator, Correlator, PatternAnalyzer
-from logger_refactor.logger_record import (
-    CRITICAL,
-    DEBUG,
-    ERROR,
-    WARNING,
-    Any,
-    Console,
-    FileHandler,
-    List,
-    LogRecord,
-    Optional,
-    Path,
-    Span,
-    SpanContext,
-    StreamHandler,
-    Union,
-    aiofiles,
-    asyncio,
-    getLevelName,
-    threading,
-    tracer,
-)
-from variant_loggers import variant_loggers
-
-"""
-Complete, working structured logger with JSON formatting and file output.
-"""
+# We'll import analyzer and formatter classes inside methods to avoid circular imports
+# This helps maintain modularity while preventing import cycles
 
 
-class JSONFormatter(logging.Formatter):
-    """Format log records as JSON"""
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Format the log record as JSON"""
-        log_data = {
-            "timestamp": datetime.fromtimestamp(record.created).isoformat(),
-            "level": record.levelname,
-            "message": record.getMessage(),
-            "logger": record.name,
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        }
-
-        # Add any extra fields
-        if hasattr(record, "metrics"):
-            log_data["metrics"] = record.metrics
-
-        if hasattr(record, "file_info"):
-            log_data["file_info"] = record.file_info
-
-        # Include traceback for errors
-        if record.exc_info:
-            log_data["error"] = {
-                "type": record.exc_info[0].__name__,
-                "message": str(record.exc_info[1]),
-                "traceback": self.formatException(record.exc_info),
-            }
-
-        return json.dumps(log_data)
+# JSONFormatter has been moved to python_fixer.formatters.json
 
 
 class StructuredLogger:
@@ -102,7 +49,8 @@ class StructuredLogger:
 
         # Create console handler with JSON formatter
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(JSONFormatter())
+        from python_fixer.formatters.json import JsonFormatter
+        console_handler.setFormatter(JsonFormatter())
         logger.addHandler(console_handler)
 
         # Store logger in cache
@@ -112,7 +60,7 @@ class StructuredLogger:
 
     @classmethod
     def setup_file_logging(cls, log_dir: Path, name: str = "python_fixer") -> None:
-        """Set up file logging.
+        """Set up file logging with enhanced formatting capabilities.
 
         Args:
             log_dir: Directory to store log files
@@ -123,30 +71,119 @@ class StructuredLogger:
 
         # Get root logger
         root_logger = logging.getLogger()
+        
+        # Create formatters - use enhanced formatter if possible
+        from python_fixer.formatters.json import JsonFormatter
+        json_formatter = JsonFormatter()
+        
+        from contextlib import suppress
+        
+        # Try to use the enhanced formatter if the output directory exists
+        with suppress(Exception):
+            # Import here to avoid circular imports
+            from python_fixer.formatters.formatter import EnhancedFormatter
+            enhanced_formatter = EnhancedFormatter(output_dir=log_dir)
+            # Add console handler with enhanced formatter for rich output
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(enhanced_formatter)
+            root_logger.addHandler(console_handler)
 
-        # Add file handler with JSON formatter
+        # Add file handler with JSON formatter for structured logging
         file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(JSONFormatter())
+        file_handler.setFormatter(json_formatter)
         root_logger.addHandler(file_handler)
 
     def __init__(self, name: str, log_file: Optional[Path] = None, level: str = "INFO"):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, level.upper()))
+        self.name = name
+        self.log_dir: Optional[Path] = Path("./logs")
+        self.level: int = INFO
+        self.enable_metrics: bool = True
+        self.enable_ml: bool = True
+        # Use string type annotations to avoid circular imports
+        self.pattern_analyzer: Optional['PatternAnalyzer'] = None
+        self.correlator: Optional['Correlator'] = None
+        self.aggregator: Optional['Aggregator'] = None
+        self.handlers: Optional[List[Any]] = None
+        self.report_path: Optional[Path] = None
+        self.json_formatter: Optional['JsonFormatter'] = None
+        # Use string type annotations to avoid circular imports
+        self.enhanced_formatter: Optional['EnhancedFormatter'] = None
+        self.console_handler: Optional[StreamHandler] = None
+        self.file_handler: Optional[FileHandler] = None
+        self.console_formatter: Optional['ConsoleFormatter'] = None
+        
+        # Create log directory
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.report_path = self.log_dir / "report.html"
 
-        # Create formatters
-        json_formatter = JSONFormatter()
+        # Initialize formatters
+        from python_fixer.formatters.json import JsonFormatter
+        self.json_formatter = JsonFormatter()
+        
+        # Initialize console formatter for human-readable output
+        from python_fixer.formatters.console import ConsoleFormatter
+        self.console_formatter = ConsoleFormatter()
+        
+        # Initialize enhanced formatter if output directory exists
+        if self.log_dir.exists():
+            # Import here to avoid circular imports
+            from python_fixer.formatters.formatter import EnhancedFormatter
+            self.enhanced_formatter = EnhancedFormatter(output_dir=self.log_dir)
 
-        # Console handler (with colors for better readability)
-        console = logging.StreamHandler(sys.stdout)
-        console.setFormatter(json_formatter)
-        self.logger.addHandler(console)
+        # Setup console handler with ConsoleFormatter for human-readable output
+        self.console_handler = StreamHandler(stream=sys.stdout)
+        self.console_handler.setFormatter(self.console_formatter)
+        self.console_handler.setLevel(self.level)
+        
+        # Setup structured console handler with JsonFormatter for machine-readable output
+        self.structured_console_handler = StreamHandler(stream=sys.stderr)
+        self.structured_console_handler.setFormatter(self.json_formatter)
+        self.structured_console_handler.setLevel(self.level)
+
+        # Setup file handler
+        self.file_handler = FileHandler(filename=str(self.log_dir / f"{self.name}.log"))
+        self.file_handler.setFormatter(self.json_formatter)
+        self.file_handler.setLevel(self.level)
+
+        # Configure base logger with all handlers
+        self.logger.setLevel(self.level)
+        self.logger.addHandler(self.console_handler)
+        self.logger.addHandler(self.structured_console_handler)
+        self.logger.addHandler(self.file_handler)
+
+        # Initialize analysis components
+        # Import here to avoid circular imports
+        from python_fixer.analyzers.pattern import PatternAnalyzer
+        from python_fixer.analyzers.correlator import Correlator
+        from python_fixer.analyzers.aggregator import Aggregator
+        
+        self.pattern_analyzer = self.pattern_analyzer or PatternAnalyzer()
+        self.correlator = self.correlator or Correlator()
+        self.aggregator = self.aggregator or Aggregator()
+
+        # Add additional handlers if provided
+        if self.handlers:
+            for handler in self.handlers:
+                self.logger.addHandler(handler)
+
+        # Initialize console formatter for report generation
+        from python_fixer.formatters.console import ConsoleFormatter
+        self.console_formatter = ConsoleFormatter()
+
+        # Add enhanced formatter handler if available
+        if self.enhanced_formatter:
+            enhanced_console_handler = logging.StreamHandler(sys.stdout)
+            enhanced_console_handler.setFormatter(self.enhanced_formatter)
+            self.logger.addHandler(enhanced_console_handler)
 
         # File handler if requested
         if log_file:
             log_file = Path(log_file)
             log_file.parent.mkdir(parents=True, exist_ok=True)
             file_handler = logging.FileHandler(log_file)
-            file_handler.setFormatter(json_formatter)
+            file_handler.setFormatter(self.json_formatter)
             self.logger.addHandler(file_handler)
 
     def info(self, message: str, extra: Optional[Dict[str, Any]] = None, **kwargs):
@@ -188,96 +225,29 @@ class StructuredLogger:
             extra={"file_info": file_info},
         )
 
+    def is_enabled_for(self, level: int) -> bool:
+        """Check if logger is enabled for specified level
 
-# Third-party library imports
+        Args:
+            level: The logging level to check
+
+        Returns:
+            bool: True if the logger is enabled for the specified level
+        """
+        return self.logger.isEnabledFor(level)
 
 
-class EnhancedLogger:
-    """Enhanced logging system with advanced features."""
-
-    def __init__(
-        self,
-        name: str = "EnhancedLogger",
-        log_dir: Optional[Path] = None,
-        level: int = INFO,
-        enable_metrics: bool = True,
-        enable_ml: bool = True,
-        pattern_analyzer: Optional[PatternAnalyzer] = None,
-        correlator: Optional[Correlator] = None,
-        aggregator: Optional[Aggregator] = None,
-        handlers: Optional[List[Any]] = None,
-    ):
-        """Initialize the EnhancedLogger."""
-        self.name = name
-        self.log_dir = log_dir or Path("./logs")
-        self.level = level
-        self.enable_metrics = enable_metrics
-        self.enable_ml = enable_ml
-
-        # Create log directory
-        self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.report_path = self.log_dir / "report.html"
-
-        # Initialize formatter with JSON config
-        self.formatter = JsonFormatter(
-            fmt=json.dumps(
-                {
-                    "format": "{timestamp} - {level} - {module}.{function}:{line} - {message}",
-                    "format_rules": [
-                        {
-                            "level": "ERROR",
-                            "format": "{timestamp} - {level} - {message}",
-                        },
-                        {
-                            "level": "INFO",
-                            "format": "{timestamp} - {level} - {module}.{function} - {message}",
-                        },
-                    ],
-                    "is_active": True,
-                }
-            )
-        )
-
-        # Setup console handler
-        self.console_handler = StreamHandler(stream=sys.stdout)
-        self.console_handler.setFormatter(self.formatter)
-        self.console_handler.setLevel(self.level)
-
-        # Setup file handler
-        self.file_handler = FileHandler(filename=str(self.log_dir / f"{self.name}.log"))
-        self.file_handler.setFormatter(self.formatter)
-        self.file_handler.setLevel(self.level)
-
-        # Configure base logger
-        self.logger = variant_loggers.getLogger(self.name)
-        self.logger.setLevel(self.level)
-        self.logger.addHandler(self.console_handler)
-        self.logger.addHandler(self.file_handler)
-
-        # Initialize analysis components
-        self.pattern_analyzer = pattern_analyzer or PatternAnalyzer()
-        self.correlator = correlator or Correlator()
-        self.aggregator = aggregator or Aggregator()
-
-        # Add additional handlers if provided
-        if handlers:
-            for handler in handlers:
-                self.logger.addHandler(handler)
-
-        # Initialize console for report generation
-        self.console = Console()
-
-    def _create_context(self, **kwargs) -> variant_loggers.LogContext:
+    def _create_context(self, **kwargs) -> Dict[str, Any]:
         """Create a structured context for the log entry."""
-        return variant_loggers.LogContext(
-            timestamp=datetime.now(timezone.utc),
-            module=kwargs.get("module", "unknown"),
-            function=kwargs.get("function", "unknown"),
-            line=kwargs.get("line", 0),
-            extra=kwargs.get("extra", {}),
-            process_id=os.getpid(),
-            thread_id=threading.get_ident(),
-        )
+        return {
+            "timestamp": datetime.now(timezone.utc),
+            "module": kwargs.get("module", "unknown"),
+            "function": kwargs.get("function", "unknown"),
+            "line": kwargs.get("line", 0),
+            "extra": kwargs.get("extra", {}),
+            "process_id": os.getpid(),
+            "thread_id": threading.get_ident()
+        }
 
     def _level_str_to_num(self, level_str: str) -> int:
         """Convert log level from string to numeric value."""
@@ -304,15 +274,16 @@ class EnhancedLogger:
     def _write_entry(self, record: LogRecord):
         """Emit the log record to configured handlers."""
         log_message = (
-            f"{record.timestamp} - {variant_loggers.getLevelName(record.level)} - "
-            f"{record.module}.{record.function}:{record.line} - {record.message}"
+            f"{record.created} - {logging.getLevelName(record.levelno)} - "
+            f"{record.module}.{record.funcName}:{record.lineno} - {record.getMessage()}"
         )
-        extra = record.extra or {}
-        self.logger.log(record.level, log_message, extra=extra)
+        extra = getattr(record, 'extra', {}) or {}
+        self.logger.log(record.levelno, log_message, extra=extra)
 
     async def _update_visualizations(self):
         """Update visual dashboards with the latest log information."""
-        # Placeholder for visualization updates
+        # The EnhancedFormatter already handles visualization updates
+        # through its internal visualization_engine when available
         await asyncio.sleep(0)  # Avoid blocking
 
     def _generate_span_id(self) -> str:
@@ -323,25 +294,43 @@ class EnhancedLogger:
         """Generate a unique trace ID."""
         return uuid.uuid4().hex
 
+    # Define SpanContext as a NamedTuple for simplicity
+    class SpanContext(NamedTuple):
+        process_id: int
+        thread_id: int
+        is_remote: bool
+        span_id: str
+        trace_id: str
+
+    # Define Span class for tracing
+    class Span:
+        def __init__(self, name: str, context: 'StructuredLogger.SpanContext'):
+            self.name = name
+            self.context = context
+            self.start_time = datetime.now()
+            self.end_time = None
+
     @asynccontextmanager
     async def start_as_current_span(
-        self, name: str, context: Optional[SpanContext] = None
-    ) -> Span:
+        self, name: str, context: Optional['StructuredLogger.SpanContext'] = None
+    ) -> 'StructuredLogger.Span':
         """Start a new tracing span as the current span."""
         if context is None:
-            context = SpanContext(
+            context = self.SpanContext(
                 process_id=os.getpid(),
                 thread_id=threading.get_ident(),
                 is_remote=False,
                 span_id=self._generate_span_id(),
                 trace_id=self._generate_trace_id(),
             )
-        span = Span(name=name, context=context)
-        tracer.start_span(span)
+        span = self.Span(name=name, context=context)
+        # Start span (simplified without external tracer)
+        self.logger.info(f"Starting span: {name}")
         try:
             yield span
         finally:
-            tracer.end_span(span)
+            # End span (simplified without external tracer)
+            self.logger.info(f"Ending span: {name}")
 
     async def log(self, level: Union[int, str], message: str, **kwargs):
         """Enhanced asynchronous logging with context and analysis."""
@@ -369,7 +358,7 @@ class EnhancedLogger:
             span.set_attribute("log.function", record.function)
             span.set_attribute("log.line", record.line)
             span.set_attribute("log.message", record.message)
-            span.set_attribute("log.level", variant_loggers.getLevelName(record.level))
+            span.set_attribute("log.level", logging.getLevelName(record.level))
 
             # Update metrics
             if self.enable_metrics:
@@ -396,7 +385,25 @@ class EnhancedLogger:
         """Generate a report based on aggregated log data."""
         if not self.aggregator:
             raise ValueError("Aggregator is not initialized")
-
+            
+        # Use EnhancedFormatter's visualization if available
+        if self.enhanced_formatter:
+            # The EnhancedFormatter has more advanced visualization capabilities
+            report_path = self.report_path
+            if format.lower() == "json":
+                report_path = report_path.with_suffix(".json")
+                
+            # Delegate to the EnhancedFormatter's report generation
+            from contextlib import suppress
+            
+            # Import here to avoid circular imports
+            with suppress(AttributeError, NotImplementedError):
+                # We need to check if the method exists at runtime
+                if hasattr(self.enhanced_formatter, "generate_report"):
+                    return await self.enhanced_formatter.generate_report(report_path, format)
+            # If we get here, the enhanced report generation failed, so fall back to default
+        
+        # Default implementation
         if format.lower() == "html":
             report_content = self._generate_html_report()
         elif format.lower() == "json":
@@ -409,8 +416,10 @@ class EnhancedLogger:
         if format.lower() == "json":
             report_path = report_path.with_suffix(".json")
 
-        async with aiofiles.open(report_path, "w") as f:
-            await f.write(report_content)
+        # Use regular file operations instead of aiofiles
+        with open(report_path, "w") as f:
+            f.write(report_content)
+        await asyncio.sleep(0)  # Yield control to event loop
 
         return report_path
 
@@ -468,7 +477,7 @@ if __name__ == "__main__":
     async def main():
         # Example usage
         log_dir = Path("./logs")
-        logger = EnhancedLogger(
+        logger = StructuredLogger(
             name="MyAppLogger", log_dir=log_dir, enable_metrics=True, enable_ml=True
         )
 

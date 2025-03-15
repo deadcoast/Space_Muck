@@ -1,79 +1,54 @@
-# Standard library imports
+"""
+JSON formatter for structured logging.
+"""
+
 import json
-from datetime import datetime
-from typing import Any, Dict
-
-import variant_loggers
-
-# Local application imports
-from rich.console import Console
-from variant_loggers import LogRecord
-
-# Third-party library imports
+import logging
+from typing import Dict, Any
 
 
-console = Console()
+class JsonFormatter(logging.Formatter):
+    """
+    Formatter that outputs JSON strings after formatting the log record.
+    """
+    
+    def __init__(self, **kwargs):
+        """
+        Initialize the formatter with specified keyword arguments.
+        """
+        super().__init__()
+        self.kwargs = kwargs
 
-
-class JsonFormatter:
-    """JSON output formatter for structured variant_loggers"""
-
-    def format(self, record: LogRecord) -> str:
-        """Format record as JSON string"""
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format the specified record as JSON.
+        """
+        log_data = self._get_record_data(record)
+        return json.dumps(log_data)
+    
+    def _get_record_data(self, record: logging.LogRecord) -> Dict[str, Any]:
+        """
+        Get a dictionary with all the log record attributes.
+        """
+        # Standard log record attributes
         data = {
-            "timestamp": record.timestamp,
-            "level": record.get_level_name(),
-            "message": record.get_message(),
-            "module": record.module,
-            "function": record.function,
-            "line": record.line,
+            'timestamp': self.formatTime(record),
+            'level': record.levelname,
+            'name': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno,
+            'process': record.process,
+            'thread': record.thread,
         }
 
-        # Add exception info if present
-        if "exception" in record.extra:
-            data["exception"] = record.extra["exception"]
+        # Add any extra attributes
+        if hasattr(record, 'extra') and record.extra:
+            data |= record.extra
 
-        # Add context if available
-        if "context" in record.extra:
-            data["context"] = record.extra["context"]
+        # Include any custom kwargs passed to the formatter
+        if self.kwargs:
+            data.update(self.kwargs)
 
-        return json.dumps(data)
-
-    def format_exception(self, exc_info):
-        """
-        Formats the given exception information into a formatted string.
-
-        :param exc_info: Exception information tuple as returned by sys.exc_info().
-        :type exc_info: tuple
-
-        :return: A formatted string that represents the provided exception details.
-        :rtype: str
-        """
-        return "".join(variant_loggers.Formatter.format_exception(self, exc_info))
-
-
-def get_level_name(self) -> str:
-    """Returns the name of the variant_loggers level."""
-    return variant_loggers.get_level_name(self.level)
-
-
-def get_message(self) -> str:
-    """Returns the log message."""
-    return self.message
-
-
-@classmethod
-def from_dict(cls, record_data: Dict[str, Any]) -> "LogRecord":
-    """Creates a LogRecord instance from a dictionary."""
-    return cls(
-        timestamp=record_data.get("timestamp", datetime.now().timestamp()),
-        level=record_data.get("level", "INFO"),
-        message=record_data.get("message", ""),
-        module=record_data.get("module", "unknown"),
-        func_name=record_data.get("func_name"),
-        lineno=record_data.get("lineno"),
-        process=record_data.get("process"),
-        thread=record_data.get("thread"),
-        extra=record_data.get("extra"),
-        stack_trace=record_data.get("stack_trace"),
-    )
+        return data

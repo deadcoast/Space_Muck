@@ -5,18 +5,19 @@
 # Local application imports
 from typing import Any, Dict, List
 
-from variant_loggers import LogRecord
+import logging
+from logging import LogRecord
 
 
 class Correlator:
     """Correlate related log entries"""
 
-    def __init__(self, related_event: str, max_distance: int = 5):
+    def __init__(self, related_event: str = None, max_distance: int = 5):
         self.max_distance = max_distance
-        self.recent_entries: List[LogRecord] = []
-        self.related_event = related_event
+        self.recent_entries: List[logging.LogRecord] = []
+        self.related_event = related_event or "error"
 
-    def correlate(self, record: LogRecord) -> List[LogRecord]:
+    def correlate(self, record: logging.LogRecord) -> List[logging.LogRecord]:
         """Find correlations with recent entries"""
         correlations = [
             recent
@@ -28,7 +29,7 @@ class Correlator:
             self.recent_entries = self.recent_entries[-self.max_distance :]
         return correlations
 
-    def _are_related(self, record1: LogRecord, record2: LogRecord) -> bool:
+    def _are_related(self, record1: logging.LogRecord, record2: logging.LogRecord) -> bool:
         """Determine if two records are related"""
         cid1 = record1.extra.get("correlation_id")
         cid2 = record2.extra.get("correlation_id")
@@ -52,9 +53,9 @@ class LogCorrelator:
 
     def __init__(self, max_distance: int = 5):
         self.max_distance = max_distance
-        self.recent_entries: List[LogRecord] = []
+        self.recent_entries: List[logging.LogRecord] = []
 
-    def correlate(self, record: LogRecord) -> List[LogRecord]:
+    def correlate(self, record: logging.LogRecord) -> List[logging.LogRecord]:
         """
         Find correlations with recent entries.
 
@@ -76,7 +77,7 @@ class LogCorrelator:
 
         return correlations
 
-    def _are_related(self, record1: LogRecord, record2: LogRecord) -> bool:
+    def _are_related(self, record1: logging.LogRecord, record2: logging.LogRecord) -> bool:
         """
         Determine if two records are related.
 

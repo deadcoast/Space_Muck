@@ -1,5 +1,5 @@
 """
-Enhanced variant_loggers formatter with advanced visualization and real-time analytics.
+Enhanced logging formatter with advanced visualization and real-time analytics.
 Features:
 - Rich terminal output with advanced formatting
 - Real-time log aggregation and analysis
@@ -27,7 +27,7 @@ import dash
 import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
-import variant_loggers
+import logging
 
 # Local application imports
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -41,22 +41,31 @@ from rich.table import Table
 from sklearn.cluster import DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
-from variant_loggers import LogMetrics
+# Define LogMetrics class locally since variant_loggers is not available
+class LogMetrics:
+    """Class to store log metrics"""
+    def __init__(self):
+        self.error_count = 0
+        self.warning_count = 0
+        self.info_count = 0
+        self.debug_count = 0
 
 console = Console()
 
 
-class EnhancedFormatter(variant_loggers.Formatter):
+class EnhancedFormatter(logging.Formatter):
     """Advanced log formatter with real-time analytics and visualization"""
 
     def __init__(
         self,
         output_dir: Path,
+        fmt: str = "%(levelname)s - %(name)s - %(message)s",
         theme: str = "monokai",
-        real_time: bool = True,
+        real_time: bool = False,  # Default to False to avoid asyncio issues
         max_history: int = 1000,
     ):
-        super().__init__(Path(__file__).parent / "log_record.py")
+        # Initialize with standard format string
+        super().__init__(fmt=fmt)
         self.output_dir = output_dir
         self.theme = theme
         self.real_time = real_time
@@ -66,11 +75,18 @@ class EnhancedFormatter(variant_loggers.Formatter):
         self.visualization_engine = self._initialize_visualization()
         self.layout = self._create_layout()
         self._lock = Lock()
-        # Initialize real-time display
+        # Initialize real-time display only if explicitly requested
+        # and we're in an environment that supports it
+        self.live_display = None
         if real_time:
-            self._start_live_display()
+            from contextlib import suppress
+            
+            with suppress(ImportError, RuntimeError):
+                import asyncio
+                if asyncio.get_event_loop().is_running():
+                    self._start_live_display()
 
-    def format(self, record: variant_loggers.LogRecord) -> Iterable[Segment]:
+    def format(self, record: logging.LogRecord) -> str:
         """Format log record with enhanced styling and analytics."""
         # Update metrics
         with self._lock:
@@ -87,19 +103,23 @@ class EnhancedFormatter(variant_loggers.Formatter):
         # Add to history
         self.log_history.append(log_entry)
         # Format based on level
-        if record.levelno >= variant_loggers.ERROR:
-            return self._format_error(log_entry)
-        elif record.levelno >= variant_loggers.WARNING:
-            return self._format_warning(log_entry)
+        if record.levelno >= logging.ERROR:
+            formatted = self._format_error(log_entry)
+        elif record.levelno >= logging.WARNING:
+            formatted = self._format_warning(log_entry)
         else:
-            return self._format_info(log_entry)
+            formatted = self._format_info(log_entry)
+            
+        # Convert rich formatted output to string for standard logging
+        # This allows us to maintain compatibility with both rich and standard logging
+        return self._render_to_string(formatted)
 
     def _format_timestamp(self, timestamp: float) -> str:
         """Format timestamp with millisecond precision."""
         dt = datetime.fromtimestamp(timestamp)
         return dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
-    def _extract_context(self, record: variant_loggers.LogRecord) -> Dict[str, Any]:
+    def _extract_context(self, record: logging.LogRecord) -> Dict[str, Any]:
         """Extract rich context from log record."""
         context = {
             "function": record.funcName,
@@ -111,37 +131,39 @@ class EnhancedFormatter(variant_loggers.Formatter):
         # If 'extra' fields are present, merge them
         if hasattr(record, "extra"):
             # Using Python 3.9+ syntax to merge dictionaries
-            context |= record.extra
+            # Handle extra attributes if they exist
+            if hasattr(record, 'extra') and record.extra:
+                context |= record.extra
 
             return {**context, **getattr(record, "extra", {})}
         return context
 
-    def _format_error(self, entry: Dict[str, Any]) -> Iterable[Segment]:
+    def _format_error(self, entry: Dict[str, Any]) -> str:
         """Format error entries with stack trace and context."""
         panel = Panel(
             self._create_error_layout(entry),
             title=f"[bold red]ERROR - {entry['timestamp']}[/]",
             border_style="red",
         )
-        return console.render(panel)
+        return self._render_to_string(panel)
 
-    def _format_warning(self, entry: Dict[str, Any]) -> Iterable[Segment]:
+    def _format_warning(self, entry: Dict[str, Any]) -> str:
         """Format warning entries with context."""
         panel = Panel(
             self._create_warning_layout(entry),
             title=f"[bold yellow]WARNING - {entry['timestamp']}[/]",
             border_style="yellow",
         )
-        return console.render(panel)
+        return self._render_to_string(panel)
 
-    def _format_info(self, entry: Dict[str, Any]) -> Iterable[Segment]:
+    def _format_info(self, entry: Dict[str, Any]) -> str:
         """Format info entries with metrics."""
         panel = Panel(
             self._create_info_layout(entry),
             title=f"[bold green]INFO - {entry['timestamp']}[/]",
             border_style="green",
         )
-        return console.render(panel)
+        return self._render_to_string(panel)
 
     def _create_error_layout(self, entry: Dict[str, Any]) -> Layout:
         """Create rich layout for error entries."""
@@ -190,6 +212,17 @@ class EnhancedFormatter(variant_loggers.Formatter):
             context_table.add_row(str(k), str(v))
         layout["context"].update(Panel(context_table, title="Context"))
 
+    def _render_to_string(self, renderable: Any) -> str:
+        """Helper method to render rich objects to string.
+        
+        This centralizes the string conversion logic to maintain DRY principles.
+        """
+        from io import StringIO
+        string_io = StringIO()
+        temp_console = Console(file=string_io, width=100)
+        temp_console.print(renderable)
+        return string_io.getvalue()
+        
     def _create_info_layout(self, entry: Dict[str, Any]) -> Layout:
         """Create rich layout for info entries."""
         layout = Layout()
@@ -216,11 +249,11 @@ class EnhancedFormatter(variant_loggers.Formatter):
 
         return layout
 
-    def _update_metrics(self, record: variant_loggers.LogRecord):
+    def _update_metrics(self, record: logging.LogRecord):
         """Update real-time metrics based on log record."""
-        if record.levelno >= variant_loggers.ERROR:
+        if record.levelno >= logging.ERROR:
             self.metrics.error_count += 1
-        elif record.levelno >= variant_loggers.WARNING:
+        elif record.levelno >= logging.WARNING:
             self.metrics.warning_count += 1
         else:
             self.metrics.info_count += 1
@@ -232,15 +265,37 @@ class EnhancedFormatter(variant_loggers.Formatter):
         if hasattr(record, "import_fixes"):
             self.metrics.import_fixes = record.import_fixes
 
-    def _analyze_patterns(self, record: variant_loggers.LogRecord):
+    def _analyze_patterns(self, record: logging.LogRecord):
         """Analyze log message patterns using a ML pipeline."""
+        # Skip pattern detection if the pattern_detector is not properly initialized
+        if not self.pattern_detector:
+            return
+            
+        from contextlib import suppress
+        
+        # Get the message from the record
         message = record.getMessage()
-        features = self.pattern_detector.transform([message])
-        cluster = self.pattern_detector.predict(features)[0]
-
-        pattern_key = f"pattern_{cluster}"
-        current_count = self.metrics.pattern_frequencies.get(pattern_key, 0)
-        self.metrics.pattern_frequencies[pattern_key] = current_count + 1
+        
+        # Try to transform the message using the pattern detector
+        features = None
+        with suppress(AttributeError):
+            features = self.pattern_detector.transform([message])
+            
+        # If transform failed, try fit_transform
+        if features is None:
+            with suppress(AttributeError):
+                features = self.pattern_detector.fit_transform([message])
+                
+        # If we couldn't get features, skip pattern detection
+        if features is None:
+            return
+            
+        # Try to predict the cluster
+        with suppress(Exception):
+            cluster = self.pattern_detector.predict(features)[0]
+            pattern_key = f"pattern_{cluster}"
+            current_count = self.metrics.pattern_frequencies.get(pattern_key, 0)
+            self.metrics.pattern_frequencies[pattern_key] = current_count + 1
 
     def _initialize_pattern_detector(self):
         """Initialize ML-based pattern detector with TF-IDF + DBSCAN."""

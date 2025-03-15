@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import Any, List
 
-from python_fixer.core.analyzer import ProjectAnalyzer
+from python_fixer.analyzers.project_analysis import ProjectAnalyzer
 from python_fixer.core.signals import SignalManager
 from python_fixer.logging.structured import StructuredLogger
 
@@ -99,7 +99,7 @@ def verify_imports() -> None:
         ImportError: If any required module is not available
     """
     required_modules = [
-        "python_fixer.core.analyzer",
+        "python_fixer.analyzers.project_analysis",
         "python_fixer.core.signals",
         "python_fixer.logging.structured",
     ]
@@ -474,6 +474,121 @@ def _extracted_from_setup_args_and_logging_9():
         raise
 
 
+def _handle_init_command(args, config, logger):
+    """Handle the 'init' command."""
+    print(f"\033[94mInitializing project at {args.project_path}...\033[0m")
+    try:
+        initialize_project(args, config)
+        return 0
+    except (ValidationError, ProjectError) as e:
+        print(f"\033[91m✗ {str(e)}\033[0m")
+        logger.error("Initialization failed", exc_info=e)
+        return 1
+
+def _handle_analyze_command(args, logger):
+    """Handle the 'analyze' command."""
+    print(f"\033[94mAnalyzing project at {args.project_path}...\033[0m")
+    analyzer = ProjectAnalyzer(
+        args.project_path, backup=True
+    )
+    results = analyzer.analyze_project()
+    logger.info("Analysis complete", extra={"metrics": results})
+    print_analysis_summary(results)
+    return analyzer, 0
+
+def _handle_fix_command(args, logger):
+    """Handle the 'fix' command."""
+    print(
+        f"\033[94mFixing imports in {args.project_path} (mode: {args.mode})...\033[0m"
+    )
+    analyzer = ProjectAnalyzer(
+        args.project_path, backup=True
+    )
+    fixes = analyzer.fix_project(mode=args.mode)
+    logger.info("Fixes complete", extra={"metrics": fixes})
+    print_fixes_summary(fixes)
+    return analyzer, 0
+
+def _handle_dashboard_command(args):
+    """Handle the 'dashboard' command."""
+    if not run_dashboard:
+        raise ValidationError(
+            "Web dashboard not available. Please install optional dependencies:"
+            "\n  pip install python-fixer[web]"
+        )
+
+    print(f"\033[94mLaunching dashboard for {args.project_path}...\033[0m")
+    print_dashboard_info(args.host, args.port, args.reload)
+
+    dashboard_process = run_dashboard(
+        project_path=args.project_path,
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+        log_level="DEBUG" if args.verbose else "INFO",
+    )
+    return dashboard_process, 0
+
+def _setup_environment():
+    """Set up the environment and import necessary modules."""
+    print("\033[94mDebug: Import Resolution\033[0m")
+    print("Python executable:", sys.executable)
+    print("Python version:", sys.version)
+    print("Python path:")
+    for p in sys.path:
+        print(f"  {p}")
+
+    print("\nAttempting imports...")
+    import python_fixer
+
+    print("\033[92m✓ Successfully imported python_fixer\033[0m")
+    print("python_fixer location:", python_fixer.__file__)
+    return python_fixer
+
+def _create_config(args):
+    """Create configuration dictionary from arguments."""
+    print("Creating default config...")
+    config = {
+        "verbose": args.verbose,
+        "enable_caching": True,
+        "cache_dir": ".python_fixer_cache",
+        "max_workers": 4,
+        "enable_type_checking": True,
+        "enable_complexity_analysis": True,
+    }
+    print(f"Config created: {config}")
+    return config
+
+def _handle_exception(e, args, logger):
+    """Handle exceptions during command execution."""
+    if isinstance(e, ValidationError):
+        return handle_error(e, args, logger)
+    elif isinstance(e, KeyboardInterrupt):
+        logger.warning("Operation cancelled by user")
+        return 130
+    else:
+        logger.error(f"Unexpected error: {e}")
+        if logger.is_enabled_for(logging.DEBUG):
+            logger.exception("Error details:")
+        return handle_error(e, args, logger)
+
+def _execute_command(args, config, logger):
+    """Execute the appropriate command based on args."""
+    analyzer = None
+    dashboard_process = None
+    result = 0
+    
+    if args.command == "init":
+        result = _handle_init_command(args, config, logger)
+    elif args.command == "analyze":
+        analyzer, result = _handle_analyze_command(args, logger)
+    elif args.command == "fix":
+        analyzer, result = _handle_fix_command(args, logger)
+    elif args.command == "dashboard":
+        dashboard_process, result = _handle_dashboard_command(args)
+    
+    return analyzer, dashboard_process, result
+
 def main():
     args = None
     logger = None
@@ -498,94 +613,23 @@ def main():
 
     with signal_manager.handler(cleanup):
         try:
-            # Debug import paths
-            print("\033[94mDebug: Import Resolution\033[0m")
-            print("Python executable:", sys.executable)
-            print("Python version:", sys.version)
-            print("Python path:")
-            for p in sys.path:
-                print(f"  {p}")
-
-            print("\nAttempting imports...")
-            import python_fixer
-
-            print("\033[92m✓ Successfully imported python_fixer\033[0m")
-            print("python_fixer location:", python_fixer.__file__)
-
+            # Setup environment and import dependencies
+            _setup_environment()
+            
+            # Setup arguments and logging
             print("\nSetting up arguments and logging...")
             args, logger = setup_args_and_logging()
             print("Arguments and logging setup complete")
+            
+            # Create configuration
+            config = _create_config(args)
+            
+            # Execute the command
+            analyzer, dashboard_process, result = _execute_command(args, config, logger)
+            return result
 
-            print("Creating default config...")
-            config = {
-                "verbose": args.verbose,
-                "enable_caching": True,
-                "cache_dir": ".python_fixer_cache",
-                "max_workers": 4,
-                "enable_type_checking": True,
-                "enable_complexity_analysis": True,
-            }
-            print(f"Config created: {config}")
-
-            if args.command == "init":
-                print(f"\033[94mInitializing project at {args.project_path}...\033[0m")
-                try:
-                    initialize_project(args, config)
-                except (ValidationError, ProjectError) as e:
-                    print(f"\033[91m✗ {str(e)}\033[0m")
-                    logger.error("Initialization failed", exc_info=e)
-                    return 1
-
-            elif args.command == "analyze":
-                print(f"\033[94mAnalyzing project at {args.project_path}...\033[0m")
-                analyzer = ProjectAnalyzer(
-                    args.project_path, config=config, backup=True
-                )
-                results = analyzer.analyze_project()
-                logger.info("Analysis complete", extra={"metrics": results})
-                print_analysis_summary(results)
-
-            elif args.command == "fix":
-                print(
-                    f"\033[94mFixing imports in {args.project_path} (mode: {args.mode})...\033[0m"
-                )
-                analyzer = ProjectAnalyzer(
-                    args.project_path, config=config, backup=True
-                )
-                fixes = analyzer.fix_project(mode=args.mode)
-                logger.info("Fixes complete", extra={"metrics": fixes})
-                print_fixes_summary(fixes)
-
-            elif args.command == "dashboard":
-                if not run_dashboard:
-                    raise ValidationError(
-                        "Web dashboard not available. Please install optional dependencies:"
-                        "\n  pip install python-fixer[web]"
-                    )
-
-                print(f"\033[94mLaunching dashboard for {args.project_path}...\033[0m")
-                print_dashboard_info(args.host, args.port, args.reload)
-
-                dashboard_process = run_dashboard(
-                    project_path=args.project_path,
-                    host=args.host,
-                    port=args.port,
-                    reload=args.reload,
-                    log_level="DEBUG" if args.verbose else "INFO",
-                )
-
-            return 0
-
-        except ValidationError as e:
-            return handle_error(e, args, logger)
-        except KeyboardInterrupt:
-            logger.warning("Operation cancelled by user")
-            return 130
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.exception("Error details:")
-            return handle_error(e, args, logger)
+            return _handle_exception(e, args, logger)
 
 
 def initialize_project(args, config):
@@ -631,7 +675,7 @@ def initialize_project(args, config):
                 print(f"  Project path: {args.project_path}")
                 print(f"  Config: {config}")
                 analyzer = ProjectAnalyzer(
-                    args.project_path, config=config, backup=True
+                    args.project_path, backup=True
                 )
                 print("\033[92m✓ ProjectAnalyzer instance created successfully\033[0m")
                 logger.info("ProjectAnalyzer instance created successfully")

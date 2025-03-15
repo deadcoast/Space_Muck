@@ -28,7 +28,7 @@ from src.converters.converter_models import (
     Recipe,
     ResourceType,
 )
-from src.ui.draw_utils import draw_panel, draw_text
+from src.ui.draw_utils import draw_panel, draw_text, PanelConfig
 from src.ui.event_system import (
     EventData,
     EventSystem,
@@ -317,12 +317,14 @@ class ConverterDetailsView:
         # Create a surface for the type panel
         type_panel_surface = pygame.Surface((20, 3), pygame.SRCALPHA)
         # Draw the panel on the surface
+        panel_config = PanelConfig()
+        panel_config.color = COLOR_BG
+        panel_config.border_color = (100, 100, 140)
+        panel_config.border_width = 1
         draw_panel(
             type_panel_surface,
             pygame.Rect(0, 0, 20, 3),
-            color=COLOR_BG,
-            border_color=(100, 100, 140),
-            border_width=1,
+            config=panel_config
         )
         # Draw text on the surface
         draw_text(

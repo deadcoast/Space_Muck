@@ -3,23 +3,41 @@ import asyncio
 import json
 import os
 import tempfile
-
-# Local application imports
+import importlib.util
+import contextlib
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
-import aiofiles
-import patch
-import variant_loggers
-from questionary import prompt
-from variant_loggers.log_analyzer import report_param
+# Check for optional dependencies
+PATCH_AVAILABLE = importlib.util.find_spec("patch") is not None
+QUESTIONARY_AVAILABLE = importlib.util.find_spec("questionary") is not None
 
 # Third-party library imports
+import aiofiles
 
+# Import optional dependencies at runtime
+patch = None  # Define at module level
+if PATCH_AVAILABLE:
+    with contextlib.suppress(ImportError):
+        import patch
 
-# Configure variant_loggers
-variant_loggers.basicConfig(level=variant_loggers.INFO)
-logger = variant_loggers.getLogger(__name__)
+prompt = None  # Define at module level
+if QUESTIONARY_AVAILABLE:
+    with contextlib.suppress(ImportError):
+        from questionary import prompt
+
+# Use local variant_loggers if available, otherwise use standard logging
+with contextlib.suppress(ImportError):
+    from ..logging import variant_loggers
+if 'variant_loggers' not in locals():
+    import logging as variant_loggers
+
+# Define report_param at module level to avoid import errors
+report_param = {}
+
+# Configure logging
+variant_loggers.basic_config(level=variant_loggers.INFO)
+logger = variant_loggers.get_logger(__name__)
 
 # Example files to analyze
 files = ["example1.py", "example2.py"]
