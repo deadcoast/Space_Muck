@@ -7,16 +7,15 @@ used throughout the codebase, with fallback mechanisms for systems without
 GPU support.
 """
 
+
 # Standard library imports
 import itertools
 import logging
-
-# Local application imports
-from typing import Any, List, Optional, Set, Tuple, Union
-
-import numpy as np
+import importlib.util
+from typing import Any, List, Optional, Set, Tuple, Union, TYPE_CHECKING
 
 # Third-party library imports
+import numpy as np
 from numpy.random import PCG64, Generator
 
 # Standard library imports
@@ -27,18 +26,45 @@ from numpy.random import PCG64, Generator
 rng = Generator(PCG64(42))
 
 # GPU acceleration libraries - try to import with fallbacks
-try:
-    import numba
-    from numba import cuda
 
-    NUMBA_AVAILABLE = True
-    if CUDA_AVAILABLE := cuda.is_available():
-        logging.info("CUDA is available for GPU acceleration")
-    else:
-        logging.info("Numba is available but CUDA is not detected")
-except ImportError:
-    NUMBA_AVAILABLE = False
+# Check for optional dependencies
+NUMBA_AVAILABLE = importlib.util.find_spec("numba") is not None
+CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
+
+# For type checking only
+if TYPE_CHECKING:
+    try:
+        import numba  # type: ignore
+        from numba import cuda  # type: ignore
+        import cupy as cp  # type: ignore
+    except ImportError:
+        pass
+
+# Import Numba at runtime if available
+if NUMBA_AVAILABLE:
+    try:
+        import numba
+        from numba import cuda
+        if CUDA_AVAILABLE := cuda.is_available():
+            logging.info("CUDA is available for GPU acceleration")
+        else:
+            logging.info("Numba is available but CUDA is not detected")
+    except ImportError:
+        NUMBA_AVAILABLE = False
+        CUDA_AVAILABLE = False
+        logging.warning("Error importing Numba, GPU acceleration disabled")
+else:
     CUDA_AVAILABLE = False
+
+# Import CuPy at runtime if available
+cp = None  # Define at module level to prevent undefined variable errors
+if CUPY_AVAILABLE:
+    try:
+        import cupy as cp
+        logging.info("CuPy is available for GPU acceleration")
+    except ImportError:
+        CUPY_AVAILABLE = False
+        logging.warning("Error importing CuPy, some GPU operations will be disabled")
     logging.warning("Numba not available. GPU acceleration will be disabled.")
 
 try:
@@ -157,7 +183,7 @@ def to_cpu(array: Any) -> np.ndarray:
         np.ndarray: Array on CPU
     """
     # Handle CuPy arrays
-    if CUPY_AVAILABLE and isinstance(array, cp.ndarray):
+    if CUPY_AVAILABLE and cp is not None and isinstance(array, cp.ndarray):
         return array.get()
 
     # Handle PyTorch tensors (including those on MPS device)
@@ -335,7 +361,7 @@ def _apply_cellular_automaton_cuda(
     return grid * d_grid
 
 
-def _count_neighbors_cupy(d_grid: cp.ndarray, wrap: bool) -> cp.ndarray:
+def _count_neighbors_cupy(d_grid: Any, wrap: bool) -> Any:
     """
     Count neighbors for each cell using CuPy.
 
@@ -344,7 +370,7 @@ def _count_neighbors_cupy(d_grid: cp.ndarray, wrap: bool) -> cp.ndarray:
         wrap: Whether to wrap around grid edges
 
     Returns:
-        cp.ndarray: Neighbor count for each cell
+        Any: Neighbor count for each cell (cp.ndarray when CuPy is available)
     """
     neighbors_kernel = cp.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
     if wrap:
@@ -360,11 +386,11 @@ def _count_neighbors_cupy(d_grid: cp.ndarray, wrap: bool) -> cp.ndarray:
 
 
 def _apply_cellular_automaton_rules_cupy(
-    d_grid: cp.ndarray,
-    neighbor_count: cp.ndarray,
+    d_grid: Any,
+    neighbor_count: Any,
     birth_list: List[int],
     survival_list: List[int],
-) -> cp.ndarray:
+) -> Any:
     """
     Apply cellular automaton rules using CuPy.
 
@@ -375,7 +401,7 @@ def _apply_cellular_automaton_rules_cupy(
         survival_list: List of neighbor counts that allow cell survival
 
     Returns:
-        cp.ndarray: New grid state
+        Any: New grid state (cp.ndarray when CuPy is available)
     """
     new_grid = cp.zeros_like(d_grid)
 
@@ -704,7 +730,7 @@ def _generate_noise_metalgpu(
     )
 
 
-def _generate_noise_layer_cupy(height: int, width: int, frequency: float) -> cp.ndarray:
+def _generate_noise_layer_cupy(height: int, width: int, frequency: float) -> Any:
     """
     Generate a single noise layer using CuPy with FFT-based smoothing.
 
@@ -714,7 +740,7 @@ def _generate_noise_layer_cupy(height: int, width: int, frequency: float) -> cp.
         frequency: Frequency for this octave
 
     Returns:
-        cp.ndarray: Generated noise layer
+        Any: Generated noise layer (cp.ndarray when CuPy is available)
     """
     # Generate base noise
     noise_layer = cp.random.random((height, width)).astype(cp.float32)
@@ -1087,7 +1113,7 @@ def _apply_kmeans_cupy(
 
 def _initialize_centroids_cuda(
     data: np.ndarray, n_samples: int, n_clusters: int, random_gen: Generator
-) -> Tuple[np.ndarray, cuda.devicearray.DeviceNDArray]:
+) -> Tuple[np.ndarray, Any]:
     """
     Initialize centroids randomly for CUDA implementation.
 
@@ -1098,7 +1124,7 @@ def _initialize_centroids_cuda(
         random_gen: Random number generator
 
     Returns:
-        Tuple[np.ndarray, cuda.devicearray.DeviceNDArray]: (CPU centroids, GPU centroids)
+        Tuple[np.ndarray, Any]: (CPU centroids, GPU centroids)
     """
     idx = random_gen.choice(n_samples, n_clusters, replace=False)
     centroids = data[idx].copy()
@@ -1108,7 +1134,7 @@ def _initialize_centroids_cuda(
 
 def _setup_cuda_environment(
     data: np.ndarray, n_samples: int, n_clusters: int
-) -> Tuple[cuda.devicearray.DeviceNDArray, cuda.devicearray.DeviceNDArray, int, int]:
+) -> Tuple[Any, Any, int, int]:
     """
     Set up CUDA environment for K-means.
 
@@ -1135,9 +1161,9 @@ def _setup_cuda_environment(
 
 
 def _compute_cuda_distances(
-    d_data: cuda.devicearray.DeviceNDArray,
-    d_centroids: cuda.devicearray.DeviceNDArray,
-    d_distances: cuda.devicearray.DeviceNDArray,
+    d_data: Any,
+    d_centroids: Any,
+    d_distances: Any,
     blockspergrid: int,
     threadsperblock: int,
     kernel_func,

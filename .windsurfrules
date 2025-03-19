@@ -1,36 +1,60 @@
-# WINDSURFRULES
+# windsurfRULES
 
-## `System Reference Files` (`SRF`)
+## Correction Guidelines
 
-- **`Cursor System Documents`**: *Optimized Document Format for AI*
-  - `CodeBase_Docs/Windsurf_System_Architecture.md` - Phased restructuring plan with implementation priorities
-  - `CodeBase_Docs/Windsurf_System_Integration.md` - Current state architecture reference
-- **`CodeBase Context Documents`**: *Context Documents on prior Code Implementation*
-  - `CodeBase_Docs/System_Directory_Tree.md` - An outline of the entire CodeBase for contextual awareness
-  - `CodeBase_Docs/System_Development_History.md` - Comprehensive Documentation on the History of Development on each section of the code base.
+- **NEVER CORRECT CODE BY COMMENTING IT OUT WITH "\_"**
+- **NEVER ADD WRAPPER FUNCTIONS AROUND EXISTING METHODS**
+- **NEVER ABSTRACT OR ALTER EXISTING FUNCTIONALITY**
+- **NEVER CREATE YOUR OWN IMPLEMENTATIONS OF EXISTING METHODS**
+- **NEVER MAKE ASSUMPTIONS ABOUT THE CODE - ALWAYS VERIFY FIRST**
+- **ONLY CREATE ACTUAL INSTANCES OF REAL CLASSES AND USE THEIR EXISTING METHODS DIRECTLY**
+- **AVOID CREATING NEW FILES WHEN ASKED TO CORRECT A FILE**
+
+## Primary Context Source
+
+### `.windsurfcontext` - _Comprehensive Codebase Reference_
+
+This file contains all essential codebase patterns, structures, interfaces, and relationships. Refer to this file first when seeking context for code generation, correction, or analysis. The document uses hashtag identifiers (#system_name) to mark major system sections.
 
 ## Workflow & Instructions
-1. **Context First**: Always check `System_Directory_Tree.md` and relevant `SRF` before generating code. If you cannot find context still, provide a grep or command search on the `CodeBase_Context.md` file for relevant implementations.
-2. **Architecture Alignment**: Ensure all implementations align with specifications in `SRF` Documents. If you still cannot find proper context or current implementations, **ask the user** before generating a new implementation.
-3. **Incremental Implementation**: Generate code in manageable steps, maintaining consistency with existing codebase.
-4. **Knowledge Management**: Document reusable components, fixes, and implementation decisions in the appropriate `SRF`.
 
-5. **Rule of Seven (`RO7`)**:
-   1. Review `System_Scratchpad.md` for current task and plan implementation steps
-   2. Search `SRF` for existing implementations; adjust plan accordingly
-   3. Take action to complete the task
-   4. Review for missing implementations required by recent changes
-   5. Identify implementation gaps and plan necessary steps
-   6. Update Cursor System documents `Cursor_System_Architecture.md` and `Cursor_System_Integration` to maintain codebase consistency
-   7. Update the `System_Scratchpad.md`, with progress
+1. **Context Retrieval Process**:
 
+   - When analyzing or generating code, first search `.windsurfcontext` for relevant system sections using `(#hashtag)` identifiers
+   - Look for code patterns, interfaces, and type structures in the identified sections
+   - Verify implementation approaches against established patterns
+   - If context is insufficient, ask the user for clarification
 
-6. **`System_Scratchpad` Usage**: Maintain a task list in `System_Scratchpad.md` file following this format:
+2. **Architecture Alignment**:
+
+   - Ensure all implementations follow patterns documented in `.windsurfcontext`
+   - Maintain consistency with existing type structures and interfaces
+   - Follow established naming conventions and implementation patterns
+   - If context is missing, ask the user before implementing new patterns
+
+3. **Incremental Implementation**:
+
+   - Generate code in manageable steps aligned with patterns in `.windsurfcontext`
+   - Review implementations for consistency with documented patterns
+   - Identify and resolve gaps between implementation and documentation
+
+4. **Context Maintenance**:
+
+   - When discovering new patterns or implementations, suggest updates to `.windsurfcontext`
+   - Format new context entries according to the established structure
+   - Ensure new entries include concrete code examples, not explanations
+
+5. **Scratchpad Usage**:
+   Maintain a task list in thw Scratchpad section below in this format:
+
    ```
    ## Scratchpad
-   
+
    [X] Task 1
    [ ] Task 2
    ```
-   
-   Update progress markers as subtasks are completed. Use the Scratchpad to maintain implementation context and track progress.
+
+   - Update progress markers as subtasks are completed
+   - Use the Scratchpad to maintain implementation context and track progress
+
+---

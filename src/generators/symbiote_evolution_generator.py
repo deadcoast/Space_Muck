@@ -7,13 +7,34 @@ and mutations based on environmental factors.
 """
 
 # Standard library imports
+import importlib.util
 import logging
 import math
 import random
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 # Third-party library imports
 import numpy as np
+
+# Check for optional pattern analysis dependency
+PATTERN_ANALYSIS_AVAILABLE = importlib.util.find_spec("algorithms.pattern_analysis") is not None
+
+# For type checking only - these imports are not executed at runtime
+if TYPE_CHECKING:
+    from algorithms.pattern_analysis import AdvancedPatternAnalyzer, VoronoiTerritoryPartitioner, ColonyMerger
+
+# Define at module level to prevent undefined variable errors
+AdvancedPatternAnalyzer = None
+VoronoiTerritoryPartitioner = None
+ColonyMerger = None
+
+# Import pattern analysis dependencies at runtime if available
+if PATTERN_ANALYSIS_AVAILABLE:
+    try:
+        from algorithms.pattern_analysis import AdvancedPatternAnalyzer, VoronoiTerritoryPartitioner, ColonyMerger
+    except ImportError:
+        PATTERN_ANALYSIS_AVAILABLE = False
+        logging.warning("Pattern analysis features not available. Using basic implementation.")
 
 # Local application imports
 from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
@@ -125,10 +146,57 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             "intelligence": 0.5,
             "aggression_base": initial_aggression,
         }
+        
+        # Initialize pattern analysis components if available
+        self.pattern_analyzer = None
+        self.territory_partitioner = None
+        self.colony_merger = None
+        self.history_enabled = False
+        self.territory_analysis_enabled = False
+        self.colony_merging_enabled = False
+        
+        # Parameters for pattern analysis
+        self.set_parameter("max_pattern_history", 20)  # Default max history for pattern detection
+        self.set_parameter("max_oscillator_period", 8)  # Max oscillator period to detect
+        self.set_parameter("territory_partitioning", True)  # Whether to use territory partitioning
+        self.set_parameter("colony_merging", True)  # Whether to merge colonies
+        self.set_parameter("assimilation_ratio", 0.7)  # Default assimilation ratio (70% winner, 30% loser)
+        
+        # Initialize pattern analysis components if available
+        self._initialize_pattern_analysis()
 
         logging.info(
             f"SymbioteEvolutionGenerator initialized: ID: {self.entity_id}, Seed: {self.seed}"
         )
+        
+    def _initialize_pattern_analysis(self):
+        """Initialize pattern analysis components if available.
+        
+        This method sets up the pattern analyzer, territory partitioner,
+        and colony merger when the pattern_analysis module is available.
+        """
+        if not PATTERN_ANALYSIS_AVAILABLE:
+            logging.info("Pattern analysis module not available. Advanced pattern analysis disabled.")
+            return
+            
+        try:
+            # Initialize pattern analyzer
+            self._initialize_pattern_analyzer()
+            self.history_enabled = True
+            
+            # Set feature flags based on configuration
+            self._configure_pattern_analysis_features()
+            
+            # Create the colony merger if enabled
+            if self.colony_merging_enabled:
+                self.colony_merger = ColonyMerger()
+            
+            logging.info("Pattern analysis components initialized successfully.")
+        except Exception as e:
+            logging.warning(f"Failed to initialize pattern analysis components: {str(e)}")
+            self.history_enabled = False
+            self.territory_analysis_enabled = False
+            self.colony_merging_enabled = False
 
     def generate_initial_colonies(
         self, num_colonies: Optional[int] = None
@@ -343,13 +411,21 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         Returns:
             dict: Metadata dictionary
         """
-        return {
+        metadata = {
             "seed": self.seed,
             "num_colonies": num_colonies,
             "colony_size": colony_size,
             "colony_centers": colony_centers,
             "colony_population": np.sum(grid),
         }
+        
+        # Add pattern analysis information if available
+        if self.history_enabled and self.pattern_analyzer is not None:
+            # Add initial state to pattern analyzer
+            self.pattern_analyzer.add_state(grid)
+            metadata["pattern_analysis_enabled"] = True
+            
+        return metadata
 
     def generate_mineral_distribution(self) -> np.ndarray:
         """
@@ -442,6 +518,15 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         genome = self.base_genome.copy()
         aggression = genome["aggression_base"]
         hostility = self.get_parameter("environmental_hostility", 0.3)
+        
+        # Initialize pattern analysis if enabled
+        pattern_tracking = False
+        if self.history_enabled and self.pattern_analyzer is not None:
+            pattern_tracking = True
+            # Reset analyzer to start fresh with this evolution sequence
+            self._initialize_pattern_analyzer()
+            # Add initial state
+            self.pattern_analyzer.add_state(current_grid)
 
         # Simulate evolution over multiple iterations
         for i in range(iterations):
@@ -451,19 +536,70 @@ class SymbioteEvolutionGenerator(BaseGenerator):
                     current_grid, mineral_grid, genome, aggression, hostility, i
                 )
             )
+            
+            # Update pattern analyzer with new state if enabled
+            if pattern_tracking:
+                self.pattern_analyzer.add_state(current_grid.copy())  # Use copy to prevent reference issues
 
-            # Record history for this iteration
-            evolution_history.append(
-                self._create_evolution_record(
-                    i, current_grid, aggression, genome, minerals
-                )
+            # Create evolution record for this iteration
+            iteration_record = self._create_evolution_record(
+                i, current_grid, aggression, genome, minerals
             )
+            
+            # Add pattern analysis data if available
+            if pattern_tracking and i > 0 and i % 5 == 0:  # Check every 5 iterations to reduce overhead
+                self._add_pattern_analysis_to_record(current_grid, iteration_record)
+            
+            # Add record to history
+            evolution_history.append(iteration_record)
 
             # Adjust hostility based on iteration (environment may become more challenging)
             hostility = min(0.8, hostility + 0.02)
 
         log_performance_end("simulate_evolution", start_time)
         return current_grid, evolution_history
+        
+    def get_pattern_analysis_summary(self):
+        """Get a summary of detected patterns and territories.
+        
+        This utility method is useful for testing and debugging pattern analysis functionality.
+        
+        Returns:
+            dict: Summary of detected patterns and territories, or None if pattern analysis is disabled
+        """
+        if not PATTERN_ANALYSIS_AVAILABLE or self.pattern_analyzer is None:
+            return None
+            
+        summary = {
+            "enabled": True,
+            "oscillator_count": 0,
+            "stable_structures": 0
+        }
+        
+        try:
+            # Get oscillator information
+            oscillator_period = self.pattern_analyzer.detect_oscillator()
+            if oscillator_period > 0:
+                summary["oscillator_count"] = 1
+                summary["oscillator_period"] = oscillator_period
+                
+            # Get stable structure information
+            stable_structures = self.pattern_analyzer.detect_stable_structures()
+            if stable_structures is not None:
+                summary["stable_structures"] = len(stable_structures)
+                
+            # Get territory information if available
+            if self.territory_analysis_enabled and hasattr(self, "territory_partitioner"):
+                summary["territory_partitioning"] = True
+            
+            # Get colony merger information if available
+            if self.colony_merging_enabled and self.colony_merger is not None:
+                summary["colony_merging"] = True
+        except Exception as e:
+            logging.warning(f"Error getting pattern analysis summary: {str(e)}")
+            summary["error"] = str(e)
+            
+        return summary
 
     def _process_evolution_iteration(
         self, current_grid, mineral_grid, genome, aggression, hostility, iteration
@@ -512,6 +648,14 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         # Limit population if needed
         if np.sum(updated_grid) > self.evolution_algorithm.carrying_capacity:
             updated_grid = self._limit_population(updated_grid)
+            
+        # Apply colony merging if enabled and conditions are met
+        if (self.colony_merging_enabled and PATTERN_ANALYSIS_AVAILABLE and 
+                self.colony_merger is not None and iteration > 0 and iteration % 3 == 0):
+            # Create basic colony data for merging based on current state
+            colony_data = self._create_colony_data_for_merging(updated_grid)
+            # Apply colony merging
+            updated_grid = self._merge_colonies(updated_grid, colony_data)
 
         return updated_grid, updated_genome, new_aggression, minerals
 
@@ -594,6 +738,204 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         return result_grid
 
+    def _initialize_pattern_analyzer(self):
+        """Initialize the pattern analyzer with configured parameters."""
+        max_period = self.get_parameter("max_oscillator_period", 8)
+        max_history = self.get_parameter("max_pattern_history", 20)
+        self.pattern_analyzer = AdvancedPatternAnalyzer(
+            max_period=max_period, 
+            max_history=max_history
+        )
+    
+    def _add_pattern_analysis_to_record(self, grid, record):
+        """Add pattern analysis data to an evolution record.
+        
+        Args:
+            grid: Current colony grid
+            record: Evolution record to update
+        """
+        if not self.history_enabled or self.pattern_analyzer is None:
+            return
+            
+        # Check for oscillators and stable structures
+        oscillator_period = self.pattern_analyzer.detect_oscillator()
+        stable_structures = self.pattern_analyzer.detect_stable_structures()
+        
+        # Add pattern info to record
+        record["pattern_analysis"] = {
+            "oscillator_period": oscillator_period,
+            "stable_structures": stable_structures,
+        }
+        
+        # Compute territory partition if enabled
+        if self.territory_analysis_enabled and PATTERN_ANALYSIS_AVAILABLE:
+            territory_map = self._compute_territory_partition(grid)
+            if territory_map is not None:
+                record["territory_map"] = territory_map
+    
+    def _configure_pattern_analysis_features(self):
+        """Configure pattern analysis features based on parameters."""
+        self.territory_analysis_enabled = self.get_parameter("territory_partitioning", True)
+        self.colony_merging_enabled = self.get_parameter("colony_merging", True)
+        
+    def _merge_colonies(self, grid, colony_data=None):
+        """Merge weaker colonies into stronger ones based on territory and strength.
+        
+        Args:
+            grid: Colony grid with colony IDs
+            colony_data: Optional dictionary with colony metadata used to determine strength
+            
+        Returns:
+            np.ndarray: Updated grid with merged colonies
+        """
+        if not self.colony_merging_enabled or not PATTERN_ANALYSIS_AVAILABLE or self.colony_merger is None:
+            return grid
+            
+        try:
+            # First compute a territory map to find borders
+            territory_map = self._compute_territory_partition(grid)
+            if territory_map is None:
+                return grid
+                
+            # Identify colonies and their strengths
+            if colony_data is None:
+                colony_data = self._create_colony_data_for_merging(grid)
+            
+            # Call the colony merger to perform merges
+            assimilation_ratio = self.get_parameter("assimilation_ratio", 0.7)
+            updated_grid = grid.copy()
+            
+            # Find border regions where colonies might merge
+            # This is a simplified approach - in a full implementation, you'd want a more
+            # sophisticated algorithm to determine which colonies should merge based on 
+            # territory borders, relative strength, etc.
+            for source_id, target_id in self._find_potential_merges(territory_map, colony_data):
+                # Merge weaker colony (source_id) into stronger colony (target_id)
+                updated_grid = self.colony_merger.merge_colonies(
+                    target_id=target_id,
+                    source_id=source_id,
+                    labeled_grid=updated_grid,
+                    colony_data=colony_data,
+                    assimilation_ratio=assimilation_ratio
+                )
+                
+            return updated_grid
+        except Exception as e:
+            logging.warning(f"Error during colony merging: {str(e)}")
+            return grid
+    
+    def _create_colony_data_for_merging(self, grid):
+        """Create colony data for the merging process based on grid state.
+        
+        Args:
+            grid: Colony grid with colony IDs
+            
+        Returns:
+            dict: Dictionary with colony data for merging
+        """
+        colony_data = {}
+        unique_colonies = np.unique(grid)
+        unique_colonies = unique_colonies[unique_colonies > 0]  # Skip empty cells (0)
+        
+        for colony_id in unique_colonies:
+            # Count cells as a basic measure of colony strength
+            colony_strength = np.sum(grid == colony_id)
+            
+            # Create colony data with strength metric
+            colony_data[int(colony_id)] = {
+                "strength": float(colony_strength),
+                # Additional metrics could be added here in the future
+                # such as age, resource control, etc.
+            }
+            
+        return colony_data
+    
+    def _find_potential_merges(self, territory_map, colony_data):
+        """Find potential colony merges based on territory boundaries and strengths.
+        
+        Args:
+            territory_map: Territory map with colony IDs
+            colony_data: Dictionary with colony metadata
+            
+        Returns:
+            list: List of (source_id, target_id) tuples for potential merges
+        """
+        potential_merges = []
+        
+        # This is a simplified implementation that finds colonies that are likely to merge
+        # In a full implementation, you would analyze territory borders to determine
+        # which colonies are actually adjacent and could potentially merge
+        unique_colonies = list(colony_data.keys())
+        
+        if len(unique_colonies) <= 1:
+            return []  # Need at least 2 colonies for merging
+            
+        # Sort colonies by strength (weakest first)
+        sorted_colonies = sorted(unique_colonies, key=lambda cid: colony_data[cid].get("strength", 0))
+        
+        # For each weaker colony, find a potential stronger merge target
+        # This is a basic heuristic - in reality, you'd want to consider proximity and other factors
+        weaker_colonies = sorted_colonies[:-1]  # All but the strongest
+        strongest_colony = sorted_colonies[-1]  # The strongest colony
+        
+        for weak_colony in weaker_colonies:
+            # In a real implementation, you'd be more selective about which colonies to merge,
+            # consider colony adjacency, conflict history, etc.
+            merge_threshold = self.get_parameter("colony_merge_threshold", 0.5)
+            weak_strength = colony_data[weak_colony].get("strength", 0)
+            strong_strength = colony_data[strongest_colony].get("strength", 1)  # Avoid division by zero
+            
+            # If the weak colony is significantly weaker, consider it for merging
+            if weak_strength / strong_strength < merge_threshold:
+                potential_merges.append((weak_colony, strongest_colony))
+                
+        return potential_merges
+    
+    def _compute_territory_partition(self, grid):
+        """Compute territory partitioning based on colony centers.
+        
+        Args:
+            grid: Colony grid with colony IDs
+            
+        Returns:
+            np.ndarray or None: Territory map with colony IDs, or None if partitioning failed
+        """
+        if not self.territory_analysis_enabled or not PATTERN_ANALYSIS_AVAILABLE:
+            return None
+            
+        try:
+            # Find colony centers (centroid of each labeled region)
+            centers = {}
+            unique_colonies = np.unique(grid)
+            unique_colonies = unique_colonies[unique_colonies > 0]  # Skip empty cells (0)
+            
+            if len(unique_colonies) <= 1:  # Need at least 2 colonies for territory analysis
+                return None
+                
+            # Calculate centroids for each colony
+            for colony_id in unique_colonies:
+                colony_mask = (grid == colony_id)
+                if np.any(colony_mask):
+                    colony_coords = np.nonzero(colony_mask)
+                    center_y = np.mean(colony_coords[0])
+                    center_x = np.mean(colony_coords[1])
+                    centers[int(colony_id)] = (center_x, center_y)
+            
+            # Initialize territory partitioner with these centers
+            if centers:
+                self.territory_partitioner = VoronoiTerritoryPartitioner(
+                    width=self.width,
+                    height=self.height,
+                    centers=centers
+                )
+                # Compute and return the territory map
+                return self.territory_partitioner.compute_voronoi()
+                
+        except Exception as e:
+            logging.warning(f"Error computing territory partition: {str(e)}")
+            
+        return None
+            
     def _create_evolution_record(self, iteration, grid, aggression, genome, minerals):
         """
         Create a record of the current evolution state.

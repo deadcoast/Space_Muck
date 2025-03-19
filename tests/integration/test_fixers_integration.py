@@ -5,6 +5,7 @@ These tests verify that the fixers module integrates properly with other modules
 in the Python Fixer system, including core, enhancers, parsers, and utils.
 """
 
+
 import sys
 import unittest
 import importlib.util
@@ -36,10 +37,6 @@ NUMPY_AVAILABLE = importlib.util.find_spec("numpy") is not None
 SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
 SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
 ROPE_AVAILABLE = importlib.util.find_spec("rope") is not None
-
-# For type checking only
-if TYPE_CHECKING:  # pragma: no cover
-    pass  # No type checking imports needed
 
 # Import optional dependencies only if needed in tests
 # We're just checking availability with find_spec above

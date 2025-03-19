@@ -695,14 +695,13 @@ class NotificationManager:
         else:
             self.notifications = []
 
-    def notify_event(self, type_str: str, message: str, importance: int = 1) -> None:
+    def notify_event(self, type_str: str, message: str) -> None:
         """
         Create a notification for a game event with appropriate formatting.
 
         Args:
             type_str: Type of event ("discovery", "warning", "achievement", etc)
             message: Event message
-            importance: Priority level (1-3)
         """
         if type_str == "discovery":
             self.add(

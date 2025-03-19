@@ -624,10 +624,7 @@ def _check_programmatic_inheritance(parent_dir):
             print("✗ AsteroidField is not a subclass of BaseGenerator")
             success = False
 
-        # Check for required methods
-        success = _check_required_methods(AsteroidField) and success
-
-        return success
+        return _check_required_methods(AsteroidField) and success
     except ImportError as e:
         print(f"Error importing modules: {e}")
         return False
