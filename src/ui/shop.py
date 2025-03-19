@@ -7,35 +7,24 @@ and customizable upgrade options that affect different aspects of gameplay.
 
 # Standard library imports
 import random
+from typing import Dict, List, Tuple, Any
 
+# Local application imports
 from config import (
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
     COLOR_TEXT,
-)
-from config import (
-    COLOR_UI_BUTTON as COLOR_BUTTON,  # Standard library imports; Third-party library imports; Local application imports
-)
-from config import COLOR_UI_BUTTON_HOVER as COLOR_BUTTON_HOVER
-from config import (
+    COLOR_UI_BUTTON as COLOR_BUTTON,
+    COLOR_UI_BUTTON_HOVER as COLOR_BUTTON_HOVER,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
-    Any,
-    Dict,
-    List,
-    Tuple,
-    from,
-    import,
-    pygame,
-    typing,
 )
 
-# Local application imports
 from .draw_utils import draw_button, draw_panel, draw_text
 
 # Third-party library imports
-
+import pygame
 
 # Forward references for type hints
 class AsteroidField:

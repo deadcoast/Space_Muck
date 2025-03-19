@@ -9,6 +9,7 @@ in a consistent and optimized way, separating the rendering logic from the game 
 import itertools
 import math
 import random
+from typing import Tuple, List, Dict
 
 # Third-party library imports
 import numpy as np
@@ -20,12 +21,7 @@ from config import (  # Standard library imports; Third-party library imports; L
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
-    List,
-    Tuple,
-    from,
-    import,
     pygame,
-    typing,
 )
 
 # Local application imports
@@ -686,56 +682,127 @@ class PlayerRenderer:
         for i in range(1, len(ship_positions)):
             ship_x, ship_y = ship_positions[i]
             # Check if ship is in view
-            if min_x <= ship_x <= max_x and min_y <= ship_y <= max_y:
-                # Calculate screen position
-                screen_x = (ship_x - min_x) * cell_size
-                screen_y = (ship_y - min_y) * cell_size
+            if not (min_x <= ship_x <= max_x and min_y <= ship_y <= max_y):
+                continue
+                
+            # Render visible fleet ship
+            self._render_fleet_ship(surface, ship_x, ship_y, ship_health[i], min_x, min_y, cell_size)
+            
+    def _render_fleet_ship(
+        self, 
+        surface: pygame.Surface, 
+        ship_x: int, 
+        ship_y: int, 
+        health: int, 
+        min_x: int, 
+        min_y: int, 
+        cell_size: int
+    ) -> None:
+        """
+        Render a single fleet ship.
+        
+        Args:
+            surface: Pygame surface to render on
+            ship_x: X coordinate of the ship
+            ship_y: Y coordinate of the ship
+            health: Health value of the ship
+            min_x: Minimum X coordinate of view bounds
+            min_y: Minimum Y coordinate of view bounds
+            cell_size: Size of each cell in pixels
+        """
+        # Calculate screen position
+        screen_x = (ship_x - min_x) * cell_size
+        screen_y = (ship_y - min_y) * cell_size
 
-                health = ship_health[i]
+        # Scale ship based on health
+        health_factor = max(0.5, health / 100.0)
+        # Calculate ship size based on health (used for scaling)
+        ship_scale = max(int(cell_size * 1.5 * health_factor), 6)
 
-                # Scale ship based on health
-                health_factor = max(0.5, health / 100.0)
-                # Calculate ship size based on health (used for scaling)
-                ship_scale = max(int(cell_size * 1.5 * health_factor), 6)
-
-                # Draw smaller ships for fleet
-                ship_color = (0, int(220 * health_factor), 0)
-
-                # Use ship_scale for the ship size
-                pygame.draw.polygon(
-                    surface,
-                    ship_color,
-                    [
-                        (screen_x + ship_scale // 2, screen_y),
-                        (screen_x + ship_scale, screen_y + ship_scale),
-                        (screen_x, screen_y + ship_scale),
-                    ],
-                )
-
-                # Health indicator
-                if health < 100:
-                    # Draw health bar
-                    bar_width = cell_size
-                    bar_height = 3
-                    pygame.draw.rect(
-                        surface,
-                        (50, 50, 50),
-                        (screen_x, screen_y - bar_height - 1, bar_width, bar_height),
-                    )
-                    pygame.draw.rect(
-                        surface,
-                        (
-                            (0, 255, 0)
-                            if health > 50
-                            else (255, 255, 0) if health > 25 else (255, 0, 0)
-                        ),
-                        (
-                            screen_x,
-                            screen_y - bar_height - 1,
-                            int(bar_width * health / 100),
-                            bar_height,
-                        ),
-                    )
+        # Draw ship
+        self._draw_fleet_ship_shape(surface, screen_x, screen_y, ship_scale, health_factor)
+        
+        # Draw health bar if needed
+        if health < 100:
+            self._draw_health_bar(surface, screen_x, screen_y, cell_size, health)
+            
+    def _draw_fleet_ship_shape(
+        self,
+        surface: pygame.Surface,
+        screen_x: int,
+        screen_y: int,
+        ship_scale: int,
+        health_factor: float
+    ) -> None:
+        """
+        Draw the ship polygon shape.
+        """
+        # Calculate ship color based on health
+        ship_color = (0, int(220 * health_factor), 0)
+        
+        # Draw ship polygon
+        pygame.draw.polygon(
+            surface,
+            ship_color,
+            [
+                (screen_x + ship_scale // 2, screen_y),
+                (screen_x + ship_scale, screen_y + ship_scale),
+                (screen_x, screen_y + ship_scale),
+            ],
+        )
+        
+    def _draw_health_bar(
+        self,
+        surface: pygame.Surface,
+        screen_x: int,
+        screen_y: int,
+        cell_size: int,
+        health: int
+    ) -> None:
+        """
+        Draw a health bar for the ship.
+        """
+        bar_width = cell_size
+        bar_height = 3
+        
+        # Draw background bar
+        pygame.draw.rect(
+            surface,
+            (50, 50, 50),
+            (screen_x, screen_y - bar_height - 1, bar_width, bar_height),
+        )
+        
+        # Determine health bar color based on health level
+        bar_color = self._get_health_bar_color(health)
+        
+        # Draw health fill
+        pygame.draw.rect(
+            surface,
+            bar_color,
+            (
+                screen_x,
+                screen_y - bar_height - 1,
+                int(bar_width * health / 100),
+                bar_height,
+            ),
+        )
+    
+    def _get_health_bar_color(self, health: int) -> Tuple[int, int, int]:
+        """
+        Get the appropriate color for a health bar based on health percentage.
+        
+        Args:
+            health: Health value (0-100)
+            
+        Returns:
+            RGB color tuple
+        """
+        if health > 50:
+            return (0, 255, 0)  # Green
+        elif health > 25:
+            return (255, 255, 0)  # Yellow
+        else:
+            return (255, 0, 0)  # Red
 
 class EffectsRenderer:
     """Handles rendering of special effects like explosions, particles, etc."""
@@ -860,27 +927,38 @@ class EffectsRenderer:
                 self.effects.remove(effect)
                 continue
 
-            # Update particles
+            # Update particles if present
             if "particles" in effect:
-                for particle in effect["particles"][:]:
-                    # Update position
-                    particle["pos"][0] += particle["velocity"][0]
-                    particle["pos"][1] += particle["velocity"][1]
-
-                    # Apply gravity or drag if needed
-                    if effect["type"] == "explosion":
-                        # Slow down particles over time
-                        particle["velocity"] = (
-                            particle["velocity"][0] * 0.95,
-                            particle["velocity"][1] * 0.95 + 0.1,  # Add gravity
-                        )
-
-                    # Update lifetime
-                    particle["lifetime"] -= 1
-
-                    # Remove expired particles
-                    if particle["lifetime"] <= 0:
-                        effect["particles"].remove(particle)
+                self._update_effect_particles(effect)
+                
+    def _update_effect_particles(self, effect: Dict) -> None:
+        """Update particles for a specific effect."""
+        for particle in effect["particles"][:]:
+            self._update_particle_position(particle)
+            
+            # Apply effect-specific physics
+            if effect["type"] == "explosion":
+                self._apply_explosion_physics(particle)
+                
+            # Update lifetime
+            particle["lifetime"] -= 1
+            
+            # Remove expired particles
+            if particle["lifetime"] <= 0:
+                effect["particles"].remove(particle)
+                
+    def _update_particle_position(self, particle: Dict) -> None:
+        """Update the position of a particle based on its velocity."""
+        particle["pos"][0] += particle["velocity"][0]
+        particle["pos"][1] += particle["velocity"][1]
+        
+    def _apply_explosion_physics(self, particle: Dict) -> None:
+        """Apply explosion-specific physics to a particle."""
+        # Slow down particles over time and add gravity
+        particle["velocity"] = (
+            particle["velocity"][0] * 0.95,
+            particle["velocity"][1] * 0.95 + 0.1,  # Add gravity
+        )
 
     def render(
         self,
@@ -976,32 +1054,48 @@ class UIStateRenderer:
     def update(self) -> None:
         """Update all active UI transitions and notifications."""
         # Update transitions
-        for trans_type, trans in list(self.transitions.items()):
-            if trans["active"]:
-                trans["progress"] += 1
-
-                # Update fade overlay alpha
-                if trans_type == "fade_in":
-                    self.fade_alpha = 255 - int(
-                        255 * (trans["progress"] / trans["duration"])
-                    )
-                elif trans_type == "fade_out":
-                    self.fade_alpha = int(255 * (trans["progress"] / trans["duration"]))
-
-                # Check if transition is complete
-                if trans["progress"] >= trans["duration"]:
-                    trans["active"] = False
-
-                    # Clean up completed transitions
-                    if trans_type == "fade_in":
-                        self.fade_alpha = 0
-                    elif trans_type == "fade_out":
-                        self.fade_alpha = 255
-
+        self._update_transitions()
         # Update notifications
+        self._update_notifications()
+        
+    def _update_transitions(self) -> None:
+        """Update all active screen transitions."""
+        for trans_type, trans in list(self.transitions.items()):
+            if not trans["active"]:
+                continue
+                
+            trans["progress"] += 1
+            # Update fade overlay alpha based on transition type
+            self._update_transition_alpha(trans_type, trans)
+            
+            # Check if transition is complete
+            if trans["progress"] >= trans["duration"]:
+                self._complete_transition(trans_type, trans)
+                
+    def _update_transition_alpha(self, trans_type: str, trans: Dict) -> None:
+        """Update the fade alpha value based on transition type and progress."""
+        progress_ratio = trans["progress"] / trans["duration"]
+        
+        if trans_type == "fade_in":
+            self.fade_alpha = 255 - int(255 * progress_ratio)
+        elif trans_type == "fade_out":
+            self.fade_alpha = int(255 * progress_ratio)
+            
+    def _complete_transition(self, trans_type: str, trans: Dict) -> None:
+        """Mark transition as complete and set final state."""
+        trans["active"] = False
+        
+        # Set final alpha value
+        if trans_type == "fade_in":
+            self.fade_alpha = 0
+        elif trans_type == "fade_out":
+            self.fade_alpha = 255
+            
+    def _update_notifications(self) -> None:
+        """Update all active notifications."""
         for notification in self.notifications[:]:
             notification["lifetime"] -= 1
-
+            
             if notification["lifetime"] <= 0:
                 self.notifications.remove(notification)
 
@@ -1041,106 +1135,151 @@ class UIStateRenderer:
         Args:
             surface: Pygame surface to render on
         """
-
         # Render fade overlay if needed
         if self.fade_alpha > 0:
             self._render_surface_handler(surface)
+            
         # Render notifications
-        for notification in self.notifications:
-            # Calculate position
-            text = notification["text"]
-            color = notification["color"]
-            size = notification["size"]
-            position = notification["position"]
-            lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
-
-            # Fade in/out
-            alpha = 255
-            if lifetime_ratio > 0.8:  # Fade in
-                alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
-            elif lifetime_ratio < 0.2:  # Fade out
-                alpha = int(255 * lifetime_ratio * 5)
-
-            # Position
-            if position == "bottom":
-                x = surface.get_width() // 2
-                y = surface.get_height() - 50
-                align = "center"
-            elif position == "center":
-                x = surface.get_width() // 2
-                y = surface.get_height() // 2
-                align = "center"
-            elif position == "top":
-                x = surface.get_width() // 2
-                y = 50
-                align = "center"
-            else:
-                x, y = 50, 50
-                align = "left"
-
-            # Draw with shadow for visibility
-            draw_text(
-                surface,
-                text,
-                x,
-                y,
-                size,
-                color,
-                align,
-                shadow=True,
-                shadow_color=(0, 0, 0),
-                alpha=alpha,
-            )
-
-            # Update lifetime
-            notification["lifetime"] -= 1
-
-            if notification["lifetime"] <= 0:
-                self.notifications.remove(notification)
-
+        self._render_notifications(surface)
+        
         # Render transitions
-        for trans_type, trans in self.transitions.items():
-            if trans["active"]:
-                if trans_type == "fade_in":
-                    self.fade_alpha = 255 - int(
-                        255 * (trans["progress"] / trans["duration"])
-                    )
-                elif trans_type == "fade_out":
-                    self.fade_alpha = int(255 * (trans["progress"] / trans["duration"]))
-                if self.fade_overlay:
-                    self.fade_overlay.fill((0, 0, 0, self.fade_alpha))
-                    surface.blit(self.fade_overlay, (0, 0))
-
+        self._render_transitions(surface)
+    
+    def _render_surface_handler(self, surface: pygame.Surface) -> None:
+        """Create and render fade overlay surface if needed."""
+        if self.fade_overlay is None or self.fade_overlay.get_size() != surface.get_size():
+            self.fade_overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            
+        self.fade_overlay.fill((0, 0, 0, self.fade_alpha))
+        surface.blit(self.fade_overlay, (0, 0))
+        
+    def _render_notifications(self, surface: pygame.Surface) -> None:
+        """Render all active notifications."""
+        for notification in self.notifications[:]:
+            self._render_single_notification(surface, notification)
+            
+    def _render_single_notification(self, surface: pygame.Surface, notification: Dict) -> None:
+        """Render a single notification."""
+        # Extract notification properties
+        text = notification["text"]
+        color = notification["color"]
+        size = notification["size"]
+        position = notification["position"]
+        
+        # Calculate alpha based on lifetime
+        alpha = self._calculate_notification_alpha(notification)
+        
+        # Calculate position coordinates
+        x, y = self._calculate_notification_position(surface, position)
+        
+        # Draw notification text with shadow for visibility
+        self._draw_notification_text(surface, text, x, y, size, color, alpha)
+        
+        # Update lifetime
+        notification["lifetime"] -= 1
+        if notification["lifetime"] <= 0:
+            self.notifications.remove(notification)
+    
+    def _calculate_notification_alpha(self, notification: Dict) -> int:
+        """Calculate alpha value for a notification based on its lifetime."""
+        lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
+        
+        # Default alpha
+        alpha = 255
+        
+        # Fade in/out logic
+        if lifetime_ratio > 0.8:  # Fade in
+            alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
+        elif lifetime_ratio < 0.2:  # Fade out
+            alpha = int(255 * lifetime_ratio * 5)
+            
+        return alpha
+    
+    def _calculate_notification_position(self, surface: pygame.Surface, position: str) -> Tuple[int, int]:
+        """Calculate position coordinates for a notification."""
+        if position == "bottom":
+            return surface.get_width() // 2, surface.get_height() - 50
+        elif position == "center":
+            return surface.get_width() // 2, surface.get_height() // 2
+        elif position == "top":
+            return surface.get_width() // 2, 50
+        else:  # default to top-left
+            return 50, 50
+    
+    def _draw_notification_text(self, surface: pygame.Surface, text: str, x: int, y: int, 
+                               size: int, color: Tuple[int, int, int], alpha: int) -> None:
+        """Draw notification text with shadow."""
+        # Determine alignment based on position
+        text_align = "center" if x == surface.get_width() // 2 else "left"
+        
+        # Draw text with shadow
+        draw_text(
+            surface,
+            text,
+            x,
+            y,
+            size,
+            color,
+            text_align,
+            shadow=True,
+            shadow_color=(0, 0, 0),
+            alpha=alpha,
+        )
+    
+    def _render_transitions(self, surface: pygame.Surface) -> None:
+        """Render all active transitions."""
+        # Process active transitions
+        self._process_active_transitions(surface)
+        
+        # Process remaining UI elements
+        self._process_ui_elements(surface)
+        
+    def _process_active_transitions(self, surface: pygame.Surface) -> None:
+        """Process and render active transitions."""
+        for trans_type, trans in list(self.transitions.items()):
+            if not trans["active"]:
+                continue
+                
+            # Update alpha based on progress
+            self._update_transition_alpha(trans_type, trans)
+            
+            # Apply fade effect if overlay exists
+            if self.fade_alpha > 0 and self.fade_overlay:
+                self.fade_overlay.fill((0, 0, 0, self.fade_alpha))
+                surface.blit(self.fade_overlay, (0, 0))
+            
+            # Check if transition is complete
             if trans["progress"] >= trans["duration"]:
-                trans["active"] = False
+                self._complete_transition(trans_type, trans)
 
-                # Clean up completed transitions
-                if trans_type == "fade_in":
-                    self.fade_alpha = 0
-                elif trans_type == "fade_out":
-                    self.fade_alpha = 255
-
-        # Update transitions
-        for trans_type, trans in self.transitions.items():
-            if trans["active"]:
-                trans["progress"] += 1
-
-            if trans["progress"] >= trans["duration"]:
-                trans["active"] = False
-
-                # Clean up completed transitions
-                if trans_type == "fade_in":
-                    self.fade_alpha = 0
-                elif trans_type == "fade_out":
-                    self.fade_alpha = 255
-
+    def _process_ui_elements(self, surface: pygame.Surface) -> None:
+        """Process and render UI elements."""
         # Update notifications
+        self._update_notification_lifetimes()
+        
+        # Render UI components if visible
+        self._render_visible_ui_components(surface)
+    
+    def _update_notification_lifetimes(self) -> None:
+        """Update lifetimes for all notifications."""
         for notification in self.notifications[:]:
             notification["lifetime"] -= 1
-
             if notification["lifetime"] <= 0:
                 self.notifications.remove(notification)
-
+    
+    def _render_visible_ui_components(self, surface: pygame.Surface) -> None:
+        """Render all visible UI components."""
+        # Render UI elements
+        self._render_ui_elements(surface)
+        
+        # Render overlay elements
+        self._render_overlay_elements(surface)
+        
+        # Render notification items
+        self._render_notification_items(surface)
+        
+    def _render_ui_elements(self, surface: pygame.Surface) -> None:
+        """Render basic UI elements if visible."""
         # Render minimap
         if self.show_minimap:
             self.minimap.render(surface)
@@ -1148,7 +1287,9 @@ class UIStateRenderer:
         # Render shop
         if self.show_shop:
             self.shop.render(surface)
-
+            
+    def _render_overlay_elements(self, surface: pygame.Surface) -> None:
+        """Render overlay UI elements if visible."""
         # Render cursor
         if self.cursor:
             self.cursor.render(surface)
@@ -1168,38 +1309,49 @@ class UIStateRenderer:
         # Render fade overlay if needed
         if self.fade_alpha > 0:
             self._render_surface_handler(surface)
-        # Render notifications
+            
+    def _calculate_notification_alpha(self, notification: Dict) -> int:
+        """Calculate the alpha value for a notification based on its lifetime."""
+        lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
+        alpha = 255
+            
+        if lifetime_ratio > 0.8:  # Fade in
+            alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
+        elif lifetime_ratio < 0.2:  # Fade out
+            alpha = int(255 * lifetime_ratio * 5)
+            
+        return alpha
+    
+    def _calculate_notification_position(self, surface: pygame.Surface, position: str) -> Tuple[int, int]:
+        """Calculate the position coordinates for a notification."""
+        if position == "bottom":
+            x = surface.get_width() // 2
+            y = surface.get_height() - 50
+        elif position == "center":
+            x = surface.get_width() // 2
+            y = surface.get_height() // 2
+        elif position == "top":
+            x = surface.get_width() // 2
+            y = 50
+        else:
+            x, y = 50, 50
+            
+        return x, y
+    
+    def _render_notification_items(self, surface: pygame.Surface) -> None:
+        """Render individual notification items."""
         for notification in self.notifications:
-            # Calculate position
+            # Get notification properties
             text = notification["text"]
             color = notification["color"]
             size = notification["size"]
             position = notification["position"]
-            lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
-
-            # Fade in/out
-            alpha = 255
-            if lifetime_ratio > 0.8:  # Fade in
-                alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
-            elif lifetime_ratio < 0.2:  # Fade out
-                alpha = int(255 * lifetime_ratio * 5)
-
-            # Position
-            if position == "bottom":
-                x = surface.get_width() // 2
-                y = surface.get_height() - 50
-                align = "center"
-            elif position == "center":
-                x = surface.get_width() // 2
-                y = surface.get_height() // 2
-                align = "center"
-            elif position == "top":
-                x = surface.get_width() // 2
-                y = 50
-                align = "center"
-            else:
-                x, y = 50, 50
-                align = "left"
+            
+            # Calculate alpha for fade in/out
+            alpha = self._calculate_notification_alpha(notification)
+            
+            # Calculate position coordinates
+            x, y = self._calculate_notification_position(surface, position)
 
             # Draw with shadow for visibility
             draw_text(surface, text, x, y, size, color)
