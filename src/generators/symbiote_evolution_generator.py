@@ -805,20 +805,18 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         """
         if not self.colony_merging_enabled or not PATTERN_ANALYSIS_AVAILABLE or self.colony_merger is None:
             return grid
-            
+
         try:
             # First compute a territory map to find borders
             territory_map = self._compute_territory_partition(grid)
             if territory_map is None:
                 return grid
-                
+
             # Identify colonies and their strengths
             if colony_data is None:
                 colony_data = self._create_colony_data_for_merging(grid)
-            
-            # Call the colony merger to perform merges
-            updated_grid = self._perform_colony_merges(grid, territory_map, colony_data)
-            return updated_grid
+
+            return self._perform_colony_merges(grid, territory_map, colony_data)
         except Exception as e:
             logging.warning(f"Error during colony merging: {str(e)}")
             return grid

@@ -62,9 +62,9 @@ class Region:
     size: float
     type: RegionType
     state: ExplorationState = ExplorationState.UNEXPLORED
-    resources: Dict[str, float] = None
+    resources: Optional[Dict[str, float]] = None
     hazard_level: float = 0.0
-    discoveries: List[str] = None
+    discoveries: Optional[List[str]] = None
 
     def __post_init__(self):
         """Initialize optional fields."""
@@ -81,7 +81,7 @@ class ExplorationMission:
     pattern: str
     duration: float
     progress: float = 0.0
-    discoveries: List[str] = None
+    discoveries: Optional[List[str]] = None
     active: bool = True
 
     def __post_init__(self):

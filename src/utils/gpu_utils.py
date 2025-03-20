@@ -1623,7 +1623,7 @@ def _apply_dbscan_cpu(data: np.ndarray, eps: float, min_samples: int, n_samples:
 
 
 def _apply_dbscan_mps(
-    data: np.ndarray, eps: float, min_samples: int, n_samples: int
+    data: np.ndarray, eps: float, min_samples: int
 ) -> np.ndarray:
     """Apply DBSCAN clustering using MPS (Metal Performance Shaders).
     
@@ -1631,7 +1631,6 @@ def _apply_dbscan_mps(
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
-        n_samples: Number of samples in data
         
     Returns:
         np.ndarray: Cluster labels
@@ -2018,7 +2017,7 @@ def _try_gpu_backend(
     """
     # Select the appropriate implementation based on backend
     if backend == "mps" and MPS_AVAILABLE:
-        return _apply_dbscan_mps(data, eps, min_samples, n_samples)
+        return _apply_dbscan_mps(data, eps, min_samples)
     
     if backend == "metalgpu" and METALGPU_AVAILABLE:
         return _apply_dbscan_metalgpu(data, eps, min_samples, n_samples)
