@@ -30,30 +30,30 @@ ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
 ## Workflow & Instructions
 
 Context Retrieval Process:
-   - When analyzing or generating code, first search `.windsurfcontext.md` for relevant system sections using `(#hashtag)` identifiers
+   - When analyzing or generating code, first search `.windsurfcontext` for relevant system sections using `(#hashtag)` identifiers
    - Look for code patterns, interfaces, and type structures in the identified sections
    - Verify implementation approaches against established patterns
    - If context is insufficient, ask the user for clarification
 
 Architecture Alignment:
-   - Ensure all implementations follow patterns documented in `.windsurfcontext.md`
+   - Ensure all implementations follow patterns documented in `.windsurfcontext`
    - Maintain consistency with existing type structures and interfaces
    - Follow established naming conventions and implementation patterns
    - If context is missing, ask the user before implementing new patterns
 
 Incremental Implementation:
-   - Generate code in manageable steps aligned with patterns in `.windsurfcontext.md`
+   - Generate code in manageable steps aligned with patterns in `.windsurfcontext`
    - Review implementations for consistency with documented patterns
    - Identify and resolve gaps between implementation and documentation
 
 Context Maintenance:
 
-   - When discovering new patterns or implementations, suggest updates to `.windsurfcontext.md`
+   - When discovering new patterns or implementations, suggest updates to `.windsurfcontext`
    - Format new context entries according to the established structure
    - Ensure new entries include concrete code examples, not explanations
 
 Scratchpad Usage:
-   Maintain a task list in the Scratchpad section below in this format:
+   Maintain a task list in the `Scratchpad.md` file in this format:
 
    ```
    ## Scratchpad
