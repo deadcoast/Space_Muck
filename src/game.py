@@ -1151,14 +1151,7 @@ class Game:
     def _hide_gameplay_elements(self) -> None:
         """Hide gameplay UI elements when showing the menu."""
         gameplay_elements = ["status_panel", "inventory_panel", "action_panel"]
-        
-        for element_name in gameplay_elements:
-            if element_name not in self.ui_elements:
-                continue
-                
-            element = self.ui_elements[element_name]
-            if hasattr(element, "visible"):
-                element.visible = False
+        self._set_ui_elements_visibility(gameplay_elements, visible=False)
                 
     def _update_menu_content(self) -> None:
         """Update the menu content if the menu has an update method."""
@@ -1230,23 +1223,11 @@ class Game:
             
         # Show gameplay UI elements
         gameplay_elements = ["status_panel", "inventory_panel", "action_panel"]
-        for element_name in gameplay_elements:
-            if element_name not in self.ui_elements:
-                continue
-                
-            element = self.ui_elements[element_name]
-            if hasattr(element, "visible"):
-                element.visible = True
+        self._set_ui_elements_visibility(gameplay_elements, visible=True)
                 
         # Hide any menu components if they exist
         menu_elements = ["main_menu", "pause_menu"]
-        for element_name in menu_elements:
-            if element_name not in self.ui_elements:
-                continue
-                
-            element = self.ui_elements[element_name]
-            if hasattr(element, "visible"):
-                element.visible = False
+        self._set_ui_elements_visibility(menu_elements, visible=False)
                 
         # Update active element if tracking is available and status panel exists
         if hasattr(self, "active_element") and "status_panel" in self.ui_elements:
@@ -1297,18 +1278,19 @@ class Game:
         """Hide all menu-related UI elements."""
         menu_elements = ["main_menu", "pause_menu", "settings_menu", "help_menu"]
         
+        # Handle visibility using our helper method
+        self._set_ui_elements_visibility(menu_elements, visible=False)
+        
+        # Handle additional functionality not covered by the visibility helper
         for element_name in menu_elements:
             if element_name not in self.ui_elements:
                 continue
                 
             element = self.ui_elements[element_name]
+            
             # Deactivate the menu
             if hasattr(element, "active"):
                 element.active = False
-                
-            # Hide the menu
-            if hasattr(element, "visible"):
-                element.visible = False
                 
             # Stop any active animations
             if (hasattr(element, "animation") and isinstance(element.animation, dict) and
@@ -1467,9 +1449,8 @@ class Game:
             self._logger.debug("Activated pause menu")
 
         # Make the pause menu visible
-        if hasattr(pause_menu, "visible"):
-            pause_menu.visible = True
-            self._logger.debug("Made pause menu visible")
+        self._set_ui_elements_visibility(["pause_menu"], visible=True)
+        self._logger.debug("Made pause menu visible")
 
         # If the menu has a reset method, call it to ensure proper state
         if hasattr(pause_menu, "reset") and callable(pause_menu.reset):
@@ -1565,9 +1546,8 @@ class Game:
             self._logger.debug("Activated shop interface")
             
         # Make the shop interface visible
-        if hasattr(shop, "visible"):
-            shop.visible = True
-            self._logger.debug("Made shop interface visible")
+        self._set_ui_elements_visibility(["shop_interface"], visible=True)
+        self._logger.debug("Made shop interface visible")
             
         # Hide gameplay elements while in shop
         self._hide_gameplay_for_shop()
@@ -1590,14 +1570,10 @@ class Game:
         # Elements to hide during shop interface
         gameplay_elements = ["action_panel", "minimap"]
         
-        for element_name in gameplay_elements:
-            if element_name not in self.ui_elements:
-                continue
-                
-            element = self.ui_elements[element_name]
-            if hasattr(element, "visible"):
-                element.visible = False
-                self._logger.debug(f"Hid {element_name} for shop display")
+        # Use our helper method to hide all gameplay elements at once
+        self._set_ui_elements_visibility(gameplay_elements, visible=False)
+        
+        self._logger.debug("Hid gameplay elements for shop display")
                 
     def _apply_shop_effects(self) -> None:
         """Apply visual effects and animations to the shop interface."""
@@ -1903,9 +1879,8 @@ class Game:
             self._logger.debug("Activated game over screen")
             
         # Make the game over screen visible
-        if hasattr(game_over, "visible"):
-            game_over.visible = True
-            self._logger.debug("Made game over screen visible")
+        self._set_ui_elements_visibility(["game_over_screen"], visible=True)
+        self._logger.debug("Made game over screen visible")
             
         # Track active UI element
         if hasattr(self, "active_element"):
@@ -1920,14 +1895,10 @@ class Game:
             "status_bar", "game_hud", "shop_interface", "map_interface"
         ]
         
-        for element_name in elements_to_hide:
-            if element_name not in self.ui_elements:
-                continue
-                
-            element = self.ui_elements[element_name]
-            if hasattr(element, "visible"):
-                element.visible = False
-                self._logger.debug(f"Hid {element_name} for game over screen")
+        # Use our helper method to hide all elements at once
+        self._set_ui_elements_visibility(elements_to_hide, visible=False)
+        
+        self._logger.debug("Hid UI elements for game over screen")
                 
     def _update_game_over_stats(self) -> None:
         """Update game over screen with player's final stats and score."""
@@ -2177,7 +2148,7 @@ class Game:
             # Ensure save directory exists
             self._ensure_save_directory()
 
-            if save_success := self._write_save_data(save_data):
+            if self._write_save_data(save_data):
                 self._logger.info("Game state saved successfully")
             else:
                 self._logger.warning("Failed to save game state")
@@ -2231,14 +2202,13 @@ class Game:
         player_data = {}
 
         try:
-            self._extracted_from__collect_player_data_10(player_data)
+            self._player_attributes(player_data)
         except Exception as e:
             self._logger.error(f"Error collecting player data: {e}")
 
         return player_data
 
-    # TODO Rename this here and in `_collect_player_data`
-    def _extracted_from__collect_player_data_10(self, player_data):
+    def _player_attributes(self, player_data):
         player = self.player
 
         # Collect basic player attributes
@@ -2504,24 +2474,8 @@ class Game:
             # List of pause menu related UI elements
             pause_elements = ["pause_menu", "pause_background", "pause_options"]
             
-            for element_name in pause_elements:
-                if element_name not in self.ui_elements:
-                    continue
-                    
-                element = self.ui_elements[element_name]
-                
-                # Hide the element if it has visible property
-                if hasattr(element, "visible"):
-                    element.visible = False
-                    self._logger.debug(f"Set {element_name} visibility to False")
-                    
-                # If element has specific hide method, call it
-                if hasattr(element, "hide") and callable(element.hide):
-                    try:
-                        element.hide()
-                        self._logger.debug(f"Called hide() for {element_name}")
-                    except Exception as e:
-                        self._logger.error(f"Error hiding {element_name}: {e}")
+            # Set visibility of all pause elements to False
+            self._set_ui_elements_visibility(pause_elements, visible=False)
                         
             self._logger.debug("Finished hiding pause menu UI elements")
             
@@ -2669,24 +2623,8 @@ class Game:
             # List of shop-related UI elements
             shop_elements = ["shop_panel", "shop_inventory", "shop_items", "shop_buttons"]
             
-            for element_name in shop_elements:
-                if element_name not in self.ui_elements:
-                    continue
-                    
-                element = self.ui_elements[element_name]
-                
-                # Hide the element if it has visible property
-                if hasattr(element, "visible"):
-                    element.visible = False
-                    self._logger.debug(f"Set {element_name} visibility to False")
-                    
-                # If element has hide method, call it
-                if hasattr(element, "hide") and callable(element.hide):
-                    try:
-                        element.hide()
-                        self._logger.debug(f"Called hide() for {element_name}")
-                    except Exception as e:
-                        self._logger.error(f"Error hiding {element_name}: {e}")
+            # Set visibility of all shop elements to False
+            self._set_ui_elements_visibility(shop_elements, visible=False)
             
             self._logger.debug("Finished hiding shop UI elements")
             
@@ -2700,16 +2638,7 @@ class Game:
             shop_state_vars = ["shop_selection", "shop_page", "shop_filter", "shop_sort_order"]
             
             for var_name in shop_state_vars:
-                if hasattr(self, var_name):
-                    if isinstance(getattr(self, var_name), list):
-                        setattr(self, var_name, [])
-                    elif isinstance(getattr(self, var_name), dict):
-                        setattr(self, var_name, {})
-                    elif isinstance(getattr(self, var_name), int):
-                        setattr(self, var_name, 0)
-                    else:
-                        setattr(self, var_name, None)
-                    self._logger.debug(f"Reset shop state variable: {var_name}")
+                self._reset_state_variable(var_name)
                     
             # Clear active element if it's shop-related
             if hasattr(self, "active_element") and "shop" in str(self.active_element):
@@ -2727,24 +2656,8 @@ class Game:
             # List of game UI elements to restore
             game_ui_elements = ["player_hud", "inventory_button", "map_button"]
             
-            for element_name in game_ui_elements:
-                if element_name not in self.ui_elements:
-                    continue
-                    
-                element = self.ui_elements[element_name]
-                
-                # Show the element if it has visible property
-                if hasattr(element, "visible"):
-                    element.visible = True
-                    self._logger.debug(f"Set {element_name} visibility to True")
-                    
-                # If element has show method, call it
-                if hasattr(element, "show") and callable(element.show):
-                    try:
-                        element.show()
-                        self._logger.debug(f"Called show() for {element_name}")
-                    except Exception as e:
-                        self._logger.error(f"Error showing {element_name}: {e}")
+            # Set visibility of all game elements to True
+            self._set_ui_elements_visibility(game_ui_elements, visible=True)
                         
             self._logger.debug("Finished restoring game UI elements")
             
@@ -2759,23 +2672,19 @@ class Game:
         """
         try:
             self._logger.info("Processing and saving purchase data")
-            
+
             # Validate that we have necessary data to process purchases
             if not self._validate_purchase_data():
                 return
-                
-            # Process pending purchases
-            processed_purchases = self._process_pending_purchases()
-            
-            # Update transaction history
-            if processed_purchases:
+
+            if processed_purchases := self._process_pending_purchases():
                 self._update_transaction_history(processed_purchases)
-                
+
             # Update shop inventory if needed
             self._update_shop_inventory()
-            
+
             self._logger.info("Purchase data processed and saved successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error saving purchase data: {e}")
             
@@ -3121,12 +3030,10 @@ class Game:
             
             # Calculate total cost in currency
             total_cost = cost.get("currency", 0)
-            if "resources" in cost:
-                # Convert resources to equivalent currency if resource values exist
-                if hasattr(self, "resource_values") and isinstance(self.resource_values, dict):
-                    for resource_id, amount in cost["resources"].items():
-                        if resource_id in self.resource_values:
-                            total_cost += amount * self.resource_values[resource_id]
+            if "resources" in cost and (hasattr(self, "resource_values") and isinstance(self.resource_values, dict)):
+                for resource_id, amount in cost["resources"].items():
+                    if resource_id in self.resource_values:
+                        total_cost += amount * self.resource_values[resource_id]
                             
             stats["total_spent"] += total_cost
             
@@ -3229,24 +3136,8 @@ class Game:
             # List of map-related UI elements
             map_elements = ["map_view", "map_panel", "map_controls", "map_legend"]
             
-            for element_name in map_elements:
-                if element_name not in self.ui_elements:
-                    continue
-                    
-                element = self.ui_elements[element_name]
-                
-                # Hide the element if it has visible property
-                if hasattr(element, "visible"):
-                    element.visible = False
-                    self._logger.debug(f"Set {element_name} visibility to False")
-                    
-                # If element has hide method, call it
-                if hasattr(element, "hide") and callable(element.hide):
-                    try:
-                        element.hide()
-                        self._logger.debug(f"Called hide() for {element_name}")
-                    except Exception as e:
-                        self._logger.error(f"Error hiding {element_name}: {e}")
+            # Set visibility of all map elements to False
+            self._set_ui_elements_visibility(map_elements, visible=False)
             
             self._logger.debug("Finished hiding map UI elements")
             
@@ -3260,16 +3151,7 @@ class Game:
             map_state_vars = ["map_zoom", "map_position", "map_selection", "highlighted_location"]
             
             for var_name in map_state_vars:
-                if hasattr(self, var_name):
-                    if isinstance(getattr(self, var_name), tuple) or isinstance(getattr(self, var_name), list):
-                        setattr(self, var_name, [])
-                    elif isinstance(getattr(self, var_name), dict):
-                        setattr(self, var_name, {})
-                    elif isinstance(getattr(self, var_name), (int, float)):
-                        setattr(self, var_name, 0)
-                    else:
-                        setattr(self, var_name, None)
-                    self._logger.debug(f"Reset map state variable: {var_name}")
+                self._reset_state_variable(var_name)
             
             # Clear temporary map data if it exists
             if hasattr(self, "temp_map_data"):
@@ -3281,30 +3163,71 @@ class Game:
         except Exception as e:
             self._logger.error(f"Error resetting map state: {e}")
             
+    def _reset_state_variable(self, var_name: str) -> None:
+        """Reset a state variable to its default value based on its type.
+        
+        Args:
+            var_name: Name of the variable to reset
+        """
+        if not hasattr(self, var_name):
+            return
+            
+        var_value = getattr(self, var_name)
+        
+        # Determine default value based on current value's type
+        if isinstance(var_value, (list, tuple)):
+            setattr(self, var_name, [])
+        elif isinstance(var_value, dict):
+            setattr(self, var_name, {})
+        elif isinstance(var_value, (int, float)):
+            setattr(self, var_name, 0)
+        else:
+            setattr(self, var_name, None)
+            
+        self._logger.debug(f"Reset state variable: {var_name}")
+            
+    def _set_ui_elements_visibility(self, element_names: List[str], visible: bool) -> None:
+        """Set visibility of UI elements.
+        
+        Args:
+            element_names: List of UI element names to update
+            visible: True to show elements, False to hide them
+        """
+        try:
+            action = "show" if visible else "hide"
+            method_name = action
+            
+            for element_name in element_names:
+                if element_name not in self.ui_elements:
+                    continue
+                    
+                element = self.ui_elements[element_name]
+                
+                # Set the visible property if it exists
+                if hasattr(element, "visible"):
+                    element.visible = visible
+                    self._logger.debug(f"Set {element_name} visibility to {visible}")
+                    
+                # Call the show/hide method if it exists
+                if hasattr(element, method_name) and callable(getattr(element, method_name)):
+                    try:
+                        method = getattr(element, method_name)
+                        method()
+                        self._logger.debug(f"Called {method_name}() for {element_name}")
+                    except Exception as e:
+                        self._logger.error(f"Error {action}ing {element_name}: {e}")
+                        
+        except Exception as e:
+            self._logger.error(f"Error setting UI element visibility: {e}")
+    
     def _restore_game_ui_after_map(self) -> None:
         """Restore game UI elements after exiting map."""
         try:
             # List of game UI elements to restore
             game_ui_elements = ["player_hud", "main_view", "game_controls"]
             
-            for element_name in game_ui_elements:
-                if element_name not in self.ui_elements:
-                    continue
-                    
-                element = self.ui_elements[element_name]
-                
-                # Show the element if it has visible property
-                if hasattr(element, "visible"):
-                    element.visible = True
-                    self._logger.debug(f"Set {element_name} visibility to True")
-                    
-                # If element has show method, call it
-                if hasattr(element, "show") and callable(element.show):
-                    try:
-                        element.show()
-                        self._logger.debug(f"Called show() for {element_name}")
-                    except Exception as e:
-                        self._logger.error(f"Error showing {element_name}: {e}")
+            # Set visibility of all game elements to True
+            self._set_ui_elements_visibility(game_ui_elements, visible=True)
                         
             self._logger.debug("Finished restoring game UI elements")
             
@@ -3352,9 +3275,8 @@ class Game:
         """
         try:
             # Check game stats for score
-            if hasattr(self, "game_stats") and isinstance(self.game_stats, dict):
-                if "score" in self.game_stats:
-                    return self.game_stats["score"]
+            if hasattr(self, "game_stats") and isinstance(self.game_stats, dict) and "score" in self.game_stats:
+                return self.game_stats["score"]
                     
             # Check player object for score
             if hasattr(self, "player") and hasattr(self.player, "score"):
@@ -3438,14 +3360,12 @@ class Game:
         """
         try:
             # Check player object for name
-            if hasattr(self, "player"):
-                if hasattr(self.player, "name") and self.player.name:
-                    return self.player.name
+            if hasattr(self, "player") and (hasattr(self.player, "name") and self.player.name):
+                return self.player.name
                     
             # Check game settings for player name
-            if hasattr(self, "settings") and isinstance(self.settings, dict):
-                if "player_name" in self.settings and self.settings["player_name"]:
-                    return self.settings["player_name"]
+            if hasattr(self, "settings") and isinstance(self.settings, dict) and ("player_name" in self.settings and self.settings["player_name"]):
+                return self.settings["player_name"]
                     
             # Default player name
             return "Player"
@@ -3701,9 +3621,8 @@ class Game:
             
     def _reset_world_generator(self) -> None:
         """Reset the world generator if it exists."""
-        if hasattr(self, "world_generator"):
-            if hasattr(self.world_generator, "reset") and callable(self.world_generator.reset):
-                self.world_generator.reset()
+        if hasattr(self, "world_generator") and (hasattr(self.world_generator, "reset") and callable(self.world_generator.reset)):
+            self.world_generator.reset()
                 
     def _reset_entities(self) -> None:
         """Reset all game entities (enemies, collectibles, etc)."""
@@ -3761,8 +3680,8 @@ class Game:
         """Hide all overlay UI elements."""
         overlay_elements = ["pause_menu", "shop_menu", "map_screen", "game_over_screen"]
         
-        for element_name in overlay_elements:
-            self._hide_ui_element(element_name)
+        # Hide all overlay elements in a single operation
+        self._set_ui_elements_visibility(overlay_elements, visible=False)
             
     def _hide_ui_element(self, element_name: str) -> None:
         """Hide a specific UI element.
@@ -3770,18 +3689,8 @@ class Game:
         Args:
             element_name: Name of the UI element to hide
         """
-        if element_name not in self.ui_elements:
-            return
-            
-        element = self.ui_elements[element_name]
-        
-        # Set visibility to false
-        if hasattr(element, "visible"):
-            element.visible = False
-            
-        # Call hide method if available
-        if hasattr(element, "hide") and callable(element.hide):
-            element.hide()
+        # Use our helper method with a list containing just this element
+        self._set_ui_elements_visibility([element_name], visible=False)
             
     def _reset_main_ui_elements(self) -> None:
         """Reset and show main game UI elements."""
@@ -3805,13 +3714,8 @@ class Game:
         if hasattr(element, "reset") and callable(element.reset):
             element.reset()
             
-        # Set visibility to true
-        if hasattr(element, "visible"):
-            element.visible = True
-            
-        # Call show method if available
-        if hasattr(element, "show") and callable(element.show):
-            element.show()
+        # Set visibility to true using our helper method
+        self._set_ui_elements_visibility([element_name], visible=True)
             
     def _reset_game_timer(self) -> None:
         """Reset game timers and time-based variables."""

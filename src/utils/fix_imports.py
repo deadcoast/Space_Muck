@@ -14,29 +14,25 @@ If no file or directory is specified, it will fix imports in the entire src dire
 
 # Standard library imports
 import argparse
-import importlib.util
 import os
 import re
 import sys
 
 # Local application imports
-from typing import Dict, List, Optional, Set, Tuple
-
-# Third-party library imports
-
+from typing import Dict, List, Tuple
+from . import import_standards
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Import the import standards
+# Get constants and functions from import_standards
+STDLIB_MODULES = import_standards.STDLIB_MODULES
+THIRD_PARTY_MODULES = import_standards.THIRD_PARTY_MODULES
+OPTIONAL_DEPENDENCIES = import_standards.OPTIONAL_DEPENDENCIES
+generate_standard_imports = import_standards.generate_standard_imports
 
-    STDLIB_MODULES,
-    THIRD_PARTY_MODULES,
-    OPTIONAL_DEPENDENCIES,
-    generate_standard_imports,
-)
 
 def is_stdlib_import(module_name: str) -> bool:
     """Check if a module is from the standard library."""
@@ -53,6 +49,39 @@ def is_third_party_import(module_name: str) -> bool:
 def is_local_import(module_name: str) -> bool:
     """Check if a module is a local import."""
     return not (is_stdlib_import(module_name) or is_third_party_import(module_name))
+
+def _categorize_import(module: str, line: str, import_info: Dict[str, List[str]]) -> None:
+    """Categorize an import based on its module name."""
+    if is_stdlib_import(module):
+        import_info["stdlib"].append(line)
+    elif is_third_party_import(module):
+        import_info["third_party"].append(line)
+        # Check if it's an optional dependency
+        if module in OPTIONAL_DEPENDENCIES:
+            import_info["optional"].append(module)
+    else:
+        import_info["local"].append(line)
+
+
+def _process_simple_import(match: re.Match, import_lines: List[str], import_info: Dict[str, List[str]]) -> None:
+    """Process a simple 'import x' statement."""
+    line = match[0]
+    import_lines.append(line)
+
+    # Simpler regex to extract module names
+    modules = re.findall(r'([\w.]+)(?:\s+as\s+[\w.]+)?', line.replace('import ', '', 1))
+    for module in modules:
+        _categorize_import(module, line, import_info)
+
+
+def _process_from_import(match: re.Match, import_lines: List[str], import_info: Dict[str, List[str]]) -> None:
+    """Process a 'from x import y' statement."""
+    line = match[0]
+    import_lines.append(line)
+
+    module = match[1]
+    _categorize_import(module, line, import_info)
+
 
 def extract_imports(content: str) -> Tuple[List[str], Dict[str, List[str]]]:
     """
@@ -72,43 +101,17 @@ def extract_imports(content: str) -> Tuple[List[str], Dict[str, List[str]]]:
         "optional": [],
     }
     
-    # Regular expressions for import statements
-    import_regex = re.compile(r'^import\s+([\w.]+)(?:\s+as\s+[\w.]+)?(?:\s*,\s*([\w.]+)(?:\s+as\s+[\w.]+)?)*', re.MULTILINE)
-    from_import_regex = re.compile(r'^from\s+([\w.]+)\s+import\s+(.+)', re.MULTILINE)
+    # Simplified regular expressions for import statements
+    import_regex = re.compile(r'^import\s+([\w.\s,]+)', re.MULTILINE)
+    from_import_regex = re.compile(r'^from\s+([\w.]+)\s+import', re.MULTILINE)
     
-    # Find all import statements
+    # Process all import statements
     for match in import_regex.finditer(content):
-        line = match.group(0)
-        import_lines.append(line)
-        
-        # Process each module in the import statement
-        modules = re.findall(r'([\w.]+)(?:\s+as\s+[\w.]+)?', line.replace('import ', '', 1))
-        for module in modules:
-            if is_stdlib_import(module):
-                import_info["stdlib"].append(line)
-            elif is_third_party_import(module):
-                import_info["third_party"].append(line)
-            else:
-                import_info["local"].append(line)
+        _process_simple_import(match, import_lines, import_info)
     
-    # Find all from ... import statements
+    # Process all from ... import statements
     for match in from_import_regex.finditer(content):
-        line = match.group(0)
-        import_lines.append(line)
-        
-        module = match.group(1)
-        if is_stdlib_import(module):
-            import_info["stdlib"].append(line)
-        elif is_third_party_import(module):
-            import_info["third_party"].append(line)
-            # Check if it's an optional dependency
-            if module in OPTIONAL_DEPENDENCIES:
-                import_info["optional"].append(module)
-        else:
-            # Convert relative imports to absolute
-            if not module.startswith('src.'):
-                # This is a relative import, needs to be fixed
-                import_info["local"].append(line)
+        _process_from_import(match, import_lines, import_info)
     
     return import_lines, import_info
 
@@ -124,17 +127,17 @@ def fix_imports_in_file(file_path: str, dry_run: bool = False) -> bool:
         True if changes were made, False otherwise
     """
     print(f"Processing {file_path}...")
-    
+
     with open(file_path, 'r') as f:
         content = f.read()
-    
+
     # Extract imports
     import_lines, import_info = extract_imports(content)
-    
+
     if not import_lines:
         print(f"No imports found in {file_path}")
         return False
-    
+
     # Generate new imports
     new_imports = generate_standard_imports(
         import_info["stdlib"],
@@ -142,32 +145,33 @@ def fix_imports_in_file(file_path: str, dry_run: bool = False) -> bool:
         import_info["local"],
         import_info["optional"]
     )
-    
+
     # Replace imports in the content
     new_content = content
     for line in import_lines:
         new_content = new_content.replace(line, '')
-    
-    # Find the insertion point for imports
-    # Look for the module docstring or the first non-comment, non-empty line
-    docstring_end = re.search(r'""".*?"""|\'\'\'.*?\'\'\'', new_content, re.DOTALL)
-    if docstring_end:
+
+    if docstring_end := re.search(
+        r'""".*?"""|\'\'\'.*?\'\'\'', new_content, re.DOTALL
+    ):
         insertion_point = docstring_end.end()
     else:
         # Find the first non-comment, non-empty line
         lines = new_content.split('\n')
-        insertion_point = 0
-        for i, line in enumerate(lines):
-            if line.strip() and not line.strip().startswith('#'):
-                insertion_point = sum(len(l) + 1 for l in lines[:i])
-                break
-    
+        insertion_point = next(
+            (
+                sum(len(line_item) + 1 for line_item in lines[:i])
+                for i, line in enumerate(lines)
+                if line.strip() and not line.strip().startswith('#')
+            ),
+            0,
+        )
     # Insert new imports
     new_content = new_content[:insertion_point] + '\n\n' + new_imports + '\n' + new_content[insertion_point:]
-    
+
     # Clean up multiple blank lines
     new_content = re.sub(r'\n{3,}', '\n\n', new_content)
-    
+
     if new_content != content:
         if not dry_run:
             with open(file_path, 'w') as f:
