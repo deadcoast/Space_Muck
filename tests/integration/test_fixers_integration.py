@@ -196,24 +196,27 @@ class TestFixersIntegration(unittest.TestCase):
         for module in list(sys.modules.keys()):
             if module.startswith("python_fixer"):
                 del sys.modules[module]
-        
+
         # Now import all modules in the correct order (bottom-up)
         try:
-            # Import in hierarchical order to verify no circular dependencies
-            __import__("python_fixer.utils")
-            __import__("python_fixer.core")
-            __import__("python_fixer.enhancers")
-            __import__("python_fixer.parsers")
-            __import__("python_fixer.analyzers")
-            
-            # Check if fixers module is available before importing
-            if FIXERS_AVAILABLE:
-                __import__("python_fixer.fixers")
-            
-            # If we reach this point, no import errors occurred
-            self.assertTrue(IMPORTS_SUCCESSFUL, "No circular dependencies detected")
+            self._verify_no_circular_imports()
         except ImportError as e:
             self.skipTest(f"Could not import all modules: {e}")
+
+    def _verify_no_circular_imports(self):
+        # Import in hierarchical order to verify no circular dependencies
+        __import__("python_fixer.utils")
+        __import__("python_fixer.core")
+        __import__("python_fixer.enhancers")
+        __import__("python_fixer.parsers")
+        __import__("python_fixer.analyzers")
+
+        # Check if fixers module is available before importing
+        if FIXERS_AVAILABLE:
+            __import__("python_fixer.fixers")
+
+        # If we reach this point, no import errors occurred
+        self.assertTrue(IMPORTS_SUCCESSFUL, "No circular dependencies detected")
     
     def test_integration_with_all_modules(self):
         """Test integration with all modules in a realistic scenario."""

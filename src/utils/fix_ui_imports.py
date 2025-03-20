@@ -22,7 +22,7 @@ import re
 import sys
 
 # Local application imports
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Tuple
 
 # Third-party library imports
 
@@ -37,40 +37,46 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+# Define module path constants to avoid duplication
+MODULE_ASCII_BASE = "src.ui.ui_base.ascii_base"
+MODULE_ASCII_UI = "src.ui.ui_base.ascii_ui"
+MODULE_UI_ELEMENT = "src.ui.ui_element"
+MODULE_DRAW_UTILS = "src.ui.draw_utils"
+
 # UI module structure based on the memories
 UI_STRUCTURE = {
     "base_modules": [
-        "src.ui.ui_base.ascii_base",  # Contains only base classes and enums
+        MODULE_ASCII_BASE,  # Contains only base classes and enums
     ],
     "component_modules": [
-        "src.ui.ui_base.ascii_ui",  # Contains specific ASCII UI components
+        MODULE_ASCII_UI,  # Contains specific ASCII UI components
     ],
     "specialized_modules": [
-        "src.ui.ui_element",  # Directory for specialized complex components
+        MODULE_UI_ELEMENT,  # Directory for specialized complex components
     ],
     "utility_modules": [
-        "src.ui.draw_utils",  # Drawing utilities
+        MODULE_DRAW_UTILS,  # Drawing utilities
     ],
 }
 
 # Mapping of common UI imports to their correct absolute paths
 UI_IMPORT_MAP = {
     # Base classes and enums
-    "UIStyle": "src.ui.ui_base.ascii_base",
-    "AnimationStyle": "src.ui.ui_base.ascii_base",
-    "UIElement": "src.ui.ui_base.ascii_base",
-    "COLOR_TEXT": "src.ui.ui_base.ascii_base",
-    "COLOR_BG": "src.ui.ui_base.ascii_base",
-    "COLOR_HIGHLIGHT": "src.ui.ui_base.ascii_base",
+    "UIStyle": MODULE_ASCII_BASE,
+    "AnimationStyle": MODULE_ASCII_BASE,
+    "UIElement": MODULE_ASCII_BASE,
+    "COLOR_TEXT": MODULE_ASCII_BASE,
+    "COLOR_BG": MODULE_ASCII_BASE,
+    "COLOR_HIGHLIGHT": MODULE_ASCII_BASE,
     # ASCII UI components
-    "ASCIIBox": "src.ui.ui_base.ascii_ui",
-    "ASCIIPanel": "src.ui.ui_base.ascii_ui",
-    "ASCIIButton": "src.ui.ui_base.ascii_ui",
-    "ASCIIProgressBar": "src.ui.ui_base.ascii_ui",
+    "ASCIIBox": MODULE_ASCII_UI,
+    "ASCIIPanel": MODULE_ASCII_UI,
+    "ASCIIButton": MODULE_ASCII_UI,
+    "ASCIIProgressBar": MODULE_ASCII_UI,
     # Drawing utilities
-    "draw_panel": "src.ui.draw_utils",
-    "draw_histogram": "src.ui.draw_utils",
-    "draw_tooltip": "src.ui.draw_utils",
+    "draw_panel": MODULE_DRAW_UTILS,
+    "draw_histogram": MODULE_DRAW_UTILS,
+    "draw_tooltip": MODULE_DRAW_UTILS,
 }
 
 
@@ -118,6 +124,40 @@ def find_ui_imports(content: str) -> List[Tuple[str, str, str]]:
     return ui_imports
 
 
+def _create_correct_import(module: str, imported_item: str, correct_module: str) -> str:
+    """Create the corrected import statement based on import type."""
+    if module == imported_item:  # It's an 'import X' statement
+        return f"import {correct_module}"
+    else:  # It's a 'from X import Y' statement
+        return f"from {correct_module} import {imported_item}"
+
+
+def _process_mapped_import(import_line: str, module: str, imported_item: str, content: str) -> tuple[str, bool]:
+    """Process imports that exist in the UI_IMPORT_MAP."""
+    correct_module = UI_IMPORT_MAP[imported_item]
+    
+    # If the module is already correct, skip
+    if module == correct_module:
+        return content, False
+        
+    correct_import = _create_correct_import(module, imported_item, correct_module)
+    new_content = content.replace(import_line, correct_import)
+    logging.info(f"  Fixed: {import_line} -> {correct_import}")
+    return new_content, True
+
+
+def _process_relative_import(import_line: str, module: str, imported_item: str, content: str) -> tuple[str, bool]:
+    """Process UI-related relative imports that need to be made absolute."""
+    if "ui" not in module or module.startswith("src."):
+        return content, False
+
+    absolute_module = f"src.{module}"
+    correct_import = _create_correct_import(module, imported_item, absolute_module)
+    new_content = content.replace(import_line, correct_import)
+    logging.info(f"  Fixed: {import_line} -> {correct_import}")
+    return new_content, True
+
+
 def fix_ui_imports(file_path: str, dry_run: bool = False) -> bool:
     """
     Fix UI imports in a Python file.
@@ -131,8 +171,12 @@ def fix_ui_imports(file_path: str, dry_run: bool = False) -> bool:
     """
     logging.info(f"Processing {file_path}...")
 
-    with open(file_path, "r") as f:
-        content = f.read()
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+    except Exception as e:
+        logging.error(f"Error reading file {file_path}: {e}")
+        return False
 
     # Find UI imports
     ui_imports = find_ui_imports(content)
@@ -147,53 +191,34 @@ def fix_ui_imports(file_path: str, dry_run: bool = False) -> bool:
 
     # Fix imports
     for import_line, module, imported_item in ui_imports:
-        # Check if the import needs to be fixed
+        # Process imports that exist in the UI_IMPORT_MAP
         if imported_item in UI_IMPORT_MAP:
-            correct_module = UI_IMPORT_MAP[imported_item]
+            new_content, changed = _process_mapped_import(
+                import_line, module, imported_item, new_content
+            )
+        else:
+            # Process relative imports that need to be made absolute
+            new_content, changed = _process_relative_import(
+                import_line, module, imported_item, new_content
+            )
+        changes_made = changes_made or changed
+    # Write changes to file if needed
+    if not changes_made:
+        logging.info(f"No changes needed in {file_path}")
+        return False
 
-            # If the module is already correct, skip
-            if module == correct_module:
-                continue
-
-            # Create the correct import statement
-            if module == imported_item:  # It's an 'import X' statement
-                correct_import = f"import {correct_module}"
-            else:  # It's a 'from X import Y' statement
-                correct_import = f"from {correct_module} import {imported_item}"
-
-            # Replace the import
-            new_content = new_content.replace(import_line, correct_import)
-            changes_made = True
-            logging.info(f"  Fixed: {import_line} -> {correct_import}")
-
-        # Fix relative imports to absolute
-        elif "ui" in module and not module.startswith("src."):
-            # Convert to absolute import
-            absolute_module = f"src.{module}"
-
-            # Create the correct import statement
-            if module == imported_item:  # It's an 'import X' statement
-                correct_import = f"import {absolute_module}"
-            else:  # It's a 'from X import Y' statement
-                correct_import = f"from {absolute_module} import {imported_item}"
-
-            # Replace the import
-            new_content = new_content.replace(import_line, correct_import)
-            changes_made = True
-            logging.info(f"  Fixed: {import_line} -> {correct_import}")
-
-    # Write changes to file
-    if changes_made:
-        if not dry_run:
+    if not dry_run:
+        try:
             with open(file_path, "w") as f:
                 f.write(new_content)
             logging.info(f"Fixed UI imports in {file_path}")
-        else:
-            logging.info(f"Would fix UI imports in {file_path}")
-        return True
+        except Exception as e:
+            logging.error(f"Error writing to file {file_path}: {e}")
+            return False
     else:
-        logging.info(f"No changes needed in {file_path}")
-        return False
+        logging.info(f"Would fix UI imports in {file_path}")
+
+    return True
 
 
 def fix_ui_imports_in_directory(directory: str, dry_run: bool = False) -> int:

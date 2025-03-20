@@ -23,11 +23,6 @@ PATTERN_ANALYSIS_AVAILABLE = importlib.util.find_spec("algorithms.pattern_analys
 if TYPE_CHECKING:
     from algorithms.pattern_analysis import AdvancedPatternAnalyzer, VoronoiTerritoryPartitioner, ColonyMerger
 
-# Define at module level to prevent undefined variable errors
-AdvancedPatternAnalyzer = None
-VoronoiTerritoryPartitioner = None
-ColonyMerger = None
-
 # Import pattern analysis dependencies at runtime if available
 if PATTERN_ANALYSIS_AVAILABLE:
     try:
@@ -61,6 +56,10 @@ from utils.value_generator import (
     add_value_clusters,
 )
 
+# Define at module level to prevent undefined variable errors
+AdvancedPatternAnalyzer = None
+VoronoiTerritoryPartitioner = None
+ColonyMerger = None
 
 @inject
 class SymbioteEvolutionGenerator(BaseGenerator):

@@ -75,6 +75,10 @@ This document outlines the tasks needed to properly implement the `game.py` file
   - [x] Refactor `_add_purchased_items_to_inventory` to reduce cognitive complexity (implemented strategy pattern)
   - [x] Ensure robust error handling in all state handlers
   - [x] Add comprehensive logging for debugging purposes
+  - [x] Created `_set_ui_elements_visibility` helper method to reduce UI code duplication
+  - [x] Created `_reset_state_variable` helper method to centralize state variable reset logic
+  - [x] Fixed duplicate branch in `_clear_collection` method
+  - [x] Applied helper methods to UI handlers: `_hide_gameplay_elements`, `_restore_game_ui_after_map`, `_resume_game`, `_hide_pause_ui_elements`, `_restore_game_ui_after_shop`, `_hide_shop_ui_elements`, etc.
 
 ## Game Loop Implementation
 
