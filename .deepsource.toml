@@ -1,0 +1,10 @@
+version = 1
+
+[[analyzers]]
+name = "python"
+dependency_file_paths = [
+  "requirements/requirements_project.txt"
+]
+
+  [analyzers.meta]
+  max_line_length = 100

@@ -98,9 +98,9 @@ class Game:
             "hide_pause_menu": self._exit_hide_pause_menu,
             "hide_shop": self._exit_hide_shop,
             "save_purchases": self._exit_save_purchases,
-            "hide_map": lambda: None,  # Placeholder
-            "save_high_score": lambda: None,  # Placeholder
-            "reset_game": lambda: None,  # Placeholder
+            "hide_map": self._exit_hide_map,
+            "save_high_score": self._exit_save_high_score,
+            "reset_game": self._exit_reset_game,
         }
 
     def _validate_state_transition(self, new_state: str) -> bool:
@@ -2898,24 +2898,49 @@ class Game:
             bool: True if player can afford the purchase, False otherwise
         """
         player = self.player
+        # Return true only if player has enough currency AND resources
+        return (self._has_enough_currency(player, cost) and 
+                self._has_enough_resources(player, cost))
         
-        # If cost specifies currency
-        if "currency" in cost and hasattr(player, "currency"):
-            if player.currency < cost["currency"]:
-                return False
-                
-        # If cost specifies resources
-        if "resources" in cost and isinstance(cost["resources"], dict):
-            if not hasattr(player, "resources"):
-                return False
-                
-            # Check each required resource
-            for resource_id, amount in cost["resources"].items():
-                player_amount = player.resources.get(resource_id, 0) if hasattr(player.resources, "get") else 0
-                if player_amount < amount:
-                    return False
-                    
-        return True
+    def _has_enough_currency(self, player, cost: Dict[str, int]) -> bool:
+        """Check if player has enough currency for the purchase.
+        
+        Args:
+            player: Player object
+            cost: Purchase cost dictionary
+            
+        Returns:
+            bool: True if player has enough currency, False otherwise
+        """
+        # Return False only if currency is specified and player doesn't have enough
+        return not ("currency" in cost and 
+                  hasattr(player, "currency") and 
+                  player.currency < cost["currency"])
+        
+    def _has_enough_resources(self, player, cost: Dict[str, int]) -> bool:
+        """Check if player has enough resources for the purchase.
+        
+        Args:
+            player: Player object
+            cost: Purchase cost dictionary
+            
+        Returns:
+            bool: True if player has enough resources, False otherwise
+        """
+        # No resources check needed if cost doesn't specify resources
+        if "resources" not in cost or not isinstance(cost["resources"], dict):
+            return True
+            
+        # Player must have resources attribute
+        if not hasattr(player, "resources"):
+            return False
+            
+        # Check if player has all required resources in sufficient amounts
+        has_get_method = hasattr(player.resources, "get")
+        return all(
+            (player.resources.get(resource_id, 0) if has_get_method else 0) >= amount
+            for resource_id, amount in cost["resources"].items()
+        )
         
     def _deduct_purchase_cost(self, cost: Dict[str, int]) -> bool:
         """Deduct the purchase cost from player's currency/resources.
@@ -2988,36 +3013,85 @@ class Game:
             player = self.player
             inventory = player.inventory
             
-            # Check if inventory has add_item method
-            if hasattr(inventory, "add_item") and callable(inventory.add_item):
-                for _ in range(quantity):
-                    success = inventory.add_item(item_id)
-                    if not success:
-                        self._logger.warning(f"Failed to add item {item_id} to inventory")
-                        return False
+            # Try different inventory adding strategies
+            if self._try_add_via_method(inventory, item_id, quantity):
                 return True
                 
-            # Alternative: if inventory has items dictionary
-            elif hasattr(inventory, "items") and isinstance(inventory.items, dict):
-                if item_id in inventory.items:
-                    inventory.items[item_id] += quantity
-                else:
-                    inventory.items[item_id] = quantity
+            if self._try_add_via_dict(inventory, item_id, quantity):
                 return True
                 
-            # Alternative: if inventory is a list
-            elif hasattr(inventory, "append") and callable(inventory.append):
-                for _ in range(quantity):
-                    inventory.append(item_id)
+            if self._try_add_via_list(inventory, item_id, quantity):
                 return True
                 
-            else:
-                self._logger.warning("Unknown inventory format, cannot add items")
-                return False
+            # If no strategy worked
+            self._logger.warning("Unknown inventory format, cannot add items")
+            return False
                 
         except Exception as e:
             self._logger.error(f"Error adding items to inventory: {e}")
             return False
+            
+    def _try_add_via_method(self, inventory, item_id: str, quantity: int) -> bool:
+        """Try to add items to inventory using its add_item method.
+        
+        Args:
+            inventory: Player inventory object
+            item_id: ID of the item to add
+            quantity: Quantity to add
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not hasattr(inventory, "add_item") or not callable(inventory.add_item):
+            return False
+            
+        for _ in range(quantity):
+            success = inventory.add_item(item_id)
+            if not success:
+                self._logger.warning(f"Failed to add item {item_id} to inventory")
+                return False
+                
+        return True
+        
+    def _try_add_via_dict(self, inventory, item_id: str, quantity: int) -> bool:
+        """Try to add items to inventory using its items dictionary.
+        
+        Args:
+            inventory: Player inventory object
+            item_id: ID of the item to add
+            quantity: Quantity to add
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not hasattr(inventory, "items") or not isinstance(inventory.items, dict):
+            return False
+            
+        if item_id in inventory.items:
+            inventory.items[item_id] += quantity
+        else:
+            inventory.items[item_id] = quantity
+            
+        return True
+        
+    def _try_add_via_list(self, inventory, item_id: str, quantity: int) -> bool:
+        """Try to add items to inventory using its append method (list).
+        
+        Args:
+            inventory: Player inventory object
+            item_id: ID of the item to add
+            quantity: Quantity to add
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not hasattr(inventory, "append") or not callable(inventory.append):
+            return False
+            
+        for _ in range(quantity):
+            inventory.append(item_id)
+            
+        return True
             
     def _update_purchase_stats(self, item_id: str, quantity: int, cost: Dict[str, int]) -> None:
         """Update game statistics with purchase information.
@@ -3120,3 +3194,689 @@ class Game:
                         
         except Exception as e:
             self._logger.error(f"Error updating shop inventory: {e}")
+            
+    def _exit_hide_map(self) -> None:
+        """Clean up map interface when exiting the map state.
+        
+        This state exit handler ensures proper cleanup of the map UI elements
+        and restores the game UI when exiting the map view.
+        """
+        try:
+            self._logger.info("Cleaning up map interface")
+            
+            # Check if UI component dictionary exists
+            if not hasattr(self, "ui_elements"):
+                self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
+                return
+                
+            # Hide map UI elements
+            self._hide_map_ui_elements()
+            
+            # Reset map state variables
+            self._reset_map_state()
+            
+            # Restore game UI visibility
+            self._restore_game_ui_after_map()
+            
+            self._logger.info("Map interface cleaned up successfully")
+            
+        except Exception as e:
+            self._logger.error(f"Error cleaning up map interface: {e}")
+            
+    def _hide_map_ui_elements(self) -> None:
+        """Hide all map-related UI elements."""
+        try:
+            # List of map-related UI elements
+            map_elements = ["map_view", "map_panel", "map_controls", "map_legend"]
+            
+            for element_name in map_elements:
+                if element_name not in self.ui_elements:
+                    continue
+                    
+                element = self.ui_elements[element_name]
+                
+                # Hide the element if it has visible property
+                if hasattr(element, "visible"):
+                    element.visible = False
+                    self._logger.debug(f"Set {element_name} visibility to False")
+                    
+                # If element has hide method, call it
+                if hasattr(element, "hide") and callable(element.hide):
+                    try:
+                        element.hide()
+                        self._logger.debug(f"Called hide() for {element_name}")
+                    except Exception as e:
+                        self._logger.error(f"Error hiding {element_name}: {e}")
+            
+            self._logger.debug("Finished hiding map UI elements")
+            
+        except Exception as e:
+            self._logger.error(f"Error hiding map UI elements: {e}")
+            
+    def _reset_map_state(self) -> None:
+        """Reset map-related state variables."""
+        try:
+            # Reset map selection and interaction state
+            map_state_vars = ["map_zoom", "map_position", "map_selection", "highlighted_location"]
+            
+            for var_name in map_state_vars:
+                if hasattr(self, var_name):
+                    if isinstance(getattr(self, var_name), tuple) or isinstance(getattr(self, var_name), list):
+                        setattr(self, var_name, [])
+                    elif isinstance(getattr(self, var_name), dict):
+                        setattr(self, var_name, {})
+                    elif isinstance(getattr(self, var_name), (int, float)):
+                        setattr(self, var_name, 0)
+                    else:
+                        setattr(self, var_name, None)
+                    self._logger.debug(f"Reset map state variable: {var_name}")
+            
+            # Clear temporary map data if it exists
+            if hasattr(self, "temp_map_data"):
+                self.temp_map_data = None
+                self._logger.debug("Cleared temporary map data")
+                
+            self._logger.debug("Finished resetting map state")
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting map state: {e}")
+            
+    def _restore_game_ui_after_map(self) -> None:
+        """Restore game UI elements after exiting map."""
+        try:
+            # List of game UI elements to restore
+            game_ui_elements = ["player_hud", "main_view", "game_controls"]
+            
+            for element_name in game_ui_elements:
+                if element_name not in self.ui_elements:
+                    continue
+                    
+                element = self.ui_elements[element_name]
+                
+                # Show the element if it has visible property
+                if hasattr(element, "visible"):
+                    element.visible = True
+                    self._logger.debug(f"Set {element_name} visibility to True")
+                    
+                # If element has show method, call it
+                if hasattr(element, "show") and callable(element.show):
+                    try:
+                        element.show()
+                        self._logger.debug(f"Called show() for {element_name}")
+                    except Exception as e:
+                        self._logger.error(f"Error showing {element_name}: {e}")
+                        
+            self._logger.debug("Finished restoring game UI elements")
+            
+        except Exception as e:
+            self._logger.error(f"Error restoring game UI: {e}")
+            
+    def _exit_save_high_score(self) -> None:
+        """Save the player's high score when exiting game over state.
+        
+        This state exit handler records the player's score, updates the high score list
+        if the current score qualifies, and saves the updated high scores to a file.
+        """
+        try:
+            self._logger.info("Processing and saving high score")
+            
+            # Get current score
+            current_score = self._get_current_score()
+            if current_score <= 0:
+                self._logger.debug("No valid score to save")
+                return
+                
+            # Load existing high scores
+            high_scores = self._load_high_scores()
+            
+            # Check if current score qualifies as a high score
+            if self._is_high_score(current_score, high_scores):
+                # Add current score to high scores
+                player_name = self._get_player_name()
+                self._add_to_high_scores(player_name, current_score, high_scores)
+                
+                # Save updated high scores
+                self._save_high_scores(high_scores)
+                self._logger.info(f"New high score saved: {current_score}")
+            else:
+                self._logger.debug(f"Score {current_score} not high enough to qualify")
+                
+        except Exception as e:
+            self._logger.error(f"Error saving high score: {e}")
+            
+    def _get_current_score(self) -> int:
+        """Get the player's current score.
+        
+        Returns:
+            int: Current score, or 0 if not available
+        """
+        try:
+            # Check game stats for score
+            if hasattr(self, "game_stats") and isinstance(self.game_stats, dict):
+                if "score" in self.game_stats:
+                    return self.game_stats["score"]
+                    
+            # Check player object for score
+            if hasattr(self, "player") and hasattr(self.player, "score"):
+                return self.player.score
+                
+            # Try other possible score locations
+            if hasattr(self, "score"):
+                return self.score
+                
+            self._logger.warning("Could not find current score")
+            return 0
+            
+        except Exception as e:
+            self._logger.error(f"Error getting current score: {e}")
+            return 0
+            
+    def _load_high_scores(self) -> List[Dict[str, Any]]:
+        """Load existing high scores from file.
+        
+        Returns:
+            List[Dict[str, Any]]: List of high score entries, empty if none exist
+        """
+        try:
+            # Default high scores file path
+            file_path = os.path.join(self.save_dir, "high_scores.json")
+            
+            # If file doesn't exist, return empty list
+            if not os.path.exists(file_path):
+                self._logger.debug(f"High scores file not found at {file_path}")
+                return []
+                
+            # Load high scores from file
+            with open(file_path, "r") as f:
+                high_scores = json.load(f)
+                
+            # Validate that high_scores is a list
+            if not isinstance(high_scores, list):
+                self._logger.warning("Invalid high scores format, resetting")
+                return []
+                
+            self._logger.debug(f"Loaded {len(high_scores)} high scores")
+            return high_scores
+            
+        except Exception as e:
+            self._logger.error(f"Error loading high scores: {e}")
+            return []
+            
+    def _is_high_score(self, score: int, high_scores: List[Dict[str, Any]]) -> bool:
+        """Check if the current score qualifies as a high score.
+        
+        Args:
+            score: Current score to check
+            high_scores: List of existing high scores
+            
+        Returns:
+            bool: True if the score qualifies, False otherwise
+        """
+        try:
+            # If we have fewer than 10 high scores, any positive score qualifies
+            if len(high_scores) < 10:
+                return score > 0
+                
+            # Check if the current score is higher than the lowest high score
+            lowest_score = float('inf')
+            for entry in high_scores:
+                if "score" in entry and entry["score"] < lowest_score:
+                    lowest_score = entry["score"]
+                    
+            return score > lowest_score
+            
+        except Exception as e:
+            self._logger.error(f"Error checking if score qualifies: {e}")
+            # Default to allowing the score to be saved if there's an error
+            return True
+            
+    def _get_player_name(self) -> str:
+        """Get the player's name for the high score entry.
+        
+        Returns:
+            str: Player name, or "Player" if not available
+        """
+        try:
+            # Check player object for name
+            if hasattr(self, "player"):
+                if hasattr(self.player, "name") and self.player.name:
+                    return self.player.name
+                    
+            # Check game settings for player name
+            if hasattr(self, "settings") and isinstance(self.settings, dict):
+                if "player_name" in self.settings and self.settings["player_name"]:
+                    return self.settings["player_name"]
+                    
+            # Default player name
+            return "Player"
+            
+        except Exception as e:
+            self._logger.error(f"Error getting player name: {e}")
+            return "Player"
+            
+    def _add_to_high_scores(self, player_name: str, score: int, high_scores: List[Dict[str, Any]]) -> None:
+        """Add the current score to the high scores list.
+        
+        Args:
+            player_name: Name of the player
+            score: Score to add
+            high_scores: List of existing high scores to update
+        """
+        try:
+            # Create new high score entry
+            new_entry = {
+                "name": player_name,
+                "score": score,
+                "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "play_time": getattr(self, "play_time", 0)
+            }
+            
+            # Add new entry to high scores
+            high_scores.append(new_entry)
+            
+            # Sort high scores by score (descending)
+            high_scores.sort(key=lambda x: x.get("score", 0), reverse=True)
+            
+            # Keep only the top 10 scores
+            if len(high_scores) > 10:
+                high_scores = high_scores[:10]
+                
+            self._logger.debug(f"Added score {score} for {player_name} to high scores")
+            
+        except Exception as e:
+            self._logger.error(f"Error adding to high scores: {e}")
+            
+    def _save_high_scores(self, high_scores: List[Dict[str, Any]]) -> None:
+        """Save high scores to file.
+        
+        Args:
+            high_scores: List of high score entries to save
+        """
+        try:
+            # Create save directory if it doesn't exist
+            if not os.path.exists(self.save_dir):
+                os.makedirs(self.save_dir)
+                self._logger.debug(f"Created save directory: {self.save_dir}")
+                
+            # Save high scores to file
+            file_path = os.path.join(self.save_dir, "high_scores.json")
+            with open(file_path, "w") as f:
+                json.dump(high_scores, f, indent=2)
+                
+            self._logger.debug(f"Saved {len(high_scores)} high scores to {file_path}")
+            
+        except Exception as e:
+            self._logger.error(f"Error saving high scores: {e}")
+            
+    def _exit_reset_game(self) -> None:
+        """Reset the game when exiting certain game states.
+        
+        This handler is typically called when transitioning from game over state
+        back to the main menu or when starting a new game. It resets all game
+        variables and state to their initial values.
+        """
+        try:
+            self._logger.info("Resetting game state")
+            self._perform_full_reset()
+            self._logger.info("Game state successfully reset")
+        except Exception as e:
+            self._logger.error(f"Error resetting game: {e}")
+            
+    def _perform_full_reset(self) -> None:
+        """Perform all reset operations in sequence."""
+        # Reset game variables
+        self._reset_game_variables()
+        
+        # Reset player state
+        self._reset_player_state()
+        
+        # Reset game world
+        self._reset_game_world()
+        
+        # Reset UI elements
+        self._reset_ui_elements()
+        
+        # Reset game timer and stats
+        self._reset_game_timer()
+        self._reset_game_stats()
+        
+        # Reset any ongoing animations or effects
+        self._clear_animations()
+            
+    def _reset_game_variables(self) -> None:
+        """Reset core game variables to their initial values."""
+        try:
+            self._logger.debug("Resetting game variables")
+            
+            # Reset game flags
+            self.paused = False
+            self.game_over = False
+            self.victory = False
+            
+            # Reset game progress tracking
+            self.current_level = 1
+            self.difficulty = self.initial_difficulty
+            
+            # Reset timers
+            self.elapsed_time = 0
+            self.play_time = 0
+            
+            # Reset any cached data
+            self.cached_data = {}
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting game variables: {e}")
+            
+    def _reset_player_state(self) -> None:
+        """Reset the player character to initial state."""
+        try:
+            self._logger.debug("Resetting player state")
+            
+            # Check if player exists and has reset method
+            if hasattr(self, "player"):
+                if hasattr(self.player, "reset") and callable(self.player.reset):
+                    self.player.reset()
+                    self._logger.debug("Called player.reset()")
+                    return
+                    
+                # Otherwise, recreate player with initial values
+                self._create_new_player()
+                
+        except Exception as e:
+            self._logger.error(f"Error resetting player state: {e}")
+            
+    def _create_new_player(self) -> None:
+        """Create a new player with initial values."""
+        try:
+            # Get initial player config
+            player_config = self.GAME_CONFIG.get("player", {})
+            
+            # Create new player instance using factory if available
+            if self._try_create_player_from_factory(player_config):
+                return
+                
+            # Otherwise reset existing player attributes
+            if hasattr(self, "player"):
+                self._reset_player_attributes(player_config)
+                
+        except Exception as e:
+            self._logger.error(f"Error creating new player: {e}")
+            
+    def _try_create_player_from_factory(self, player_config: Dict[str, Any]) -> bool:
+        """Try to create a new player using player class constructor.
+        
+        Args:
+            player_config: Configuration for the new player
+            
+        Returns:
+            bool: True if player was created, False otherwise
+        """
+        # Check for any player class factory - try common naming conventions
+        for class_name in ["PlayerClass", "Player", "player_factory"]:
+            if hasattr(self, class_name) and callable(getattr(self, class_name)):
+                factory = getattr(self, class_name)
+                self.player = factory(**player_config)
+                self._logger.debug(f"Created new player instance using {class_name}")
+                return True
+                
+        return False
+        
+    def _reset_player_attributes(self, player_config: Dict[str, Any]) -> None:
+        """Reset player attributes to initial values.
+        
+        Args:
+            player_config: Configuration with initial values
+        """
+        player = self.player
+        
+        # Reset basic attributes
+        self._reset_player_basic_stats(player, player_config)
+        
+        # Reset inventory
+        self._reset_player_inventory(player)
+        
+        # Reset position and score
+        self._reset_player_position_and_score(player, player_config)
+            
+        self._logger.debug("Reset player attributes manually")
+        
+    def _reset_player_basic_stats(self, player, player_config: Dict[str, Any]) -> None:
+        """Reset player's basic stats like health and energy.
+        
+        Args:
+            player: Player object
+            player_config: Configuration with initial values
+        """
+        if hasattr(player, "health"):
+            player.health = player_config.get("health", 100)
+            
+        if hasattr(player, "energy"):
+            player.energy = player_config.get("energy", 100)
+            
+        if hasattr(player, "resources") and isinstance(player.resources, dict):
+            player.resources = player_config.get("resources", {})
+            
+    def _reset_player_inventory(self, player) -> None:
+        """Reset player's inventory.
+        
+        Args:
+            player: Player object
+        """
+        if not hasattr(player, "inventory"):
+            return
+            
+        inventory = player.inventory
+        if hasattr(inventory, "clear") and callable(inventory.clear):
+            inventory.clear()
+        elif hasattr(inventory, "items") and isinstance(inventory.items, dict):
+            inventory.items = {}
+            
+    def _reset_player_position_and_score(self, player, player_config: Dict[str, Any]) -> None:
+        """Reset player's position and score.
+        
+        Args:
+            player: Player object
+            player_config: Configuration with initial values
+        """
+        if hasattr(player, "position"):
+            player.position = player_config.get("start_position", (0, 0))
+            
+        if hasattr(player, "score"):
+            player.score = 0
+            
+    def _reset_game_world(self) -> None:
+        """Reset the game world and environment."""
+        try:
+            self._logger.debug("Resetting game world")
+            
+            # Reset world components
+            self._reset_world_generator()
+            self._reset_entities()
+            self._regenerate_world()
+                
+            self._logger.debug("Game world reset")
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting game world: {e}")
+            
+    def _reset_world_generator(self) -> None:
+        """Reset the world generator if it exists."""
+        if hasattr(self, "world_generator"):
+            if hasattr(self.world_generator, "reset") and callable(self.world_generator.reset):
+                self.world_generator.reset()
+                
+    def _reset_entities(self) -> None:
+        """Reset all game entities (enemies, collectibles, etc)."""
+        # Reset enemy spawns
+        self._clear_collection("enemies")
+            
+        # Reset collectibles
+        self._clear_collection("collectibles")
+        
+    def _clear_collection(self, collection_name: str) -> None:
+        """Clear a collection of entities.
+        
+        Args:
+            collection_name: Name of the collection attribute
+        """
+        if not hasattr(self, collection_name):
+            return
+            
+        collection = getattr(self, collection_name)
+        # Handle both list-type collections and collections with clear() method
+        if hasattr(collection, "clear") and callable(collection.clear):
+            collection.clear()
+        # If no clear method but it's iterable, try to empty it another way
+        elif isinstance(collection, (list, dict, set)):
+            if isinstance(collection, dict):
+                collection.clear()  # dict.clear() always exists
+            elif isinstance(collection, list):
+                while collection:  # This is a fallback approach
+                    collection.pop()
+            elif isinstance(collection, set):
+                collection.clear()  # set.clear() always exists
+            
+    def _regenerate_world(self) -> None:
+        """Regenerate the initial world if possible."""
+        if hasattr(self, "generate_world") and callable(self.generate_world):
+            self.generate_world(level=1)
+            
+    def _reset_ui_elements(self) -> None:
+        """Reset UI elements to their initial state."""
+        try:
+            self._logger.debug("Resetting UI elements")
+            
+            # Hide overlay UI elements
+            self._hide_overlay_ui_elements()
+                        
+            # Reset and show main game UI elements
+            self._reset_main_ui_elements()
+                        
+            self._logger.debug("UI elements reset")
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting UI elements: {e}")
+            
+    def _hide_overlay_ui_elements(self) -> None:
+        """Hide all overlay UI elements."""
+        overlay_elements = ["pause_menu", "shop_menu", "map_screen", "game_over_screen"]
+        
+        for element_name in overlay_elements:
+            self._hide_ui_element(element_name)
+            
+    def _hide_ui_element(self, element_name: str) -> None:
+        """Hide a specific UI element.
+        
+        Args:
+            element_name: Name of the UI element to hide
+        """
+        if element_name not in self.ui_elements:
+            return
+            
+        element = self.ui_elements[element_name]
+        
+        # Set visibility to false
+        if hasattr(element, "visible"):
+            element.visible = False
+            
+        # Call hide method if available
+        if hasattr(element, "hide") and callable(element.hide):
+            element.hide()
+            
+    def _reset_main_ui_elements(self) -> None:
+        """Reset and show main game UI elements."""
+        main_elements = ["main_view", "player_hud", "game_controls"]
+        
+        for element_name in main_elements:
+            self._reset_and_show_ui_element(element_name)
+            
+    def _reset_and_show_ui_element(self, element_name: str) -> None:
+        """Reset and show a specific UI element.
+        
+        Args:
+            element_name: Name of the UI element to reset and show
+        """
+        if element_name not in self.ui_elements:
+            return
+            
+        element = self.ui_elements[element_name]
+        
+        # Call reset method if available
+        if hasattr(element, "reset") and callable(element.reset):
+            element.reset()
+            
+        # Set visibility to true
+        if hasattr(element, "visible"):
+            element.visible = True
+            
+        # Call show method if available
+        if hasattr(element, "show") and callable(element.show):
+            element.show()
+            
+    def _reset_game_timer(self) -> None:
+        """Reset game timers and time-based variables."""
+        try:
+            self._logger.debug("Resetting game timer")
+            
+            # Reset time tracking
+            self.game_start_time = time.time()
+            self.elapsed_time = 0
+            self.last_update_time = time.time()
+            
+            # Reset any time-based cooldowns
+            self.cooldowns = {}
+            
+            # Reset frame counters
+            self.current_frame = 0
+            
+            self._logger.debug("Game timer reset")
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting game timer: {e}")
+            
+    def _reset_game_stats(self) -> None:
+        """Reset game statistics and metrics."""
+        try:
+            self._logger.debug("Resetting game statistics")
+            
+            # Initialize empty stats dictionary if needed
+            if not hasattr(self, "game_stats") or not isinstance(self.game_stats, dict):
+                self.game_stats = {}
+                
+            # Reset all game stats
+            self.game_stats = {
+                "score": 0,
+                "enemies_defeated": 0,
+                "resources_collected": 0,
+                "distance_traveled": 0,
+                "items_purchased": 0,
+                "deaths": 0,
+                "levels_completed": 0
+            }
+            
+            self._logger.debug("Game statistics reset")
+            
+        except Exception as e:
+            self._logger.error(f"Error resetting game stats: {e}")
+            
+    def _clear_animations(self) -> None:
+        """Clear any ongoing animations or visual effects."""
+        try:
+            self._logger.debug("Clearing animations and effects")
+            
+            # Clear animation collections
+            self._clear_collection("animations")
+            self._clear_collection("particles")
+            
+            # Reset sound effects
+            self._stop_sounds()
+                
+            self._logger.debug("Animations and effects cleared")
+            
+        except Exception as e:
+            self._logger.error(f"Error clearing animations: {e}")
+            
+    def _stop_sounds(self) -> None:
+        """Stop all active sound effects."""
+        if hasattr(self, "_stop_all_sounds") and callable(self._stop_all_sounds):
+            self._stop_all_sounds()
