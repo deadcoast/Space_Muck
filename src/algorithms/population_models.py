@@ -8,11 +8,7 @@ This module implements advanced population models for the simulation of mining r
 """
 
 import collections
-import math
-import random
-from typing import Dict, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import Dict, List, Optional
 
 
 class MultiSpeciesPopulation:
@@ -115,10 +111,10 @@ class MultiSpeciesPopulation:
             growth_factor = 1.0 - (populations[i] / self.carrying_capacities[i]) + interaction_term
             
             # Calculate population change
-            dN = self.growth_rates[i] * populations[i] * growth_factor * dt
+            dn = self.growth_rates[i] * populations[i] * growth_factor * dt
             
             # Update population with bounds checking
-            new_pop = max(0.0, populations[i] + dN)
+            new_pop = max(0.0, populations[i] + dn)
             new_populations.append(new_pop)
             
         return new_populations

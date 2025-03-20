@@ -462,14 +462,12 @@ class ASCIIInventoryPanel:
         Returns:
             int: Updated y position after drawing
         """
-        items = self._get_items_on_current_page()
-        
-        if items:
+        if items := self._get_items_on_current_page():
             y = self._draw_column_headers(surface, font, x, y, width, margin)
             y = self._draw_item_list(surface, font, x, y, width, margin, items)
         else:
             y = self._draw_empty_message(surface, font, x, y, width, margin)
-            
+
         return y
     
     def _draw_column_headers(self, surface: pygame.Surface, font: pygame.font.Font,
@@ -584,16 +582,16 @@ class ASCIIInventoryPanel:
         """
         max_name_width = qty_x - content_x - margin
         item_name = item_id
-        
+
         if font.size(item_name)[0] > max_name_width:
             # Truncate and add ellipsis
             while (
                 font.size(f"{item_name}...")[0] > max_name_width
-                and len(item_name) > 0
+                and item_name != ""
             ):
                 item_name = item_name[:-1]
             item_name += "..."
-            
+
         return item_name
     
     def _draw_empty_message(self, surface: pygame.Surface, font: pygame.font.Font,

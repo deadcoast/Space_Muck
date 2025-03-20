@@ -60,7 +60,13 @@ All rights reserved.
 import importlib.util
 import contextlib
 import warnings
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, List
+
+# Advanced scientific and ML libraries
+import numpy as np
+from scipy.optimize import linprog
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
 
 # Local application imports - import only what we need
 from config import (
@@ -69,7 +75,6 @@ from config import (
     COLOR_ASTEROID_PRECIOUS,
     COLOR_ASTEROID_ANOMALY,
     COLOR_GRID,
-    
     # UI colors for data visualization
     COLOR_UI_BG,
     COLOR_UI_BORDER,
@@ -77,30 +82,16 @@ from config import (
     COLOR_SUCCESS,
     COLOR_WARNING,
     COLOR_ERROR,
-    
     # Entity behavior colors
-    COLOR_ENTITY_FEEDING
+    COLOR_ENTITY_FEEDING,
 )
 
-# Check for optional dependencies
-SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
-SKLEARN_AVAILABLE = importlib.util.find_spec("sklearn") is not None
+# No need for availability flags - we're always using the advanced libraries
+
+# Check if pygame is available for visualization
 PYGAME_AVAILABLE = importlib.util.find_spec("pygame") is not None
-
-# For type checking only - these imports aren't executed at runtime
-if TYPE_CHECKING:
-    import numpy as np
-    from scipy.optimize import linprog
-    from sklearn.cluster import KMeans
-    from sklearn.linear_model import LogisticRegression
+if PYGAME_AVAILABLE:
     import pygame
-
-# Define module-level variables to prevent undefined variable errors
-np = None
-linprog = None
-KMeans = None
-LogisticRegression = None
-pygame = None
 
 # Import numpy - this is required, not optional
 try:
@@ -108,22 +99,13 @@ try:
 except ImportError:
     warnings.warn("NumPy is required for economy_decision.py functionality.")
 
-# Import optional dependencies using contextlib.suppress to silence ImportError
-# Import optional scipy
-if SCIPY_AVAILABLE:
-    with contextlib.suppress(ImportError):
-        from scipy.optimize import linprog
-
-# Import optional scikit-learn
-if SKLEARN_AVAILABLE:
-    with contextlib.suppress(ImportError):
-        from sklearn.cluster import KMeans
-        from sklearn.linear_model import LogisticRegression
+# No need for conditional imports - we're always using the advanced libraries
 
 # Import optional pygame
 if PYGAME_AVAILABLE:
     with contextlib.suppress(ImportError):
         import pygame
+
 
 # -----------------------------------------------------------------------------
 # 1) MINERAL RESOURCE OPTIMIZER (SCIPY OPTIMIZE)
@@ -156,7 +138,7 @@ class MineralResourceOptimizer:
             mineral_types: A list of recognized mineral types (e.g., ["common","rare","precious"]).
         """
         self.mineral_types = mineral_types
-        
+
         # Colors for visualization based on mineral type
         self.mineral_colors = {
             "common": COLOR_GRID,  # Common minerals
@@ -168,7 +150,7 @@ class MineralResourceOptimizer:
         self.status_colors = {
             "optimal": COLOR_SUCCESS,
             "fallback": COLOR_WARNING,
-            "error": COLOR_ERROR
+            "error": COLOR_ERROR,
         }
 
     def linear_optimize_feeding(
@@ -248,25 +230,19 @@ class MineralResourceOptimizer:
         a_ub = np.array(a_ub, dtype=float)
         b_ub = np.array(b_ub, dtype=float)
 
-        # Solve
+        # Solve using SciPy's advanced optimization
         res = linprog(c, A_ub=a_ub, b_ub=b_ub, bounds=bounds, method="highs")
 
-        # If SciPy is not available or optimization fails, use fallback method
-        if not SCIPY_AVAILABLE or not res.success:
-            return self._fallback_proportional_feeding(
-                total_minerals, feed_benefits, min_feeding_requirements
-            )
-            
-        solution = res.x if res.success else np.zeros(n)
+        # Always use the optimization result - no fallbacks
+        solution = res.x
         return {m: float(solution[i]) for i, m in enumerate(self.mineral_types)}
 
-
-# -----------------------------------------------------------------------------
-# 2) PLAYER FEEDING BEHAVIOR MODEL (scikit-learn)
-# -----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
+    # 2) PLAYER FEEDING BEHAVIOR MODEL (scikit-learn)
+    # -----------------------------------------------------------------------------
     def _fallback_proportional_feeding(
-        self, 
-        total_minerals: Dict[str, float], 
+        self,
+        total_minerals: Dict[str, float],
         feed_benefits: Dict[str, float],
         min_feeding_requirements: Dict[str, float] = None,
     ) -> Dict[str, float]:
@@ -285,7 +261,7 @@ class MineralResourceOptimizer:
         # First, handle any explicit minimum feeding requirements
         result = {m: 0.0 for m in self.mineral_types}
         remaining_minerals = total_minerals.copy()
-        
+
         if min_feeding_requirements:
             for m, min_amount in min_feeding_requirements.items():
                 if m in remaining_minerals:
@@ -293,13 +269,15 @@ class MineralResourceOptimizer:
                     feed_amount = min(min_amount, remaining_minerals[m])
                     result[m] = feed_amount
                     remaining_minerals[m] -= feed_amount
-        
+
         # For the remaining minerals, allocate proportionally based on feed benefits
         # Calculate total benefit weighted by amount available
         total_weighted_benefit = sum(
-            feed_benefits.get(m, 0) * amt for m, amt in remaining_minerals.items() if amt > 0
+            feed_benefits.get(m, 0) * amt
+            for m, amt in remaining_minerals.items()
+            if amt > 0
         )
-        
+
         if total_weighted_benefit > 0:
             for m, remaining in remaining_minerals.items():
                 if remaining > 0 and m in feed_benefits:
@@ -307,90 +285,87 @@ class MineralResourceOptimizer:
                     benefit_proportion = feed_benefits[m] / sum(feed_benefits.values())
                     feed_amount = remaining * benefit_proportion
                     result[m] += feed_amount
-        
+
         return result
 
     def visualize_decision(self, surface, rect, total_minerals, feeding_amounts):
         """
         Visualize the feeding vs. selling decision on a pygame surface.
-        
+
         Args:
             surface: Pygame surface to draw on
             rect: Rectangle area to draw within (x, y, width, height)
             total_minerals: Dictionary of {mineral_type: total_amount}
             feeding_amounts: Dictionary of {mineral_type: amount_to_feed}
-        
+
         This creates a visual representation showing what proportion of each
         mineral type is being fed vs. sold.
         """
         if not PYGAME_AVAILABLE or pygame is None:
             return
-            
+
         # Calculate selling amounts (total - feeding)
         selling_amounts = {}
         for mineral_type, total in total_minerals.items():
             feeding = feeding_amounts.get(mineral_type, 0)
             selling_amounts[mineral_type] = total - feeding
-            
+
         # Setup drawing area
         x, y, width, height = rect
         bar_height = height / max(len(total_minerals), 1)
         padding = bar_height * 0.1
-        
+
         # Draw mineral allocation bars
         current_y = y
-        font = pygame.font.SysFont('Arial', int(bar_height * 0.4))
-        
+        font = pygame.font.SysFont("Arial", int(bar_height * 0.4))
+
         for i, mineral_type in enumerate(self.mineral_types):
             if mineral_type not in total_minerals or total_minerals[mineral_type] <= 0:
                 continue
-                
+
             total = total_minerals[mineral_type]
             # Calculate proportions
             feeding = feeding_amounts.get(mineral_type, 0)
             selling = selling_amounts.get(mineral_type, 0)
-            
+
             feed_width = (feeding / total) * width if total > 0 else 0
             sell_width = (selling / total) * width if total > 0 else 0
-            
+
             # Get colors - fallback to default colors if type not found
             mineral_color = self.mineral_colors.get(mineral_type, COLOR_UI_TEXT)
-            
+
             # Draw background
             pygame.draw.rect(
-                surface, 
-                COLOR_UI_BG,
-                (x, current_y, width, bar_height - padding)
+                surface, COLOR_UI_BG, (x, current_y, width, bar_height - padding)
             )
-            
+
             # Draw feeding portion
             if feeding > 0:
                 pygame.draw.rect(
-                    surface, 
+                    surface,
                     COLOR_ENTITY_FEEDING,
-                    (x, current_y, feed_width, bar_height - padding)
+                    (x, current_y, feed_width, bar_height - padding),
                 )
-            
+
             # Draw selling portion
             if selling > 0:
                 pygame.draw.rect(
-                    surface, 
+                    surface,
                     COLOR_SUCCESS,
-                    (x + feed_width, current_y, sell_width, bar_height - padding)
+                    (x + feed_width, current_y, sell_width, bar_height - padding),
                 )
-            
+
             # Draw border
             pygame.draw.rect(
-                surface, 
-                COLOR_UI_BORDER,
-                (x, current_y, width, bar_height - padding),
-                1
+                surface, COLOR_UI_BORDER, (x, current_y, width, bar_height - padding), 1
             )
-            
+
             # Add text label
-            text = font.render(f"{mineral_type}: {int(feeding)}/{int(total)}", True, mineral_color)
+            text = font.render(
+                f"{mineral_type}: {int(feeding)}/{int(total)}", True, mineral_color
+            )
             surface.blit(text, (x + 5, current_y + (bar_height - padding) / 3))
-            
+
             current_y += bar_height
 
 
@@ -410,13 +385,9 @@ class PlayerFeedingBehaviorModel:
         self.n_clusters = n_clusters
         self.cluster_labels = None
 
-        # Initialize models if dependencies are available
-        if SKLEARN_AVAILABLE and KMeans is not None and LogisticRegression is not None:
-            self.kmeans_model = KMeans(n_clusters=n_clusters, random_state=42)
-            self.logistic_model = LogisticRegression(random_state=42, max_iter=200)
-        else:
-            self.kmeans_model = None
-            self.logistic_model = None
+        # Always initialize scikit-learn models - no conditionals
+        self.kmeans_model = KMeans(n_clusters=n_clusters, random_state=42)
+        self.logistic_model = LogisticRegression(random_state=42, max_iter=200)
 
     def cluster_players(self, feature_matrix: np.ndarray) -> np.ndarray:
         """
@@ -430,9 +401,7 @@ class PlayerFeedingBehaviorModel:
         Returns:
             A 1D array of cluster labels. Also stored in self.cluster_labels.
         """
-        if not SKLEARN_AVAILABLE or self.kmeans_model is None:
-            # Fallback: simple threshold-based clustering
-            return self._fallback_clustering(feature_matrix)
+        # Always use scikit-learn clustering - no fallbacks
 
         self.cluster_labels = self.kmeans_model.fit_predict(feature_matrix)
         return self.cluster_labels
@@ -454,11 +423,11 @@ class PlayerFeedingBehaviorModel:
 
         # Use mean values of features for thresholding
         means = np.mean(feature_matrix, axis=0)
-        
+
         # Assign clusters based on whether features are above or below mean
         # This is a very simplified approach but works as a fallback
         cluster_labels = np.zeros(feature_matrix.shape[0], dtype=int)
-        
+
         # For each player, check if their features are mostly above mean
         for i, player_features in enumerate(feature_matrix):
             # Count how many features are above mean
@@ -466,10 +435,10 @@ class PlayerFeedingBehaviorModel:
             # If more than half features are above mean, assign to cluster 1, else 0
             if above_mean > feature_matrix.shape[1] // 2:
                 cluster_labels[i] = 1
-            # If we want a third cluster for players close to the mean:    
+            # If we want a third cluster for players close to the mean:
             elif np.all(np.abs(player_features - means) < 0.2 * means):
                 cluster_labels[i] = 2
-                
+
         self.cluster_labels = cluster_labels
         return cluster_labels
 
@@ -481,12 +450,7 @@ class PlayerFeedingBehaviorModel:
             x_train: shape [n_samples, n_features], e.g. historical states
             y_train: shape [n_samples], binary or multi-class labels (feed yes/no)
         """
-        if not SKLEARN_AVAILABLE or self.logistic_model is None:
-            # Store training data for fallback method
-            self.x_train = x_train
-            self.y_train = y_train
-            return
-            
+        # Always use scikit-learn's logistic regression model
         self.logistic_model.fit(x_train, y_train)
 
     def predict_feeding(self, x_test: np.ndarray) -> np.ndarray:
@@ -499,63 +463,15 @@ class PlayerFeedingBehaviorModel:
         Returns:
             A 1D array of predictions (0 or 1).
         """
-        if not SKLEARN_AVAILABLE or self.logistic_model is None:
-            # Use fallback prediction method
-            return self._fallback_prediction(x_test)
-            
+        # Always use scikit-learn's prediction
         return self.logistic_model.predict(x_test)
-        
-    def _fallback_prediction(self, x_test: np.ndarray) -> np.ndarray:
-        """
-        Simple fallback prediction when scikit-learn is not available.
-        
-        Args:
-            x_test: shape [n_test, n_features]
-            
-        Returns:
-            Binary predictions based on simple heuristics
-        """
-        if not hasattr(self, 'x_train') or not hasattr(self, 'y_train'):
-            # No training data, predict randomly with slight bias toward feeding (1)
-            return np.random.choice([0, 1], size=len(x_test), p=[0.4, 0.6])
-            
-        # Very simple nearest-neighbor approach
-        predictions = np.zeros(len(x_test), dtype=int)
-        
-        for i, test_sample in enumerate(x_test):
-            # Find the closest training sample
-            distances = np.sum((self.x_train - test_sample) ** 2, axis=1)
-            closest_idx = np.argmin(distances)
-            # Use its label as prediction
-            predictions[i] = self.y_train[closest_idx]
-            
-        return predictions
 
     def predict_feeding_proba(self, x_test: np.ndarray) -> np.ndarray:
         """
         Returns the probability of feeding (class 1) for each test sample.
         """
-        if SKLEARN_AVAILABLE and self.logistic_model is not None:
-            return self.logistic_model.predict_proba(x_test)[:, 1]
-        # Simple heuristic probabilities based on feature averages
-        probas = np.zeros(len(x_test))
-
-        if hasattr(self, 'x_train') and hasattr(self, 'y_train'):
-            # Use distance-weighted probabilities
-            for i, test_sample in enumerate(x_test):
-                # Calculate distances to all training samples
-                distances = np.sum((self.x_train - test_sample) ** 2, axis=1)
-                # Avoid division by zero
-                distances = np.maximum(distances, 1e-10)  
-                # Weight by inverse distance
-                weights = 1.0 / distances
-                # Calculate weighted average of labels
-                probas[i] = np.sum(weights * self.y_train) / np.sum(weights)
-        else:
-            # No training data, return default probabilities
-            probas = np.ones(len(x_test)) * 0.5
-
-        return probas
+        # Always use scikit-learn's probability estimation
+        return self.logistic_model.predict_proba(x_test)[:, 1]
 
 
 # -----------------------------------------------------------------------------
