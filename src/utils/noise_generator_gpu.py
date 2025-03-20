@@ -10,25 +10,19 @@ used in procedural generation, with fallback mechanisms for systems without GPU 
 import itertools
 import logging
 import random
+from typing import List, Optional, Tuple
 
 # Third-party library imports
 import numpy as np
 
 # Local application imports
 from .gpu_utils import (  # Standard library imports; Third-party library imports; Local imports
-    List,
     NoiseGenerator,
-    Optional,
-    Tuple,
-    .noise_generator,
     apply_noise_generation_gpu,
-    from,
     get_available_backends,
     get_noise_generator,
-    import,
     is_gpu_available,
     to_cpu,
-    typing,
 )
 
 # Optional dependencies
@@ -123,6 +117,99 @@ class GPUNoiseGenerator(NoiseGenerator):
                 width=width, height=height, scale=scale, octaves=octaves, seed=seed
             )
 
+    def _normalize_parameters(
+        self, 
+        octaves: List[int] = None, 
+        weights: List[float] = None, 
+        seed: Optional[int] = None
+    ) -> tuple:
+        """Normalize input parameters for noise generation."""
+        # Default octaves and weights
+        if octaves is None:
+            octaves = [1, 2, 4, 8]
+
+        if weights is None:
+            weights = [1.0, 0.5, 0.25, 0.125]
+
+        # Normalize weights
+        total_weight = sum(weights)
+        normalized_weights = [w / total_weight for w in weights]
+
+        # Set seed if provided
+        if seed is not None:
+            random.seed(seed)
+            np.random.seed(seed)
+            
+        return octaves, normalized_weights
+            
+    def _generate_octave_noise(
+        self, 
+        width: int, 
+        height: int, 
+        scale: float, 
+        octave: int, 
+        octave_index: int, 
+        seed: Optional[int], 
+        backend: str
+    ) -> np.ndarray:
+        """Generate noise for a single octave with the given parameters."""
+        octave_scale = scale * (2**octave_index)
+        octave_seed = seed + octave_index if seed is not None else None
+        
+        return apply_noise_generation_gpu(
+            width=width,
+            height=height,
+            scale=octave_scale,
+            octaves=octave,
+            seed=octave_seed,
+            backend=backend,
+        )
+    
+    def _combine_octaves_cupy(
+        self, 
+        width: int, 
+        height: int, 
+        scale: float, 
+        octaves: List[int], 
+        normalized_weights: List[float], 
+        seed: Optional[int]
+    ) -> np.ndarray:
+        """Combine multiple octaves using CuPy backend."""
+        result = cp.zeros((height, width), dtype=cp.float32)
+        
+        for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
+            octave_noise = self._generate_octave_noise(
+                width, height, scale, octave, i, seed, "cupy")
+            
+            # Add weighted noise to result
+            result += cp.asarray(octave_noise) * weight
+            
+        # Ensure values are in [0, 1]
+        result = cp.clip(result, 0, 1)
+        return to_cpu(result)
+        
+    def _combine_octaves_cuda(
+        self, 
+        width: int, 
+        height: int, 
+        scale: float, 
+        octaves: List[int], 
+        normalized_weights: List[float], 
+        seed: Optional[int]
+    ) -> np.ndarray:
+        """Combine multiple octaves using CUDA backend."""
+        result = np.zeros((height, width), dtype=np.float32)
+        
+        for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
+            octave_noise = self._generate_octave_noise(
+                width, height, scale, octave, i, seed, "cuda")
+            
+            # Add weighted noise to result
+            result += octave_noise * weight
+            
+        # Ensure values are in [0, 1]
+        return np.clip(result, 0, 1)
+
     def generate_multi_octave_noise(
         self,
         width: int,
@@ -146,98 +233,36 @@ class GPUNoiseGenerator(NoiseGenerator):
         Returns:
             A 2D numpy array of noise values between 0 and 1
         """
-        # Default octaves and weights
-        if octaves is None:
-            octaves = [1, 2, 4, 8]
-
-        if weights is None:
-            weights = [1.0, 0.5, 0.25, 0.125]
-
-        # Normalize weights
-        total_weight = sum(weights)
-        normalized_weights = [w / total_weight for w in weights]
-
-        # Set seed if provided
-        if seed is not None:
-            random.seed(seed)
-            np.random.seed(seed)
-
+        # Normalize parameters
+        octaves, normalized_weights = self._normalize_parameters(octaves, weights, seed)
+        
+        # Use CPU if backend is set to CPU or GPU is not available
         if self.backend == "cpu" or not is_gpu_available():
-            # Use CPU implementation
             return self.cpu_generator.generate_multi_octave_noise(
-                width=width,
-                height=height,
-                scale=scale,
-                octaves=octaves,
-                weights=weights,
-                seed=seed,
+                width=width, height=height, scale=scale,
+                octaves=octaves, weights=weights, seed=seed,
             )
+            
         try:
-            # Generate noise for each octave and combine
+            # Choose appropriate backend implementation
             if self.backend == "cupy" and CUPY_AVAILABLE:
-                # CuPy implementation
-                result = cp.zeros((height, width), dtype=cp.float32)
-
-                for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
-                    octave_scale = scale * (2**i)
-                    octave_seed = seed + i if seed is not None else None
-
-                    # Generate noise for this octave
-                    octave_noise = apply_noise_generation_gpu(
-                        width=width,
-                        height=height,
-                        scale=octave_scale,
-                        octaves=octave,
-                        seed=octave_seed,
-                        backend="cupy",
-                    )
-
-                    # Add weighted noise to result
-                    result += cp.asarray(octave_noise) * weight
-
-                # Ensure values are in [0, 1]
-                result = cp.clip(result, 0, 1)
-                return to_cpu(result)
-
+                return self._combine_octaves_cupy(
+                    width, height, scale, octaves, normalized_weights, seed)
+                    
             elif self.backend == "cuda" and CUDA_AVAILABLE:
-                # CUDA implementation
-                result = np.zeros((height, width), dtype=np.float32)
-
-                for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
-                    octave_scale = scale * (2**i)
-                    octave_seed = seed + i if seed is not None else None
-
-                    # Generate noise for this octave
-                    octave_noise = apply_noise_generation_gpu(
-                        width=width,
-                        height=height,
-                        scale=octave_scale,
-                        octaves=octave,
-                        seed=octave_seed,
-                        backend="cuda",
-                    )
-
-                    # Add weighted noise to result
-                    result += octave_noise * weight
-
-                # Ensure values are in [0, 1]
-                return np.clip(result, 0, 1)
-
-            else:
-                # Fallback to CPU
-                raise ValueError(f"Unsupported backend: {self.backend}")
-
+                return self._combine_octaves_cuda(
+                    width, height, scale, octaves, normalized_weights, seed)
+                    
+            # Fallback to CPU for unsupported backends
+            raise ValueError(f"Unsupported backend: {self.backend}")
+            
         except Exception as e:
             logging.warning(
                 f"GPU multi-octave noise generation failed: {str(e)}. Falling back to CPU."
             )
             return self.cpu_generator.generate_multi_octave_noise(
-                width=width,
-                height=height,
-                scale=scale,
-                octaves=octaves,
-                weights=weights,
-                seed=seed,
+                width=width, height=height, scale=scale,
+                octaves=octaves, weights=weights, seed=seed,
             )
 
 class FractalNoiseGenerator(GPUNoiseGenerator):

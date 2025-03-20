@@ -38,21 +38,34 @@ Guidelines:
 7. Avoid circular imports by using type hints and forward references
 """
 
+# ========================================================================
+# EXAMPLE IMPORTS BELOW - These demonstrate the correct style but are not used
+# These are intentionally marked as noqa to suppress linter warnings
+# ========================================================================
+
 # Standard library imports
-import abc
-import logging
-import math
-import random
-from typing import Dict, List, Optional, Set, Tuple, Union
+import abc  # noqa: F401 - Example import
+import logging  # noqa: F401 - Example import
+import math  # noqa: F401 - Example import
+import random  # noqa: F401 - Example import
+from typing import Dict, List, Optional, Set, Tuple, Union  # noqa: F401 - Example imports
 
 # Third-party library imports
-import numpy as np
+import numpy as np  # noqa: F401 - Example import
 
-# Local application imports
-from config import *  # Config imports
-from entities.base_entity import BaseEntity
-from utils.dependency_injection import inject
-from utils.noise_generator import NoiseGenerator, get_noise_generator
+# Local application imports - specific imports are preferred over wildcard imports
+from config import (  # noqa: F401 - Example import
+    COLOR_BG,
+    COLOR_FG,
+    GAME_TITLE
+)  
+from entities.base_entity import BaseEntity  # noqa: F401 - Example import
+from utils.dependency_injection import inject  # noqa: F401 - Example import
+from utils.noise_generator import NoiseGenerator, get_noise_generator  # noqa: F401 - Example import
+
+# ========================================================================
+# END OF EXAMPLE IMPORTS
+# ========================================================================
 
 # Standard import categories
 STDLIB_MODULES = [

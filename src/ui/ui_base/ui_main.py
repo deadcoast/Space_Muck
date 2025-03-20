@@ -1,25 +1,16 @@
-
-
-# Use absolute imports for consistency
-
-# Define standard colors for UI components
-COLOR_TEXT = (220, 220, 220)  # Standard text color
-COLOR_BG = (20, 20, 30)  # Standard background color
-COLOR_HIGHLIGHT = (180, 180, 255)  # Standard highlight color
-
-class SpaceMuckMainUI:
-    """Main UI manager for Space Muck game"""
-
-# Local application imports
-import contextlib
-import curses
-
 # Standard library imports
 import random
 import time
+import contextlib
+import curses
 
 # Third-party library imports
 
+# Local application imports
+from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
+
+class SpaceMuckMainUI:
+    """Main UI manager for Space Muck game"""
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
@@ -205,6 +196,7 @@ import time
 
             # Sleep briefly to control frame rate
             time.sleep(0.05)
+
 
 def run_space_muck_ui():
     """Initialize and run the Space Muck UI"""

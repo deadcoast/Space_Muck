@@ -7,9 +7,8 @@ and interactions between mining races.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Tuple, Union, Any
 
-import numpy as np
 import pygame
 
 from entities.miner_entity import MinerEntity
@@ -139,13 +138,39 @@ class MiningSystem:
             asteroid_field: The asteroid field object containing resources
         """
         # Step 1: Collect mining targets from all miners
+        mining_targets = self._collect_mining_targets()
+        
+        # Step 2: Resolve mining conflicts where multiple races target the same cell
+        cell_claims = self._resolve_mining_claim_conflicts(mining_targets)
+        
+        # Step 3: Extract resources and distribute based on claims
+        self._process_resource_extraction(asteroid_field, cell_claims)
+    
+    def _collect_mining_targets(self) -> Dict[int, List[Tuple[int, int]]]:
+        """
+        Collect mining targets from all miners.
+        
+        Returns:
+            Dictionary mapping race_id to list of cell coordinates
+        """
         mining_targets = {}
         for race_id, miner in self.miners.items():
             # Get cells this miner is targeting for mining
             cells = miner.get_mining_cells()
             mining_targets[race_id] = cells
         
-        # Step 2: Resolve mining conflicts where multiple races target the same cell
+        return mining_targets
+    
+    def _resolve_mining_claim_conflicts(self, mining_targets: Dict[int, List[Tuple[int, int]]]) -> Dict[Tuple[int, int], List[int]]:
+        """
+        Resolve mining conflicts where multiple races target the same cell.
+        
+        Args:
+            mining_targets: Dictionary mapping race_id to list of cell coordinates
+            
+        Returns:
+            Dictionary mapping cell coordinates to list of race_ids claiming that cell
+        """
         cell_claims = {}  # (x, y) -> [race_ids]
         for race_id, cells in mining_targets.items():
             for cell in cells:
@@ -153,7 +178,16 @@ class MiningSystem:
                     cell_claims[cell] = []
                 cell_claims[cell].append(race_id)
         
-        # Step 3: Extract resources and distribute based on claims
+        return cell_claims
+    
+    def _process_resource_extraction(self, asteroid_field: Any, cell_claims: Dict[Tuple[int, int], List[int]]) -> None:
+        """
+        Extract resources and distribute based on claims.
+        
+        Args:
+            asteroid_field: The asteroid field object containing resources
+            cell_claims: Dictionary mapping cell coordinates to list of race_ids claiming that cell
+        """
         for cell, claiming_races in cell_claims.items():
             # Skip if cell is outside asteroid field
             if not asteroid_field.is_valid_cell(cell[0], cell[1]):
@@ -169,15 +203,24 @@ class MiningSystem:
             if len(claiming_races) > 1:
                 self._distribute_contested_resources(cell_resources, claiming_races)
             else:
-                # Single race gets all resources
-                race_id = claiming_races[0]
-                miner = self.miners[race_id]
-                miner.process_minerals(cell_resources)
-                
-                # Track allocation
-                for resource_type, amount in cell_resources.items():
-                    self.total_extracted[resource_type] += amount
-                    self.resource_allocation[resource_type][race_id] += amount
+                self._allocate_resources_to_single_race(cell_resources, claiming_races[0])
+    
+    def _allocate_resources_to_single_race(self, cell_resources: Dict[str, int], race_id: int) -> None:
+        """
+        Allocate resources to a single race.
+        
+        Args:
+            cell_resources: Dictionary of resource types and amounts
+            race_id: ID of the race receiving the resources
+        """
+        # Single race gets all resources
+        miner = self.miners[race_id]
+        miner.process_minerals(cell_resources)
+        
+        # Track allocation
+        for resource_type, amount in cell_resources.items():
+            self.total_extracted[resource_type] += amount
+            self.resource_allocation[resource_type][race_id] += amount
     
     def _distribute_contested_resources(
         self, 

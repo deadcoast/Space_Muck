@@ -36,6 +36,91 @@ except ImportError:
     )
 
 
+def _count_neighbors(grid: np.ndarray, x: int, y: int, width: int, height: int, wrap: bool) -> int:
+    """
+    Count the number of live neighbors for a cell at position (x, y).
+    
+    Args:
+        grid: The grid containing cell states
+        x: X-coordinate of the cell
+        y: Y-coordinate of the cell
+        width: Width of the grid
+        height: Height of the grid
+        wrap: Whether to wrap around grid edges
+        
+    Returns:
+        int: Number of live neighbors
+    """
+    neighbors = 0
+    
+    for dy in [-1, 0, 1]:
+        for dx in [-1, 0, 1]:
+            # Skip the cell itself
+            if dx == 0 and dy == 0:
+                continue
+
+            nx, ny = x + dx, y + dy
+
+            # Handle edge conditions
+            if wrap:
+                nx = nx % width
+                ny = ny % height
+            elif nx < 0 or nx >= width or ny < 0 or ny >= height:
+                continue
+
+            neighbors += grid[ny, nx]
+                
+    return neighbors
+
+
+def _apply_rules(current_state: int, neighbors: int, birth_set: Set[int], survival_set: Set[int]) -> int:
+    """
+    Apply cellular automaton rules to determine the next state of a cell.
+    
+    Args:
+        current_state: Current state of the cell (0 or 1)
+        neighbors: Number of live neighbors
+        birth_set: Set of neighbor counts that cause cell birth
+        survival_set: Set of neighbor counts that allow cell survival
+        
+    Returns:
+        int: Next state of the cell (0 or 1)
+    """
+    if current_state == 1:
+        # Cell is alive - check survival rule
+        return 1 if neighbors in survival_set else 0
+    else:
+        # Cell is dead - check birth rule
+        return 1 if neighbors in birth_set else 0
+
+
+def _evolve_grid_once(grid: np.ndarray, birth_set: Set[int], survival_set: Set[int], 
+                     wrap: bool, width: int, height: int) -> np.ndarray:
+    """
+    Evolve the grid through one iteration of the cellular automaton rules.
+    
+    Args:
+        grid: Current state of the grid
+        birth_set: Set of neighbor counts that cause cell birth
+        survival_set: Set of neighbor counts that allow cell survival
+        wrap: Whether to wrap around grid edges
+        width: Width of the grid
+        height: Height of the grid
+        
+    Returns:
+        np.ndarray: Evolved grid after one iteration
+    """
+    new_grid = grid.copy()
+    
+    # Process all cells using itertools.product for better performance
+    for y, x in itertools.product(range(height), range(width)):
+        # Count neighbors and apply rules
+        neighbors = _count_neighbors(grid, x, y, width, height, wrap)
+        new_grid[y, x] = _apply_rules(grid[y, x], neighbors, birth_set, survival_set)
+    
+    return new_grid
+
+
 def apply_cellular_automaton(
     grid: np.ndarray,
     birth_set: Set[int] = None,
@@ -60,6 +145,7 @@ def apply_cellular_automaton(
     Returns:
         np.ndarray: Evolved grid
     """
+    # Handle default parameters
     if birth_set is None:
         birth_set = {3}
     if survival_set is None:
@@ -67,40 +153,14 @@ def apply_cellular_automaton(
     if width is None:
         height, width = grid.shape
 
+    # Convert to binary grid for processing
     binary_grid = (grid > 0).astype(np.int8)
     result_grid = binary_grid.copy()
 
+    # Evolve the grid for the specified number of iterations
     for _ in range(iterations):
-        new_grid = result_grid.copy()
-
-        for y, x in itertools.product(range(height), range(width)):
-            # Count live neighbors
-            neighbors = 0
-
-            for dy in [-1, 0, 1]:
-                for dx in [-1, 0, 1]:
-                    if dx == 0 and dy == 0:
-                        continue
-
-                    nx, ny = x + dx, y + dy
-
-                    if wrap:
-                        nx = nx % width
-                        ny = ny % height
-                    elif nx < 0 or nx >= width or ny < 0 or ny >= height:
-                        continue
-
-                    neighbors += result_grid[ny, nx]
-
-            # Apply rules
-            if result_grid[y, x] == 1:
-                # Cell is alive
-                if neighbors not in survival_set:
-                    new_grid[y, x] = 0  # Cell dies
-            elif neighbors in birth_set:
-                new_grid[y, x] = 1  # Cell is born
-
-        result_grid = new_grid
+        result_grid = _evolve_grid_once(
+            result_grid, birth_set, survival_set, wrap, width, height)
 
     # Preserve original values where cells are alive
     return grid * result_grid

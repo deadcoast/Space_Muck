@@ -8,6 +8,8 @@ GPU support.
 """
 
 
+
+import contextlib
 # Standard library imports
 import itertools
 import logging
@@ -33,13 +35,10 @@ CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
 
 # For type checking only
 if TYPE_CHECKING:
-    try:
+    with contextlib.suppress(ImportError):
         import numba  # type: ignore
         from numba import cuda  # type: ignore
         import cupy as cp  # type: ignore
-    except ImportError:
-        pass
-
 # Import Numba at runtime if available
 if NUMBA_AVAILABLE:
     try:
@@ -1597,6 +1596,442 @@ def apply_kmeans_clustering_gpu(
     return _apply_kmeans_cpu(data, n_clusters, max_iterations, tolerance, seed)
 
 
+# Define constant for duplicate warning message
+SCIKIT_DBSCAN_WARNING = "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
+
+
+def _apply_dbscan_cpu(data: np.ndarray, eps: float, min_samples: int, n_samples: int) -> np.ndarray:
+    """Apply DBSCAN clustering using scikit-learn CPU implementation.
+    
+    Args:
+        data: Input data points
+        eps: Epsilon parameter for DBSCAN
+        min_samples: Minimum samples parameter for DBSCAN
+        n_samples: Number of samples
+        
+    Returns:
+        np.ndarray: Cluster labels
+    """
+    try:
+        from sklearn.cluster import DBSCAN
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        return dbscan.fit_predict(data)
+    except ImportError:
+        logging.warning(SCIKIT_DBSCAN_WARNING)
+        # Return all points as noise if scikit-learn is not available
+        return np.full(n_samples, -1)
+
+
+def _apply_dbscan_mps(
+    data: np.ndarray, eps: float, min_samples: int, n_samples: int
+) -> np.ndarray:
+    """Apply DBSCAN clustering using MPS (Metal Performance Shaders).
+    
+    Args:
+        data: Input data points
+        eps: Epsilon parameter for DBSCAN
+        min_samples: Minimum samples parameter for DBSCAN
+        n_samples: Number of samples in data
+        
+    Returns:
+        np.ndarray: Cluster labels
+    """
+    try:
+        # Transfer data to MPS device
+        d_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
+        data_shape = data.shape
+        sample_count, n_features = data_shape
+
+        # Compute pairwise distances - using n_features in the calculation
+        distances = torch.zeros(
+            (sample_count, sample_count), dtype=torch.float32, device=mps_device
+        )
+        
+        # Using batch matrix operations to utilize n_features dimension more efficiently
+        for i in range(sample_count):
+            # For each sample, compute distance to all other samples
+            diff = d_data - d_data[i].view(1, n_features)
+            # Square differences and sum across feature dimension
+            distances[i] = torch.sqrt(torch.sum(diff * diff, dim=1))
+
+        # Find neighbors
+        neighbors = distances <= eps
+
+        # Count neighbors
+        neighbor_counts = torch.sum(neighbors, dim=1)
+
+        # Find core points
+        core_points = neighbor_counts >= min_samples
+
+        # Initialize labels
+        labels = torch.full((sample_count,), -1, dtype=torch.int32, device=mps_device)
+
+        # Cluster ID
+        cluster_id = 0
+
+        # Process each point
+        for i in range(sample_count):
+            # Skip non-core points or already labeled points
+            if not core_points[i] or labels[i] != -1:
+                continue
+
+            # Start a new cluster
+            labels[i] = cluster_id
+
+            # Find neighbors to process
+            to_process = torch.where(neighbors[i] & (labels == -1))[0]
+
+            # Process neighbors
+            while len(to_process) > 0:
+                j = to_process[0]
+                to_process = to_process[1:]
+
+                labels[j] = cluster_id
+
+                # If core point, add its neighbors
+                if core_points[j]:
+                    new_neighbors = torch.where(neighbors[j] & (labels == -1))[0]
+                    to_process = torch.cat([to_process, new_neighbors])
+
+            cluster_id += 1
+
+        return to_cpu(labels)
+
+    except Exception as e:
+        logging.warning(
+            f"MPS DBSCAN implementation failed: {e}. Falling back to CPU."
+        )
+        return None
+
+
+def _apply_dbscan_metalgpu(
+    data: np.ndarray, eps: float, min_samples: int, _: int
+) -> np.ndarray:
+    """Apply DBSCAN clustering using the metalgpu library.
+    
+    Args:
+        data: Input data points
+        eps: Epsilon parameter for DBSCAN
+        min_samples: Minimum samples parameter for DBSCAN
+        _: Unused parameter (number of samples) to maintain consistent interface
+        
+    Returns:
+        np.ndarray: Cluster labels
+    """
+    try:
+        # Import metalgpu here to avoid lint errors when it's not used
+        import metalgpu
+
+        # Log that we're using metalgpu for DBSCAN
+        version_str = "unknown"
+        if hasattr(metalgpu, "__version__"):
+            version_str = metalgpu.__version__
+            
+        logging.info(f"Using metalgpu version {version_str} for DBSCAN clustering")
+
+        # Use metalgpu for DBSCAN clustering
+        return metalgpu.dbscan_clustering(
+            data=data, eps=eps, min_samples=min_samples
+        )
+
+    except Exception as e:
+        logging.warning(
+            f"Metal GPU DBSCAN implementation failed: {e}. Falling back to CPU."
+        )
+        return None
+
+
+def _find_and_process_cluster_cupy(
+    index: int, neighbors: Any, core_points: Any, labels: Any, cluster_id: int
+) -> None:
+    """Find and process a cluster from a core point using CuPy.
+    
+    Args:
+        index: Index of the core point to start from
+        neighbors: Matrix of neighbor relationships
+        core_points: Array indicating core points
+        labels: Array of cluster labels to update
+        cluster_id: Current cluster ID to assign
+    """
+    # Start a new cluster
+    labels[index] = cluster_id
+
+    # Find all points reachable from this core point
+    stack = [index]
+    while stack:
+        current = stack.pop()
+
+        # Get neighbors
+        current_neighbors = cp.where(neighbors[current])[0]
+
+        # Process neighbors
+        for neighbor in current_neighbors:
+            # If not yet assigned to a cluster
+            if labels[neighbor] == -1:
+                labels[neighbor] = cluster_id
+
+                # If it's a core point, add to stack for further expansion
+                if core_points[neighbor]:
+                    stack.append(neighbor)
+
+
+def _compute_distances_cupy(d_data: Any, n_samples: int) -> Any:
+    """Compute pairwise distances between points using CuPy.
+    
+    Args:
+        d_data: CuPy array of data points
+        n_samples: Number of samples
+        
+    Returns:
+        CuPy array of pairwise distances
+    """
+    distances = cp.zeros((n_samples, n_samples), dtype=cp.float32)
+    for i in range(n_samples):
+        diff = d_data - d_data[i]
+        distances[i] = cp.sum(diff * diff, axis=1)
+    return distances
+
+
+def _apply_dbscan_cupy(
+    data: np.ndarray, eps: float, min_samples: int, n_samples: int
+) -> np.ndarray:
+    """Apply DBSCAN clustering using CuPy.
+    
+    Args:
+        data: Input data points
+        eps: Epsilon parameter for DBSCAN
+        min_samples: Minimum samples parameter for DBSCAN
+        n_samples: Number of samples
+        
+    Returns:
+        np.ndarray: Cluster labels
+    """
+    # Transfer data to GPU
+    d_data = cp.asarray(data)
+
+    # Compute pairwise distances
+    distances = _compute_distances_cupy(d_data, n_samples)
+
+    # Find neighbors
+    neighbors = distances <= eps**2
+
+    # Count neighbors
+    n_neighbors = cp.sum(neighbors, axis=1)
+
+    # Find core points
+    core_points = n_neighbors >= min_samples
+
+    # Initialize labels
+    labels = cp.full(n_samples, -1, dtype=cp.int32)
+
+    # Cluster ID counter
+    cluster_id = 0
+
+    # Perform clustering
+    for i in range(n_samples):
+        # Skip non-core points or already labeled points
+        if not core_points[i] or labels[i] != -1:
+            continue
+
+        # Process cluster starting from this core point
+        _find_and_process_cluster_cupy(i, neighbors, core_points, labels, cluster_id)
+            
+        # Move to next cluster
+        cluster_id += 1
+
+    # Transfer results back to CPU
+    return cp.asnumpy(labels)
+
+
+def _setup_cuda_distance_computation(data: np.ndarray, n_samples: int) -> tuple:
+    """Set up CUDA environment for distance computation.
+    
+    Args:
+        data: Input data points
+        n_samples: Number of samples
+        
+    Returns:
+        tuple: (d_data, d_distances, threadsperblock, blockspergrid)
+    """
+    # Transfer data to device
+    d_data = cuda.to_device(data)
+
+    # Prepare distance matrix
+    distances = np.zeros((n_samples, n_samples), dtype=np.float32)
+    d_distances = cuda.to_device(distances)
+
+    # Configure CUDA grid for distance computation
+    threadsperblock = (16, 16)
+    blockspergrid_x = (n_samples + threadsperblock[0] - 1) // threadsperblock[0]
+    blockspergrid_y = (n_samples + threadsperblock[1] - 1) // threadsperblock[1]
+    blockspergrid = (blockspergrid_x, blockspergrid_y)
+    
+    return d_data, d_distances, threadsperblock, blockspergrid
+
+
+def _find_and_process_cluster_cuda(
+    index: int, neighbors: np.ndarray, core_points: np.ndarray, labels: np.ndarray, cluster_id: int
+) -> None:
+    """Find and process a cluster from a core point using CUDA.
+    
+    Args:
+        index: Index of the core point to start from
+        neighbors: Matrix of neighbor relationships
+        core_points: Array indicating core points
+        labels: Array of cluster labels to update
+        cluster_id: Current cluster ID to assign
+    """
+    # Start a new cluster
+    labels[index] = cluster_id
+
+    # Find all points reachable from this core point
+    stack = [index]
+    while stack:
+        current = stack.pop()
+
+        # Get neighbors
+        current_neighbors = np.nonzero(neighbors[current])[0]
+
+        # Process neighbors
+        for neighbor in current_neighbors:
+            # If not yet assigned to a cluster
+            if labels[neighbor] == -1:
+                labels[neighbor] = cluster_id
+
+                # If it's a core point, add to stack for further expansion
+                if core_points[neighbor]:
+                    stack.append(neighbor)
+
+
+def _apply_dbscan_cuda(
+    data: np.ndarray, eps: float, min_samples: int, n_samples: int
+) -> np.ndarray:
+    """Apply DBSCAN clustering using CUDA.
+    
+    Args:
+        data: Input data points
+        eps: Epsilon parameter for DBSCAN
+        min_samples: Minimum samples parameter for DBSCAN
+        n_samples: Number of samples
+        
+    Returns:
+        np.ndarray: Cluster labels
+    """
+    # Define CUDA kernels for DBSCAN
+    @cuda.jit
+    def _compute_distance_matrix_kernel(data, distances):
+        """Compute pairwise distances between all points."""
+        i, j = cuda.grid(2)
+
+        if i < data.shape[0] and j < data.shape[0]:
+            dist = 0.0
+            for f in range(data.shape[1]):  # Iterate over n_features
+                diff = data[i, f] - data[j, f]
+                dist += diff * diff
+            distances[i, j] = dist
+
+    # Set up CUDA environment
+    d_data, d_distances, threadsperblock, blockspergrid = _setup_cuda_distance_computation(
+        data, n_samples
+    )
+
+    # Compute distances
+    _compute_distance_matrix_kernel[blockspergrid, threadsperblock](
+        d_data, d_distances
+    )
+
+    # Copy distances back to host
+    distances = d_distances.copy_to_host()
+
+    # Find neighbors and core points
+    neighbors = distances <= eps**2
+    n_neighbors = np.sum(neighbors, axis=1)
+    core_points = n_neighbors >= min_samples
+
+    # Initialize labels
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    cluster_id = 0
+
+    # Perform clustering
+    for i in range(n_samples):
+        # Skip non-core points or already labeled points
+        if not core_points[i] or labels[i] != -1:
+            continue
+
+        # Process cluster starting from this core point
+        _find_and_process_cluster_cuda(i, neighbors, core_points, labels, cluster_id)
+        
+        # Move to next cluster
+        cluster_id += 1
+
+    return labels
+
+
+def _select_dbscan_backend(backend: str) -> str:
+    """Select appropriate backend for DBSCAN clustering based on availability.
+    
+    Args:
+        backend: Requested backend ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
+        
+    Returns:
+        str: Selected backend name
+    """
+    if backend != "auto":
+        return backend
+        
+    # Auto-select based on availability
+    if CUPY_AVAILABLE:
+        return "cupy"
+    elif CUDA_AVAILABLE:
+        return "cuda"
+    elif MPS_AVAILABLE:
+        return "mps"
+    elif METALGPU_AVAILABLE:
+        return "metalgpu"
+    else:
+        return "cpu"
+
+
+def _is_gpu_available() -> bool:
+    """Check if any GPU backend is available for DBSCAN.
+    
+    Returns:
+        bool: True if at least one GPU backend is available
+    """
+    return any([CUDA_AVAILABLE, CUPY_AVAILABLE, MPS_AVAILABLE, METALGPU_AVAILABLE])
+
+
+def _try_gpu_backend(
+    backend: str, data: np.ndarray, eps: float, min_samples: int, n_samples: int
+) -> Optional[np.ndarray]:
+    """Try to run DBSCAN using the specified GPU backend.
+    
+    Args:
+        backend: Backend to use
+        data: Input data points
+        eps: Epsilon parameter
+        min_samples: Minimum samples parameter
+        n_samples: Number of samples
+        
+    Returns:
+        Optional[np.ndarray]: Cluster labels if successful, None if failed
+    """
+    # Select the appropriate implementation based on backend
+    if backend == "mps" and MPS_AVAILABLE:
+        return _apply_dbscan_mps(data, eps, min_samples, n_samples)
+    
+    if backend == "metalgpu" and METALGPU_AVAILABLE:
+        return _apply_dbscan_metalgpu(data, eps, min_samples, n_samples)
+        
+    if backend == "cupy" and CUPY_AVAILABLE:
+        return _apply_dbscan_cupy(data, eps, min_samples, n_samples)
+        
+    if backend == "cuda" and CUDA_AVAILABLE and NUMBA_AVAILABLE:
+        return _apply_dbscan_cuda(data, eps, min_samples, n_samples)
+        
+    return None
+
+
 def apply_dbscan_clustering_gpu(
     data: np.ndarray, eps: float = 0.5, min_samples: int = 5, backend: str = "auto"
 ) -> np.ndarray:
@@ -1615,285 +2050,18 @@ def apply_dbscan_clustering_gpu(
         np.ndarray: Cluster labels for each point. Noisy samples are labeled as -1.
     """
     n_samples = data.shape[0]
-
-    # Choose backend
-    if backend == "auto":
-        if CUPY_AVAILABLE:
-            backend = "cupy"
-        elif CUDA_AVAILABLE:
-            backend = "cuda"
-        elif MPS_AVAILABLE:
-            backend = "mps"
-        elif METALGPU_AVAILABLE:
-            backend = "metalgpu"
-        else:
-            backend = "cpu"
-
-    # Use CPU implementation if no GPU is available or requested
-    if backend == "cpu" or (
-        not CUDA_AVAILABLE
-        and not CUPY_AVAILABLE
-        and not MPS_AVAILABLE
-        and not METALGPU_AVAILABLE
-    ):
-        try:
-            from sklearn.cluster import DBSCAN
-
-            dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-            return dbscan.fit_predict(data)
-        except ImportError:
-            logging.warning(
-                "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
-            )
-
-    # Metal implementation for macOS using MPS
-    if backend == "mps" and MPS_AVAILABLE:
-        try:
-            # Transfer data to MPS device
-            d_data = torch.tensor(data, dtype=torch.float32, device=mps_device)
-            n_samples, n_features = data.shape
-
-            # Compute pairwise distances
-            distances = torch.zeros(
-                (n_samples, n_samples), dtype=torch.float32, device=mps_device
-            )
-            for i in range(n_samples):
-                diff = d_data - d_data[i]
-                distances[i] = torch.sqrt(torch.sum(diff * diff, dim=1))
-
-            # Find neighbors
-            neighbors = distances <= eps
-
-            # Count neighbors
-            neighbor_counts = torch.sum(neighbors, dim=1)
-
-            # Find core points
-            core_points = neighbor_counts >= min_samples
-
-            # Initialize labels
-            labels = torch.full((n_samples,), -1, dtype=torch.int32, device=mps_device)
-
-            # Cluster ID
-            cluster_id = 0
-
-            # Process each point
-            for i in range(n_samples):
-                if not core_points[i] or labels[i] != -1:
-                    continue
-
-                # Start a new cluster
-                labels[i] = cluster_id
-
-                # Find neighbors to process
-                to_process = torch.where(neighbors[i] & (labels == -1))[0]
-
-                # Process neighbors
-                while len(to_process) > 0:
-                    j = to_process[0]
-                    to_process = to_process[1:]
-
-                    labels[j] = cluster_id
-
-                    # If core point, add its neighbors
-                    if core_points[j]:
-                        new_neighbors = torch.where(neighbors[j] & (labels == -1))[0]
-                        to_process = torch.cat([to_process, new_neighbors])
-
-                cluster_id += 1
-
-            return to_cpu(labels)
-
-        except Exception as e:
-            logging.warning(
-                f"MPS DBSCAN implementation failed: {e}. Falling back to CPU."
-            )
-
-    # Metal implementation for macOS using metalgpu
-    if backend == "metalgpu" and METALGPU_AVAILABLE:
-        try:
-            # Import metalgpu here to avoid lint errors when it's not used
-            import metalgpu
-
-            # Log that we're using metalgpu for DBSCAN
-            logging.info(
-                f"Using metalgpu version {metalgpu.__version__ if hasattr(metalgpu, '__version__') else 'unknown'} for DBSCAN clustering"
-            )
-
-            # Use metalgpu for DBSCAN clustering
-            labels = metalgpu.dbscan_clustering(
-                data=data, eps=eps, min_samples=min_samples
-            )
-
-            return labels
-
-        except Exception as e:
-            logging.warning(
-                f"Metal GPU DBSCAN implementation failed: {e}. Falling back to CPU."
-            )
-            # Return all points as noise if scikit-learn is not available
-            return np.full(n_samples, -1)
-
-    # CuPy implementation
-    if backend == "cupy" and CUPY_AVAILABLE:
-        # Transfer data to GPU
-        d_data = cp.asarray(data)
-
-        # Compute pairwise distances
-        distances = cp.zeros((n_samples, n_samples), dtype=cp.float32)
-        for i in range(n_samples):
-            diff = d_data - d_data[i]
-            distances[i] = cp.sum(diff * diff, axis=1)
-
-        # Find neighbors
-        neighbors = distances <= eps**2
-
-        # Count neighbors
-        n_neighbors = cp.sum(neighbors, axis=1)
-
-        # Find core points
-        core_points = n_neighbors >= min_samples
-
-        # Initialize labels
-        labels = cp.full(n_samples, -1, dtype=cp.int32)
-
-        # Cluster ID counter
-        cluster_id = 0
-
-        # Perform clustering
-        for i in range(n_samples):
-            if not core_points[i] or labels[i] != -1:
-                continue
-
-            # Start a new cluster
-            labels[i] = cluster_id
-
-            # Find all points reachable from this core point
-            stack = [i]
-            while stack:
-                current = stack.pop()
-
-                # Get neighbors
-                current_neighbors = cp.where(neighbors[current])[0]
-
-                # Process neighbors
-                for neighbor in current_neighbors:
-                    # If not yet assigned to a cluster
-                    if labels[neighbor] == -1:
-                        labels[neighbor] = cluster_id
-
-                        # If it's a core point, add to stack for further expansion
-                        if core_points[neighbor]:
-                            stack.append(neighbor)
-
-            # Move to next cluster
-            cluster_id += 1
-
-        # Transfer results back to CPU
-        return cp.asnumpy(labels)
-
-    # CUDA implementation using Numba
-    if backend == "cuda" and CUDA_AVAILABLE and NUMBA_AVAILABLE:
-        # Define CUDA kernels for DBSCAN
-        @cuda.jit
-        def _compute_distance_matrix_kernel(data, distances):
-            """Compute pairwise distances between all points."""
-            i, j = cuda.grid(2)
-
-            if i < data.shape[0] and j < data.shape[0]:
-                dist = 0.0
-                for f in range(data.shape[1]):
-                    diff = data[i, f] - data[j, f]
-                    dist += diff * diff
-                distances[i, j] = dist
-
-        # Transfer data to device
-        d_data = cuda.to_device(data)
-
-        # Prepare distance matrix
-        distances = np.zeros((n_samples, n_samples), dtype=np.float32)
-        d_distances = cuda.to_device(distances)
-
-        # Configure CUDA grid for distance computation
-        threadsperblock = (16, 16)
-        blockspergrid_x = (n_samples + threadsperblock[0] - 1) // threadsperblock[0]
-        blockspergrid_y = (n_samples + threadsperblock[1] - 1) // threadsperblock[1]
-        blockspergrid = (blockspergrid_x, blockspergrid_y)
-
-        # Compute distances
-        _compute_distance_matrix_kernel[blockspergrid, threadsperblock](
-            d_data, d_distances
-        )
-
-        # Copy distances back to host
-        distances = d_distances.copy_to_host()
-
-        # Find neighbors
-        neighbors = distances <= eps**2
-
-        # Count neighbors
-        n_neighbors = np.sum(neighbors, axis=1)
-
-        # Find core points
-        core_points = n_neighbors >= min_samples
-
-        # Initialize labels
-        labels = np.full(n_samples, -1, dtype=np.int32)
-
-        # Cluster ID counter
-        cluster_id = 0
-
-        # Perform clustering
-        for i in range(n_samples):
-            if not core_points[i] or labels[i] != -1:
-                continue
-
-            # Start a new cluster
-            labels[i] = cluster_id
-
-            # Find all points reachable from this core point
-            stack = [i]
-            while stack:
-                current = stack.pop()
-
-                # Get neighbors
-                current_neighbors = np.nonzero(neighbors[current])[0]
-
-                # Process neighbors
-                for neighbor in current_neighbors:
-                    # If not yet assigned to a cluster
-                    if labels[neighbor] == -1:
-                        labels[neighbor] = cluster_id
-
-                        # If it's a core point, add to stack for further expansion
-                        if core_points[neighbor]:
-                            stack.append(neighbor)
-
-            # Move to next cluster
-            cluster_id += 1
-
-        return labels
-
-    # If we reach here, fallback to CPU implementation
-    try:
-        from sklearn.cluster import DBSCAN
-
-        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-        return dbscan.fit_predict(data)
-    except ImportError:
-        logging.warning(
-            "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
-        )
-        # Return all points as noise if scikit-learn is not available
-        return np.full(n_samples, -1)
-    # If we reach here, fallback to CPU implementation
-    try:
-        from sklearn.cluster import DBSCAN
-
-        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-        return dbscan.fit_predict(data)
-    except ImportError:
-        logging.warning(
-            "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
-        )
-        # Return all points as noise if scikit-learn is not available
-        return np.full(n_samples, -1)
+    
+    # Select appropriate backend
+    selected_backend = _select_dbscan_backend(backend)
+    
+    # Use CPU if requested or if no GPU available
+    if selected_backend == "cpu" or not _is_gpu_available():
+        return _apply_dbscan_cpu(data, eps, min_samples, n_samples)
+    
+    # Try the selected GPU backend
+    result = _try_gpu_backend(selected_backend, data, eps, min_samples, n_samples)
+    if result is not None:
+        return result
+    
+    # Fallback to CPU implementation
+    return _apply_dbscan_cpu(data, eps, min_samples, n_samples)

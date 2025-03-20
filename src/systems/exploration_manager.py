@@ -128,7 +128,7 @@ class ExplorationManager:
         position: Tuple[int, int],
         size: float,
         region_type: RegionType = RegionType.EMPTY,
-    ) -> str:
+    ) -> Optional[str]:
         """
         Register a new region for exploration.
 

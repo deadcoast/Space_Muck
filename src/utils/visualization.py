@@ -360,6 +360,155 @@ class GeneratorVisualizer:
         )
 
 
+def _visualize_noise_layers(
+    generator, visualizer, generator_name: str, show: bool, save: bool, colormap: str
+) -> None:
+    """
+    Visualize noise layers from a generator if available.
+    
+    Args:
+        generator: Generator instance with generate_noise_layer method
+        visualizer: GeneratorVisualizer instance
+        generator_name: Name of the generator for filenames
+        show: Whether to display the visualizations
+        save: Whether to save the visualizations
+        colormap: Colormap to use
+    """
+    noise_types = ["low", "medium", "high", "detail"]
+    noise_grids = []
+    noise_titles = []
+
+    for noise_type in noise_types:
+        try:
+            grid = generator.generate_noise_layer(noise_type=noise_type)
+            noise_grids.append(grid)
+            noise_titles.append(f"{noise_type.capitalize()} Noise")
+        except Exception as e:
+            logging.warning(f"Could not generate {noise_type} noise: {str(e)}")
+
+    if noise_grids:
+        visualizer.compare_grids(
+            noise_grids,
+            noise_titles,
+            colormap=colormap,
+            show=show,
+            save=save,
+            filename=f"{generator_name}_noise_comparison.png",
+        )
+
+
+def _create_thresholded_grid(generator, base_grid) -> np.ndarray:
+    """
+    Create a thresholded binary grid using the generator's apply_threshold method if available,
+    or a simple threshold operation if not.
+    
+    Args:
+        generator: Generator instance
+        base_grid: Base grid to threshold
+        
+    Returns:
+        np.ndarray: Thresholded binary grid
+    """
+    if hasattr(generator, "apply_threshold"):
+        return generator.apply_threshold(base_grid, 0.5, 1.0)
+    else:
+        return (base_grid > 0.5).astype(np.float32)
+
+
+def _visualize_cellular_automaton(
+    generator, visualizer, generator_name: str, show: bool, save: bool
+) -> None:
+    """
+    Visualize cellular automaton evolution if available.
+    
+    Args:
+        generator: Generator instance with apply_cellular_automaton method
+        visualizer: GeneratorVisualizer instance
+        generator_name: Name of the generator for filenames
+        show: Whether to display the visualizations
+        save: Whether to save the visualizations
+    """
+    try:
+        # Generate base noise
+        base_grid = generator.generate_noise_layer(noise_type="medium")
+
+        # Apply threshold to create binary grid
+        binary_grid = _create_thresholded_grid(generator, base_grid)
+
+        # Apply cellular automaton with different iterations
+        ca_grids = [binary_grid]
+        ca_titles = ["Initial Grid"]
+
+        for iterations in [1, 3, 5]:
+            ca_grid = generator.apply_cellular_automaton(
+                binary_grid.copy(), iterations=iterations
+            )
+            ca_grids.append(ca_grid)
+            ca_titles.append(f"After {iterations} Iterations")
+
+        visualizer.compare_grids(
+            ca_grids,
+            ca_titles,
+            colormap="binary",
+            show=show,
+            save=save,
+            filename=f"{generator_name}_ca_evolution.png",
+        )
+
+        # Create animation
+        visualizer.visualize_evolution(
+            ca_grids,
+            title="Cellular Automaton Evolution",
+            colormap="binary",
+            show=False,
+            save=save,
+            filename=f"{generator_name}_ca_evolution_grid.png",
+            animation=True,
+            animation_filename=f"{generator_name}_ca_evolution.gif",
+        )
+    except Exception as e:
+        logging.warning(f"Could not visualize cellular automaton: {str(e)}")
+
+
+def _visualize_clusters(
+    generator, visualizer, generator_name: str, show: bool, save: bool, colormap: str
+) -> None:
+    """
+    Visualize clustering if available.
+    
+    Args:
+        generator: Generator instance with create_clusters method
+        visualizer: GeneratorVisualizer instance
+        generator_name: Name of the generator for filenames
+        show: Whether to display the visualizations
+        save: Whether to save the visualizations
+        colormap: Colormap to use
+    """
+    try:
+        # Generate base noise
+        base_grid = generator.generate_noise_layer(noise_type="medium")
+
+        # Apply threshold
+        thresholded_grid = _create_thresholded_grid(generator, base_grid)
+
+        # Create clusters
+        clustered_grid = generator.create_clusters(
+            thresholded_grid, num_clusters=5, cluster_value_multiplier=2.0
+        )
+
+        # Visualize before and after
+        visualizer.compare_grids(
+            [thresholded_grid, clustered_grid],
+            ["Before Clustering", "After Clustering"],
+            colormap=colormap,
+            show=show,
+            save=save,
+            filename=f"{generator_name}_clustering.png",
+        )
+    except Exception as e:
+        logging.warning(f"Could not visualize clustering: {str(e)}")
+
+
 def visualize_generator_output(
     generator,
     output_dir: str = "visualizations",
@@ -382,109 +531,16 @@ def visualize_generator_output(
         return
 
     visualizer = GeneratorVisualizer(output_dir)
-
-    # Get generator class name for filenames
     generator_name = generator.__class__.__name__.lower()
 
     # Visualize noise layers if available
     if hasattr(generator, "generate_noise_layer"):
-        noise_types = ["low", "medium", "high", "detail"]
-        noise_grids = []
-        noise_titles = []
-
-        for noise_type in noise_types:
-            try:
-                grid = generator.generate_noise_layer(noise_type=noise_type)
-                noise_grids.append(grid)
-                noise_titles.append(f"{noise_type.capitalize()} Noise")
-            except Exception as e:
-                logging.warning(f"Could not generate {noise_type} noise: {str(e)}")
-
-        if noise_grids:
-            visualizer.compare_grids(
-                noise_grids,
-                noise_titles,
-                colormap=colormap,
-                show=show,
-                save=save,
-                filename=f"{generator_name}_noise_comparison.png",
-            )
+        _visualize_noise_layers(generator, visualizer, generator_name, show, save, colormap)
 
     # Visualize cellular automaton if available
-    if hasattr(generator, "apply_cellular_automaton") and hasattr(
-        generator, "generate_noise_layer"
-    ):
-        try:
-            # Generate base noise
-            base_grid = generator.generate_noise_layer(noise_type="medium")
-
-            # Apply threshold to create binary grid
-            if hasattr(generator, "apply_threshold"):
-                binary_grid = generator.apply_threshold(base_grid, 0.5, 1.0)
-            else:
-                binary_grid = (base_grid > 0.5).astype(np.float32)
-
-            # Apply cellular automaton with different iterations
-            ca_grids = [binary_grid]
-            ca_titles = ["Initial Grid"]
-
-            for iterations in [1, 3, 5]:
-                ca_grid = generator.apply_cellular_automaton(
-                    binary_grid.copy(), iterations=iterations
-                )
-                ca_grids.append(ca_grid)
-                ca_titles.append(f"After {iterations} Iterations")
-
-            visualizer.compare_grids(
-                ca_grids,
-                ca_titles,
-                colormap="binary",
-                show=show,
-                save=save,
-                filename=f"{generator_name}_ca_evolution.png",
-            )
-
-            # Create animation
-            visualizer.visualize_evolution(
-                ca_grids,
-                title="Cellular Automaton Evolution",
-                colormap="binary",
-                show=False,
-                save=save,
-                filename=f"{generator_name}_ca_evolution_grid.png",
-                animation=True,
-                animation_filename=f"{generator_name}_ca_evolution.gif",
-            )
-        except Exception as e:
-            logging.warning(f"Could not visualize cellular automaton: {str(e)}")
+    if hasattr(generator, "apply_cellular_automaton") and hasattr(generator, "generate_noise_layer"):
+        _visualize_cellular_automaton(generator, visualizer, generator_name, show, save)
 
     # Visualize clusters if available
-    if hasattr(generator, "create_clusters") and hasattr(
-        generator, "generate_noise_layer"
-    ):
-        try:
-            # Generate base noise
-            base_grid = generator.generate_noise_layer(noise_type="medium")
-
-            # Apply threshold
-            if hasattr(generator, "apply_threshold"):
-                thresholded_grid = generator.apply_threshold(base_grid, 0.5, 1.0)
-            else:
-                thresholded_grid = (base_grid > 0.5).astype(np.float32)
-
-            # Create clusters
-            clustered_grid = generator.create_clusters(
-                thresholded_grid, num_clusters=5, cluster_value_multiplier=2.0
-            )
-
-            # Visualize before and after
-            visualizer.compare_grids(
-                [thresholded_grid, clustered_grid],
-                ["Before Clustering", "After Clustering"],
-                colormap=colormap,
-                show=show,
-                save=save,
-                filename=f"{generator_name}_clustering.png",
-            )
-        except Exception as e:
-            logging.warning(f"Could not visualize clustering: {str(e)}")
+    if hasattr(generator, "create_clusters") and hasattr(generator, "generate_noise_layer"):
+        _visualize_clusters(generator, visualizer, generator_name, show, save, colormap)

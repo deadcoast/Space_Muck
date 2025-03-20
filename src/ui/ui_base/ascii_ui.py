@@ -1,19 +1,19 @@
-
-
 # Import base classes from ascii_base.py using absolute imports
-
-class ASCIIBox(UIElement):
-    """A simple box UI element with customizable borders and content."""
 
 # Standard library imports
 import logging
 
 # Local application imports
 from typing import Callable, Dict, List, Optional, Tuple
-
-import pygame
+from src.ui.ui_base.ui_element import UIElement
+from src.ui.ui_base.ui_style import UIStyle
+from config import COLOR_TEXT, COLOR_HIGHLIGHT
 
 # Third-party library imports
+import pygame
+
+class ASCIIBox(UIElement):
+    """A simple box UI element with customizable borders and content."""
 
 
     def __init__(
@@ -59,11 +59,11 @@ import pygame
         """
         if len(line) <= max_width:
             return [line]
-            
+
         wrapped_lines = []
         words = line.split()
         current_line = ""
-        
+
         for word in words:
             # Check if adding this word would exceed the max width
             if len(current_line) + len(word) + 1 <= max_width:
@@ -74,19 +74,19 @@ import pygame
             else:
                 wrapped_lines.append(current_line)
                 current_line = word
-        
+
         # Add the last line if there's content
         if current_line:
             wrapped_lines.append(current_line)
-            
+
         return wrapped_lines
-    
+
     def _update_scroll_limits(self) -> None:
         """Update scroll limits based on content and box size."""
         # Calculate max scroll offset accounting for box borders
         max_visible_lines = self.height - 2
         self.max_scroll = max(0, len(self.content_lines) - max_visible_lines)
-        
+
         # Reset scroll offset if needed
         self.scroll_offset = min(self.scroll_offset, self.max_scroll)
 
@@ -99,18 +99,18 @@ import pygame
         try:
             self.content = content
             self.content_lines = []
-            
+
             # Calculate available width (accounting for borders)
             max_line_width = self.width - 2
-            
+
             # Process each line in the content
             for line in content.split("\n"):
                 # Add all wrapped lines to content_lines
                 self.content_lines.extend(self._wrap_line(line, max_line_width))
-            
+
             # Update scroll limits based on new content
             self._update_scroll_limits()
-            
+
         except Exception as e:
             logging.error(f"Error setting content: {e}")
 
@@ -241,6 +241,7 @@ import pygame
             logging.error(f"Error handling input: {e}")
 
         return None
+
 
 class ASCIIPanel(UIElement):
     """A panel UI element that can contain other UI elements."""

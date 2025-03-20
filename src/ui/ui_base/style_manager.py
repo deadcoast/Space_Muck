@@ -1,12 +1,9 @@
+"""Centralized manager for UI style handling.
 
-
-class StyleManager:
-    """Centralized manager for UI style handling.
-
-    This class provides a single source of truth for style-specific rendering logic,
-    including colors, characters, and animation parameters. All UI components should
-    use this manager to ensure consistent style application.
-    """
+This class provides a single source of truth for style-specific rendering logic,
+including colors, characters, and animation parameters. All UI components should
+use this manager to ensure consistent style application.
+"""
 
 # Standard library imports
 import logging
@@ -14,10 +11,13 @@ import logging
 # Local application imports
 from typing import Any, Dict, Tuple
 
-from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_base.ascii_base import UIStyle, COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
 # Third-party library imports
 
+
+class StyleManager:
+    """Centralized manager for UI style handling."""
 
     # Singleton instance
     _instance = None

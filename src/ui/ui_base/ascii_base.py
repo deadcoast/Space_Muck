@@ -1,3 +1,13 @@
+# Standard library imports
+import logging
+import math
+import time
+from enum import Enum, auto
+from typing import Dict, Optional, Tuple
+
+# Third-party library imports
+import pygame
+
 # Define color constants
 COLOR_TEXT = (200, 200, 200)  # Light gray
 COLOR_BG = (10, 10, 10)  # Near black
@@ -6,27 +16,11 @@ COLOR_HIGHLIGHT = (255, 255, 100)  # Yellow-ish highlight
 
 class UIStyle(Enum):
     """Enum for UI visual styles."""
-
-
-# Standard library imports
-import logging
-import math
-import time
-
-# Local application imports
-from enum import Enum, auto
-from typing import Dict, Optional, Tuple
-
-import pygame
-
-# Third-party library imports
-
-
-SYMBIOTIC = auto()  # Organic, flowing style
-ASTEROID = auto()  # Rocky, rough style
-MECHANICAL = auto()  # Industrial, mechanical style
-QUANTUM = auto()  # High-tech, digital style
-FLEET = auto()  # Military, utilitarian style
+    SYMBIOTIC = auto()  # Organic, flowing style
+    ASTEROID = auto()  # Rocky, rough style
+    MECHANICAL = auto()  # Industrial, mechanical style
+    QUANTUM = auto()  # High-tech, digital style
+    FLEET = auto()  # Military, utilitarian style
 
 
 @classmethod

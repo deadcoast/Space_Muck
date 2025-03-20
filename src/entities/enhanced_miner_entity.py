@@ -8,8 +8,6 @@ advanced population models for more realistic ecological dynamics and life-cycle
 import random
 from typing import Dict, List, Optional, Set, Tuple
 
-import numpy as np
-
 from entities.miner_entity import MinerEntity
 from algorithms.population_models import (
     MultiSpeciesPopulation,
@@ -127,32 +125,82 @@ class EnhancedMinerEntity(MinerEntity):
         matrix = [[-0.01 for _ in range(4)] for _ in range(4)]
         
         # Set diagonal to zero (no self-competition in this model)
-        for i in range(4):
-            matrix[i][i] = 0.0
+        matrix = self._initialize_matrix_diagonal(matrix)
             
         # Modify based on race trait
         trait = getattr(self, "trait", "neutral")
         
         if trait == "adaptive":
-            # Adaptive races can benefit from others slightly
-            for i in range(4):
-                if i != self.race_id - 1:  # Not self
-                    matrix[self.race_id - 1][i] = 0.02  # Benefit from other species
-        
+            matrix = self._apply_adaptive_trait(matrix)
         elif trait == "expansive":
-            # Expansive races compete more strongly
-            for i in range(4):
-                if i != self.race_id - 1:  # Not self
-                    matrix[self.race_id - 1][i] = -0.03  # Stronger competition
-                    matrix[i][self.race_id - 1] = -0.02  # Others compete back
-        
+            matrix = self._apply_expansive_trait(matrix)
         elif trait == "selective":
-            # Selective races have more specialized interactions
-            for i in range(4):
-                if i != self.race_id - 1:  # Not self
-                    # Random positive or negative interaction
-                    matrix[self.race_id - 1][i] = random.uniform(-0.05, 0.05)
+            matrix = self._apply_selective_trait(matrix)
         
+        return matrix
+        
+    def _initialize_matrix_diagonal(self, matrix: List[List[float]]) -> List[List[float]]:
+        """
+        Set the diagonal elements of the interaction matrix to zero.
+        
+        Args:
+            matrix: The initial interaction matrix
+            
+        Returns:
+            Matrix with diagonal elements set to zero
+        """
+        for i in range(4):
+            matrix[i][i] = 0.0
+        return matrix
+        
+    def _apply_adaptive_trait(self, matrix: List[List[float]]) -> List[List[float]]:
+        """
+        Apply adaptive trait effects to the interaction matrix.
+        Adaptive races can benefit from others slightly.
+        
+        Args:
+            matrix: The initial interaction matrix
+            
+        Returns:
+            Modified matrix with adaptive trait effects
+        """
+        for i in range(4):
+            if i != self.race_id - 1:  # Not self
+                matrix[self.race_id - 1][i] = 0.02  # Benefit from other species
+        return matrix
+        
+    def _apply_expansive_trait(self, matrix: List[List[float]]) -> List[List[float]]:
+        """
+        Apply expansive trait effects to the interaction matrix.
+        Expansive races compete more strongly.
+        
+        Args:
+            matrix: The initial interaction matrix
+            
+        Returns:
+            Modified matrix with expansive trait effects
+        """
+        for i in range(4):
+            if i != self.race_id - 1:  # Not self
+                matrix[self.race_id - 1][i] = -0.03  # Stronger competition
+                matrix[i][self.race_id - 1] = -0.02  # Others compete back
+        return matrix
+        
+    def _apply_selective_trait(self, matrix: List[List[float]]) -> List[List[float]]:
+        """
+        Apply selective trait effects to the interaction matrix.
+        Selective races have more specialized interactions.
+        
+        Args:
+            matrix: The initial interaction matrix
+            
+        Returns:
+            Modified matrix with selective trait effects
+        """
+        for i in range(4):
+            if i != self.race_id - 1:  # Not self
+                # Random positive or negative interaction
+                matrix[self.race_id - 1][i] = random.uniform(-0.05, 0.05)
         return matrix
     
     def update_population(self, field, all_populations: List[float] = None) -> None:

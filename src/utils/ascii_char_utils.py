@@ -9,7 +9,7 @@ in a consistent and reliable way across different fonts and platforms.
 import logging
 
 # Local application imports
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import pygame
 
