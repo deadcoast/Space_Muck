@@ -60,15 +60,21 @@ This document outlines the tasks needed to properly implement the `game.py` file
   - [ ] Implement `show_map`: Display game map/navigation interface
   - [ ] Implement `show_game_over`: Display game over screen with stats
 
-- [ ] **State Exit Handlers**
-  - [ ] Implement `hide_menu`: Clean up menu resources
-  - [ ] Implement `save_game_state`: Save current game progress
-  - [ ] Implement `hide_pause_menu`: Close pause menu and clean up
-  - [ ] Implement `hide_shop`: Close shop interface and update inventory
-  - [ ] Implement `save_purchases`: Commit shop transactions
-  - [ ] Implement `hide_map`: Close map interface
-  - [ ] Implement `save_high_score`: Update high score table
-  - [ ] Implement `reset_game`: Clean up current game state before reset
+- [x] **State Exit Handlers**
+  - [x] Implement `hide_menu`: Clean up menu resources
+  - [x] Implement `save_game_state`: Save current game progress
+  - [x] Implement `hide_pause_menu`: Close pause menu and clean up
+  - [x] Implement `hide_shop`: Close shop interface and update inventory
+  - [x] Implement `save_purchases`: Commit shop transactions
+  - [x] Implement `hide_map`: Close map interface
+  - [x] Implement `save_high_score`: Update high score table
+  - [x] Implement `reset_game`: Clean up current game state before reset
+
+- [x] **Code Quality Improvements**
+  - [x] Refactor `_can_afford_purchase` to reduce cognitive complexity (split into helper methods)
+  - [x] Refactor `_add_purchased_items_to_inventory` to reduce cognitive complexity (implemented strategy pattern)
+  - [x] Ensure robust error handling in all state handlers
+  - [x] Add comprehensive logging for debugging purposes
 
 ## Game Loop Implementation
 
