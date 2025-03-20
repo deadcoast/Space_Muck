@@ -10,7 +10,6 @@ This example demonstrates how to:
 import pygame
 import sys
 import numpy as np
-from typing import Dict, List, Tuple
 
 # Import required system components
 from systems.mining_system import MiningSystem

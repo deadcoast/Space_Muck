@@ -9,9 +9,12 @@
 
 ## Code Base Context Priority Workflow
 
-- **CRITICAL:** USING THE GREP TOOL, REVIEW `.windsurfcontext.md` AND THE RELEVANT CODE FILES IN `src` BEFORE GENERATING IMPLEMENTATIONS. THIS PROVIDES ESSENTIAL INFORMATION ABOUT CODE BASE STANDARDS AND MODULE INTEGRATION.
-- **IMPORTANT:** THIS WORKFLOW MUST BE COMPLETED WITH CONTEXT AS TOP PRIORITY.
-- **IMPORTANT:** ENSURE THAT YOUR INTEGRATION IS NOT A DUPLICATION.
+CRITICAL:
+  - USING A TOOL OR TERMINAL COMMAND OF YOUR CHOICE, REVIEW `.windsurfcontext.md` AND THE RELEVANT CODE FILES IN `src` BEFORE GENERATING IMPLEMENTATIONS. THIS PROVIDES ESSENTIAL INFORMATION ABOUT CODE BASE STANDARDS AND MODULE INTEGRATION.
+
+IMPORTANT:
+  - THIS WORKFLOW MUST BE COMPLETED WITH CONTEXT AS TOP PRIORITY.
+  - ENSURE THAT YOUR INTEGRATION IS NOT A DUPLICATION.
 
 ## `Tasklist` - [HIGH_PRIORITY]
 
@@ -165,39 +168,39 @@ These components will enhance the SymbioteEvolutionGenerator by providing more s
 ### 9. Additional Integration Plans
 
 #### pattern_analysis.py Integration Plan
-1. **AdvancedPatternAnalyzer**:
+1. AdvancedPatternAnalyzer:
    - Integrate with the game's colony tracking system to detect emergent patterns
    - Feed historical grid states from AsteroidField class to identify oscillators and stable patterns
    - Use with the debug visualization system to highlight detected patterns
 
-2. **VoronoiTerritoryPartitioner**:
+2. VoronoiTerritoryPartitioner:
    - Connect to the territorial control mechanics to define faction boundaries
    - Apply during resource allocation to determine which player controls which regions
    - Visualize territories on the main game map with distinct colors
 
-3. **ColonyMerger**:
+3. ColonyMerger:
    - Hook into symbiote evolution to determine when colonies should merge
    - Implement merge events in the game event system
    - Connect with economy_decision.py for resource redistribution during merges
 
 #### economy_decision.py Integration Plan
-1. **GameTheoreticFeedingModel**:
+1. GameTheoreticFeedingModel:
    - Connect to player feeding history to track player behavior patterns
    - Influence symbiote responses based on player feeding habits
    - Integrate with UI to subtly indicate symbiote "trust" or "wariness"
 
-2. **VariableMineralValuation**:
+2. VariableMineralValuation:
    - Integrate with the resource system to dynamically adjust mineral values
    - Connect to symbiote evolution to reflect changing resource needs
    - Include in economic reports/displays to show players changing values
 
-3. **SymbioteAttackEVCalculator**:
+3. SymbioteAttackEVCalculator:
    - Hook into symbiote AI decision-making process for attack/defense choices
    - Connect with combat system to determine attack probabilities
    - Use with the difficulty system to scale symbiote aggression
 
 #### cellular_automaton.py Integration Plan
-1. **count_neighbors & apply_life_rules**:
+1. count_neighbors & apply_life_rules:
    - Connect to AsteroidField's update system using the existing caching mechanism
    - Optimize by vectorizing with NumPy operations where appropriate
    - Implement a fallback system for environments without optional dependencies
@@ -206,128 +209,128 @@ These components will enhance the SymbioteEvolutionGenerator by providing more s
 **Integration Status**: COMPLETED
 
 **Implementation Details**:
-1. **Dependency Handling**:
+1. Dependency Handling:
    - Added proper optional dependency handling using `importlib.util.find_spec()`
    - Implemented TYPE_CHECKING pattern for IDE support without runtime errors
    - Added module-level fallbacks to prevent undefined variable errors
 
-2. **Performance Optimizations**:
+2. Performance Optimizations:
    - Integrated vectorized `count_neighbors` function for efficient neighbor counting
    - Implemented optimized `apply_life_rules` function for cellular automaton simulation
    - Added `diffuse_energy` for more natural energy distribution patterns
    - Maintained compatibility with the existing caching mechanism
 
-3. **Integration Points**:
+3. Integration Points:
    - `_calculate_neighbor_counts_scipy`: Enhanced with optimized neighbor counting
    - `_apply_automaton_with_energy`: Integrated optimized rule application
    - `_add_energy_to_low_density_areas_vectorized`: Added energy diffusion functionality
 
-4. **Fallback Mechanisms**:
+4. Fallback Mechanisms:
    - Added graceful degradation when optimized algorithms are unavailable
    - Maintained consistent API between optimized and fallback implementations
    - Implemented comprehensive exception handling and logging
 
-5. **Testing**:
+5. Testing:
    - Created test script (test_cellular_automaton_integration.py) to verify functionality
    - Verified neighbor counting, rule application, and energy diffusion
    - Confirmed compatibility with the existing AsteroidField class
 
-**Performance Impact**:
-- The optimized implementations should provide significant speedups for large grid sizes
-- Energy diffusion creates more natural and dynamic patterns in the asteroid field
-- Consistent performance regardless of available dependencies
+6. Performance Impact:
+   - The optimized implementations should provide significant speedups for large grid sizes
+   - Energy diffusion creates more natural and dynamic patterns in the asteroid field
+   - Consistent performance regardless of available dependencies
 
 #### symbiote_algorithm.py Integration Plan
-1. **SymbioteEvolutionAlgorithm**:
+1. SymbioteEvolutionAlgorithm:
    - Integrate with the core game loop to process symbiote evolution each turn
    - Connect with mineral tracking and resource consumption systems
    - Hook into cellular automaton systems for rule generation
    - Implement caching for performance-critical operations
 
 #### extended_ca.py Integration Plan
-1. **CustomNeighborhoodAutomaton**:
+1. CustomNeighborhoodAutomaton:
    - Use for special symbiote types that have unique spread patterns
    - Connect to visualization system to show different growth patterns
    - Integrate with difficulty settings to adjust complexity
 
-2. **LayeredAutomaton**:
+2. LayeredAutomaton:
    - Implement for modeling complex symbiote ecosystems with multiple interacting species
    - Use for territory visualization with multiple symbiote types
    - Connect with resource allocation to model multi-species competition
 
-3. **EvolvingCARules & MultiScaleAutomaton**:
+3. EvolvingCARules & MultiScaleAutomaton:
    - Implement in late-game scenarios for more complex symbiote behavior
    - Connect to symbiote evolution for rule mutation
    - Use with difficulty scaling to increase complexity over time
 
 #### advanced_population.py Integration Plan
-1. **MultiSpeciesPopulation**:
+1. MultiSpeciesPopulation:
    - Integrate with the symbiote population tracking system
    - Use the interaction matrix to model predator-prey relationships between symbiote variants
    - Connect to resource system to adjust carrying capacities based on available minerals
    - Add hooks to visualize population dynamics in game statistics
 
-2. **DelayedGrowthPopulation**:
+2. DelayedGrowthPopulation:
    - Implement for advanced symbiote types with gestation periods
    - Connect to game difficulty to adjust delay parameters
    - Integrate with event system to create "population boom" events after delays
 
-3. **StageStructuredPopulation**:
+3. StageStructuredPopulation:
    - Use for boss-type symbiotes with distinct life stages
    - Connect to visualization system to show different symbiote appearances per stage
    - Integrate with combat mechanics for stage-specific abilities
 
 #### ml_adapt.py Integration Plan
-1. **SymbioteQLearner**:
+1. SymbioteQLearner:
    - Integrate with symbiote decision-making to learn from player actions
    - Connect to persistent storage system using PopulationGenomeManager
    - Add difficulty settings to adjust learning rate and exploration parameters
 
-2. **NeuroEvolutionManager**:
+2. NeuroEvolutionManager:
    - Implement for advanced symbiote AI in late-game scenarios
    - Connect to behavior selection for evolved strategy development
    - Use with offline evolution system for persistent learning between games
 
-3. **BayesianSymbioteBelief**:
+3. BayesianSymbioteBelief:
    - Integrate with scouting and information systems
    - Use for modeling symbiote uncertainty about player fleet/resources
    - Connect to decision-making system to influence attack/defense choices
 
-4. **PopulationGenomeManager**:
+4. PopulationGenomeManager:
    - Implement as part of the save/load system to maintain symbiote learning
    - Connect to all ML components for persistent storage
    - Add settings option for players to reset learning if desired
 
 #### pde_spatial.py Integration Plan
-1. **AdvectionDiffusionSystem**:
+1. AdvectionDiffusionSystem:
    - Integrate with environment systems to model resource flows and toxin spread
    - Connect to asteroid field for spatial modeling of currents and drifts
    - Use for visualizing resource gradients and diffusion patterns
 
-2. **CoupledPDEFields**:
+2. CoupledPDEFields:
    - Implement for modeling interacting resources and toxic byproducts
    - Connect to symbiote evolution to model multi-resource dependencies
    - Use with visualization for showing complex spatial patterns
 
-3. **ReactionDiffusionSimulator**:
+3. ReactionDiffusionSimulator:
    - Integrate with colony growth patterns to create visually interesting spread
    - Connect to symbiote parameters to define different pattern types per species
    - Use with visualization system for dynamic territory boundaries
 
 #### population_models.py Integration Plan
-1. **MultiSpeciesPopulation**:
+1. MultiSpeciesPopulation:
    - Integrate with the faction system to model competition between different symbiote races
    - Connect to the resource allocation system to influence growth rates and carrying capacities
    - Coordinate with the core game loop to update population dynamics each turn
    - Add visualization components to display population trends over time
 
-2. **DelayedGrowthPopulation**:
+2. DelayedGrowthPopulation:
    - Implement for advanced symbiote types with time-sensitive responses to resources
    - Connect to event system to trigger population booms/busts based on past actions
    - Use with the difficulty system to scale delay effects with game progression
    - Add UI indicators for pending population changes
 
-3. **StageStructuredPopulation**:
+3. StageStructuredPopulation:
    - Connect with symbiote evolution to model life-stage specific behaviors
    - Integrate with combat system for stage-specific vulnerabilities and abilities
    - Link to visualization system to represent different life stages visually

@@ -559,6 +559,29 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         log_performance_end("simulate_evolution", start_time)
         return current_grid, evolution_history
         
+    def _analyze_pattern_structures(self, summary: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze oscillators and stable structures in the current pattern.
+        
+        Args:
+            summary: The current summary dictionary to update
+            
+        Returns:
+            Updated summary dictionary with pattern analysis results
+        """
+        # Get oscillator information
+        oscillator_period = self.pattern_analyzer.detect_oscillator()
+        if oscillator_period > 0:
+            summary["oscillator_count"] = 1
+            summary["oscillator_period"] = oscillator_period
+            
+        # Get stable structure information
+        stable_structures = self.pattern_analyzer.detect_stable_structures()
+        if stable_structures is not None:
+            summary["stable_structures"] = len(stable_structures)
+            
+        return summary
+    
     def get_pattern_analysis_summary(self):
         """Get a summary of detected patterns and territories.
         
@@ -577,16 +600,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         }
         
         try:
-            # Get oscillator information
-            oscillator_period = self.pattern_analyzer.detect_oscillator()
-            if oscillator_period > 0:
-                summary["oscillator_count"] = 1
-                summary["oscillator_period"] = oscillator_period
-                
-            # Get stable structure information
-            stable_structures = self.pattern_analyzer.detect_stable_structures()
-            if stable_structures is not None:
-                summary["stable_structures"] = len(stable_structures)
+            # Get pattern information
+            summary = self._analyze_pattern_structures(summary)
                 
             # Get territory information if available
             if self.territory_analysis_enabled and hasattr(self, "territory_partitioner"):
@@ -802,28 +817,44 @@ class SymbioteEvolutionGenerator(BaseGenerator):
                 colony_data = self._create_colony_data_for_merging(grid)
             
             # Call the colony merger to perform merges
-            assimilation_ratio = self.get_parameter("assimilation_ratio", 0.7)
-            updated_grid = grid.copy()
-            
-            # Find border regions where colonies might merge
-            # This is a simplified approach - in a full implementation, you'd want a more
-            # sophisticated algorithm to determine which colonies should merge based on 
-            # territory borders, relative strength, etc.
-            for source_id, target_id in self._find_potential_merges(territory_map, colony_data):
-                # Merge weaker colony (source_id) into stronger colony (target_id)
-                updated_grid = self.colony_merger.merge_colonies(
-                    target_id=target_id,
-                    source_id=source_id,
-                    labeled_grid=updated_grid,
-                    colony_data=colony_data,
-                    assimilation_ratio=assimilation_ratio
-                )
-                
+            updated_grid = self._perform_colony_merges(grid, territory_map, colony_data)
             return updated_grid
         except Exception as e:
             logging.warning(f"Error during colony merging: {str(e)}")
             return grid
     
+    def _perform_colony_merges(self, grid, territory_map, colony_data):
+        """
+        Perform colony merges based on territory map and colony data.
+        
+        Args:
+            grid: The colony grid to update
+            territory_map: Map of territories for potential merging
+            colony_data: Data about colonies and their strengths
+            
+        Returns:
+            Updated grid after colony merges
+        """
+        # Get assimilation ratio parameter
+        assimilation_ratio = self.get_parameter("assimilation_ratio", 0.7)
+        updated_grid = grid.copy()
+        
+        # Find border regions where colonies might merge
+        # This is a simplified approach - in a full implementation, you'd want a more
+        # sophisticated algorithm to determine which colonies should merge based on 
+        # territory borders, relative strength, etc.
+        for source_id, target_id in self._find_potential_merges(territory_map, colony_data):
+            # Merge weaker colony (source_id) into stronger colony (target_id)
+            updated_grid = self.colony_merger.merge_colonies(
+                target_id=target_id,
+                source_id=source_id,
+                labeled_grid=updated_grid,
+                colony_data=colony_data,
+                assimilation_ratio=assimilation_ratio
+            )
+            
+        return updated_grid
+        
     def _create_colony_data_for_merging(self, grid):
         """Create colony data for the merging process based on grid state.
         
@@ -833,22 +864,19 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         Returns:
             dict: Dictionary with colony data for merging
         """
-        colony_data = {}
+        # Find unique colony IDs, skipping empty cells (0)
         unique_colonies = np.unique(grid)
-        unique_colonies = unique_colonies[unique_colonies > 0]  # Skip empty cells (0)
+        unique_colonies = unique_colonies[unique_colonies > 0]
         
-        for colony_id in unique_colonies:
-            # Count cells as a basic measure of colony strength
-            colony_strength = np.sum(grid == colony_id)
-            
-            # Create colony data with strength metric
-            colony_data[int(colony_id)] = {
-                "strength": float(colony_strength),
+        # Build and return colony data dictionary with strength metrics
+        return {
+            int(colony_id): {
+                "strength": float(np.sum(grid == colony_id)),
                 # Additional metrics could be added here in the future
                 # such as age, resource control, etc.
             }
-            
-        return colony_data
+            for colony_id in unique_colonies
+        }
     
     def _find_potential_merges(self, territory_map, colony_data):
         """Find potential colony merges based on territory boundaries and strengths.

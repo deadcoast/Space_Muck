@@ -15,7 +15,7 @@ import time
 
 # Local application imports
 from src.ui.ui_base.component_registry import ComponentRegistry
-from src.ui.ui_base.event_system import UIEventSystem
+from src.ui.ui_base.event_system import UIEventSystem, UIEventType
 
 # Third-party library imports
 
