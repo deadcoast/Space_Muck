@@ -5,7 +5,6 @@ Provides a specialized template list view for displaying and managing chain temp
 """
 
 # Standard library imports
-import logging
 from typing import Any, Dict, List, Optional, Tuple, TypeVar
 
 # Local application imports
