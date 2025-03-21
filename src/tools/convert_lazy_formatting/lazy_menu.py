@@ -11,7 +11,22 @@ import logging
 from typing import List
 
 # Local application imports
-from .convert_to_lazy_formatting import transform_file
+try:
+    # Try package import first
+    from .convert_to_lazy_formatting import transform_file
+except ImportError:
+    # Direct script execution
+    import os
+    import sys
+    import importlib.util
+    
+    # Import the convert_to_lazy_formatting module dynamically
+    module_path = os.path.join(os.path.dirname(__file__), "convert_to_lazy_formatting.py")
+    spec = importlib.util.spec_from_file_location("convert_to_lazy_formatting", module_path)
+    convert_module = importlib.util.module_from_spec(spec)
+    sys.modules["convert_to_lazy_formatting"] = convert_module
+    spec.loader.exec_module(convert_module)
+    transform_file = convert_module.transform_file
 
 # Configure basic logging
 logging.basicConfig(

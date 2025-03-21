@@ -10,7 +10,7 @@ from enum import Enum, auto
 from typing import Dict, Optional
 
 # Local application imports
-from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
+# Import config colors when needed
 
 # Third-party library imports
 

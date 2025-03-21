@@ -346,18 +346,6 @@ class ASCIIProgressBar(UIElement):
         except Exception as e:
             logging.error(f"Error updating progress animation: {e}")
 
-    def update_animation(self, dt: Optional[float] = None) -> None:
-        """Update animation state for progress bar with smooth easing
-
-        This method handles the animation of progress changes using style-specific easing
-        for a more natural and visually pleasing transition between values.
-
-        Args:
-            dt: Optional time delta in seconds. If None, will calculate based on current time.
-        """
-        # Call the parent's update_animation method which will call our _update_animation_style
-        super().update_animation(dt)
-
     def draw(
         self,
         surface: pygame.Surface,

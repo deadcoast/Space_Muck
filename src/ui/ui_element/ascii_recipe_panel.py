@@ -151,8 +151,8 @@ class ASCIIRecipePanel:
             )  # Clamp between 0 and 1
             bar_x = x + font.size(recipe_name)[0] + 4
             bar_width = 20
-            bar = "=" * int(bar_width * eff)
-            bar = bar.ljust(bar_width, ".")
+            eff_bar = "=" * int(bar_width * eff)
+            eff_bar = eff_bar.ljust(bar_width, ".")
 
             # Determine color based on efficiency
             if eff > 0.8:
@@ -163,7 +163,7 @@ class ASCIIRecipePanel:
                 eff_color = (255, 100, 100)  # Red for low efficiency
             draw_text(
                 surface,
-                f"[{bar}] {eff * 100:.1f}%",
+                f"[{eff_bar}] {eff * 100:.1f}%",
                 bar_x,
                 y,
                 size=font.get_height(),
