@@ -478,7 +478,7 @@ class AsteroidField:
         # Normalize grid values to 0-1 range for threshold comparison
         max_val = np.max(self.grid) if np.max(self.grid) > 0 else 1
         normalized_grid = self.grid / max_val
-
+        
         # Apply rare mineral distribution
         for y in range(self.height):
             for x in range(self.width):
