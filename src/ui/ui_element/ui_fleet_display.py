@@ -58,18 +58,18 @@ class FleetDisplay(UIElement):
             ],
         }
 
-    def draw(self, stdscr, font=None):
+    def draw(self, surface, font=None):
         """Draw the fleet display with animated ships
 
         Args:
-            stdscr: The curses screen to draw on
+            surface: The surface to draw on
             font: Optional font to use for rendering (not used in curses mode)
         """
-        super().draw(stdscr, font)
+        super().draw(surface, font)
 
         # Draw title
         with contextlib.suppress(curses.error):
-            stdscr.addstr(self.y + 1, self.x + 2, "FLEET STATUS", curses.A_BOLD)
+            surface.addstr(self.y + 1, self.x + 2, "FLEET STATUS", curses.A_BOLD)
         # Draw ships with animation
         y_offset = 3
         for ship_type, count in self.fleet_data.items():
@@ -80,7 +80,7 @@ class FleetDisplay(UIElement):
 
                 with contextlib.suppress(curses.error):
                     # Ship type and count
-                    stdscr.addstr(
+                    surface.addstr(
                         self.y + y_offset,
                         self.x + 2,
                         f"{ship_type.capitalize()}: {count}",
@@ -90,7 +90,7 @@ class FleetDisplay(UIElement):
                     for i in range(min(count, 5)):
                         ship_x = self.x + 18 + i * (len(pattern) + 1)
                         if ship_x + len(pattern) < self.x + self.width - 1:
-                            stdscr.addstr(self.y + y_offset, ship_x, pattern)
+                            surface.addstr(self.y + y_offset, ship_x, pattern)
                 y_offset += 2
 
         # Update animation frame

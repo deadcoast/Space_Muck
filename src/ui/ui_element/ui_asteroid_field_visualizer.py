@@ -133,18 +133,18 @@ class AsteroidFieldVisualizer(UIElement):
         self.automaton_grid = new_grid
         self.generation += 1
 
-    def draw(self, stdscr, font=None):
+    def draw(self, surface, font=None):
         """Draw the asteroid field visualization
 
         Args:
-            stdscr: The curses screen to draw on
+            surface: The surface to draw on
             font: Optional font to use for rendering (not used in curses mode)
         """
-        super().draw(stdscr, font)
+        super().draw(surface, font)
 
         # Draw title
         with contextlib.suppress(curses.error):
-            stdscr.addstr(
+            surface.addstr(
                 self.y + 1,
                 self.x + 2,
                 f"ASTEROID FIELD - GEN {self.generation}",
@@ -163,17 +163,17 @@ class AsteroidFieldVisualizer(UIElement):
                     char = self.asteroid_chars[char_index]
 
                     with contextlib.suppress(curses.error):
-                        stdscr.addstr(self.y + y + 2, self.x + x + 1, char)
+                        surface.addstr(self.y + y + 2, self.x + x + 1, char)
         # Occasionally evolve the grid
         if random.random() < 0.1:
             self._evolve_grid()
 
-        stdscr.refresh()
+        surface.refresh()
         time.sleep(0.1)
         """Quantum-inspired probability wave collapse animation"""
-        self._quantum_animation(stdscr)
+        self._quantum_animation(surface)
 
-    def _quantum_animation(self, stdscr):
+    def _quantum_animation(self, surface):
         """Quantum-inspired probability wave collapse animation
 
         Creates a visual effect that resembles quantum probability wave collapse,
@@ -182,7 +182,7 @@ class AsteroidFieldVisualizer(UIElement):
         that flicker between different states before settling.
 
         Args:
-            stdscr: The curses screen to draw on
+            surface: The surface to draw on
         """
         with contextlib.suppress(Exception):
             # Only trigger quantum effects occasionally (10% chance)
@@ -212,7 +212,7 @@ class AsteroidFieldVisualizer(UIElement):
             ]
 
             # Perform the quantum animation sequence
-            self._animate_quantum_collapse(stdscr, quantum_cells, quantum_chars)
+            self._animate_quantum_collapse(surface, quantum_cells, quantum_chars)
 
     def _select_quantum_cells(self):
         """Select cells for quantum effects based on probability.
@@ -232,11 +232,11 @@ class AsteroidFieldVisualizer(UIElement):
                     quantum_cells.append((x, y))
         return quantum_cells
 
-    def _animate_quantum_collapse(self, stdscr, quantum_cells, quantum_chars):
+    def _animate_quantum_collapse(self, surface, quantum_cells, quantum_chars):
         """Animate the quantum collapse effect across multiple phases.
 
         Args:
-            stdscr: The curses screen to draw on
+            surface: The surface to draw on
             quantum_cells: List of (x, y) coordinates for cells to animate
             quantum_chars: List of characters to use for quantum states
         """
@@ -248,10 +248,10 @@ class AsteroidFieldVisualizer(UIElement):
 
                 # Draw the character
                 with contextlib.suppress(curses.error):
-                    stdscr.addstr(self.y + y + 2, self.x + x + 1, char, attr)
+                    surface.addstr(self.y + y + 2, self.x + x + 1, char, attr)
 
             # Refresh and short delay between phases
-            stdscr.refresh()
+            surface.refresh()
             time.sleep(0.05)
 
     def _get_quantum_char_for_phase(self, x, y, phase, quantum_chars):
