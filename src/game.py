@@ -5,7 +5,6 @@ This module implements the core Game class with enhanced state management,
 including state transitions, validation, and history tracking.
 """
 
-
 import contextlib
 import json
 import logging
@@ -22,6 +21,7 @@ from config import GAME_CONFIG
 
 # Constants
 ERROR_UI_DICT_NOT_FOUND = "UI elements dictionary not found"
+
 
 @dataclass
 class StateTransition:
@@ -368,7 +368,7 @@ class Game:
                 return False, "Save file is empty"
 
             # Read and parse the save file
-            with open(save_file_path, "r") as file:
+            with open(save_file_path, "r", encoding="utf-8") as file:
                 save_data = json.load(file)
 
             # Validate required fields
@@ -1113,97 +1113,100 @@ class Game:
         self._apply_menu_animation(main_menu)
 
         self._logger.info("Main menu activated successfully")
-        
+
     def _set_menu_visibility(self, menu, is_visible: bool) -> None:
         """Set the visibility of a UI element."""
         if hasattr(menu, "visible"):
             menu.visible = is_visible
-            
+
     def _set_menu_active_state(self, menu) -> None:
         """Set the active state of a menu and update active element tracking."""
         if hasattr(menu, "active"):
             menu.active = True
-            
+
         # Update active element tracking if available
         if hasattr(self, "active_element"):
             self.active_element = "main_menu"
-            
+
     def _apply_menu_animation(self, menu) -> None:
         """Apply animation effects to a menu if supported."""
         # Check if animation is supported
-        if not (hasattr(menu, "animation") and 
-                isinstance(menu.animation, dict) and 
-                "style" in menu.animation):
+        if not (
+            hasattr(menu, "animation")
+            and isinstance(menu.animation, dict)
+            and "style" in menu.animation
+        ):
             return
-            
+
         # Check if fade-in animation is available
-        if not (hasattr(self, "AnimationStyle") and 
-                hasattr(self.AnimationStyle, "FADE_IN")):
+        if not (
+            hasattr(self, "AnimationStyle") and hasattr(self.AnimationStyle, "FADE_IN")
+        ):
             return
-            
+
         # Apply fade-in animation
         menu.animation["style"] = self.AnimationStyle.FADE_IN
         menu.animation["active"] = True
         menu.animation["progress"] = 0.0
         menu.animation["start_time"] = time.time()
         menu.animation["duration"] = 0.5  # Half-second fade in
-        
+
     def _hide_gameplay_elements(self) -> None:
         """Hide gameplay UI elements when showing the menu."""
         gameplay_elements = ["status_panel", "inventory_panel", "action_panel"]
         self._set_ui_elements_visibility(gameplay_elements, visible=False)
-                
+
     def _update_menu_content(self) -> None:
         """Update the menu content if the menu has an update method."""
         if "main_menu" not in self.ui_elements:
             return
-            
+
         menu = self.ui_elements["main_menu"]
         if not hasattr(menu, "update"):
             return
-            
+
         try:
             menu.update()
         except Exception as e:
             self._logger.error(f"Error updating main menu content: {e}")
-            
+
     def _resume_game(self) -> None:
         """Resume game from paused state.
-        
+
         This state entry handler restores the game from a paused state,
         reactivating all game systems and UI components needed for gameplay.
         """
         try:
             self._logger.info("Resuming game from paused state")
-            
+
             # Resume core game modules
             self._resume_game_modules()
-            
+
             # Restore UI components for gameplay
             self._restore_gameplay_ui()
-            
+
             # Resume game timing if time tracking is used
             self._resume_game_timing()
-            
+
             self._logger.info("Game resumed successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error resuming game: {e}")
-            
+
     def _resume_game_modules(self) -> None:
         """Resume all game modules that support pause/resume functionality."""
         modules_to_resume = [
-            "event_manager", 
-            "field", 
-            "player", 
+            "event_manager",
+            "field",
+            "player",
             "ai_manager",
-            "physics_engine"
+            "physics_engine",
         ]
-        
+
         for module_name in modules_to_resume:
             if not hasattr(self, module_name):
                 continue
-                
+
             module = getattr(self, module_name)
             if hasattr(module, "resume") and callable(module.resume):
                 try:
@@ -1211,28 +1214,28 @@ class Game:
                     self._logger.debug(f"Resumed module: {module_name}")
                 except Exception as e:
                     self._logger.error(f"Error resuming {module_name}: {e}")
-        
+
         # Set game paused state if tracking is available
         if hasattr(self, "paused"):
             self.paused = False
-            
+
     def _restore_gameplay_ui(self) -> None:
         """Restore and show gameplay UI components."""
         if not hasattr(self, "ui_elements"):
             return
-            
+
         # Show gameplay UI elements
         gameplay_elements = ["status_panel", "inventory_panel", "action_panel"]
         self._set_ui_elements_visibility(gameplay_elements, visible=True)
-                
+
         # Hide any menu components if they exist
         menu_elements = ["main_menu", "pause_menu"]
         self._set_ui_elements_visibility(menu_elements, visible=False)
-                
+
         # Update active element if tracking is available and status panel exists
         if hasattr(self, "active_element") and "status_panel" in self.ui_elements:
             self.active_element = "status_panel"
-                
+
     def _resume_game_timing(self) -> None:
         """Resume game timing and update mechanisms."""
         # Resume any game timers or update mechanisms
@@ -1241,116 +1244,124 @@ class Game:
                 self.game_clock.resume()
             except Exception as e:
                 self._logger.error(f"Error resuming game clock: {e}")
-                
+
         # Resume any update loops or schedulers
-        if hasattr(self, "update_scheduler") and hasattr(self.update_scheduler, "resume"):
+        if hasattr(self, "update_scheduler") and hasattr(
+            self.update_scheduler, "resume"
+        ):
             try:
                 self.update_scheduler.resume()
             except Exception as e:
                 self._logger.error(f"Error resuming update scheduler: {e}")
-                
+
     def _hide_menu(self) -> None:
         """Hide the menu UI.
-        
+
         This state entry handler hides any active menu interfaces and prepares
         for gameplay or other non-menu states.
         """
         try:
             self._logger.info("Hiding menu interface")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Hide main menu and related elements
             self._hide_menu_elements()
-            
+
             # Reset any menu-related state
             self._reset_menu_state()
-            
+
             self._logger.info("Menu hidden successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error hiding menu: {e}")
-            
+
     def _hide_menu_elements(self) -> None:
         """Hide all menu-related UI elements."""
         menu_elements = ["main_menu", "pause_menu", "settings_menu", "help_menu"]
-        
+
         # Handle visibility using our helper method
         self._set_ui_elements_visibility(menu_elements, visible=False)
-        
+
         # Handle additional functionality not covered by the visibility helper
         for element_name in menu_elements:
             if element_name not in self.ui_elements:
                 continue
-                
+
             element = self.ui_elements[element_name]
-            
+
             # Deactivate the menu
             if hasattr(element, "active"):
                 element.active = False
-                
+
             # Stop any active animations
-            if (hasattr(element, "animation") and isinstance(element.animation, dict) and
-                    "active" in element.animation):
+            if (
+                hasattr(element, "animation")
+                and isinstance(element.animation, dict)
+                and "active" in element.animation
+            ):
                 element.animation["active"] = False
-            
+
     def _reset_menu_state(self) -> None:
         """Reset menu-related state variables."""
         # Clear active element if it's a menu
-        if (hasattr(self, "active_element") and
-                self.active_element in ["main_menu", "pause_menu", "settings_menu"]):
-                # Default to gameplay or null depending on what's available
-                if "status_panel" in self.ui_elements:
-                    self.active_element = "status_panel"
-                else:
-                    self.active_element = None
-                    
+        if hasattr(self, "active_element") and self.active_element in [
+            "main_menu",
+            "pause_menu",
+            "settings_menu",
+        ]:
+            # Default to gameplay or null depending on what's available
+            if "status_panel" in self.ui_elements:
+                self.active_element = "status_panel"
+            else:
+                self.active_element = None
+
         # Reset any menu-specific flags
         menu_flags = ["menu_active", "in_menu_transition", "menu_selection"]
         for flag in menu_flags:
             if hasattr(self, flag):
                 setattr(self, flag, False)
-                
+
     def _pause_game(self) -> None:
         """Pause game logic and timing.
-        
+
         This state entry handler pauses all active game systems and modules,
         preparing for a pause menu or other interruption.
         """
         try:
             self._logger.info("Pausing game")
-            
+
             # Pause all active game modules
             self._pause_game_modules()
-            
+
             # Pause game timing mechanisms
             self._pause_game_timing()
-            
+
             # Store current game state for potential resumption
             self._store_pause_state()
-            
+
             self._logger.info("Game paused successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error pausing game: {e}")
-            
+
     def _pause_game_modules(self) -> None:
         """Pause all active game modules."""
         modules_to_pause = [
-            "event_manager", 
-            "field", 
-            "player", 
+            "event_manager",
+            "field",
+            "player",
             "ai_manager",
-            "physics_engine"
+            "physics_engine",
         ]
-        
+
         for module_name in modules_to_pause:
             if not hasattr(self, module_name):
                 continue
-                
+
             module = getattr(self, module_name)
             if hasattr(module, "pause") and callable(module.pause):
                 try:
@@ -1358,11 +1369,11 @@ class Game:
                     self._logger.debug(f"Paused module: {module_name}")
                 except Exception as e:
                     self._logger.error(f"Error pausing {module_name}: {e}")
-        
+
         # Set game paused state if tracking is available
         if hasattr(self, "paused"):
             self.paused = True
-            
+
     def _pause_game_timing(self) -> None:
         """Pause game timing and update mechanisms."""
         # Pause game clock if available
@@ -1372,15 +1383,17 @@ class Game:
                 self._logger.debug("Paused game clock")
             except Exception as e:
                 self._logger.error(f"Error pausing game clock: {e}")
-                
+
         # Pause any update loops or schedulers
-        if hasattr(self, "update_scheduler") and hasattr(self.update_scheduler, "pause"):
+        if hasattr(self, "update_scheduler") and hasattr(
+            self.update_scheduler, "pause"
+        ):
             try:
                 self.update_scheduler.pause()
                 self._logger.debug("Paused update scheduler")
             except Exception as e:
                 self._logger.error(f"Error pausing update scheduler: {e}")
-                
+
     def _store_pause_state(self) -> None:
         """Store current game state for resumption after pause."""
         # Create a snapshot of important game state if needed
@@ -1390,51 +1403,56 @@ class Game:
                 # Prepare a state dictionary to hold pause information
                 self.pause_state = {
                     "timestamp": time.time(),
-                    "game_state": self._current_state
+                    "game_state": self._current_state,
                 }
-                
+
                 # Store player state if available
                 if hasattr(self, "player"):
-                    self.pause_state["player_position"] = getattr(self.player, "position", None)
-                    self.pause_state["player_direction"] = getattr(self.player, "direction", None)
-                    
+                    self.pause_state["player_position"] = getattr(
+                        self.player, "position", None
+                    )
+                    self.pause_state["player_direction"] = getattr(
+                        self.player, "direction", None
+                    )
+
                 # Store any other state information that might be needed for proper resumption
                 if hasattr(self, "active_entities"):
                     # Just store entity IDs or references, not deep copying the entities
                     self.pause_state["active_entity_ids"] = [
-                        getattr(entity, "id", i) for i, entity in enumerate(self.active_entities)
+                        getattr(entity, "id", i)
+                        for i, entity in enumerate(self.active_entities)
                     ]
-                    
+
             self._logger.debug("Stored game state for pause")
         except Exception as e:
             self._logger.error(f"Error storing pause state: {e}")
-            
+
     def _show_pause_menu(self) -> None:
         """Display the pause menu overlay.
-        
+
         This state entry handler displays the pause menu while keeping the game
         state preserved in the background. It handles the animation and
         activation of the pause menu UI elements.
         """
         try:
             self._logger.info("Showing pause menu")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Display and configure the pause menu
             self._setup_pause_menu()
-            
+
             # Apply appropriate animations and transitions
             self._apply_pause_menu_effects()
-            
+
             self._logger.info("Pause menu displayed successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error showing pause menu: {e}")
-            
+
     def _setup_pause_menu(self) -> None:
         """Set up and display the pause menu interface."""
         if "pause_menu" not in self.ui_elements:
@@ -1473,28 +1491,28 @@ class Game:
         if hasattr(self, "active_element"):
             self.active_element = "pause_menu"
             self._logger.debug("Set pause menu as active element")
-            
+
     def _apply_pause_menu_effects(self) -> None:
         """Apply visual effects and animations to the pause menu."""
         if "pause_menu" not in self.ui_elements:
             return
-            
+
         pause_menu = self.ui_elements["pause_menu"]
-        
+
         # If the menu supports animations, activate them
         if hasattr(pause_menu, "animation") and isinstance(pause_menu.animation, dict):
             if "active" in pause_menu.animation:
                 pause_menu.animation["active"] = True
                 self._logger.debug("Activated pause menu animation")
-                
+
             # Set animation properties if available
             if "start_time" in pause_menu.animation:
                 pause_menu.animation["start_time"] = time.time()
-                
+
             if "duration" in pause_menu.animation:
                 # Standard duration for pause menu animation
                 pause_menu.animation["duration"] = 0.3  # 300ms animation
-                
+
         # Add overlay effect to dim the background game elements
         if hasattr(self, "overlay") and hasattr(self.overlay, "activate"):
             try:
@@ -1503,55 +1521,55 @@ class Game:
                 self._logger.debug("Activated background overlay for pause menu")
             except Exception as e:
                 self._logger.error(f"Error activating overlay: {e}")
-                
+
     def _show_shop(self) -> None:
         """Display the shop interface.
-        
+
         This state entry handler shows the shop interface, allowing players
         to browse and purchase items, upgrades, or services.
         """
         try:
             self._logger.info("Showing shop interface")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Display and configure the shop interface
             self._setup_shop_interface()
-            
+
             # Apply appropriate shop animations and transitions
             self._apply_shop_effects()
-            
+
             # Update shop inventory with current available items
             self._update_shop_inventory()
-            
+
             self._logger.info("Shop interface displayed successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error showing shop interface: {e}")
-            
+
     def _setup_shop_interface(self) -> None:
         """Configure and display the shop interface components."""
         if "shop_interface" not in self.ui_elements:
             self._logger.warning("Shop interface UI element not found")
             return
-            
+
         shop = self.ui_elements["shop_interface"]
-        
+
         # Activate the shop interface
         if hasattr(shop, "active"):
             shop.active = True
             self._logger.debug("Activated shop interface")
-            
+
         # Make the shop interface visible
         self._set_ui_elements_visibility(["shop_interface"], visible=True)
         self._logger.debug("Made shop interface visible")
-            
+
         # Hide gameplay elements while in shop
         self._hide_gameplay_for_shop()
-            
+
         # Reset shop state if method available
         if hasattr(shop, "reset") and callable(shop.reset):
             try:
@@ -1559,43 +1577,43 @@ class Game:
                 self._logger.debug("Reset shop interface state")
             except Exception as e:
                 self._logger.error(f"Error resetting shop interface: {e}")
-                
+
         # Track active UI element
         if hasattr(self, "active_element"):
             self.active_element = "shop_interface"
             self._logger.debug("Set shop as active element")
-            
+
     def _hide_gameplay_for_shop(self) -> None:
         """Hide gameplay elements while the shop is displayed."""
         # Elements to hide during shop interface
         gameplay_elements = ["action_panel", "minimap"]
-        
+
         # Use our helper method to hide all gameplay elements at once
         self._set_ui_elements_visibility(gameplay_elements, visible=False)
-        
+
         self._logger.debug("Hid gameplay elements for shop display")
-                
+
     def _apply_shop_effects(self) -> None:
         """Apply visual effects and animations to the shop interface."""
         if "shop_interface" not in self.ui_elements:
             return
-            
+
         shop = self.ui_elements["shop_interface"]
-        
+
         # If the shop supports animations, activate them
         if hasattr(shop, "animation") and isinstance(shop.animation, dict):
             if "active" in shop.animation:
                 shop.animation["active"] = True
                 self._logger.debug("Activated shop animation")
-                
+
             # Set animation properties if available
             if "start_time" in shop.animation:
                 shop.animation["start_time"] = time.time()
-                
+
             if "duration" in shop.animation:
                 # Standard duration for shop animation
                 shop.animation["duration"] = 0.5  # 500ms animation
-                
+
         # Add shop-specific visual effects if any
         if hasattr(shop, "apply_effects") and callable(shop.apply_effects):
             try:
@@ -1603,86 +1621,88 @@ class Game:
                 self._logger.debug("Applied shop visual effects")
             except Exception as e:
                 self._logger.error(f"Error applying shop effects: {e}")
-                
+
     def _update_shop_inventory(self) -> None:
         """Update the shop inventory with current available items."""
         # Check if shop interface exists
         if "shop_interface" not in self.ui_elements:
             return
-            
+
         shop = self.ui_elements["shop_interface"]
-        
+
         # If shop has an update_inventory method, call it
         if hasattr(shop, "update_inventory") and callable(shop.update_inventory):
             try:
                 # Get available items to display in the shop
                 items = self._get_available_shop_items()
-                
+
                 # Update shop with items
                 shop.update_inventory(items)
                 self._logger.debug("Updated shop inventory")
             except Exception as e:
                 self._logger.error(f"Error updating shop inventory: {e}")
-                
+
     def _get_available_shop_items(self) -> List[Dict[str, Any]]:
         """Get the list of items available for purchase in the shop.
-        
+
         Returns:
             List[Dict[str, Any]]: List of item dictionaries with properties
         """
         try:
             # Check if shop manager exists
-            if hasattr(self, "shop_manager") and hasattr(self.shop_manager, "get_available_items"):
+            if hasattr(self, "shop_manager") and hasattr(
+                self.shop_manager, "get_available_items"
+            ):
                 return self.shop_manager.get_available_items()
-                
+
             # Check if there's a shop data source in game config
             if "shop_items" in GAME_CONFIG:
                 return GAME_CONFIG["shop_items"]
-                
+
             # If no dynamic source exists, return empty list
             self._logger.warning("No shop item source found, displaying empty shop")
             return []
-            
+
         except Exception as e:
             self._logger.error(f"Error retrieving shop items: {e}")
             return []
-            
+
     def _show_map(self) -> None:
         """Display the game map/minimap.
-        
+
         This state entry handler shows the map interface, allowing players
         to view the game world, their current position, and points of interest.
         """
         try:
             self._logger.info("Showing game map interface")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Check if field data is available
             if not self._check_field_data_available():
                 self._logger.error("Field data not available for map display")
                 return
-                
+
             # Setup and display the map interface
             self._setup_map_interface()
-            
+
             # Update map with current game state
             self._update_map_data()
-            
+
             # Apply map-specific visual effects if any
             self._apply_map_effects()
-            
+
             self._logger.info("Map interface displayed successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error showing map interface: {e}")
-            
+
     def _check_field_data_available(self) -> bool:
         """Check if field data required for map display is available.
-        
+
         Returns:
             bool: True if field data is available, False otherwise
         """
@@ -1690,115 +1710,115 @@ class Game:
         if not hasattr(self, "field"):
             self._logger.warning("Field instance not found for map display")
             return False
-            
+
         # Check if player has valid position data for map centering
         if not hasattr(self, "player") or not hasattr(self.player, "position"):
             self._logger.warning("Player position data not available for map display")
             return False
-            
+
         return True
-            
+
     def _setup_map_interface(self) -> None:
         """Set up and display the map interface components."""
         # Check for map interface component
         if "map_interface" not in self.ui_elements:
             self._logger.warning("Map interface UI element not found")
             return
-            
+
         map_ui = self.ui_elements["map_interface"]
-        
+
         # Activate the map interface
         if hasattr(map_ui, "active"):
             map_ui.active = True
             self._logger.debug("Activated map interface")
-            
+
         # Make the map interface visible
         if hasattr(map_ui, "visible"):
             map_ui.visible = True
             self._logger.debug("Made map interface visible")
-            
+
         # Track active UI element
         if hasattr(self, "active_element"):
             self.active_element = "map_interface"
             self._logger.debug("Set map interface as active element")
-            
+
     def _update_map_data(self) -> None:
         """Update map with current game state and entity positions."""
         if "map_interface" not in self.ui_elements:
             return
-            
+
         map_ui = self.ui_elements["map_interface"]
-        
+
         # If map has update method, call it with current data
         if hasattr(map_ui, "update") and callable(map_ui.update):
             try:
                 # Prepare map data
                 map_data = self._prepare_map_data()
-                
+
                 # Update map with data
                 map_ui.update(map_data)
                 self._logger.debug("Updated map with current data")
             except Exception as e:
                 self._logger.error(f"Error updating map data: {e}")
-                
+
     def _prepare_map_data(self) -> Dict[str, Any]:
         """Prepare map data from current game state.
-        
+
         Returns:
             Dict[str, Any]: Map data including field, entities, and POIs
         """
         map_data = {}
-        
+
         # Add field data if available
         if hasattr(self, "field") and hasattr(self.field, "get_map_data"):
             try:
                 map_data["field"] = self.field.get_map_data()
             except Exception as e:
                 self._logger.error(f"Error getting field map data: {e}")
-                
+
         # Add player position if available
         if hasattr(self, "player") and hasattr(self.player, "position"):
             map_data["player_position"] = self.player.position
-            
+
         # Add entity positions if available
         if hasattr(self, "entities"):
             map_data["entities"] = [
                 {
                     "position": entity.position,
                     "icon": entity.map_icon,
-                    "entity_id": getattr(entity, "id", None)
+                    "entity_id": getattr(entity, "id", None),
                 }
                 for entity in self.entities
                 if hasattr(entity, "position") and hasattr(entity, "map_icon")
             ]
-                    
+
         # Add points of interest if available
         if hasattr(self, "points_of_interest"):
             map_data["poi"] = self.points_of_interest
-            
+
         return map_data
-                
+
     def _apply_map_effects(self) -> None:
         """Apply visual effects and animations to the map interface."""
         if "map_interface" not in self.ui_elements:
             return
-            
+
         map_ui = self.ui_elements["map_interface"]
-        
+
         # If the map supports animations, activate them
         if hasattr(map_ui, "animation") and isinstance(map_ui.animation, dict):
             if "active" in map_ui.animation:
                 map_ui.animation["active"] = True
                 self._logger.debug("Activated map animation")
-                
+
             # Set animation properties if available
             if "start_time" in map_ui.animation:
                 map_ui.animation["start_time"] = time.time()
-                
+
             if "duration" in map_ui.animation:
                 # Standard duration for map animation
                 map_ui.animation["duration"] = 0.3  # 300ms animation
-                
+
         # Apply specific map effects if available
         if hasattr(map_ui, "apply_effects") and callable(map_ui.apply_effects):
             try:
@@ -1806,48 +1826,48 @@ class Game:
                 self._logger.debug("Applied map open effects")
             except Exception as e:
                 self._logger.error(f"Error applying map effects: {e}")
-                
+
     def _show_game_over(self) -> None:
         """Display the game over screen.
-        
+
         This state entry handler shows the game over screen, displaying the
         player's final stats, score, and options to restart or quit.
         """
         try:
             self._logger.info("Showing game over screen")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Pause all game systems before showing game over
             self._pause_game_systems_for_game_over()
-                
+
             # Setup and display the game over interface
             self._setup_game_over_interface()
-            
+
             # Update game over screen with final stats
             self._update_game_over_stats()
-            
+
             # Apply game over animations and effects
             self._apply_game_over_effects()
-            
+
             self._logger.info("Game over screen displayed successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error showing game over screen: {e}")
-            
+
     def _pause_game_systems_for_game_over(self) -> None:
         """Pause all active game systems when showing game over screen."""
         try:
             # Pause all modules that support pausing
             modules_to_pause = ["field", "combat_system", "quest_manager", "timer"]
-            
+
             for module_name in modules_to_pause:
                 if not hasattr(self, module_name):
                     continue
-                    
+
                 module = getattr(self, module_name)
                 if hasattr(module, "pause") and callable(module.pause):
                     try:
@@ -1855,130 +1875,137 @@ class Game:
                         self._logger.debug(f"Paused {module_name} for game over")
                     except Exception as e:
                         self._logger.error(f"Error pausing {module_name}: {e}")
-                        
+
             self._logger.debug("Paused game systems for game over")
-            
+
         except Exception as e:
             self._logger.error(f"Error pausing systems for game over: {e}")
-            
+
     def _setup_game_over_interface(self) -> None:
         """Set up and display the game over interface."""
         # Check for game over interface component
         if "game_over_screen" not in self.ui_elements:
             self._logger.warning("Game over screen UI element not found")
             return
-            
+
         game_over = self.ui_elements["game_over_screen"]
-        
+
         # Deactivate other UI elements that shouldn't be visible
         self._hide_ui_elements_for_game_over()
-        
+
         # Activate the game over screen
         if hasattr(game_over, "active"):
             game_over.active = True
             self._logger.debug("Activated game over screen")
-            
+
         # Make the game over screen visible
         self._set_ui_elements_visibility(["game_over_screen"], visible=True)
         self._logger.debug("Made game over screen visible")
-            
+
         # Track active UI element
         if hasattr(self, "active_element"):
             self.active_element = "game_over_screen"
             self._logger.debug("Set game over screen as active element")
-            
+
     def _hide_ui_elements_for_game_over(self) -> None:
         """Hide gameplay UI elements when showing game over screen."""
         # Elements to hide during game over screen
         elements_to_hide = [
-            "action_panel", "minimap", "inventory_panel", 
-            "status_bar", "game_hud", "shop_interface", "map_interface"
+            "action_panel",
+            "minimap",
+            "inventory_panel",
+            "status_bar",
+            "game_hud",
+            "shop_interface",
+            "map_interface",
         ]
-        
+
         # Use our helper method to hide all elements at once
         self._set_ui_elements_visibility(elements_to_hide, visible=False)
-        
+
         self._logger.debug("Hid UI elements for game over screen")
-                
+
     def _update_game_over_stats(self) -> None:
         """Update game over screen with player's final stats and score."""
         # Check for game over screen
         if "game_over_screen" not in self.ui_elements:
             return
-            
+
         game_over = self.ui_elements["game_over_screen"]
-        
+
         # If game over screen has update_stats method, call it with player stats
         if hasattr(game_over, "update_stats") and callable(game_over.update_stats):
             try:
                 # Get final game stats
                 final_stats = self._get_final_game_stats()
-                
+
                 # Update game over screen with stats
                 game_over.update_stats(final_stats)
                 self._logger.debug("Updated game over screen with final stats")
             except Exception as e:
                 self._logger.error(f"Error updating game over stats: {e}")
-                
+
     def _get_final_game_stats(self) -> Dict[str, Any]:
         """Get the player's final stats for the game over screen.
-        
+
         Returns:
             Dict[str, Any]: Dictionary containing final game statistics
         """
         stats = {}
-        
+
         # Add player stats if available
         if hasattr(self, "player"):
             player = self.player
-            
+
             # Get basic player attributes
             for attr in ["health", "max_health", "energy", "max_energy", "level"]:
                 if hasattr(player, attr):
                     stats[attr] = getattr(player, attr)
-                    
+
             # Get inventory summary if available
-            if hasattr(player, "inventory") and hasattr(player.inventory, "get_summary"):
+            if hasattr(player, "inventory") and hasattr(
+                player.inventory, "get_summary"
+            ):
                 try:
                     stats["inventory"] = player.inventory.get_summary()
                 except Exception as e:
                     self._logger.error(f"Error getting inventory summary: {e}")
-                    
+
         # Add game stats
         if hasattr(self, "game_stats"):
             stats["game_stats"] = self.game_stats
-            
+
         # Add score if available
         if hasattr(self, "score"):
             stats["score"] = self.score
-            
+
         # Add game duration if available
         if hasattr(self, "start_time"):
             stats["duration"] = time.time() - self.start_time
-            
+
         return stats
-                
+
     def _apply_game_over_effects(self) -> None:
         """Apply visual effects and animations to the game over screen."""
         if "game_over_screen" not in self.ui_elements:
             return
-            
+
         game_over = self.ui_elements["game_over_screen"]
-        
+
         # If the game over screen supports animations, activate them
         if hasattr(game_over, "animation") and isinstance(game_over.animation, dict):
             if "active" in game_over.animation:
                 game_over.animation["active"] = True
                 self._logger.debug("Activated game over animation")
-                
+
             # Set animation properties if available
             if "start_time" in game_over.animation:
                 game_over.animation["start_time"] = time.time()
-                
+
             if "duration" in game_over.animation:
                 # Longer duration for game over animation
                 game_over.animation["duration"] = 1.5  # 1.5s animation
-                
+
         # Apply specific game over effects if available
         if hasattr(game_over, "apply_effects") and callable(game_over.apply_effects):
             try:
@@ -1986,108 +2013,118 @@ class Game:
                 self._logger.debug("Applied game over screen effects")
             except Exception as e:
                 self._logger.error(f"Error applying game over effects: {e}")
-                
+
     # ======================================================================
     # State Exit Handlers
     # ======================================================================
-                
+
     def _exit_hide_menu(self) -> None:
         """Clean up menu resources when exiting the menu state.
-        
+
         This state exit handler ensures proper cleanup of menu resources,
         canceling animations, unloading unnecessary assets, and setting UI
         elements to appropriate states for the next state.
         """
         try:
             self._logger.info("Cleaning up menu resources")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Clean up menu animations and effects
             self._cancel_menu_animations()
-            
+
             # Unload menu-specific assets if needed
             self._unload_menu_assets()
-            
+
             # Clear any menu-related state
             self._clear_menu_state()
-            
+
             self._logger.info("Menu resources cleaned up successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error cleaning up menu resources: {e}")
-            
+
     def _cancel_menu_animations(self) -> None:
         """Cancel any ongoing menu animations."""
         menu_elements = ["main_menu", "options_menu", "menu_background"]
-        
+
         for element_name in menu_elements:
             if element_name not in self.ui_elements:
                 continue
-                
+
             element = self.ui_elements[element_name]
-            
+
             # If element has animation, disable it
-            if hasattr(element, "animation") and isinstance(element.animation, dict) and "active" in element.animation:
+            if (
+                hasattr(element, "animation")
+                and isinstance(element.animation, dict)
+                and "active" in element.animation
+            ):
                 element.animation["active"] = False
                 self._logger.debug(f"Cancelled animation for {element_name}")
-                    
+
             # If element has a cancel_animation method, call it
-            if hasattr(element, "cancel_animation") and callable(element.cancel_animation):
+            if hasattr(element, "cancel_animation") and callable(
+                element.cancel_animation
+            ):
                 try:
                     element.cancel_animation()
                     self._logger.debug(f"Called cancel_animation for {element_name}")
                 except Exception as e:
-                    self._logger.error(f"Error cancelling animation for {element_name}: {e}")
-                    
+                    self._logger.error(
+                        f"Error cancelling animation for {element_name}: {e}"
+                    )
+
     def _unload_menu_assets(self) -> None:
         """Unload menu-specific assets to free memory."""
         # Check if resource manager exists and supports unloading
         if not self._has_resource_manager():
             return
-            
+
         try:
             # Get list of menu resources to unload
             menu_resources = ["menu_background", "menu_music", "menu_effects"]
-            
+
             # Unload each resource
             for resource in menu_resources:
                 self._unload_single_resource(resource)
-                
+
             self._logger.debug("Finished unloading menu assets")
-            
+
         except Exception as e:
             self._logger.error(f"Error unloading menu assets: {e}")
-            
+
     def _has_resource_manager(self) -> bool:
         """Check if resource manager exists and supports unloading."""
-        return (hasattr(self, "resource_manager") and 
-                hasattr(self.resource_manager, "unload"))
-                
+        return hasattr(self, "resource_manager") and hasattr(
+            self.resource_manager, "unload"
+        )
+
     def _unload_single_resource(self, resource_name: str) -> None:
         """Unload a single resource if it's loaded.
-        
+
         Args:
             resource_name: Name of the resource to unload
         """
         if not hasattr(self, "resource_manager"):
             return
 
-        if (hasattr(self.resource_manager, "is_loaded")
-            and callable(self.resource_manager.is_loaded)):
+        if hasattr(self.resource_manager, "is_loaded") and callable(
+            self.resource_manager.is_loaded
+        ):
             # Only unload if the resource is loaded
             if self.resource_manager.is_loaded(resource_name):
                 self._perform_resource_unload(resource_name)
         else:
             # Try unloading directly if can't check loaded status
             self._attempt_direct_unload(resource_name)
-            
+
     def _perform_resource_unload(self, resource_name: str) -> None:
         """Perform actual resource unloading and log result.
-        
+
         Args:
             resource_name: Name of the resource to unload
         """
@@ -2096,23 +2133,23 @@ class Game:
             self._logger.debug(f"Unloaded menu resource: {resource_name}")
         except Exception as e:
             self._logger.error(f"Failed to unload resource {resource_name}: {e}")
-            
+
     def _attempt_direct_unload(self, resource_name: str) -> None:
         """Attempt to unload a resource without checking if it's loaded.
-        
+
         Args:
             resource_name: Name of the resource to unload
         """
         with contextlib.suppress(Exception):
             self.resource_manager.unload(resource_name)
             self._logger.debug(f"Unloaded menu resource: {resource_name}")
-                
+
     def _clear_menu_state(self) -> None:
         """Clear any menu-related state variables."""
         try:
             # Reset menu selection trackers if they exist
             menu_state_vars = ["menu_selection", "last_menu_state", "menu_history"]
-            
+
             for var_name in menu_state_vars:
                 if hasattr(self, var_name):
                     if isinstance(getattr(self, var_name), list):
@@ -2122,20 +2159,23 @@ class Game:
                     else:
                         setattr(self, var_name, None)
                     self._logger.debug(f"Cleared menu state variable: {var_name}")
-                    
+
             # Clear active element if it's a menu
-            if hasattr(self, "active_element") and self.active_element in ["main_menu", "options_menu"]:
+            if hasattr(self, "active_element") and self.active_element in [
+                "main_menu",
+                "options_menu",
+            ]:
                 self.active_element = None
                 self._logger.debug("Cleared active element")
-                
+
             self._logger.debug("Finished clearing menu state")
-            
+
         except Exception as e:
             self._logger.error(f"Error clearing menu state: {e}")
-            
+
     def _exit_save_game_state(self) -> None:
         """Save current game progress when exiting a state.
-        
+
         This state exit handler ensures that the current game state is saved,
         including player data, game world state, and other progress metrics.
         """
@@ -2155,17 +2195,17 @@ class Game:
 
         except Exception as e:
             self._logger.error(f"Error saving game state: {e}")
-            
+
     def _prepare_save_data(self) -> Dict[str, Any]:
         """Collect all relevant game state data for saving.
-        
+
         Returns:
             Dict[str, Any]: Dictionary containing game state data
         """
         save_data = {
             "version": GAME_CONFIG.get("version", "1.0.0"),
             "timestamp": time.time(),
-            "state": self._state
+            "state": self._state,
         }
 
         # Add player data if available
@@ -2192,10 +2232,10 @@ class Game:
                 save_data["entities"] = entities_data
 
         return save_data
-        
+
     def _collect_player_data(self) -> Dict[str, Any]:
         """Collect player data for saving.
-        
+
         Returns:
             Dict[str, Any]: Dictionary containing player state data
         """
@@ -2212,8 +2252,16 @@ class Game:
         player = self.player
 
         # Collect basic player attributes
-        basic_attrs = ["health", "max_health", "energy", "max_energy",
-                      "level", "experience", "position", "direction"]
+        basic_attrs = [
+            "health",
+            "max_health",
+            "energy",
+            "max_energy",
+            "level",
+            "experience",
+            "position",
+            "direction",
+        ]
 
         for attr in basic_attrs:
             if hasattr(player, attr):
@@ -2221,7 +2269,9 @@ class Game:
 
         # Collect inventory if available
         if hasattr(player, "inventory"):
-            if hasattr(player.inventory, "get_save_data") and callable(player.inventory.get_save_data):
+            if hasattr(player.inventory, "get_save_data") and callable(
+                player.inventory.get_save_data
+            ):
                 player_data["inventory"] = player.inventory.get_save_data()
             elif hasattr(player.inventory, "items"):
                 player_data["inventory"] = {"items": player.inventory.items}
@@ -2233,75 +2283,77 @@ class Game:
         # Collect skills/abilities if available
         if hasattr(player, "skills") and hasattr(player.skills, "get_save_data"):
             player_data["skills"] = player.skills.get_save_data()
-        
+
     def _collect_field_data(self) -> Dict[str, Any]:
         """Collect field/map data for saving.
-        
+
         Returns:
             Dict[str, Any]: Dictionary containing field state data
         """
         field_data = {}
-        
+
         try:
             field = self.field
-            
+
             # Check if field has save data method
             if hasattr(field, "get_save_data") and callable(field.get_save_data):
                 return field.get_save_data()
-                
+
             # Collect basic field properties
             field_data = self._collect_basic_field_properties(field)
-            
+
             # Add objects data if available
             self._add_field_objects_data(field, field_data)
-                        
+
         except Exception as e:
             self._logger.error(f"Error collecting field data: {e}")
-            
+
         return field_data
-        
+
     def _collect_basic_field_properties(self, field) -> Dict[str, Any]:
         """Collect basic field properties like dimensions and tiles.
-        
+
         Args:
             field: The field object
-            
+
         Returns:
             Dict[str, Any]: Basic field properties
         """
         field_data = {}
-        
+
         # Get width and height
         if hasattr(field, "width"):
             field_data["width"] = field.width
         if hasattr(field, "height"):
             field_data["height"] = field.height
-            
+
         # Get tiles data
         if hasattr(field, "tiles"):
             field_data["tiles"] = field.tiles
-            
+
         return field_data
-        
+
     def _add_field_objects_data(self, field, field_data: Dict[str, Any]) -> None:
         """Add field objects data to the field data dictionary.
-        
+
         Args:
             field: The field object
             field_data: Dictionary to add objects data to
         """
         if not hasattr(field, "objects"):
             return
-            
+
         # Get serializable objects if method available
-        if hasattr(field, "get_serializable_objects") and callable(field.get_serializable_objects):
+        if hasattr(field, "get_serializable_objects") and callable(
+            field.get_serializable_objects
+        ):
             field_data["objects"] = field.get_serializable_objects()
         else:
             field_data["objects"] = []
-        
+
     def _collect_entities_data(self) -> List[Dict[str, Any]]:
         """Collect data for non-player entities.
-        
+
         Returns:
             List[Dict[str, Any]]: List of entity data dictionaries
         """
@@ -2325,72 +2377,72 @@ class Game:
             self._logger.error(f"Error collecting entities data: {e}")
 
         return entities_data
-        
+
     def _ensure_save_directory(self) -> None:
         """Ensure the save directory exists, creating it if necessary."""
         save_dir = self._get_save_directory()
-        
+
         try:
             # Create directory if it doesn't exist
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
                 self._logger.debug(f"Created save directory: {save_dir}")
-                
+
         except Exception as e:
             self._logger.error(f"Error creating save directory: {e}")
-            
+
     def _get_save_directory(self) -> str:
         """Get the directory path for saving game data.
-        
+
         Returns:
             str: Path to save directory
         """
         # Default save directory
         default_save_dir = os.path.join(os.path.expanduser("~"), ".space_muck", "saves")
-        
+
         # Check if custom save directory is defined in config
         if "save_directory" in GAME_CONFIG:
             custom_save_dir = GAME_CONFIG["save_directory"]
-            
+
             # If relative path, make it relative to user home
             if not os.path.isabs(custom_save_dir):
                 custom_save_dir = os.path.join(os.path.expanduser("~"), custom_save_dir)
-                
+
             return custom_save_dir
-            
+
         return default_save_dir
-        
+
     def _write_save_data(self, save_data: Dict[str, Any]) -> bool:
         """Write save data to file.
-        
+
         Args:
             save_data: Dictionary containing game state data
-            
+
         Returns:
             bool: True if save was successful, False otherwise
         """
         try:
             # Get save directory and generate file path
             save_path = self._generate_save_path(save_data)
-            
+
             # Write data to file
             self._write_data_to_file(save_path, save_data)
-            
+
             # Create quick save reference
             self._create_quicksave_reference(save_path)
-            
+
             return True
-            
+
         except Exception as e:
             self._logger.error(f"Error writing save data: {e}")
             return False
-            
+
     def _generate_save_path(self, save_data: Dict[str, Any]) -> str:
         """Generate a path for saving the game data.
-        
+
         Args:
             save_data: Dictionary containing game state data
-            
+
         Returns:
             str: Complete path for the save file
         """
@@ -2407,81 +2459,78 @@ class Game:
         # Create file name and full path
         save_file_name = f"{player_name}_{save_timestamp}.json"
         return os.path.join(save_dir, save_file_name)
-        
+
     def _write_data_to_file(self, file_path: str, data: Dict[str, Any]) -> None:
         """Write data to a file in JSON format.
-        
+
         Args:
             file_path: Path to save the file
             data: Data to save
         """
-        with open(file_path, "w") as save_file:
+        with open(file_path, "w", encoding="utf-8") as save_file:
             json.dump(data, save_file, indent=2)
-            
+
         self._logger.debug(f"Saved game to: {file_path}")
-            
+
     def _create_quicksave_reference(self, save_path: str) -> None:
         """Create a reference to the most recent save for quick loading.
-        
+
         Args:
             save_path: Path to the most recent save file
         """
         try:
             save_dir = self._get_save_directory()
             quicksave_path = os.path.join(save_dir, "quicksave.json")
-            
+
             # Create a quicksave reference file pointing to the latest save
-            with open(quicksave_path, "w") as quicksave_file:
-                quicksave_data = {
-                    "latest_save": save_path,
-                    "timestamp": time.time()
-                }
+            with open(quicksave_path, "w", encoding="utf-8") as quicksave_file:
+                quicksave_data = {"latest_save": save_path, "timestamp": time.time()}
                 json.dump(quicksave_data, quicksave_file)
-                
+
             self._logger.debug(f"Updated quicksave reference to: {save_path}")
-            
+
         except Exception as e:
             self._logger.error(f"Error creating quicksave reference: {e}")
-            
+
     def _exit_hide_pause_menu(self) -> None:
         """Clean up pause menu resources when exiting the pause state.
-        
+
         This state exit handler ensures proper cleanup of pause menu resources,
         restoring game state and UI elements to continue gameplay seamlessly.
         """
         try:
             self._logger.info("Cleaning up pause menu resources")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Hide pause menu UI elements
             self._hide_pause_ui_elements()
-            
+
             # Restore game state (unpause)
             self._resume_game_state()
-            
+
             self._logger.info("Pause menu resources cleaned up successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error cleaning up pause menu resources: {e}")
-            
+
     def _hide_pause_ui_elements(self) -> None:
         """Hide all pause menu UI elements."""
         try:
             # List of pause menu related UI elements
             pause_elements = ["pause_menu", "pause_background", "pause_options"]
-            
+
             # Set visibility of all pause elements to False
             self._set_ui_elements_visibility(pause_elements, visible=False)
-                        
+
             self._logger.debug("Finished hiding pause menu UI elements")
-            
+
         except Exception as e:
             self._logger.error(f"Error hiding pause UI elements: {e}")
-            
+
     def _resume_game_state(self) -> None:
         """Restore game state after exiting pause menu."""
         try:
@@ -2489,73 +2538,79 @@ class Game:
             if hasattr(self, "_paused"):
                 self._paused = False
                 self._logger.debug("Unpaused game state")
-                
+
             # Resume any paused animations or timers
             self._resume_animations_and_timers()
-            
+
             # Restore input handling if it was disabled
             if hasattr(self, "_input_enabled"):
                 self._input_enabled = True
                 self._logger.debug("Restored input handling")
-                
+
             # Resume sound if it was paused
             self._resume_audio()
-            
+
             self._logger.debug("Finished resuming game state")
-            
+
         except Exception as e:
             self._logger.error(f"Error resuming game state: {e}")
-            
+
     def _resume_animations_and_timers(self) -> None:
         """Resume any animations or timers that were paused."""
         try:
             # Resume game clock
             self._resume_game_clock()
-            
+
             # Resume entity animations
             self._resume_entity_animations()
-            
+
             # Resume UI animations
             self._resume_ui_animations()
-                        
+
         except Exception as e:
             self._logger.error(f"Error resuming animations and timers: {e}")
-            
+
     def _resume_game_clock(self) -> None:
         """Resume the game clock if it exists."""
         if hasattr(self, "game_clock") and hasattr(self.game_clock, "resume"):
             self.game_clock.resume()
             self._logger.debug("Resumed game clock")
-            
+
     def _resume_entity_animations(self) -> None:
         """Resume animations for all entities."""
         if not hasattr(self, "entities"):
             return
-            
+
         for entity in self.entities:
-            if hasattr(entity, "resume_animation") and callable(entity.resume_animation):
+            if hasattr(entity, "resume_animation") and callable(
+                entity.resume_animation
+            ):
                 entity.resume_animation()
-                
+
     def _resume_ui_animations(self) -> None:
         """Resume animations for all UI elements."""
         if not hasattr(self, "ui_elements"):
             return
-            
+
         for element_name, element in self.ui_elements.items():
             self._resume_element_animation(element_name, element)
-                
+
     def _resume_element_animation(self, element_name: str, element) -> None:
         """Resume animation for a specific UI element.
-        
+
         Args:
             element_name: Name of the UI element
             element: The UI element object
         """
         # Resume animation dictionary if it exists
-        if hasattr(element, "animation") and isinstance(element.animation, dict) and "paused" in element.animation:
+        if (
+            hasattr(element, "animation")
+            and isinstance(element.animation, dict)
+            and "paused" in element.animation
+        ):
             element.animation["paused"] = False
             self._logger.debug(f"Resumed animation for {element_name}")
-            
+
         # Call resume_animation method if it exists
         if hasattr(element, "resume_animation") and callable(element.resume_animation):
             try:
@@ -2563,110 +2618,126 @@ class Game:
                 self._logger.debug(f"Called resume_animation for {element_name}")
             except Exception as e:
                 self._logger.error(f"Error resuming animation for {element_name}: {e}")
-            
+
     def _resume_audio(self) -> None:
         """Resume any audio that was paused."""
         try:
             # Check if sound manager exists
             if not hasattr(self, "sound_manager"):
                 return
-                
+
             # Resume background music
-            if hasattr(self.sound_manager, "resume_music") and callable(self.sound_manager.resume_music):
+            if hasattr(self.sound_manager, "resume_music") and callable(
+                self.sound_manager.resume_music
+            ):
                 self.sound_manager.resume_music()
                 self._logger.debug("Resumed background music")
-                
+
             # Resume sound effects if they were paused
-            if hasattr(self.sound_manager, "resume_effects") and callable(self.sound_manager.resume_effects):
+            if hasattr(self.sound_manager, "resume_effects") and callable(
+                self.sound_manager.resume_effects
+            ):
                 self.sound_manager.resume_effects()
                 self._logger.debug("Resumed sound effects")
-                
+
             # If no specific methods, try a generic resume method
-            elif hasattr(self.sound_manager, "resume") and callable(self.sound_manager.resume):
+            elif hasattr(self.sound_manager, "resume") and callable(
+                self.sound_manager.resume
+            ):
                 self.sound_manager.resume()
                 self._logger.debug("Resumed all audio")
-                
+
         except Exception as e:
             self._logger.error(f"Error resuming audio: {e}")
-            
+
     def _exit_hide_shop(self) -> None:
         """Clean up shop interface when exiting the shop state.
-        
+
         This state exit handler ensures proper cleanup of shop UI elements,
         hiding shop panels, and restoring the game UI when exiting the shop.
         """
         try:
             self._logger.info("Cleaning up shop interface")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Hide shop UI elements
             self._hide_shop_ui_elements()
-            
+
             # Reset shop state variables
             self._reset_shop_state()
-            
+
             # Restore game UI visibility
             self._restore_game_ui_after_shop()
-            
+
             self._logger.info("Shop interface cleaned up successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error cleaning up shop interface: {e}")
-            
+
     def _hide_shop_ui_elements(self) -> None:
         """Hide all shop-related UI elements."""
         try:
             # List of shop-related UI elements
-            shop_elements = ["shop_panel", "shop_inventory", "shop_items", "shop_buttons"]
-            
+            shop_elements = [
+                "shop_panel",
+                "shop_inventory",
+                "shop_items",
+                "shop_buttons",
+            ]
+
             # Set visibility of all shop elements to False
             self._set_ui_elements_visibility(shop_elements, visible=False)
-            
+
             self._logger.debug("Finished hiding shop UI elements")
-            
+
         except Exception as e:
             self._logger.error(f"Error hiding shop UI elements: {e}")
-            
+
     def _reset_shop_state(self) -> None:
         """Reset shop-related state variables."""
         try:
             # Reset shop selection and interaction state
-            shop_state_vars = ["shop_selection", "shop_page", "shop_filter", "shop_sort_order"]
-            
+            shop_state_vars = [
+                "shop_selection",
+                "shop_page",
+                "shop_filter",
+                "shop_sort_order",
+            ]
+
             for var_name in shop_state_vars:
                 self._reset_state_variable(var_name)
-                    
+
             # Clear active element if it's shop-related
             if hasattr(self, "active_element") and "shop" in str(self.active_element):
                 self.active_element = None
                 self._logger.debug("Cleared active element")
-                
+
             self._logger.debug("Finished resetting shop state")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting shop state: {e}")
-            
+
     def _restore_game_ui_after_shop(self) -> None:
         """Restore game UI elements after exiting shop."""
         try:
             # List of game UI elements to restore
             game_ui_elements = ["player_hud", "inventory_button", "map_button"]
-            
+
             # Set visibility of all game elements to True
             self._set_ui_elements_visibility(game_ui_elements, visible=True)
-                        
+
             self._logger.debug("Finished restoring game UI elements")
-            
+
         except Exception as e:
             self._logger.error(f"Error restoring game UI: {e}")
-            
+
     def _exit_save_purchases(self) -> None:
         """Save player's purchase data when exiting the shop state.
-        
+
         This state exit handler processes pending purchases, updates player inventory,
         deducts currency or resources, and records purchase history.
         """
@@ -2687,10 +2758,10 @@ class Game:
 
         except Exception as e:
             self._logger.error(f"Error saving purchase data: {e}")
-            
+
     def _validate_purchase_data(self) -> bool:
         """Validate that we have necessary data to process purchases.
-        
+
         Returns:
             bool: True if validation passes, False otherwise
         """
@@ -2698,31 +2769,31 @@ class Game:
         if not hasattr(self, "player"):
             self._logger.warning("Cannot process purchases: player object not found")
             return False
-            
+
         # Check if pending purchases exist
         if not hasattr(self, "pending_purchases") or not self.pending_purchases:
             self._logger.debug("No pending purchases to process")
             return False
-            
+
         # Check if player has inventory
         if not hasattr(self.player, "inventory"):
             self._logger.warning("Cannot process purchases: player inventory not found")
             return False
-            
+
         return True
-        
+
     def _process_pending_purchases(self) -> List[Dict[str, Any]]:
         """Process all pending purchases and update player inventory and currency.
-        
+
         Returns:
             List[Dict[str, Any]]: List of successfully processed purchases
         """
         processed_purchases = []
-        
+
         try:
             # Get the list of pending purchases
             pending_purchases = getattr(self, "pending_purchases", [])
-            
+
             for purchase in pending_purchases:
                 # Make sure purchase has required data
                 if self._is_valid_purchase_data(purchase):
@@ -2733,36 +2804,38 @@ class Game:
                         processed_purchases.append(purchase)
                     else:
                         purchase["status"] = "failed"
-                        self._logger.warning(f"Failed to process purchase: {purchase['item_id']}")
+                        self._logger.warning(
+                            f"Failed to process purchase: {purchase['item_id']}"
+                        )
                 else:
                     self._logger.warning(f"Invalid purchase data: {purchase}")
-                
+
             # Clear pending purchases after processing
             self.pending_purchases = []
-            
+
         except Exception as e:
             self._logger.error(f"Error processing pending purchases: {e}")
-            
+
         return processed_purchases
-        
+
     def _is_valid_purchase_data(self, purchase: Dict[str, Any]) -> bool:
         """Check if purchase data contains required fields.
-        
+
         Args:
             purchase: Purchase data dictionary
-            
+
         Returns:
             bool: True if purchase data is valid, False otherwise
         """
         required_fields = ["item_id", "quantity", "cost"]
         return all(field in purchase for field in required_fields)
-        
+
     def _process_single_purchase(self, purchase: Dict[str, Any]) -> bool:
         """Process a single purchase, update inventory and deduct resources.
-        
+
         Args:
             purchase: Purchase data dictionary
-            
+
         Returns:
             bool: True if purchase was processed successfully, False otherwise
         """
@@ -2771,240 +2844,261 @@ class Game:
             item_id = purchase["item_id"]
             quantity = purchase["quantity"]
             cost = purchase["cost"]
-            
+
             # Check if player has enough currency/resources
             if not self._can_afford_purchase(cost):
                 self._logger.warning(f"Cannot afford purchase: {item_id}")
                 return False
-                
+
             # Deduct cost from player
             if not self._deduct_purchase_cost(cost):
                 return False
-                
+
             # Add items to player inventory
             if not self._add_purchased_items_to_inventory(item_id, quantity):
                 # If adding to inventory fails, refund the cost
                 self._refund_purchase_cost(cost)
                 return False
-                
+
             # Update game stats to track purchases
             self._update_purchase_stats(item_id, quantity, cost)
-            
+
             self._logger.debug(f"Processed purchase: {quantity}x {item_id}")
             return True
-            
+
         except Exception as e:
-            self._logger.error(f"Error processing purchase {purchase.get('item_id', 'unknown')}: {e}")
+            self._logger.error(
+                f"Error processing purchase {purchase.get('item_id', 'unknown')}: {e}"
+            )
             return False
-            
+
     def _can_afford_purchase(self, cost: Dict[str, int]) -> bool:
         """Check if player has enough resources to cover the purchase cost.
-        
+
         Args:
             cost: Dictionary of resources and amounts required
-            
+
         Returns:
             bool: True if player can afford the purchase, False otherwise
         """
         player = self.player
         # Return true only if player has enough currency AND resources
-        return (self._has_enough_currency(player, cost) and 
-                self._has_enough_resources(player, cost))
-        
+        return self._has_enough_currency(player, cost) and self._has_enough_resources(
+            player, cost
+        )
+
     def _has_enough_currency(self, player, cost: Dict[str, int]) -> bool:
         """Check if player has enough currency for the purchase.
-        
+
         Args:
             player: Player object
             cost: Purchase cost dictionary
-            
+
         Returns:
             bool: True if player has enough currency, False otherwise
         """
         # Return False only if currency is specified and player doesn't have enough
-        return not ("currency" in cost and 
-                  hasattr(player, "currency") and 
-                  player.currency < cost["currency"])
-        
+        return not (
+            "currency" in cost
+            and hasattr(player, "currency")
+            and player.currency < cost["currency"]
+        )
+
     def _has_enough_resources(self, player, cost: Dict[str, int]) -> bool:
         """Check if player has enough resources for the purchase.
-        
+
         Args:
             player: Player object
             cost: Purchase cost dictionary
-            
+
         Returns:
             bool: True if player has enough resources, False otherwise
         """
         # No resources check needed if cost doesn't specify resources
         if "resources" not in cost or not isinstance(cost["resources"], dict):
             return True
-            
+
         # Player must have resources attribute
         if not hasattr(player, "resources"):
             return False
-            
+
         # Check if player has all required resources in sufficient amounts
         has_get_method = hasattr(player.resources, "get")
         return all(
             (player.resources.get(resource_id, 0) if has_get_method else 0) >= amount
             for resource_id, amount in cost["resources"].items()
         )
-        
+
     def _deduct_purchase_cost(self, cost: Dict[str, int]) -> bool:
         """Deduct the purchase cost from player's currency/resources.
-        
+
         Args:
             cost: Dictionary of resources and amounts to deduct
-            
+
         Returns:
             bool: True if deduction was successful, False otherwise
         """
         try:
             player = self.player
-            
+
             # Deduct currency if specified
             if "currency" in cost and hasattr(player, "currency"):
                 player.currency -= cost["currency"]
                 self._logger.debug(f"Deducted {cost['currency']} currency")
-                
+
             # Deduct resources if specified
-            if "resources" in cost and isinstance(cost["resources"], dict) and hasattr(player, "resources"):
+            if (
+                "resources" in cost
+                and isinstance(cost["resources"], dict)
+                and hasattr(player, "resources")
+            ):
                 for resource_id, amount in cost["resources"].items():
-                    if hasattr(player.resources, "get") and resource_id in player.resources:
+                    if (
+                        hasattr(player.resources, "get")
+                        and resource_id in player.resources
+                    ):
                         player.resources[resource_id] -= amount
                         self._logger.debug(f"Deducted {amount}x {resource_id}")
                     else:
                         self._logger.warning(f"Resource not found: {resource_id}")
                         return False
-                        
+
             return True
-            
+
         except Exception as e:
             self._logger.error(f"Error deducting purchase cost: {e}")
             return False
-            
+
     def _refund_purchase_cost(self, cost: Dict[str, int]) -> None:
         """Refund the purchase cost to player's currency/resources if purchase fails.
-        
+
         Args:
             cost: Dictionary of resources and amounts to refund
         """
         try:
             player = self.player
-            
+
             # Refund currency if specified
             if "currency" in cost and hasattr(player, "currency"):
                 player.currency += cost["currency"]
                 self._logger.debug(f"Refunded {cost['currency']} currency")
-                
+
             # Refund resources if specified
-            if "resources" in cost and isinstance(cost["resources"], dict) and hasattr(player, "resources"):
+            if (
+                "resources" in cost
+                and isinstance(cost["resources"], dict)
+                and hasattr(player, "resources")
+            ):
                 for resource_id, amount in cost["resources"].items():
-                    if hasattr(player.resources, "get") and resource_id in player.resources:
+                    if (
+                        hasattr(player.resources, "get")
+                        and resource_id in player.resources
+                    ):
                         player.resources[resource_id] += amount
                         self._logger.debug(f"Refunded {amount}x {resource_id}")
-                        
+
         except Exception as e:
             self._logger.error(f"Error refunding purchase cost: {e}")
-            
+
     def _add_purchased_items_to_inventory(self, item_id: str, quantity: int) -> bool:
         """Add purchased items to player inventory.
-        
+
         Args:
             item_id: ID of the purchased item
             quantity: Quantity of items to add
-            
+
         Returns:
             bool: True if items were added successfully, False otherwise
         """
         try:
             player = self.player
             inventory = player.inventory
-            
+
             # Try different inventory adding strategies
             if self._try_add_via_method(inventory, item_id, quantity):
                 return True
-                
+
             if self._try_add_via_dict(inventory, item_id, quantity):
                 return True
-                
+
             if self._try_add_via_list(inventory, item_id, quantity):
                 return True
-                
+
             # If no strategy worked
             self._logger.warning("Unknown inventory format, cannot add items")
             return False
-                
+
         except Exception as e:
             self._logger.error(f"Error adding items to inventory: {e}")
             return False
-            
+
     def _try_add_via_method(self, inventory, item_id: str, quantity: int) -> bool:
         """Try to add items to inventory using its add_item method.
-        
+
         Args:
             inventory: Player inventory object
             item_id: ID of the item to add
             quantity: Quantity to add
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         if not hasattr(inventory, "add_item") or not callable(inventory.add_item):
             return False
-            
+
         for _ in range(quantity):
             success = inventory.add_item(item_id)
             if not success:
                 self._logger.warning(f"Failed to add item {item_id} to inventory")
                 return False
-                
+
         return True
-        
+
     def _try_add_via_dict(self, inventory, item_id: str, quantity: int) -> bool:
         """Try to add items to inventory using its items dictionary.
-        
+
         Args:
             inventory: Player inventory object
             item_id: ID of the item to add
             quantity: Quantity to add
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         if not hasattr(inventory, "items") or not isinstance(inventory.items, dict):
             return False
-            
+
         if item_id in inventory.items:
             inventory.items[item_id] += quantity
         else:
             inventory.items[item_id] = quantity
-            
+
         return True
-        
+
     def _try_add_via_list(self, inventory, item_id: str, quantity: int) -> bool:
         """Try to add items to inventory using its append method (list).
-        
+
         Args:
             inventory: Player inventory object
             item_id: ID of the item to add
             quantity: Quantity to add
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         if not hasattr(inventory, "append") or not callable(inventory.append):
             return False
-            
+
         for _ in range(quantity):
             inventory.append(item_id)
-            
+
         return True
-            
-    def _update_purchase_stats(self, item_id: str, quantity: int, cost: Dict[str, int]) -> None:
+
+    def _update_purchase_stats(
+        self, item_id: str, quantity: int, cost: Dict[str, int]
+    ) -> None:
         """Update game statistics with purchase information.
-        
+
         Args:
             item_id: ID of the purchased item
             quantity: Quantity of items purchased
@@ -3014,55 +3108,57 @@ class Game:
             # Initialize game_stats if it doesn't exist
             if not hasattr(self, "game_stats"):
                 self.game_stats = {}
-                
+
             # Initialize purchases stats if they don't exist
             if "purchases" not in self.game_stats:
                 self.game_stats["purchases"] = {
                     "total_items": 0,
                     "total_spent": 0,
-                    "items": {}
+                    "items": {},
                 }
-                
+
             stats = self.game_stats["purchases"]
-            
+
             # Update totals
             stats["total_items"] += quantity
-            
+
             # Calculate total cost in currency
             total_cost = cost.get("currency", 0)
-            if "resources" in cost and (hasattr(self, "resource_values") and isinstance(self.resource_values, dict)):
+            if "resources" in cost and (
+                hasattr(self, "resource_values")
+                and isinstance(self.resource_values, dict)
+            ):
                 for resource_id, amount in cost["resources"].items():
                     if resource_id in self.resource_values:
                         total_cost += amount * self.resource_values[resource_id]
-                            
+
             stats["total_spent"] += total_cost
-            
+
             # Update item-specific stats
             if item_id not in stats["items"]:
-                stats["items"][item_id] = {
-                    "quantity": 0,
-                    "spent": 0
-                }
-                
+                stats["items"][item_id] = {"quantity": 0, "spent": 0}
+
             stats["items"][item_id]["quantity"] += quantity
             stats["items"][item_id]["spent"] += total_cost
-            
+
         except Exception as e:
             self._logger.error(f"Error updating purchase stats: {e}")
-            
-    def _update_transaction_history(self, processed_purchases: List[Dict[str, Any]]) -> None:
+
+    def _update_transaction_history(
+        self, processed_purchases: List[Dict[str, Any]]
+    ) -> None:
         """Update player's transaction history with processed purchases.
-        
+
         Args:
             processed_purchases: List of successfully processed purchases
         """
         try:
             player = self.player
-            
+
             # Initialize transaction history if it doesn't exist
             if not hasattr(player, "transaction_history"):
                 player.transaction_history = []
-                
+
             # Add purchases to history
             for purchase in processed_purchases:
                 transaction = {
@@ -3070,110 +3166,126 @@ class Game:
                     "item_id": purchase["item_id"],
                     "quantity": purchase["quantity"],
                     "cost": purchase["cost"],
-                    "timestamp": purchase["timestamp"]
+                    "timestamp": purchase["timestamp"],
                 }
                 player.transaction_history.append(transaction)
-                
-            self._logger.debug(f"Added {len(processed_purchases)} transactions to history")
-            
+
+            self._logger.debug(
+                f"Added {len(processed_purchases)} transactions to history"
+            )
+
         except Exception as e:
             self._logger.error(f"Error updating transaction history: {e}")
-            
+
     def _update_shop_inventory(self) -> None:
         """Update shop inventory after purchases if needed."""
         try:
             # Check if shop inventory tracking is enabled
-            if not hasattr(self, "shop_inventory") or not hasattr(self, "shop_inventory_tracking"):
+            if not hasattr(self, "shop_inventory") or not hasattr(
+                self, "shop_inventory_tracking"
+            ):
                 return
-                
+
             if not self.shop_inventory_tracking:
                 return
-                
+
             # Update inventory based on purchases
             if hasattr(self, "processed_purchases") and self.processed_purchases:
                 for purchase in self.processed_purchases:
                     item_id = purchase["item_id"]
                     quantity = purchase["quantity"]
-                    
-                    if item_id in self.shop_inventory and self.shop_inventory[item_id] > 0:
-                        self.shop_inventory[item_id] -= min(quantity, self.shop_inventory[item_id])
-                        self._logger.debug(f"Updated shop inventory for {item_id}: {self.shop_inventory[item_id]} remaining")
-                        
+
+                    if (
+                        item_id in self.shop_inventory
+                        and self.shop_inventory[item_id] > 0
+                    ):
+                        self.shop_inventory[item_id] -= min(
+                            quantity, self.shop_inventory[item_id]
+                        )
+                        self._logger.debug(
+                            f"Updated shop inventory for {item_id}: {self.shop_inventory[item_id]} remaining"
+                        )
+
         except Exception as e:
             self._logger.error(f"Error updating shop inventory: {e}")
-            
+
     def _exit_hide_map(self) -> None:
         """Clean up map interface when exiting the map state.
-        
+
         This state exit handler ensures proper cleanup of the map UI elements
         and restores the game UI when exiting the map view.
         """
         try:
             self._logger.info("Cleaning up map interface")
-            
+
             # Check if UI component dictionary exists
             if not hasattr(self, "ui_elements"):
                 self._logger.warning(ERROR_UI_DICT_NOT_FOUND)
                 return
-                
+
             # Hide map UI elements
             self._hide_map_ui_elements()
-            
+
             # Reset map state variables
             self._reset_map_state()
-            
+
             # Restore game UI visibility
             self._restore_game_ui_after_map()
-            
+
             self._logger.info("Map interface cleaned up successfully")
-            
+
         except Exception as e:
             self._logger.error(f"Error cleaning up map interface: {e}")
-            
+
     def _hide_map_ui_elements(self) -> None:
         """Hide all map-related UI elements."""
         try:
             # List of map-related UI elements
             map_elements = ["map_view", "map_panel", "map_controls", "map_legend"]
-            
+
             # Set visibility of all map elements to False
             self._set_ui_elements_visibility(map_elements, visible=False)
-            
+
             self._logger.debug("Finished hiding map UI elements")
-            
+
         except Exception as e:
             self._logger.error(f"Error hiding map UI elements: {e}")
-            
+
     def _reset_map_state(self) -> None:
         """Reset map-related state variables."""
         try:
             # Reset map selection and interaction state
-            map_state_vars = ["map_zoom", "map_position", "map_selection", "highlighted_location"]
-            
+            map_state_vars = [
+                "map_zoom",
+                "map_position",
+                "map_selection",
+                "highlighted_location",
+            ]
+
             for var_name in map_state_vars:
                 self._reset_state_variable(var_name)
-            
+
             # Clear temporary map data if it exists
             if hasattr(self, "temp_map_data"):
                 self.temp_map_data = None
                 self._logger.debug("Cleared temporary map data")
-                
+
             self._logger.debug("Finished resetting map state")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting map state: {e}")
-            
+
     def _reset_state_variable(self, var_name: str) -> None:
         """Reset a state variable to its default value based on its type.
-        
+
         Args:
             var_name: Name of the variable to reset
         """
         if not hasattr(self, var_name):
             return
-            
+
         var_value = getattr(self, var_name)
-        
+
         # Determine default value based on current value's type
         if isinstance(var_value, (list, tuple)):
             setattr(self, var_name, [])
@@ -3183,12 +3295,14 @@ class Game:
             setattr(self, var_name, 0)
         else:
             setattr(self, var_name, None)
-            
+
         self._logger.debug(f"Reset state variable: {var_name}")
-            
-    def _set_ui_elements_visibility(self, element_names: List[str], visible: bool) -> None:
+
+    def _set_ui_elements_visibility(
+        self, element_names: List[str], visible: bool
+    ) -> None:
         """Set visibility of UI elements.
-        
+
         Args:
             element_names: List of UI element names to update
             visible: True to show elements, False to hide them
@@ -3196,141 +3310,147 @@ class Game:
         try:
             action = "show" if visible else "hide"
             method_name = action
-            
+
             for element_name in element_names:
                 if element_name not in self.ui_elements:
                     continue
-                    
+
                 element = self.ui_elements[element_name]
-                
+
                 # Set the visible property if it exists
                 if hasattr(element, "visible"):
                     element.visible = visible
                     self._logger.debug(f"Set {element_name} visibility to {visible}")
-                    
+
                 # Call the show/hide method if it exists
-                if hasattr(element, method_name) and callable(getattr(element, method_name)):
+                if hasattr(element, method_name) and callable(
+                    getattr(element, method_name)
+                ):
                     try:
                         method = getattr(element, method_name)
                         method()
                         self._logger.debug(f"Called {method_name}() for {element_name}")
                     except Exception as e:
                         self._logger.error(f"Error {action}ing {element_name}: {e}")
-                        
+
         except Exception as e:
             self._logger.error(f"Error setting UI element visibility: {e}")
-    
+
     def _restore_game_ui_after_map(self) -> None:
         """Restore game UI elements after exiting map."""
         try:
             # List of game UI elements to restore
             game_ui_elements = ["player_hud", "main_view", "game_controls"]
-            
+
             # Set visibility of all game elements to True
             self._set_ui_elements_visibility(game_ui_elements, visible=True)
-                        
+
             self._logger.debug("Finished restoring game UI elements")
-            
+
         except Exception as e:
             self._logger.error(f"Error restoring game UI: {e}")
-            
+
     def _exit_save_high_score(self) -> None:
         """Save the player's high score when exiting game over state.
-        
+
         This state exit handler records the player's score, updates the high score list
         if the current score qualifies, and saves the updated high scores to a file.
         """
         try:
             self._logger.info("Processing and saving high score")
-            
+
             # Get current score
             current_score = self._get_current_score()
             if current_score <= 0:
                 self._logger.debug("No valid score to save")
                 return
-                
+
             # Load existing high scores
             high_scores = self._load_high_scores()
-            
+
             # Check if current score qualifies as a high score
             if self._is_high_score(current_score, high_scores):
                 # Add current score to high scores
                 player_name = self._get_player_name()
                 self._add_to_high_scores(player_name, current_score, high_scores)
-                
+
                 # Save updated high scores
                 self._save_high_scores(high_scores)
                 self._logger.info(f"New high score saved: {current_score}")
             else:
                 self._logger.debug(f"Score {current_score} not high enough to qualify")
-                
+
         except Exception as e:
             self._logger.error(f"Error saving high score: {e}")
-            
+
     def _get_current_score(self) -> int:
         """Get the player's current score.
-        
+
         Returns:
             int: Current score, or 0 if not available
         """
         try:
             # Check game stats for score
-            if hasattr(self, "game_stats") and isinstance(self.game_stats, dict) and "score" in self.game_stats:
+            if (
+                hasattr(self, "game_stats")
+                and isinstance(self.game_stats, dict)
+                and "score" in self.game_stats
+            ):
                 return self.game_stats["score"]
-                    
+
             # Check player object for score
             if hasattr(self, "player") and hasattr(self.player, "score"):
                 return self.player.score
-                
+
             # Try other possible score locations
             if hasattr(self, "score"):
                 return self.score
-                
+
             self._logger.warning("Could not find current score")
             return 0
-            
+
         except Exception as e:
             self._logger.error(f"Error getting current score: {e}")
             return 0
-            
+
     def _load_high_scores(self) -> List[Dict[str, Any]]:
         """Load existing high scores from file.
-        
+
         Returns:
             List[Dict[str, Any]]: List of high score entries, empty if none exist
         """
         try:
             # Default high scores file path
             file_path = os.path.join(self.save_dir, "high_scores.json")
-            
+
             # If file doesn't exist, return empty list
             if not os.path.exists(file_path):
                 self._logger.debug(f"High scores file not found at {file_path}")
                 return []
-                
+
             # Load high scores from file
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 high_scores = json.load(f)
-                
+
             # Validate that high_scores is a list
             if not isinstance(high_scores, list):
                 self._logger.warning("Invalid high scores format, resetting")
                 return []
-                
+
             self._logger.debug(f"Loaded {len(high_scores)} high scores")
             return high_scores
-            
+
         except Exception as e:
             self._logger.error(f"Error loading high scores: {e}")
             return []
-            
+
     def _is_high_score(self, score: int, high_scores: List[Dict[str, Any]]) -> bool:
         """Check if the current score qualifies as a high score.
-        
+
         Args:
             score: Current score to check
             high_scores: List of existing high scores
-            
+
         Returns:
             bool: True if the score qualifies, False otherwise
         """
@@ -3338,45 +3458,53 @@ class Game:
             # If we have fewer than 10 high scores, any positive score qualifies
             if len(high_scores) < 10:
                 return score > 0
-                
+
             # Check if the current score is higher than the lowest high score
-            lowest_score = float('inf')
+            lowest_score = float("inf")
             for entry in high_scores:
                 if "score" in entry and entry["score"] < lowest_score:
                     lowest_score = entry["score"]
-                    
+
             return score > lowest_score
-            
+
         except Exception as e:
             self._logger.error(f"Error checking if score qualifies: {e}")
             # Default to allowing the score to be saved if there's an error
             return True
-            
+
     def _get_player_name(self) -> str:
         """Get the player's name for the high score entry.
-        
+
         Returns:
             str: Player name, or "Player" if not available
         """
         try:
             # Check player object for name
-            if hasattr(self, "player") and (hasattr(self.player, "name") and self.player.name):
+            if hasattr(self, "player") and (
+                hasattr(self.player, "name") and self.player.name
+            ):
                 return self.player.name
-                    
+
             # Check game settings for player name
-            if hasattr(self, "settings") and isinstance(self.settings, dict) and ("player_name" in self.settings and self.settings["player_name"]):
+            if (
+                hasattr(self, "settings")
+                and isinstance(self.settings, dict)
+                and ("player_name" in self.settings and self.settings["player_name"])
+            ):
                 return self.settings["player_name"]
-                    
+
             # Default player name
             return "Player"
-            
+
         except Exception as e:
             self._logger.error(f"Error getting player name: {e}")
             return "Player"
-            
-    def _add_to_high_scores(self, player_name: str, score: int, high_scores: List[Dict[str, Any]]) -> None:
+
+    def _add_to_high_scores(
+        self, player_name: str, score: int, high_scores: List[Dict[str, Any]]
+    ) -> None:
         """Add the current score to the high scores list.
-        
+
         Args:
             player_name: Name of the player
             score: Score to add
@@ -3388,27 +3516,27 @@ class Game:
                 "name": player_name,
                 "score": score,
                 "date": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "play_time": getattr(self, "play_time", 0)
+                "play_time": getattr(self, "play_time", 0),
             }
-            
+
             # Add new entry to high scores
             high_scores.append(new_entry)
-            
+
             # Sort high scores by score (descending)
             high_scores.sort(key=lambda x: x.get("score", 0), reverse=True)
-            
+
             # Keep only the top 10 scores
             if len(high_scores) > 10:
                 high_scores = high_scores[:10]
-                
+
             self._logger.debug(f"Added score {score} for {player_name} to high scores")
-            
+
         except Exception as e:
             self._logger.error(f"Error adding to high scores: {e}")
-            
+
     def _save_high_scores(self, high_scores: List[Dict[str, Any]]) -> None:
         """Save high scores to file.
-        
+
         Args:
             high_scores: List of high score entries to save
         """
@@ -3417,20 +3545,20 @@ class Game:
             if not os.path.exists(self.save_dir):
                 os.makedirs(self.save_dir)
                 self._logger.debug(f"Created save directory: {self.save_dir}")
-                
+
             # Save high scores to file
             file_path = os.path.join(self.save_dir, "high_scores.json")
-            with open(file_path, "w") as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(high_scores, f, indent=2)
-                
+
             self._logger.debug(f"Saved {len(high_scores)} high scores to {file_path}")
-            
+
         except Exception as e:
             self._logger.error(f"Error saving high scores: {e}")
-            
+
     def _exit_reset_game(self) -> None:
         """Reset the game when exiting certain game states.
-        
+
         This handler is typically called when transitioning from game over state
         back to the main menu or when starting a new game. It resets all game
         variables and state to their initial values.
@@ -3441,93 +3569,93 @@ class Game:
             self._logger.info("Game state successfully reset")
         except Exception as e:
             self._logger.error(f"Error resetting game: {e}")
-            
+
     def _perform_full_reset(self) -> None:
         """Perform all reset operations in sequence."""
         # Reset game variables
         self._reset_game_variables()
-        
+
         # Reset player state
         self._reset_player_state()
-        
+
         # Reset game world
         self._reset_game_world()
-        
+
         # Reset UI elements
         self._reset_ui_elements()
-        
+
         # Reset game timer and stats
         self._reset_game_timer()
         self._reset_game_stats()
-        
+
         # Reset any ongoing animations or effects
         self._clear_animations()
-            
+
     def _reset_game_variables(self) -> None:
         """Reset core game variables to their initial values."""
         try:
             self._logger.debug("Resetting game variables")
-            
+
             # Reset game flags
             self.paused = False
             self.game_over = False
             self.victory = False
-            
+
             # Reset game progress tracking
             self.current_level = 1
             self.difficulty = self.initial_difficulty
-            
+
             # Reset timers
             self.elapsed_time = 0
             self.play_time = 0
-            
+
             # Reset any cached data
             self.cached_data = {}
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting game variables: {e}")
-            
+
     def _reset_player_state(self) -> None:
         """Reset the player character to initial state."""
         try:
             self._logger.debug("Resetting player state")
-            
+
             # Check if player exists and has reset method
             if hasattr(self, "player"):
                 if hasattr(self.player, "reset") and callable(self.player.reset):
                     self.player.reset()
                     self._logger.debug("Called player.reset()")
                     return
-                    
+
                 # Otherwise, recreate player with initial values
                 self._create_new_player()
-                
+
         except Exception as e:
             self._logger.error(f"Error resetting player state: {e}")
-            
+
     def _create_new_player(self) -> None:
         """Create a new player with initial values."""
         try:
             # Get initial player config
             player_config = self.GAME_CONFIG.get("player", {})
-            
+
             # Create new player instance using factory if available
             if self._try_create_player_from_factory(player_config):
                 return
-                
+
             # Otherwise reset existing player attributes
             if hasattr(self, "player"):
                 self._reset_player_attributes(player_config)
-                
+
         except Exception as e:
             self._logger.error(f"Error creating new player: {e}")
-            
+
     def _try_create_player_from_factory(self, player_config: Dict[str, Any]) -> bool:
         """Try to create a new player using player class constructor.
-        
+
         Args:
             player_config: Configuration for the new player
-            
+
         Returns:
             bool: True if player was created, False otherwise
         """
@@ -3538,109 +3666,114 @@ class Game:
                 self.player = factory(**player_config)
                 self._logger.debug(f"Created new player instance using {class_name}")
                 return True
-                
+
         return False
-        
+
     def _reset_player_attributes(self, player_config: Dict[str, Any]) -> None:
         """Reset player attributes to initial values.
-        
+
         Args:
             player_config: Configuration with initial values
         """
         player = self.player
-        
+
         # Reset basic attributes
         self._reset_player_basic_stats(player, player_config)
-        
+
         # Reset inventory
         self._reset_player_inventory(player)
-        
+
         # Reset position and score
         self._reset_player_position_and_score(player, player_config)
-            
+
         self._logger.debug("Reset player attributes manually")
-        
+
     def _reset_player_basic_stats(self, player, player_config: Dict[str, Any]) -> None:
         """Reset player's basic stats like health and energy.
-        
+
         Args:
             player: Player object
             player_config: Configuration with initial values
         """
         if hasattr(player, "health"):
             player.health = player_config.get("health", 100)
-            
+
         if hasattr(player, "energy"):
             player.energy = player_config.get("energy", 100)
-            
+
         if hasattr(player, "resources") and isinstance(player.resources, dict):
             player.resources = player_config.get("resources", {})
-            
+
     def _reset_player_inventory(self, player) -> None:
         """Reset player's inventory.
-        
+
         Args:
             player: Player object
         """
         if not hasattr(player, "inventory"):
             return
-            
+
         inventory = player.inventory
         if hasattr(inventory, "clear") and callable(inventory.clear):
             inventory.clear()
         elif hasattr(inventory, "items") and isinstance(inventory.items, dict):
             inventory.items = {}
-            
-    def _reset_player_position_and_score(self, player, player_config: Dict[str, Any]) -> None:
+
+    def _reset_player_position_and_score(
+        self, player, player_config: Dict[str, Any]
+    ) -> None:
         """Reset player's position and score.
-        
+
         Args:
             player: Player object
             player_config: Configuration with initial values
         """
         if hasattr(player, "position"):
             player.position = player_config.get("start_position", (0, 0))
-            
+
         if hasattr(player, "score"):
             player.score = 0
-            
+
     def _reset_game_world(self) -> None:
         """Reset the game world and environment."""
         try:
             self._logger.debug("Resetting game world")
-            
+
             # Reset world components
             self._reset_world_generator()
             self._reset_entities()
             self._regenerate_world()
-                
+
             self._logger.debug("Game world reset")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting game world: {e}")
-            
+
     def _reset_world_generator(self) -> None:
         """Reset the world generator if it exists."""
-        if hasattr(self, "world_generator") and (hasattr(self.world_generator, "reset") and callable(self.world_generator.reset)):
+        if hasattr(self, "world_generator") and (
+            hasattr(self.world_generator, "reset")
+            and callable(self.world_generator.reset)
+        ):
             self.world_generator.reset()
-                
+
     def _reset_entities(self) -> None:
         """Reset all game entities (enemies, collectibles, etc)."""
         # Reset enemy spawns
         self._clear_collection("enemies")
-            
+
         # Reset collectibles
         self._clear_collection("collectibles")
-        
+
     def _clear_collection(self, collection_name: str) -> None:
         """Clear a collection of entities.
-        
+
         Args:
             collection_name: Name of the collection attribute
         """
         if not hasattr(self, collection_name):
             return
-            
+
         collection = getattr(self, collection_name)
         # Handle both list-type collections and collections with clear() method
         if hasattr(collection, "clear") and callable(collection.clear):
@@ -3654,99 +3787,99 @@ class Game:
                     collection.pop()
             elif isinstance(collection, set):
                 collection.clear()  # set.clear() always exists
-            
+
     def _regenerate_world(self) -> None:
         """Regenerate the initial world if possible."""
         if hasattr(self, "generate_world") and callable(self.generate_world):
             self.generate_world(level=1)
-            
+
     def _reset_ui_elements(self) -> None:
         """Reset UI elements to their initial state."""
         try:
             self._logger.debug("Resetting UI elements")
-            
+
             # Hide overlay UI elements
             self._hide_overlay_ui_elements()
-                        
+
             # Reset and show main game UI elements
             self._reset_main_ui_elements()
-                        
+
             self._logger.debug("UI elements reset")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting UI elements: {e}")
-            
+
     def _hide_overlay_ui_elements(self) -> None:
         """Hide all overlay UI elements."""
         overlay_elements = ["pause_menu", "shop_menu", "map_screen", "game_over_screen"]
-        
+
         # Hide all overlay elements in a single operation
         self._set_ui_elements_visibility(overlay_elements, visible=False)
-            
+
     def _hide_ui_element(self, element_name: str) -> None:
         """Hide a specific UI element.
-        
+
         Args:
             element_name: Name of the UI element to hide
         """
         # Use our helper method with a list containing just this element
         self._set_ui_elements_visibility([element_name], visible=False)
-            
+
     def _reset_main_ui_elements(self) -> None:
         """Reset and show main game UI elements."""
         main_elements = ["main_view", "player_hud", "game_controls"]
-        
+
         for element_name in main_elements:
             self._reset_and_show_ui_element(element_name)
-            
+
     def _reset_and_show_ui_element(self, element_name: str) -> None:
         """Reset and show a specific UI element.
-        
+
         Args:
             element_name: Name of the UI element to reset and show
         """
         if element_name not in self.ui_elements:
             return
-            
+
         element = self.ui_elements[element_name]
-        
+
         # Call reset method if available
         if hasattr(element, "reset") and callable(element.reset):
             element.reset()
-            
+
         # Set visibility to true using our helper method
         self._set_ui_elements_visibility([element_name], visible=True)
-            
+
     def _reset_game_timer(self) -> None:
         """Reset game timers and time-based variables."""
         try:
             self._logger.debug("Resetting game timer")
-            
+
             # Reset time tracking
             self.game_start_time = time.time()
             self.elapsed_time = 0
             self.last_update_time = time.time()
-            
+
             # Reset any time-based cooldowns
             self.cooldowns = {}
-            
+
             # Reset frame counters
             self.current_frame = 0
-            
+
             self._logger.debug("Game timer reset")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting game timer: {e}")
-            
+
     def _reset_game_stats(self) -> None:
         """Reset game statistics and metrics."""
         try:
             self._logger.debug("Resetting game statistics")
-            
+
             # Initialize empty stats dictionary if needed
             if not hasattr(self, "game_stats") or not isinstance(self.game_stats, dict):
                 self.game_stats = {}
-                
+
             # Reset all game stats
             self.game_stats = {
                 "score": 0,
@@ -3755,31 +3888,31 @@ class Game:
                 "distance_traveled": 0,
                 "items_purchased": 0,
                 "deaths": 0,
-                "levels_completed": 0
+                "levels_completed": 0,
             }
-            
+
             self._logger.debug("Game statistics reset")
-            
+
         except Exception as e:
             self._logger.error(f"Error resetting game stats: {e}")
-            
+
     def _clear_animations(self) -> None:
         """Clear any ongoing animations or visual effects."""
         try:
             self._logger.debug("Clearing animations and effects")
-            
+
             # Clear animation collections
             self._clear_collection("animations")
             self._clear_collection("particles")
-            
+
             # Reset sound effects
             self._stop_sounds()
-                
+
             self._logger.debug("Animations and effects cleared")
-            
+
         except Exception as e:
             self._logger.error(f"Error clearing animations: {e}")
-            
+
     def _stop_sounds(self) -> None:
         """Stop all active sound effects."""
         if hasattr(self, "_stop_all_sounds") and callable(self._stop_all_sounds):

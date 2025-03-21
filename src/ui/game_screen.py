@@ -14,8 +14,8 @@ import pygame
 from config import COLOR_TEXT
 
 # Local application imports
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ascii_ui import ASCIIBox, ASCIIButton
+from ui.ui_base.ascii_base import UIStyle
+from ui.ui_base.ascii_ui import ASCIIBox, ASCIIButton
 
 # Third-party library imports
 

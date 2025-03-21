@@ -1,4 +1,6 @@
 """
+src/systems/encounter_generator.py
+
 Encounter generator module: Generates combat and other encounters based on player location and status.
 """
 

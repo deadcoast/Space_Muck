@@ -1,4 +1,6 @@
 """
+src/systems/exploration_manager.py
+
 Exploration Management System: Handles exploration, discovery, and mapping.
 
 This module provides functionality for managing exploration activities,
@@ -98,9 +100,9 @@ class ExplorationManager:
         """Initialize the exploration manager."""
         # Region tracking
         self.regions: Dict[str, Region] = {}
-        self.region_grid: Dict[
-            Tuple[int, int], str
-        ] = {}  # Position to region_id mapping
+        self.region_grid: Dict[Tuple[int, int], str] = (
+            {}
+        )  # Position to region_id mapping
 
         # Mission management
         self.active_missions: Dict[str, ExplorationMission] = {}

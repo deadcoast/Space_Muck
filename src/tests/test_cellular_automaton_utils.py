@@ -3,9 +3,10 @@
 Unit tests for the cellular automaton utilities module.
 """
 
+import inspect
+
 # Standard library imports
 import unittest
-import inspect
 
 # Local application imports
 from typing import Any, Dict, Set
@@ -141,9 +142,11 @@ class TestCellularAutomatonUtils(unittest.TestCase):
             grid,
             mineral_map,
             hostility=0.9,
-            rng=rng
-            if "rng" in inspect.signature(apply_environmental_effects).parameters
-            else None,
+            rng=(
+                rng
+                if "rng" in inspect.signature(apply_environmental_effects).parameters
+                else None
+            ),
         )
 
         # With high hostility, cells should mostly die except in high mineral areas
@@ -157,9 +160,11 @@ class TestCellularAutomatonUtils(unittest.TestCase):
             grid,
             mineral_map,
             hostility=0.1,
-            rng=rng
-            if "rng" in inspect.signature(apply_environmental_effects).parameters
-            else None,
+            rng=(
+                rng
+                if "rng" in inspect.signature(apply_environmental_effects).parameters
+                else None
+            ),
         )
 
         # With low hostility, more cells should survive

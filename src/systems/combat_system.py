@@ -1,4 +1,6 @@
 """
+src/systems/combat_system.py
+
 Combat system module: Handles combat encounters between the player and enemy ships.
 """
 
@@ -36,7 +38,9 @@ def print_combat_error(error_msg: str, details: List[str] = None) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ COMBAT ERROR ━━━━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ⚠ {:<52} ┃   │""".format(error_msg)
+│  ┃  ⚠ {:<52} ┃   │""".format(
+            error_msg
+        )
     )
 
     if details:
@@ -51,7 +55,9 @@ def print_combat_success(message: str, details: List[str] = None) -> None:
         """
 │  ┏━━━━━━━━━━━━━━━━━━ COMBAT ACTION ━━━━━━━━━━━━━━━━━━━━┓   │
 │  ┃                                                       ┃   │
-│  ┃  ✔ {:<52} ┃   │""".format(message)
+│  ┃  ✔ {:<52} ┃   │""".format(
+            message
+        )
     )
 
     if details:
@@ -671,14 +677,14 @@ class CombatSystem:
         return self._prepare_enemy_destroyed_result(
             log_message, loot, xp_result, reputation_change
         )
-        
+
     def _process_enemy_loot(self, loot: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process the loot obtained from an enemy and update player state.
-        
+
         Args:
             loot: Dictionary containing credits, XP, and items from the enemy
-            
+
         Returns:
             Dictionary with XP processing results
         """
@@ -691,22 +697,22 @@ class CombatSystem:
             if item["type"] not in self.player.inventory:
                 self.player.inventory[item["type"]] = 0
             self.player.inventory[item["type"]] += 1
-            
+
         return xp_result
-        
+
     def _generate_combat_log_message(self, loot: Dict[str, Any]) -> str:
         """
         Generate a log message for the combat result and display it.
-        
+
         Args:
             loot: Dictionary containing the loot obtained from the enemy
-            
+
         Returns:
             String containing the formatted log message
         """
         # Construct the basic message
         log_message = f"{self.current_enemy.ship_type} ship destroyed! Gained {loot['credits']} credits and {loot['xp']} XP."
-        
+
         # Add item information if present
         items_str = "None"
         if loot["items"]:
@@ -725,18 +731,21 @@ class CombatSystem:
 
         # Add to combat log
         self.combat_log.append(log_message)
-        
+
         return log_message
-        
+
     def _update_combat_quest_progress(self) -> bool:
         """
         Update the player's combat quest progress if applicable.
-        
+
         Returns:
             True if a quest was updated and is now complete, False otherwise
         """
         # Check if player has an active combat quest
-        if not self.player.current_quest or self.player.current_quest.get("type") != "combat":
+        if (
+            not self.player.current_quest
+            or self.player.current_quest.get("type") != "combat"
+        ):
             return False
 
         # Update the enemy count
@@ -749,19 +758,19 @@ class CombatSystem:
             self.player.current_quest["current_enemies"]
             >= self.player.current_quest["target_enemies"]
         )
-        
+
     def _update_faction_reputation(self) -> Optional[Dict[str, Any]]:
         """
         Update player reputation based on the defeated enemy's faction.
-        
+
         Returns:
             Optional dictionary with reputation change details
         """
         if not self.current_enemy.faction:
             return None
-            
+
         reputation_change = None
-        
+
         # Defeating a faction ship reduces reputation with that faction
         if self.current_enemy.faction in [
             "galactic_navy",
@@ -779,20 +788,25 @@ class CombatSystem:
             and self.current_enemy.ship_type == "patrol"
         ):
             reputation_change = self.player.change_reputation("fringe_colonies", 2)
-            
+
         return reputation_change
-        
-    def _prepare_enemy_destroyed_result(self, log_message: str, loot: Dict[str, Any], 
-                                      xp_result: Dict[str, Any], reputation_change: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _prepare_enemy_destroyed_result(
+        self,
+        log_message: str,
+        loot: Dict[str, Any],
+        xp_result: Dict[str, Any],
+        reputation_change: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
         """
         Prepare the final result dictionary for the enemy destroyed event.
-        
+
         Args:
             log_message: The formatted log message
             loot: Dictionary containing the loot obtained from the enemy
             xp_result: Dictionary with XP processing results
             reputation_change: Optional dictionary with reputation change details
-            
+
         Returns:
             Dictionary with all combat results
         """

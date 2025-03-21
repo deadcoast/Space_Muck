@@ -1,20 +1,24 @@
-# Import base classes from ascii_base.py using absolute imports
+"""
+ascii_ui.py
+
+This module provides the ASCII-based user interface components for Space Muck.
+"""
 
 # Standard library imports
 import logging
 
 # Local application imports
 from typing import Callable, Dict, List, Optional, Tuple
-from src.ui.ui_base.ui_element import UIElement
-from src.ui.ui_base.ui_style import UIStyle
-from config import COLOR_TEXT, COLOR_HIGHLIGHT
+from config import COLOR_HIGHLIGHT, COLOR_TEXT
+from ui.ui_base.ui_element import UIElement
+from ui.ui_base.ui_style import UIStyle
 
 # Third-party library imports
 import pygame
 
+
 class ASCIIBox(UIElement):
     """A simple box UI element with customizable borders and content."""
-
 
     def __init__(
         self,
@@ -49,11 +53,11 @@ class ASCIIBox(UIElement):
 
     def _wrap_line(self, line: str, max_width: int) -> List[str]:
         """Wrap a single line of text to fit within the specified width.
-        
+
         Args:
             line: The line of text to wrap
             max_width: Maximum width for each wrapped line
-            
+
         Returns:
             List[str]: List of wrapped lines
         """
@@ -370,6 +374,7 @@ class ASCIIPanel(UIElement):
 
         return None
 
+
 class ASCIIButton(UIElement):
     """A clickable button UI element."""
 
@@ -547,6 +552,7 @@ class ASCIIButton(UIElement):
             logging.error(f"Error handling mouse event: {e}")
 
         return None
+
 
 class ASCIIProgressBar(UIElement):
     """A progress bar UI element."""

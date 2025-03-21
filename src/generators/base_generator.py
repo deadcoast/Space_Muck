@@ -1,4 +1,6 @@
 """
+src/generators/base_generator.py
+
 BaseGenerator class: The base class for all procedural generation entities in the game.
 """
 
@@ -1058,7 +1060,8 @@ class BaseGenerator(BaseEntity):
             np.ndarray: Trimmed result chunk
         """
         return result_chunk[
-            process_start - start_row : process_start
+            process_start
+            - start_row : process_start
             - start_row
             + (end_row - start_row)
         ]

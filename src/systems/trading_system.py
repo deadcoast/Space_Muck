@@ -1,4 +1,6 @@
 """
+src/systems/trading_system.py
+
 Trading System: Handles resource trading, market mechanics, and price fluctuations.
 
 This module provides a comprehensive trading system with dynamic pricing,

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-# /src/main.py
 """
-
 Space Muck - Advanced Procedural Generation Edition
 
 A space mining game featuring:
@@ -40,7 +38,6 @@ from config import (
     MINIMAP_PADDING,
     MINIMAP_SIZE,
     RACE_INITIAL_DENSITY,
-    SHOW_FPS,
     STATE_PLAY,
     STATE_SHOP,
     VIEW_HEIGHT,
@@ -3451,7 +3448,7 @@ class Game:
     def _draw_performance_info(self) -> None:
         """Draw performance information (FPS counter and debug info)."""
         # Draw FPS counter if enabled and debug info is off
-        if SHOW_FPS and not self.show_debug:
+        if self.show_fps and not self.show_debug:
             self._draw_fps_counter()
 
         # Draw detailed debug info if enabled

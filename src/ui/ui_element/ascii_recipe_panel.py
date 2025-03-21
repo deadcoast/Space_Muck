@@ -1,3 +1,9 @@
+"""
+ascii_recipe_panel.py
+
+Provides a specialized recipe panel for displaying and managing converter recipes.
+"""
+
 # Standard library imports
 import logging
 from typing import Any, Dict, List, Optional, Tuple, TypeVar

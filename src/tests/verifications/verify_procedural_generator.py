@@ -17,13 +17,13 @@ import numpy as np
 # Add the src directory to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from world.asteroid_field import AsteroidField
+
 # Import the modules after path setup
 from generators.procedural_generator import (
     ProceduralGenerator,
     create_field_with_multiple_algorithms,
 )
-
-from world.asteroid_field import AsteroidField
 
 
 def test_procedural_generator():
@@ -37,9 +37,9 @@ def test_procedural_generator():
     assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
     assert generator.width == 100, f"Expected width 100, got {generator.width}"
     assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert generator.entity_type == "procedural", (
-        f"Expected entity_type 'procedural', got {generator.entity_type}"
-    )
+    assert (
+        generator.entity_type == "procedural"
+    ), f"Expected entity_type 'procedural', got {generator.entity_type}"
 
     # Test noise generation
     print("Testing noise generation...")
@@ -77,9 +77,9 @@ def test_create_field_function():
     )
 
     # Verify the field properties
-    assert isinstance(field, AsteroidField), (
-        f"Expected AsteroidField, got {type(field)}"
-    )
+    assert isinstance(
+        field, AsteroidField
+    ), f"Expected AsteroidField, got {type(field)}"
     assert field.width == 80, f"Expected width 80, got {field.width}"
     assert field.height == 80, f"Expected height 80, got {field.height}"
     assert field.grid.shape == (

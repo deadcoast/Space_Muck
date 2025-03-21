@@ -1,3 +1,9 @@
+"""
+ascii_table.py
+
+Provides a specialized table for displaying ASCII-style tables.
+"""
+
 # Standard library imports
 import logging
 import time

@@ -17,10 +17,6 @@ import numpy as np
 # Third-party library imports
 from numpy.random import PCG64, Generator
 
-# Standard library imports
-
-# Third-party library imports
-
 # Initialize random number generator with a fixed seed for reproducibility
 rng = Generator(PCG64(42))
 
@@ -36,10 +32,12 @@ except ImportError:
     )
 
 
-def _count_neighbors(grid: np.ndarray, x: int, y: int, width: int, height: int, wrap: bool) -> int:
+def _count_neighbors(
+    grid: np.ndarray, x: int, y: int, width: int, height: int, wrap: bool
+) -> int:
     """
     Count the number of live neighbors for a cell at position (x, y).
-    
+
     Args:
         grid: The grid containing cell states
         x: X-coordinate of the cell
@@ -47,12 +45,12 @@ def _count_neighbors(grid: np.ndarray, x: int, y: int, width: int, height: int, 
         width: Width of the grid
         height: Height of the grid
         wrap: Whether to wrap around grid edges
-        
+
     Returns:
         int: Number of live neighbors
     """
     neighbors = 0
-    
+
     for dy in [-1, 0, 1]:
         for dx in [-1, 0, 1]:
             # Skip the cell itself
@@ -69,20 +67,22 @@ def _count_neighbors(grid: np.ndarray, x: int, y: int, width: int, height: int, 
                 continue
 
             neighbors += grid[ny, nx]
-                
+
     return neighbors
 
 
-def _apply_rules(current_state: int, neighbors: int, birth_set: Set[int], survival_set: Set[int]) -> int:
+def _apply_rules(
+    current_state: int, neighbors: int, birth_set: Set[int], survival_set: Set[int]
+) -> int:
     """
     Apply cellular automaton rules to determine the next state of a cell.
-    
+
     Args:
         current_state: Current state of the cell (0 or 1)
         neighbors: Number of live neighbors
         birth_set: Set of neighbor counts that cause cell birth
         survival_set: Set of neighbor counts that allow cell survival
-        
+
     Returns:
         int: Next state of the cell (0 or 1)
     """
@@ -94,11 +94,17 @@ def _apply_rules(current_state: int, neighbors: int, birth_set: Set[int], surviv
         return 1 if neighbors in birth_set else 0
 
 
-def _evolve_grid_once(grid: np.ndarray, birth_set: Set[int], survival_set: Set[int], 
-                     wrap: bool, width: int, height: int) -> np.ndarray:
+def _evolve_grid_once(
+    grid: np.ndarray,
+    birth_set: Set[int],
+    survival_set: Set[int],
+    wrap: bool,
+    width: int,
+    height: int,
+) -> np.ndarray:
     """
     Evolve the grid through one iteration of the cellular automaton rules.
-    
+
     Args:
         grid: Current state of the grid
         birth_set: Set of neighbor counts that cause cell birth
@@ -106,18 +112,18 @@ def _evolve_grid_once(grid: np.ndarray, birth_set: Set[int], survival_set: Set[i
         wrap: Whether to wrap around grid edges
         width: Width of the grid
         height: Height of the grid
-        
+
     Returns:
         np.ndarray: Evolved grid after one iteration
     """
     new_grid = grid.copy()
-    
+
     # Process all cells using itertools.product for better performance
     for y, x in itertools.product(range(height), range(width)):
         # Count neighbors and apply rules
         neighbors = _count_neighbors(grid, x, y, width, height, wrap)
         new_grid[y, x] = _apply_rules(grid[y, x], neighbors, birth_set, survival_set)
-    
+
     return new_grid
 
 
@@ -160,7 +166,8 @@ def apply_cellular_automaton(
     # Evolve the grid for the specified number of iterations
     for _ in range(iterations):
         result_grid = _evolve_grid_once(
-            result_grid, birth_set, survival_set, wrap, width, height)
+            result_grid, birth_set, survival_set, wrap, width, height
+        )
 
     # Preserve original values where cells are alive
     return grid * result_grid

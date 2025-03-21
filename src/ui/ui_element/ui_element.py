@@ -1,3 +1,9 @@
+"""
+ui_element.py
+
+Provides a base class for all UI elements with cellular automaton-inspired behaviors.
+"""
+
 # Standard library imports
 import contextlib
 import curses

@@ -132,21 +132,25 @@ def _create_correct_import(module: str, imported_item: str, correct_module: str)
         return f"from {correct_module} import {imported_item}"
 
 
-def _process_mapped_import(import_line: str, module: str, imported_item: str, content: str) -> tuple[str, bool]:
+def _process_mapped_import(
+    import_line: str, module: str, imported_item: str, content: str
+) -> tuple[str, bool]:
     """Process imports that exist in the UI_IMPORT_MAP."""
     correct_module = UI_IMPORT_MAP[imported_item]
-    
+
     # If the module is already correct, skip
     if module == correct_module:
         return content, False
-        
+
     correct_import = _create_correct_import(module, imported_item, correct_module)
     new_content = content.replace(import_line, correct_import)
     logging.info(f"  Fixed: {import_line} -> {correct_import}")
     return new_content, True
 
 
-def _process_relative_import(import_line: str, module: str, imported_item: str, content: str) -> tuple[str, bool]:
+def _process_relative_import(
+    import_line: str, module: str, imported_item: str, content: str
+) -> tuple[str, bool]:
     """Process UI-related relative imports that need to be made absolute."""
     if "ui" not in module or module.startswith("src."):
         return content, False
@@ -172,7 +176,7 @@ def fix_ui_imports(file_path: str, dry_run: bool = False) -> bool:
     logging.info(f"Processing {file_path}...")
 
     try:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
         logging.error(f"Error reading file {file_path}: {e}")
@@ -209,7 +213,7 @@ def fix_ui_imports(file_path: str, dry_run: bool = False) -> bool:
 
     if not dry_run:
         try:
-            with open(file_path, "w") as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             logging.info(f"Fixed UI imports in {file_path}")
         except Exception as e:

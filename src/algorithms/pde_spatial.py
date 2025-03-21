@@ -1,5 +1,5 @@
 """
-pde_spatial.py
+src/algorithms/pde_spatial.py
 
 Extends PDE-based modeling for more advanced simulations involving multiple fields
 and advection. This module builds upon the foundational ideas in a simple Gray-Scott
@@ -52,8 +52,9 @@ Copyright (c) 2025 ...
 All rights reserved.
 """
 
-import numpy as np
 from typing import Dict, Optional, Tuple
+
+import numpy as np
 
 
 class AdvectionDiffusionSystem:
@@ -409,6 +410,7 @@ class CoupledPDEFields(AdvectionDiffusionSystem):
         # The external_supply is a constant inflow or feed of resource
         return (-self.beta * W * R) + self.external_supply
 
+
 """
 --------------------------------------------------------------------------------
 REACTION DIFFUSION SIMULATOR
@@ -423,6 +425,7 @@ patterns reminiscent of natural processes.
    - Tunable diffusion coefficients, feed rate, and kill rate to produce
      stable or chaotic patterns.
 """
+
 
 class ReactionDiffusionSimulator:
     """
@@ -667,8 +670,12 @@ class ReactionDiffusionSimulator:
 
     def set_parameters(
         self,
-        du: Optional[float] = None,  # noqa: N803 - Standard mathematical notation for diffusion coefficient
-        dv: Optional[float] = None,  # noqa: N803 - Standard mathematical notation for diffusion coefficient
+        du: Optional[
+            float
+        ] = None,  # noqa: N803 - Standard mathematical notation for diffusion coefficient
+        dv: Optional[
+            float
+        ] = None,  # noqa: N803 - Standard mathematical notation for diffusion coefficient
         feed_rate: Optional[float] = None,
         kill_rate: Optional[float] = None,
     ) -> None:

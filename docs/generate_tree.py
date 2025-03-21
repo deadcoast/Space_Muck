@@ -230,13 +230,12 @@ def main():
         )
 
     # Save to file
-    with open(output_file, "w") as f:
-        _extracted_from_main_40(f, directory, ignore_patterns, console)
+    with open(output_file, "w", encoding="utf-8") as f:
+        _tree_rules(f, directory, ignore_patterns, console)
     print(f"Tree saved to {output_file}")
 
 
-# TODO Rename this here and in `main`
-def _extracted_from_main_40(f, directory, ignore_patterns, console):
+def _tree_rules(f, directory, ignore_patterns, console):
     f.write("# Directory Tree\n\n")
     f.write(f"Generated for: {directory}\n\n")
     if ignore_patterns:

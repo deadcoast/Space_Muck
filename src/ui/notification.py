@@ -377,12 +377,17 @@ class NotificationManager:
             pygame.Rect(
                 self.panel_x, self.panel_y, self.panel_width, self.panel_height
             ),
-            color=(30, 30, 40, alpha),
-            border_color=(100, 100, 140, alpha),
-            border_width=2,
+            alpha=alpha,
             header="Notifications",
             header_height=30,
             header_color=(40, 40, 60, alpha),
+            border_color=(100, 100, 140, alpha),
+            border_width=2,
+            border_radius=3,
+            bg_color=(40, 40, 60, alpha),
+            fg_color=(100, 100, 140, alpha),
+            font_size=14,
+            font_color=(100, 100, 140, alpha),
         )
 
     def _draw_category_filters(self, surface: pygame.Surface, alpha: int) -> None:

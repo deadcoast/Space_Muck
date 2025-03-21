@@ -1,16 +1,20 @@
+"""
+ascii_template_manager.py
+
+Provides a specialized template manager for managing converter chain templates.
+"""
+
 # Standard library imports
-
-# Third-party library imports
-
 from typing import Any, Dict, List, Optional, Tuple, TypeVar
-
-import pygame
 
 # Local application imports
 from config import COLOR_TEXT
 from src.ui.draw_utils import draw_text
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ascii_ui import ASCIIButton, ASCIIPanel
+
+# Third-party library imports
+import pygame
 
 # Type definitions for better type checking
 T = TypeVar("T")

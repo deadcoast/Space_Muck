@@ -15,11 +15,12 @@ from generators.asteroid_generator import AsteroidGenerator
 from generators.procedural_generator import (
     ProceduralGenerator,
     create_field_with_multiple_algorithms,
-    generate_asteroid_field,
-    generate_field,
-    generate_ore,
-    generate_rare_minerals,
-    generate_rare_ore,
+    # The following are methods of ProceduralGenerator, not standalone functions
+    # generate_asteroid_field,
+    # generate_field,
+    # generate_ore,
+    # generate_rare_minerals, 
+    # generate_rare_ore,
 )
 from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 
@@ -30,9 +31,4 @@ __all__ = [
     "AsteroidGenerator",
     "SymbioteEvolutionGenerator",
     "AsteroidField",
-    "generate_field",
-    "generate_asteroid_field",
-    "generate_rare_minerals",
-    "generate_ore",
-    "generate_rare_ore",
 ]

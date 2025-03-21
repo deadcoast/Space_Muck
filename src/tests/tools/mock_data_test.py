@@ -8,7 +8,7 @@ This module provides functions to generate consistent test data.
 import itertools
 
 # Local application imports
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 # Third-party library imports
 import numpy as np

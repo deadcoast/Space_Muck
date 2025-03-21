@@ -5,20 +5,22 @@ This script verifies that the cellular_automaton.py module has been
 properly integrated with the AsteroidField class.
 """
 
-import sys
-import os
-import numpy as np
 import logging
+import os
+import sys
+
+import numpy as np
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
 
 # Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Check if cellular_automaton module is available
 try:
     from src.algorithms import cellular_automaton
+
     available = True
     logging.info("Cellular automaton module is available")
 except ImportError:
@@ -34,18 +36,20 @@ if available:
     try:
         neighbors = cellular_automaton.count_neighbors(test_grid)
         logging.info(f"Neighbor counting test successful: shape={neighbors.shape}")
-        
+
         # Test cellular automaton rules application
         birth_set = {3}
         survival_set = {2, 3}
         result = cellular_automaton.apply_life_rules(test_grid, birth_set, survival_set)
         logging.info(f"Cellular automaton rules test successful: shape={result.shape}")
-        
+
         # Test energy diffusion
         energy_grid = np.random.random((10, 10)).astype(np.float32)
-        diffused = cellular_automaton.diffuse_energy(energy_grid, decay_rate=0.05, spread_rate=0.2)
+        diffused = cellular_automaton.diffuse_energy(
+            energy_grid, decay_rate=0.05, spread_rate=0.2
+        )
         logging.info(f"Energy diffusion test successful: shape={diffused.shape}")
-        
+
         print("All cellular automaton module tests passed!")
     except Exception as e:
         logging.error(f"Error during cellular automaton testing: {str(e)}")

@@ -28,7 +28,7 @@ from src.converters.converter_models import (
     Recipe,
     ResourceType,
 )
-from src.ui.draw_utils import draw_panel, draw_text, PanelConfig
+from src.ui.draw_utils import PanelConfig, draw_panel, draw_text
 from src.ui.event_system import (
     EventData,
     EventSystem,
@@ -44,6 +44,7 @@ from src.ui.ui_element.ui_ascii import (
     ASCIIProgressBar,
     draw_ascii_table,
 )
+
 # Import render helper only when needed
 
 # Third-party library imports
@@ -321,11 +322,7 @@ class ConverterDetailsView:
         panel_config.color = COLOR_BG
         panel_config.border_color = (100, 100, 140)
         panel_config.border_width = 1
-        draw_panel(
-            type_panel_surface,
-            pygame.Rect(0, 0, 20, 3),
-            config=panel_config
-        )
+        draw_panel(type_panel_surface, pygame.Rect(0, 0, 20, 3), config=panel_config)
         # Draw text on the surface
         draw_text(
             type_panel_surface, f"Type: {self.converter.type.value.capitalize()}", 1, 1

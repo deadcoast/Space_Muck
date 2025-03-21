@@ -12,8 +12,8 @@ import numpy as np
 
 # Local application imports
 from entities.player import (  # Use a simple mock object instead of importing MagicMock
-    SimpleMock,
     Player,
+    SimpleMock,
 )
 
 

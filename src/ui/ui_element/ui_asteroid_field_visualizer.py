@@ -1,3 +1,9 @@
+"""
+ui_asteroid_field_visualizer.py
+
+Provides a specialized asteroid field visualizer for the game.
+"""
+
 # Standard library imports
 import contextlib
 import curses
@@ -10,7 +16,6 @@ from typing import List
 from src.ui.ui_base.ascii_base import UIElement, UIStyle
 
 # Third-party library imports
-
 
 # Define standard colors for UI components
 COLOR_TEXT = (220, 220, 220)  # Standard text color

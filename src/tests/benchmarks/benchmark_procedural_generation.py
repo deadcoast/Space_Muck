@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_procedural_generation.py
+
 Comprehensive benchmark script for procedural generation in Space Muck.
 
 This script measures the performance of various procedural generation components

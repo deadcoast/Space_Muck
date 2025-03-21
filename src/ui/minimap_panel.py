@@ -19,6 +19,7 @@ from src.ui.ui_element.ascii_panel import ASCIIPanel
 
 # Third-party library imports
 
+
 class ASCIIMinimapPanel:
     """
     A minimap showing the player's position in the game world.

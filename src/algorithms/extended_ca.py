@@ -17,7 +17,7 @@ FEATURES
 
 2. LayeredAutomaton
    - Manages multiple data layers (e.g., symbiote biomass, resource levels,
-     temperature) that factor into birth/survival rules. 
+     temperature) that factor into birth/survival rules.
    - Each layer updates in sync but can influence each other, allowing complex
      interactions beyond a single CA grid.
 
@@ -45,11 +45,11 @@ Copyright (c) 2025 ...
 All rights reserved.
 """
 
-
 import itertools
-import numpy as np
 import random
-from typing import Set, Tuple, Dict, List
+from typing import Dict, List, Set, Tuple
+
+import numpy as np
 
 
 # ------------------------------------------------------------------------------
@@ -253,12 +253,12 @@ class EvolvingCARules:
 
         # 1) Apply rule mutations
         self._apply_rule_mutations()
-        
+
         # 2) Apply local rules to generate the new grid
         self._apply_local_rules(new_grid)
 
         self.grid = new_grid
-        
+
     def _apply_rule_mutations(self) -> None:
         """
         Apply potential rule mutations to each cell based on mutation probability.
@@ -267,22 +267,22 @@ class EvolvingCARules:
             for y in range(self.height):
                 if random.random() < self.mutation_prob:
                     self._mutate_cell_rule(x, y)
-                    
+
     def _apply_local_rules(self, new_grid: np.ndarray) -> None:
         """
         Apply CA rules to each cell to determine its next state.
-        
+
         Args:
             new_grid: The grid to store the next generation states
         """
         for x in range(self.width):
             for y in range(self.height):
                 self._update_cell_state(x, y, new_grid)
-                
+
     def _update_cell_state(self, x: int, y: int, new_grid: np.ndarray) -> None:
         """
         Update a single cell's state based on local rules.
-        
+
         Args:
             x: X coordinate of cell
             y: Y coordinate of cell
@@ -290,7 +290,7 @@ class EvolvingCARules:
         """
         neighbors = self._count_neighbors(x, y)
         cell_alive = self.grid[x, y] == 1
-        
+
         # Apply birth or survival rules based on current state
         rule_set = self.survival_rules[x, y] if cell_alive else self.birth_rules[x, y]
         if neighbors in rule_set:
@@ -317,8 +317,12 @@ class EvolvingCARules:
         e.g., randomly add or remove a neighbor count in birth or survival sets.
         """
         # Weighted chance to mutate birth vs survival
-        target_set = self.birth_rules[x, y] if random.random() < 0.5 else self.survival_rules[x, y]
-        
+        target_set = (
+            self.birth_rules[x, y]
+            if random.random() < 0.5
+            else self.survival_rules[x, y]
+        )
+
         # Either remove or add an element
         if random.random() < 0.5 and len(target_set) > 0:
             # Remove a random element
@@ -416,12 +420,16 @@ class MultiScaleAutomaton:
         x_ratio = self.fine_width // self.coarse_width
         y_ratio = self.fine_height // self.coarse_height
 
-        for cx, cy in itertools.product(range(self.coarse_width), range(self.coarse_height)):
+        for cx, cy in itertools.product(
+            range(self.coarse_width), range(self.coarse_height)
+        ):
             cval = self.coarse_grid[cx, cy]
             # Write cval to the corresponding block in fine_grid
             start_x = cx * x_ratio
             start_y = cy * y_ratio
-            for fx, fy in itertools.product(range(start_x, start_x + x_ratio), range(start_y, start_y + y_ratio)):
+            for fx, fy in itertools.product(
+                range(start_x, start_x + x_ratio), range(start_y, start_y + y_ratio)
+            ):
                 self.fine_grid[fx, fy] = cval
 
     def sync_fine_to_coarse(self) -> None:
@@ -437,11 +445,13 @@ class MultiScaleAutomaton:
         for cx in range(self.coarse_width):
             for cy in range(self.coarse_height):
                 self._update_coarse_cell_from_fine_block(cx, cy, x_ratio, y_ratio)
-                
-    def _update_coarse_cell_from_fine_block(self, cx: int, cy: int, x_ratio: int, y_ratio: int) -> None:
+
+    def _update_coarse_cell_from_fine_block(
+        self, cx: int, cy: int, x_ratio: int, y_ratio: int
+    ) -> None:
         """
         Update a single coarse cell based on its corresponding fine grid block.
-        
+
         Args:
             cx: X coordinate in coarse grid
             cy: Y coordinate in coarse grid
@@ -451,16 +461,14 @@ class MultiScaleAutomaton:
         # Calculate the boundaries of the fine grid block
         start_x = cx * x_ratio
         start_y = cy * y_ratio
-        
+
         # Extract the corresponding block from the fine grid
-        block = self.fine_grid[
-            start_x : start_x + x_ratio, start_y : start_y + y_ratio
-        ]
-        
+        block = self.fine_grid[start_x : start_x + x_ratio, start_y : start_y + y_ratio]
+
         # Calculate alive cells and threshold
         alive_count = np.sum(block)
         total_cells = x_ratio * y_ratio
-        
+
         # Set coarse cell state based on majority rule
         self.coarse_grid[cx, cy] = 1 if alive_count > (total_cells // 2) else 0
 
@@ -479,22 +487,24 @@ class MultiScaleAutomaton:
         new_grid = np.zeros_like(grid)
         for x, y in itertools.product(range(width), range(height)):
             neigh = self._count_cell_neighbors(grid, x, y, width, height)
-            new_grid[x, y] = self._determine_new_state(grid[x, y], neigh, birth_set, survival_set)
+            new_grid[x, y] = self._determine_new_state(
+                grid[x, y], neigh, birth_set, survival_set
+            )
         return new_grid
-        
+
     def _count_cell_neighbors(
         self, grid: np.ndarray, x: int, y: int, width: int, height: int
     ) -> int:
         """
         Count the number of living neighbors for a cell in the grid.
-        
+
         Args:
             grid: The cellular automaton grid
             x: X coordinate of cell
             y: Y coordinate of cell
             width: Width of the grid
             height: Height of the grid
-            
+
         Returns:
             Count of living neighbors
         """
@@ -507,19 +517,23 @@ class MultiScaleAutomaton:
                 ny = (y + dy) % height
                 count += grid[nx, ny]
         return count
-        
+
     def _determine_new_state(
-        self, current_state: int, neighbors: int, birth_set: Set[int], survival_set: Set[int]
+        self,
+        current_state: int,
+        neighbors: int,
+        birth_set: Set[int],
+        survival_set: Set[int],
     ) -> int:
         """
         Determine the new state of a cell based on its current state and neighbors.
-        
+
         Args:
             current_state: Current state of the cell (0 or 1)
             neighbors: Number of living neighbors
             birth_set: Set of neighbor counts that cause birth
             survival_set: Set of neighbor counts that allow survival
-            
+
         Returns:
             New state of the cell (0 or 1)
         """

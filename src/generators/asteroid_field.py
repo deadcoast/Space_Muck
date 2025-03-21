@@ -1,4 +1,6 @@
 """
+src/generators/asteroid_field.py
+
 AsteroidField class: Manages the asteroid field grid and symbiote entities.
 
 This module contains the AsteroidField class which handles:
@@ -9,20 +11,20 @@ This module contains the AsteroidField class which handles:
 - Optimized rendering and interaction systems
 """
 
+import importlib.util
+
 # Standard library imports
 import itertools
 import logging
 import math
 import random
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 # Third-party library imports
 import numpy as np
 import pygame
 import scipy
-import importlib.util
-from typing import TYPE_CHECKING
 
 # Local application imports
 from config import GRID_HEIGHT, GRID_WIDTH, VIEW_HEIGHT, VIEW_WIDTH
@@ -58,12 +60,18 @@ from utils.logging_setup import (
 )
 
 # Check for optional cellular automaton dependencies
-CELLULAR_AUTOMATON_AVAILABLE = importlib.util.find_spec("algorithms.cellular_automaton") is not None
+CELLULAR_AUTOMATON_AVAILABLE = (
+    importlib.util.find_spec("algorithms.cellular_automaton") is not None
+)
 EXTENDED_CA_AVAILABLE = importlib.util.find_spec("algorithms.extended_ca") is not None
 
 # For type checking only - these imports are not executed at runtime
 if TYPE_CHECKING:
-    from algorithms.cellular_automaton import count_neighbors, apply_life_rules, diffuse_energy  # type: ignore
+    from algorithms.cellular_automaton import (  # type: ignore
+        apply_life_rules,
+        count_neighbors,
+        diffuse_energy,
+    )
     from algorithms.extended_ca import CustomNeighborhoodAutomaton  # type: ignore
 
 # Define at module level to prevent undefined variable errors
@@ -75,10 +83,16 @@ CustomNeighborhoodAutomaton = None
 # Import cellular automaton dependencies at runtime if available
 if CELLULAR_AUTOMATON_AVAILABLE:
     try:
-        from algorithms.cellular_automaton import count_neighbors, apply_life_rules, diffuse_energy
+        from algorithms.cellular_automaton import (
+            apply_life_rules,
+            count_neighbors,
+            diffuse_energy,
+        )
     except ImportError:
         CELLULAR_AUTOMATON_AVAILABLE = False
-        logging.warning("Optimized cellular automaton algorithms not available. Using internal implementation.")
+        logging.warning(
+            "Optimized cellular automaton algorithms not available. Using internal implementation."
+        )
 
 # Import extended CA dependencies at runtime if available
 if EXTENDED_CA_AVAILABLE:
@@ -86,7 +100,9 @@ if EXTENDED_CA_AVAILABLE:
         from algorithms.extended_ca import CustomNeighborhoodAutomaton
     except ImportError:
         EXTENDED_CA_AVAILABLE = False
-        logging.warning("Extended cellular automaton features not available. Using basic implementation.")
+        logging.warning(
+            "Extended cellular automaton features not available. Using basic implementation."
+        )
 
 # Try to import the optimized generators if available
 try:
@@ -175,12 +191,19 @@ class AsteroidField:
         self.energy_decay = 0.02  # Energy decay rate
         self.energy_spread = 0.1  # How much energy spreads to neighbors
         self.apply_edge_wrapping = True  # Whether to wrap around the grid edges
-        
+
         # Custom neighborhood parameters
         self.use_custom_neighborhood = False
-        self.current_neighborhood_pattern = "moore"  # Default to standard Moore neighborhood
+        self.current_neighborhood_pattern = (
+            "moore"  # Default to standard Moore neighborhood
+        )
         self.custom_neighborhood_offsets = self._get_neighborhood_offsets("moore")
-        self.available_neighborhood_patterns = {"moore", "von_neumann", "extended", "directional"}
+        self.available_neighborhood_patterns = {
+            "moore",
+            "von_neumann",
+            "extended",
+            "directional",
+        }
 
         # Asteroid parameters
         self.regen_rate: float = 0.01
@@ -1367,7 +1390,9 @@ class AsteroidField:
                 # Use custom neighborhood pattern when enabled
                 neighbor_counts = self._calculate_custom_neighbor_counts(grid)
             except Exception as e:
-                logging.warning(f"Error using custom neighborhood: {str(e)}. Falling back to standard convolution.")
+                logging.warning(
+                    f"Error using custom neighborhood: {str(e)}. Falling back to standard convolution."
+                )
                 neighbor_counts = self._calculate_neighbor_counts_scipy(grid)
         else:
             # Use standard convolution for neighbor counting
@@ -1375,7 +1400,9 @@ class AsteroidField:
 
         # Apply rules based on available energy information
         if energy_grid is not None and energy_boost is not None:
-            self._apply_energy_based_rules(grid, neighbor_counts, new_grid, energy_boost)
+            self._apply_energy_based_rules(
+                grid, neighbor_counts, new_grid, energy_boost
+            )
         else:
             self._rule_handler(grid, neighbor_counts, new_grid)
 
@@ -1402,14 +1429,34 @@ class AsteroidField:
             ]
         elif pattern == "moore":
             # Classic Moore neighborhood (8 neighbors)
-            return [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+            return [
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+                (0, -1),
+                (0, 1),
+                (1, -1),
+                (1, 0),
+                (1, 1),
+            ]
         elif pattern == "von_neumann":
             # Von Neumann neighborhood (4 neighbors)
             return [(-1, 0), (0, -1), (0, 1), (1, 0)]
         else:
             # Default to Moore neighborhood
-            logging.warning(f"Unknown neighborhood pattern: {pattern}. Using Moore neighborhood.")
-            return [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+            logging.warning(
+                f"Unknown neighborhood pattern: {pattern}. Using Moore neighborhood."
+            )
+            return [
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+                (0, -1),
+                (0, 1),
+                (1, -1),
+                (1, 0),
+                (1, 1),
+            ]
 
     def _calculate_neighbor_counts_scipy(self, grid):
         """
@@ -1437,7 +1484,7 @@ class AsteroidField:
             except Exception as e:
                 log_exception("Error using optimized count_neighbors", e)
                 logging.warning(f"Falling back to internal count_neighbors: {str(e)}")
-                
+
         # Fall back to internal implementation
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         return signal.convolve2d(
@@ -1583,105 +1630,107 @@ class AsteroidField:
                     height=self.height,
                     birth_set=self.birth_set,
                     survival_set=self.survival_set,
-                    neighbor_offsets=self.custom_neighborhood_offsets
+                    neighbor_offsets=self.custom_neighborhood_offsets,
                 )
-                
+
                 # Set the grid data and calculate neighbors using the custom implementation
                 custom_ca.grid = grid.copy()
                 return custom_ca.count_neighbors()
             except Exception as e:
                 logging.warning(f"Error using CustomNeighborhoodAutomaton: {str(e)}")
-        
+
         # Fall back to manual calculation
         return self._calculate_custom_neighbors_manually(grid)
-        
+
     def _calculate_custom_neighbors_manually(self, grid):
         """
         Calculate neighbor counts using manual iteration for custom neighborhood patterns.
         This is a fallback when the CustomNeighborhoodAutomaton class is not available.
-        
+
         Args:
             grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
-            
+
         Returns:
             numpy.ndarray: Grid of neighbor counts for each cell
         """
         # Initialize the neighbor count grid
         neighbor_counts = np.zeros_like(grid, dtype=np.int8)
-        
+
         # Calculate neighbor counts for each cell using the custom pattern
         for y in range(self.height):
             for x in range(self.width):
-                neighbor_counts[y, x] = self._count_custom_neighbors_at_position(grid, x, y)
-                
+                neighbor_counts[y, x] = self._count_custom_neighbors_at_position(
+                    grid, x, y
+                )
+
         return neighbor_counts
-        
+
     def _count_custom_neighbors_at_position(self, grid, x, y):
         """
         Count live neighbors at a specific position using the custom neighborhood pattern.
-        
+
         Args:
             grid (numpy.ndarray): Binary grid where 1 represents an asteroid and 0 represents empty space
             x (int): X coordinate
             y (int): Y coordinate
-            
+
         Returns:
             int: Number of live neighbors according to the custom pattern
         """
         alive_neighbors = 0
-        
+
         for dx, dy in self.custom_neighborhood_offsets:
             # Calculate neighbor coordinates
             nx, ny = x + dx, y + dy
-            
+
             # Apply coordinate adjustments based on edge wrapping setting
             nx, ny = self._adjust_coordinates(nx, ny)
-            
+
             # Skip if coordinates are out of bounds
             if nx is None or ny is None:
                 continue
-            
+
             # Count live neighbors
             if grid[ny, nx] > 0:
                 alive_neighbors += 1
-                
+
         return alive_neighbors
-        
+
     def set_neighborhood_pattern(self, pattern: str) -> bool:
         """
         Set the active neighborhood pattern for cellular automaton.
-        
+
         This method allows switching between different cellular automaton neighborhood patterns,
         which affects how asteroids grow and interact. Available patterns are:
         - "moore": Classic Moore neighborhood (8 surrounding cells)
         - "von_neumann": Von Neumann neighborhood (4 orthogonal cells)
         - "extended": Extended Moore neighborhood (24 cells within distance 2)
         - "directional": Directional growth pattern (biased towards right and bottom)
-        
+
         Args:
             pattern: The pattern to use ("moore", "von_neumann", "extended", "directional")
-            
+
         Returns:
             bool: True if the pattern was successfully set, False otherwise
         """
         if pattern not in self.available_neighborhood_patterns:
             logging.warning(f"Unsupported neighborhood pattern: {pattern}")
             return False
-            
+
         self.current_neighborhood_pattern = pattern
         self.custom_neighborhood_offsets = self._get_neighborhood_offsets(pattern)
         self.use_custom_neighborhood = True
         return True
-        
+
     def get_current_neighborhood_pattern(self) -> str:
         """
         Get the name of the currently active neighborhood pattern.
-        
+
         Returns:
             str: Current neighborhood pattern name
         """
         return self.current_neighborhood_pattern
-        
+
     def reset_to_standard_neighborhood(self) -> None:
         """
         Reset to standard Moore neighborhood and disable custom neighborhood processing.
@@ -1689,11 +1738,11 @@ class AsteroidField:
         self.use_custom_neighborhood = False
         self.current_neighborhood_pattern = "moore"
         self.custom_neighborhood_offsets = self._get_neighborhood_offsets("moore")
-        
+
     def demonstrate_neighborhood_patterns(self) -> Dict[str, Any]:
         """
         Demonstrate all available neighborhood patterns by generating test results for each.
-        
+
         Returns:
             Dict containing test results for all available patterns
         """
@@ -1710,15 +1759,15 @@ class AsteroidField:
         self.use_custom_neighborhood = original_use_custom
 
         return results
-            
+
     def test_custom_neighborhood(self, pattern: str = None) -> Dict[str, Any]:
         """
         Test a custom neighborhood pattern on a small grid to verify it works correctly.
         This is helpful for debugging and visualizing different neighborhood effects.
-        
+
         Args:
             pattern: Optional pattern to test (uses current pattern if None)
-            
+
         Returns:
             Dict containing test results including:
                 - pattern_name: Name of the tested pattern
@@ -1731,30 +1780,30 @@ class AsteroidField:
             original_pattern = self.current_neighborhood_pattern
             if not self.set_neighborhood_pattern(pattern):
                 return {"success": False, "error": f"Invalid pattern: {pattern}"}
-                
+
         # Create a small test grid with a single active cell in the center
         test_size = 7
         test_grid = np.zeros((test_size, test_size), dtype=np.int8)
         center = test_size // 2
         test_grid[center, center] = 1
-        
+
         # Calculate neighbor counts using our custom implementation
         neighbor_counts = self._calculate_custom_neighbor_counts(test_grid)
-        
+
         # Create visualization grid showing the neighbor count pattern
         visual_grid = neighbor_counts.copy()
-        
+
         # Restore original pattern if we changed it
         if pattern is not None:
             self.set_neighborhood_pattern(original_pattern)
-            
+
         # Return test results
         return {
             "success": True,
             "pattern_name": self.current_neighborhood_pattern,
             "offsets": self.custom_neighborhood_offsets,
             "test_grid": visual_grid.tolist(),
-            "active_cell": (center, center)
+            "active_cell": (center, center),
         }
 
     def _count_neighbors_manual(self, grid, x, y):
@@ -1770,32 +1819,34 @@ class AsteroidField:
             int: Number of live neighbors
         """
         neighbors = 0
-        
+
         # Get the appropriate neighborhood pattern
-        offsets = self.custom_neighborhood_offsets if self.use_custom_neighborhood else [
-            (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)
-        ]
-        
+        offsets = (
+            self.custom_neighborhood_offsets
+            if self.use_custom_neighborhood
+            else [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        )
+
         # Count neighbors using the selected pattern
         for dx, dy in offsets:
             # Skip the center cell for standard pattern
             if not self.use_custom_neighborhood and dx == 0 and dy == 0:
                 continue
-                
+
             # Calculate neighbor coordinates
             nx, ny = x + dx, y + dy
-            
+
             # Apply coordinate adjustments based on edge wrapping setting
             nx, ny = self._adjust_coordinates(nx, ny)
-            
+
             # Skip if coordinates are out of bounds
             if nx is None or ny is None:
                 continue
-            
+
             # Count live neighbor
             if grid[ny, nx] > 0:
                 neighbors += 1
-                
+
         return neighbors
 
     def _adjust_coordinates(self, x, y):
@@ -1929,14 +1980,16 @@ class AsteroidField:
                 # Use the optimized apply_life_rules function
                 # Convert class sets to Python sets for the external function
                 return apply_life_rules(
-                    binary_grid, 
-                    set(self.birth_set), 
-                    set(self.survival_set), 
-                    energy_grid=energy_grid_normalized
+                    binary_grid,
+                    set(self.birth_set),
+                    set(self.survival_set),
+                    energy_grid=energy_grid_normalized,
                 )
             except Exception as e:
                 log_exception("Error using optimized apply_life_rules", e)
-                logging.warning(f"Falling back to internal cellular automaton implementation: {str(e)}")
+                logging.warning(
+                    f"Falling back to internal cellular automaton implementation: {str(e)}"
+                )
 
         # Fall back to internal implementation
         return self.apply_cellular_automaton(
@@ -2430,18 +2483,12 @@ class AsteroidField:
         # Use optimized cellular automaton if available
         if CELLULAR_AUTOMATON_AVAILABLE:
             try:
-                return self._low_density_mask(
-                    binary_grid
-                )
+                return self._low_density_mask(binary_grid)
             except Exception as e:
                 log_exception("Error using diffuse_energy", e)
                 logging.warning(f"Falling back to standard energy boost: {str(e)}")
 
-        low_density_mask = (
-            self._neighbour_counts(
-                binary_grid
-            )
-        )
+        low_density_mask = self._neighbour_counts(binary_grid)
         self.energy_grid[low_density_mask] += 0.05
 
     def _neighbour_counts(self, binary_grid):
@@ -2458,20 +2505,14 @@ class AsteroidField:
         return neighbor_counts < 2
 
     def _low_density_mask(self, binary_grid):
-        low_density_mask = (
-            self._neighbour_counts(
-                binary_grid
-            )
-        )
+        low_density_mask = self._neighbour_counts(binary_grid)
         energy_boost = np.zeros_like(self.energy_grid)
         energy_boost[low_density_mask] = 0.05
 
         # Apply boost and then use diffuse_energy for a more natural diffusion pattern
         boosted_energy = self.energy_grid + energy_boost
         self.energy_grid = diffuse_energy(
-            boosted_energy,
-            decay_rate=self.energy_decay,
-            spread_rate=self.energy_spread
+            boosted_energy, decay_rate=self.energy_decay, spread_rate=self.energy_spread
         )
 
     def _add_energy_to_low_density_areas_manual(self, binary_grid):

@@ -1,4 +1,5 @@
-"""Centralized manager for UI style handling.
+"""
+Centralized manager for UI style handling.
 
 This class provides a single source of truth for style-specific rendering logic,
 including colors, characters, and animation parameters. All UI components should
@@ -10,8 +11,7 @@ import logging
 
 # Local application imports
 from typing import Any, Dict, Tuple
-
-from src.ui.ui_base.ascii_base import UIStyle, COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
+from src.ui.ui_base.ascii_base import COLOR_BG, COLOR_HIGHLIGHT, COLOR_TEXT, UIStyle
 
 # Third-party library imports
 

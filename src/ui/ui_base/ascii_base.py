@@ -1,3 +1,10 @@
+"""
+ASCII-based UI base module for Space Muck.
+
+This module provides the base functionality for ASCII-based user interfaces,
+including border styles and animation styles.
+"""
+
 # Standard library imports
 import logging
 import math
@@ -16,6 +23,7 @@ COLOR_HIGHLIGHT = (255, 255, 100)  # Yellow-ish highlight
 
 class UIStyle(Enum):
     """Enum for UI visual styles."""
+
     SYMBIOTIC = auto()  # Organic, flowing style
     ASTEROID = auto()  # Rocky, rough style
     MECHANICAL = auto()  # Industrial, mechanical style

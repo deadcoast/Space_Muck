@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# /src/systems/event_system.py
 """
+src/systems/event_system.py
+
 Event System
 
 Implements an event-driven communication system for the Space Muck game.

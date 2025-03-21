@@ -1,4 +1,6 @@
 """
+src/systems/module_manager.py
+
 Module Management System: Handles module registration, lifecycle, and operations.
 
 This module provides functionality for managing game modules, including

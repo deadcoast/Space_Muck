@@ -42,6 +42,7 @@ try:
 except ImportError:
     CUPY_AVAILABLE = False
 
+
 class GPUNoiseGenerator(NoiseGenerator):
     """
     GPU-accelerated noise generator implementation.
@@ -118,10 +119,10 @@ class GPUNoiseGenerator(NoiseGenerator):
             )
 
     def _normalize_parameters(
-        self, 
-        octaves: List[int] = None, 
-        weights: List[float] = None, 
-        seed: Optional[int] = None
+        self,
+        octaves: List[int] = None,
+        weights: List[float] = None,
+        seed: Optional[int] = None,
     ) -> tuple:
         """Normalize input parameters for noise generation."""
         # Default octaves and weights
@@ -139,23 +140,23 @@ class GPUNoiseGenerator(NoiseGenerator):
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
-            
+
         return octaves, normalized_weights
-            
+
     def _generate_octave_noise(
-        self, 
-        width: int, 
-        height: int, 
-        scale: float, 
-        octave: int, 
-        octave_index: int, 
-        seed: Optional[int], 
-        backend: str
+        self,
+        width: int,
+        height: int,
+        scale: float,
+        octave: int,
+        octave_index: int,
+        seed: Optional[int],
+        backend: str,
     ) -> np.ndarray:
         """Generate noise for a single octave with the given parameters."""
         octave_scale = scale * (2**octave_index)
         octave_seed = seed + octave_index if seed is not None else None
-        
+
         return apply_noise_generation_gpu(
             width=width,
             height=height,
@@ -164,49 +165,51 @@ class GPUNoiseGenerator(NoiseGenerator):
             seed=octave_seed,
             backend=backend,
         )
-    
+
     def _combine_octaves_cupy(
-        self, 
-        width: int, 
-        height: int, 
-        scale: float, 
-        octaves: List[int], 
-        normalized_weights: List[float], 
-        seed: Optional[int]
+        self,
+        width: int,
+        height: int,
+        scale: float,
+        octaves: List[int],
+        normalized_weights: List[float],
+        seed: Optional[int],
     ) -> np.ndarray:
         """Combine multiple octaves using CuPy backend."""
         result = cp.zeros((height, width), dtype=cp.float32)
-        
+
         for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
             octave_noise = self._generate_octave_noise(
-                width, height, scale, octave, i, seed, "cupy")
-            
+                width, height, scale, octave, i, seed, "cupy"
+            )
+
             # Add weighted noise to result
             result += cp.asarray(octave_noise) * weight
-            
+
         # Ensure values are in [0, 1]
         result = cp.clip(result, 0, 1)
         return to_cpu(result)
-        
+
     def _combine_octaves_cuda(
-        self, 
-        width: int, 
-        height: int, 
-        scale: float, 
-        octaves: List[int], 
-        normalized_weights: List[float], 
-        seed: Optional[int]
+        self,
+        width: int,
+        height: int,
+        scale: float,
+        octaves: List[int],
+        normalized_weights: List[float],
+        seed: Optional[int],
     ) -> np.ndarray:
         """Combine multiple octaves using CUDA backend."""
         result = np.zeros((height, width), dtype=np.float32)
-        
+
         for i, (octave, weight) in enumerate(zip(octaves, normalized_weights)):
             octave_noise = self._generate_octave_noise(
-                width, height, scale, octave, i, seed, "cuda")
-            
+                width, height, scale, octave, i, seed, "cuda"
+            )
+
             # Add weighted noise to result
             result += octave_noise * weight
-            
+
         # Ensure values are in [0, 1]
         return np.clip(result, 0, 1)
 
@@ -235,35 +238,46 @@ class GPUNoiseGenerator(NoiseGenerator):
         """
         # Normalize parameters
         octaves, normalized_weights = self._normalize_parameters(octaves, weights, seed)
-        
+
         # Use CPU if backend is set to CPU or GPU is not available
         if self.backend == "cpu" or not is_gpu_available():
             return self.cpu_generator.generate_multi_octave_noise(
-                width=width, height=height, scale=scale,
-                octaves=octaves, weights=weights, seed=seed,
+                width=width,
+                height=height,
+                scale=scale,
+                octaves=octaves,
+                weights=weights,
+                seed=seed,
             )
-            
+
         try:
             # Choose appropriate backend implementation
             if self.backend == "cupy" and CUPY_AVAILABLE:
                 return self._combine_octaves_cupy(
-                    width, height, scale, octaves, normalized_weights, seed)
-                    
+                    width, height, scale, octaves, normalized_weights, seed
+                )
+
             elif self.backend == "cuda" and CUDA_AVAILABLE:
                 return self._combine_octaves_cuda(
-                    width, height, scale, octaves, normalized_weights, seed)
-                    
+                    width, height, scale, octaves, normalized_weights, seed
+                )
+
             # Fallback to CPU for unsupported backends
             raise ValueError(f"Unsupported backend: {self.backend}")
-            
+
         except Exception as e:
             logging.warning(
                 f"GPU multi-octave noise generation failed: {str(e)}. Falling back to CPU."
             )
             return self.cpu_generator.generate_multi_octave_noise(
-                width=width, height=height, scale=scale,
-                octaves=octaves, weights=weights, seed=seed,
+                width=width,
+                height=height,
+                scale=scale,
+                octaves=octaves,
+                weights=weights,
+                seed=seed,
             )
+
 
 class FractalNoiseGenerator(GPUNoiseGenerator):
     """
@@ -288,18 +302,18 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         height: int,
         warp_scale: float,
         warp_octaves: int,
-        warp_seed: Optional[int]
+        warp_seed: Optional[int],
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generate warp noise for x and y coordinates.
-        
+
         Args:
             width: Width of the noise array
             height: Height of the noise array
             warp_scale: Scale of the warping noise
             warp_octaves: Number of octaves for the warping noise
             warp_seed: Seed for the warp noise
-            
+
         Returns:
             Tuple of warp_x and warp_y noise arrays
         """
@@ -319,27 +333,27 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
             octaves=warp_octaves,
             seed=warp_seed + 1 if warp_seed is not None else None,
         )
-        
+
         return warp_x, warp_y
-        
+
     def _create_warped_coordinates(
         self,
         width: int,
         height: int,
         warp_x: np.ndarray,
         warp_y: np.ndarray,
-        scale: float
+        scale: float,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Create warped coordinates for domain warping.
-        
+
         Args:
             width: Width of the noise array
             height: Height of the noise array
             warp_x: X-coordinate warp noise
             warp_y: Y-coordinate warp noise
             scale: Base scale factor
-            
+
         Returns:
             Tuple of warped_x and warped_y coordinate arrays
         """
@@ -358,9 +372,9 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         # Normalize coordinates to [0, 1] range for noise generation
         warped_x = warped_x / width
         warped_y = warped_y / height
-        
+
         return warped_x, warped_y
-        
+
     def _generate_cupy_warped_noise(
         self,
         width: int,
@@ -369,11 +383,11 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         warped_y: np.ndarray,
         scale: float,
         octaves: int,
-        seed: Optional[int]
+        seed: Optional[int],
     ) -> np.ndarray:
         """
         Generate domain-warped noise using CuPy.
-        
+
         Args:
             width: Width of the noise array
             height: Height of the noise array
@@ -382,7 +396,7 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
             scale: Scale of the base noise
             octaves: Number of octaves for the base noise
             seed: Random seed
-            
+
         Returns:
             A 2D numpy array of noise values
         """
@@ -409,7 +423,7 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         # Ensure values are in [0, 1]
         result = cp.clip(result, 0, 1)
         return to_cpu(result)
-        
+
     def _generate_cpu_warped_noise(
         self,
         width: int,
@@ -418,11 +432,11 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         warped_y: np.ndarray,
         scale: float,
         octaves: int,
-        seed: Optional[int]
+        seed: Optional[int],
     ) -> np.ndarray:
         """
         Generate domain-warped noise using CPU (fallback).
-        
+
         Args:
             width: Width of the noise array
             height: Height of the noise array
@@ -431,7 +445,7 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
             scale: Scale of the base noise
             octaves: Number of octaves for the base noise
             seed: Random seed
-            
+
         Returns:
             A 2D numpy array of noise values
         """
@@ -462,25 +476,25 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
 
         # Ensure values are in [0, 1]
         return np.clip(result, 0, 1)
-        
+
     def _sample_noise_at_warped_coordinates(
         self,
         noise: np.ndarray,
         warped_x: np.ndarray,
         warped_y: np.ndarray,
         width: int,
-        height: int
+        height: int,
     ) -> np.ndarray:
         """
         Sample noise values at warped coordinates.
-        
+
         Args:
             noise: Base noise array
             warped_x: Warped X coordinates
             warped_y: Warped Y coordinates
             width: Width of the noise array
             height: Height of the noise array
-            
+
         Returns:
             Sampled noise array
         """
@@ -492,7 +506,7 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
 
             # Sample noise at warped position
             warped_noise[y, x] = noise[wy, wx]
-            
+
         return warped_noise
 
     def generate_domain_warped_noise(
@@ -547,11 +561,11 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
                     raise NotImplementedError(
                         "Only CuPy backend is currently implemented for domain warping"
                     )
-                    
+
                 return self._generate_cupy_warped_noise(
                     width, height, warped_x, warped_y, scale, octaves, seed
                 )
-                
+
             except Exception as e:
                 logging.warning(
                     f"GPU domain warping failed: {str(e)}. Falling back to CPU."
@@ -561,6 +575,7 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         return self._generate_cpu_warped_noise(
             width, height, warped_x, warped_y, scale, octaves, seed
         )
+
 
 def get_gpu_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """
@@ -576,6 +591,7 @@ def get_gpu_noise_generator(backend: str = "auto") -> NoiseGenerator:
         return GPUNoiseGenerator(backend=backend)
     logging.info("No GPU acceleration available, using CPU noise generator")
     return get_noise_generator()
+
 
 def get_fractal_noise_generator(backend: str = "auto") -> NoiseGenerator:
     """

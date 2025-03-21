@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# /src/systems/game_loop.py
 """
+src/systems/game_loop.py
+
 Game Loop System
 
 Provides a standardized game loop implementation that follows the layered architecture
