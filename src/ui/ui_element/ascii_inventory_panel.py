@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 
 import pygame
 
-from config import COLOR_TEXT, COLOR_HIGHLIGHT
+from config import COLOR_HIGHLIGHT, COLOR_TEXT
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ascii_ui import ASCIIPanel
 from src.ui.ui_element.ascii_button import ASCIIButton
@@ -378,7 +378,7 @@ class ASCIIInventoryPanel:
         try:
             # Draw panel background and border
             panel_rect = self._draw_panel_background(surface, font)
-            
+
             # Calculate layout
             margin = font.get_height() // 2
             content_x = self.rect.x + margin
@@ -386,8 +386,12 @@ class ASCIIInventoryPanel:
             content_width = self.rect.width - margin * 2
 
             # Draw components
-            content_y = self._draw_panel_header(surface, font, content_x, content_y, content_width, margin)
-            content_y = self._draw_inventory_content(surface, font, content_x, content_y, content_width, margin)
+            content_y = self._draw_panel_header(
+                surface, font, content_x, content_y, content_width, margin
+            )
+            content_y = self._draw_inventory_content(
+                surface, font, content_x, content_y, content_width, margin
+            )
             self._draw_page_indicator(surface, font, margin)
             self._draw_buttons(surface, font)
 
@@ -395,14 +399,16 @@ class ASCIIInventoryPanel:
         except Exception as e:
             logging.error(f"Error drawing inventory panel: {e}")
             return self.rect
-            
-    def _draw_panel_background(self, surface: pygame.Surface, font: pygame.font.Font) -> pygame.Rect:
+
+    def _draw_panel_background(
+        self, surface: pygame.Surface, font: pygame.font.Font
+    ) -> pygame.Rect:
         """Draw the panel background and border.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
-            
+
         Returns:
             pygame.Rect: The panel rect
         """
@@ -415,11 +421,18 @@ class ASCIIInventoryPanel:
             self.title,
         )
         return panel.draw(surface, font)
-    
-    def _draw_panel_header(self, surface: pygame.Surface, font: pygame.font.Font, 
-                           x: int, y: int, width: int, margin: int) -> int:
+
+    def _draw_panel_header(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
+        margin: int,
+    ) -> int:
         """Draw the capacity bar and sort/filter info.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -427,7 +440,7 @@ class ASCIIInventoryPanel:
             y: Starting y position
             width: Content width
             margin: Margin size
-            
+
         Returns:
             int: Updated y position after drawing
         """
@@ -436,21 +449,28 @@ class ASCIIInventoryPanel:
         y += font.get_height() + margin
 
         # Draw sort and filter info
-        sort_text = f"Sort: {self.sort_by.capitalize()} ({'↑' if self.sort_ascending else '↓'})"
+        sort_text = (
+            f"Sort: {self.sort_by.capitalize()} ({'↑' if self.sort_ascending else '↓'})"
+        )
         filter_text = f"Filter: {self.filter_type.capitalize()}"
         info_text = f"{sort_text}  |  {filter_text}"
 
-        surface.blit(
-            font.render(info_text, True, COLOR_TEXT), (x, y)
-        )
+        surface.blit(font.render(info_text, True, COLOR_TEXT), (x, y))
         y += font.get_height() + margin
-        
+
         return y
-    
-    def _draw_inventory_content(self, surface: pygame.Surface, font: pygame.font.Font,
-                              x: int, y: int, width: int, margin: int) -> int:
+
+    def _draw_inventory_content(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
+        margin: int,
+    ) -> int:
         """Draw the inventory items or empty message.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -458,7 +478,7 @@ class ASCIIInventoryPanel:
             y: Starting y position
             width: Content width
             margin: Margin size
-            
+
         Returns:
             int: Updated y position after drawing
         """
@@ -469,11 +489,18 @@ class ASCIIInventoryPanel:
             y = self._draw_empty_message(surface, font, x, y, width, margin)
 
         return y
-    
-    def _draw_column_headers(self, surface: pygame.Surface, font: pygame.font.Font,
-                           x: int, y: int, width: int, margin: int) -> int:
+
+    def _draw_column_headers(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
+        margin: int,
+    ) -> int:
         """Draw the column headers for the inventory list.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -481,7 +508,7 @@ class ASCIIInventoryPanel:
             y: Starting y position
             width: Content width
             margin: Margin size
-            
+
         Returns:
             int: Updated y position after drawing
         """
@@ -494,23 +521,27 @@ class ASCIIInventoryPanel:
         )
 
         type_x = x + width - font.size(header_type)[0] - margin * 4
-        surface.blit(
-            font.render(header_type, True, COLOR_HIGHLIGHT), (type_x, y)
-        )
+        surface.blit(font.render(header_type, True, COLOR_HIGHLIGHT), (type_x, y))
 
         header_qty = "Qty"
         qty_x = type_x - font.size(header_qty)[0] - margin * 4
-        surface.blit(
-            font.render(header_qty, True, COLOR_HIGHLIGHT), (qty_x, y)
-        )
+        surface.blit(font.render(header_qty, True, COLOR_HIGHLIGHT), (qty_x, y))
 
         y += font.get_height() + margin
         return y
-    
-    def _draw_item_list(self, surface: pygame.Surface, font: pygame.font.Font,
-                      x: int, y: int, width: int, margin: int, items: list) -> int:
+
+    def _draw_item_list(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
+        margin: int,
+        items: list,
+    ) -> int:
         """Draw the list of inventory items.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -519,7 +550,7 @@ class ASCIIInventoryPanel:
             width: Content width
             margin: Margin size
             items: List of inventory items to draw
-            
+
         Returns:
             int: Updated y position after drawing
         """
@@ -528,7 +559,7 @@ class ASCIIInventoryPanel:
         header_qty = "Qty"
         type_x = x + width - font.size(header_type)[0] - margin * 4
         qty_x = type_x - font.size(header_qty)[0] - margin * 4
-        
+
         for i, (item_id, quantity) in enumerate(items):
             item_color = self._get_item_color(item_id)
             item_type = self._get_item_type(item_id)
@@ -546,37 +577,37 @@ class ASCIIInventoryPanel:
             # Draw item name (truncate if too long)
             item_name = self._get_truncated_item_name(item_id, font, x, qty_x, margin)
 
-            surface.blit(
-                font.render(item_name, True, item_color), (x, y)
-            )
+            surface.blit(font.render(item_name, True, item_color), (x, y))
 
             # Draw quantity
             qty_text = str(quantity)
-            surface.blit(
-                font.render(qty_text, True, item_color), (qty_x, y)
-            )
+            surface.blit(font.render(qty_text, True, item_color), (qty_x, y))
 
             # Draw type
             type_text = item_type.capitalize()
-            surface.blit(
-                font.render(type_text, True, item_color), (type_x, y)
-            )
+            surface.blit(font.render(type_text, True, item_color), (type_x, y))
 
             y += font.get_height() + margin
-            
+
         return y
-    
-    def _get_truncated_item_name(self, item_id: str, font: pygame.font.Font, 
-                               content_x: int, qty_x: int, margin: int) -> str:
+
+    def _get_truncated_item_name(
+        self,
+        item_id: str,
+        font: pygame.font.Font,
+        content_x: int,
+        qty_x: int,
+        margin: int,
+    ) -> str:
         """Get the truncated item name that fits within the available width.
-        
+
         Args:
             item_id: Original item name/ID
             font: Font used for rendering
             content_x: Starting x position
             qty_x: X position of quantity column
             margin: Margin size
-            
+
         Returns:
             str: Truncated item name with ellipsis if needed
         """
@@ -585,19 +616,23 @@ class ASCIIInventoryPanel:
 
         if font.size(item_name)[0] > max_name_width:
             # Truncate and add ellipsis
-            while (
-                font.size(f"{item_name}...")[0] > max_name_width
-                and item_name != ""
-            ):
+            while font.size(f"{item_name}...")[0] > max_name_width and item_name != "":
                 item_name = item_name[:-1]
             item_name += "..."
 
         return item_name
-    
-    def _draw_empty_message(self, surface: pygame.Surface, font: pygame.font.Font,
-                          x: int, y: int, width: int, margin: int) -> int:
+
+    def _draw_empty_message(
+        self,
+        surface: pygame.Surface,
+        font: pygame.font.Font,
+        x: int,
+        y: int,
+        width: int,
+        margin: int,
+    ) -> int:
         """Draw message when inventory is empty.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -605,7 +640,7 @@ class ASCIIInventoryPanel:
             y: Starting y position
             width: Content width
             margin: Margin size
-            
+
         Returns:
             int: Updated y position after drawing
         """
@@ -620,12 +655,14 @@ class ASCIIInventoryPanel:
                 y + margin * 3,
             ),
         )
-        
+
         return y + margin * 3 + font.get_height()
-    
-    def _draw_page_indicator(self, surface: pygame.Surface, font: pygame.font.Font, margin: int) -> None:
+
+    def _draw_page_indicator(
+        self, surface: pygame.Surface, font: pygame.font.Font, margin: int
+    ) -> None:
         """Draw the page indicator at the bottom of the panel.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering
@@ -645,10 +682,10 @@ class ASCIIInventoryPanel:
                 self.rect.bottom - font.get_height() * 2 - margin,
             ),
         )
-    
+
     def _draw_buttons(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Draw the buttons at the bottom of the panel.
-        
+
         Args:
             surface: Surface to draw on
             font: Font to use for rendering

@@ -1,13 +1,124 @@
+"""
+ui_main.py
+
+Main module for the Space Muck UI.
+"""
+
 # Standard library imports
-import random
-import time
 import contextlib
 import curses
+import random
+import time
+from enum import Enum, auto
 
 # Third-party library imports
 
 # Local application imports
-from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
+# No imports from config needed here
+
+
+class AnimationStyle(Enum):
+    WARP = auto()
+    FRACTAL = auto()
+    CELLULAR = auto()
+    QUANTUM_FLUX = auto()
+    MINERAL_GROWTH = auto()
+
+
+class UIStyle(Enum):
+    MECHANICAL = auto()
+    SYMBIOTIC = auto()
+    QUANTUM = auto()
+    FLEET = auto()
+    ASTEROID = auto()
+
+
+class Menu:
+    def __init__(self, x, y, width, height, title, options, style):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.title = title
+        self.options = options
+        self.style = style
+        self.selected_index = 0
+        self.active = False
+
+    def handle_input(self, key):
+        if key == curses.KEY_UP:
+            self.selected_index = max(0, self.selected_index - 1)
+        elif key == curses.KEY_DOWN:
+            self.selected_index = min(len(self.options) - 1, self.selected_index + 1)
+        elif key in (curses.KEY_ENTER, 10):
+            return self.options[self.selected_index]
+        return None
+
+    def render(self, stdscr):
+        # Drawing the menu with the title and options
+        # Title
+        stdscr.addstr(self.y, self.x, self.title, curses.A_BOLD)
+        # Options
+        for i, option in enumerate(self.options):
+            attr = curses.A_REVERSE if i == self.selected_index else 0
+            stdscr.addstr(self.y + 2 + i, self.x + 2, option, attr)
+
+
+class SymbioteEvolutionMonitor:
+    def __init__(self, x, y, width, height, style):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.style = style
+
+    def animate(self, stdscr, style):
+        # Animation implementation would go here
+        pass
+
+
+class FleetDisplay:
+    def __init__(self, x, y, width, height, fleet_data, style):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.fleet_data = fleet_data
+        self.style = style
+
+    def animate(self, stdscr, frame):
+        # Animation implementation would go here
+        pass
+
+
+class AsteroidFieldVisualizer:
+    def __init__(self, x, y, width, height, density, style):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.density = density
+        self.style = style
+
+    def animate(self, stdscr, frame):
+        # Animation implementation would go here
+        pass
+
+
+class MiningStatus:
+    def __init__(self, x, y, width, height, resources, style):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.resources = resources
+        self.style = style
+        self.extraction_rate = {}
+
+    def animate(self, stdscr, style):
+        # Animation implementation would go here
+        pass
+
 
 class SpaceMuckMainUI:
     """Main UI manager for Space Muck game"""
@@ -211,6 +322,7 @@ def run_space_muck_ui():
         ui.main_loop()
 
     curses.wrapper(main)
+
 
 if __name__ == "__main__":
     run_space_muck_ui()

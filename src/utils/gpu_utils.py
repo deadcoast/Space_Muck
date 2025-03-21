@@ -7,27 +7,20 @@ used throughout the codebase, with fallback mechanisms for systems without
 GPU support.
 """
 
-
-
 import contextlib
+import importlib.util
+
 # Standard library imports
 import itertools
 import logging
-import importlib.util
-from typing import Any, List, Optional, Set, Tuple, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Optional, Set, Tuple, Union
 
 # Third-party library imports
 import numpy as np
 from numpy.random import PCG64, Generator
 
-# Standard library imports
-
-# Third-party library imports
-
 # Initialize random number generator with a fixed seed for reproducibility
 rng = Generator(PCG64(42))
-
-# GPU acceleration libraries - try to import with fallbacks
 
 # Check for optional dependencies
 NUMBA_AVAILABLE = importlib.util.find_spec("numba") is not None
@@ -36,14 +29,15 @@ CUPY_AVAILABLE = importlib.util.find_spec("cupy") is not None
 # For type checking only
 if TYPE_CHECKING:
     with contextlib.suppress(ImportError):
+        import cupy as cp  # type: ignore
         import numba  # type: ignore
         from numba import cuda  # type: ignore
-        import cupy as cp  # type: ignore
 # Import Numba at runtime if available
 if NUMBA_AVAILABLE:
     try:
         import numba
         from numba import cuda
+
         if CUDA_AVAILABLE := cuda.is_available():
             logging.info("CUDA is available for GPU acceleration")
         else:
@@ -60,6 +54,7 @@ cp = None  # Define at module level to prevent undefined variable errors
 if CUPY_AVAILABLE:
     try:
         import cupy as cp
+
         logging.info("CuPy is available for GPU acceleration")
     except ImportError:
         CUPY_AVAILABLE = False
@@ -1597,23 +1592,28 @@ def apply_kmeans_clustering_gpu(
 
 
 # Define constant for duplicate warning message
-SCIKIT_DBSCAN_WARNING = "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
+SCIKIT_DBSCAN_WARNING = (
+    "scikit-learn not available. DBSCAN requires scikit-learn or GPU."
+)
 
 
-def _apply_dbscan_cpu(data: np.ndarray, eps: float, min_samples: int, n_samples: int) -> np.ndarray:
+def _apply_dbscan_cpu(
+    data: np.ndarray, eps: float, min_samples: int, n_samples: int
+) -> np.ndarray:
     """Apply DBSCAN clustering using scikit-learn CPU implementation.
-    
+
     Args:
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
         n_samples: Number of samples
-        
+
     Returns:
         np.ndarray: Cluster labels
     """
     try:
         from sklearn.cluster import DBSCAN
+
         dbscan = DBSCAN(eps=eps, min_samples=min_samples)
         return dbscan.fit_predict(data)
     except ImportError:
@@ -1622,16 +1622,14 @@ def _apply_dbscan_cpu(data: np.ndarray, eps: float, min_samples: int, n_samples:
         return np.full(n_samples, -1)
 
 
-def _apply_dbscan_mps(
-    data: np.ndarray, eps: float, min_samples: int
-) -> np.ndarray:
+def _apply_dbscan_mps(data: np.ndarray, eps: float, min_samples: int) -> np.ndarray:
     """Apply DBSCAN clustering using MPS (Metal Performance Shaders).
-    
+
     Args:
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
-        
+
     Returns:
         np.ndarray: Cluster labels
     """
@@ -1645,7 +1643,7 @@ def _apply_dbscan_mps(
         distances = torch.zeros(
             (sample_count, sample_count), dtype=torch.float32, device=mps_device
         )
-        
+
         # Using batch matrix operations to utilize n_features dimension more efficiently
         for i in range(sample_count):
             # For each sample, compute distance to all other samples
@@ -1697,9 +1695,7 @@ def _apply_dbscan_mps(
         return to_cpu(labels)
 
     except Exception as e:
-        logging.warning(
-            f"MPS DBSCAN implementation failed: {e}. Falling back to CPU."
-        )
+        logging.warning(f"MPS DBSCAN implementation failed: {e}. Falling back to CPU.")
         return None
 
 
@@ -1707,13 +1703,13 @@ def _apply_dbscan_metalgpu(
     data: np.ndarray, eps: float, min_samples: int, _: int
 ) -> np.ndarray:
     """Apply DBSCAN clustering using the metalgpu library.
-    
+
     Args:
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
         _: Unused parameter (number of samples) to maintain consistent interface
-        
+
     Returns:
         np.ndarray: Cluster labels
     """
@@ -1725,13 +1721,11 @@ def _apply_dbscan_metalgpu(
         version_str = "unknown"
         if hasattr(metalgpu, "__version__"):
             version_str = metalgpu.__version__
-            
+
         logging.info(f"Using metalgpu version {version_str} for DBSCAN clustering")
 
         # Use metalgpu for DBSCAN clustering
-        return metalgpu.dbscan_clustering(
-            data=data, eps=eps, min_samples=min_samples
-        )
+        return metalgpu.dbscan_clustering(data=data, eps=eps, min_samples=min_samples)
 
     except Exception as e:
         logging.warning(
@@ -1744,7 +1738,7 @@ def _find_and_process_cluster_cupy(
     index: int, neighbors: Any, core_points: Any, labels: Any, cluster_id: int
 ) -> None:
     """Find and process a cluster from a core point using CuPy.
-    
+
     Args:
         index: Index of the core point to start from
         neighbors: Matrix of neighbor relationships
@@ -1776,11 +1770,11 @@ def _find_and_process_cluster_cupy(
 
 def _compute_distances_cupy(d_data: Any, n_samples: int) -> Any:
     """Compute pairwise distances between points using CuPy.
-    
+
     Args:
         d_data: CuPy array of data points
         n_samples: Number of samples
-        
+
     Returns:
         CuPy array of pairwise distances
     """
@@ -1795,13 +1789,13 @@ def _apply_dbscan_cupy(
     data: np.ndarray, eps: float, min_samples: int, n_samples: int
 ) -> np.ndarray:
     """Apply DBSCAN clustering using CuPy.
-    
+
     Args:
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
         n_samples: Number of samples
-        
+
     Returns:
         np.ndarray: Cluster labels
     """
@@ -1834,7 +1828,7 @@ def _apply_dbscan_cupy(
 
         # Process cluster starting from this core point
         _find_and_process_cluster_cupy(i, neighbors, core_points, labels, cluster_id)
-            
+
         # Move to next cluster
         cluster_id += 1
 
@@ -1844,11 +1838,11 @@ def _apply_dbscan_cupy(
 
 def _setup_cuda_distance_computation(data: np.ndarray, n_samples: int) -> tuple:
     """Set up CUDA environment for distance computation.
-    
+
     Args:
         data: Input data points
         n_samples: Number of samples
-        
+
     Returns:
         tuple: (d_data, d_distances, threadsperblock, blockspergrid)
     """
@@ -1864,15 +1858,19 @@ def _setup_cuda_distance_computation(data: np.ndarray, n_samples: int) -> tuple:
     blockspergrid_x = (n_samples + threadsperblock[0] - 1) // threadsperblock[0]
     blockspergrid_y = (n_samples + threadsperblock[1] - 1) // threadsperblock[1]
     blockspergrid = (blockspergrid_x, blockspergrid_y)
-    
+
     return d_data, d_distances, threadsperblock, blockspergrid
 
 
 def _find_and_process_cluster_cuda(
-    index: int, neighbors: np.ndarray, core_points: np.ndarray, labels: np.ndarray, cluster_id: int
+    index: int,
+    neighbors: np.ndarray,
+    core_points: np.ndarray,
+    labels: np.ndarray,
+    cluster_id: int,
 ) -> None:
     """Find and process a cluster from a core point using CUDA.
-    
+
     Args:
         index: Index of the core point to start from
         neighbors: Matrix of neighbor relationships
@@ -1906,16 +1904,17 @@ def _apply_dbscan_cuda(
     data: np.ndarray, eps: float, min_samples: int, n_samples: int
 ) -> np.ndarray:
     """Apply DBSCAN clustering using CUDA.
-    
+
     Args:
         data: Input data points
         eps: Epsilon parameter for DBSCAN
         min_samples: Minimum samples parameter for DBSCAN
         n_samples: Number of samples
-        
+
     Returns:
         np.ndarray: Cluster labels
     """
+
     # Define CUDA kernels for DBSCAN
     @cuda.jit
     def _compute_distance_matrix_kernel(data, distances):
@@ -1930,14 +1929,12 @@ def _apply_dbscan_cuda(
             distances[i, j] = dist
 
     # Set up CUDA environment
-    d_data, d_distances, threadsperblock, blockspergrid = _setup_cuda_distance_computation(
-        data, n_samples
+    d_data, d_distances, threadsperblock, blockspergrid = (
+        _setup_cuda_distance_computation(data, n_samples)
     )
 
     # Compute distances
-    _compute_distance_matrix_kernel[blockspergrid, threadsperblock](
-        d_data, d_distances
-    )
+    _compute_distance_matrix_kernel[blockspergrid, threadsperblock](d_data, d_distances)
 
     # Copy distances back to host
     distances = d_distances.copy_to_host()
@@ -1959,7 +1956,7 @@ def _apply_dbscan_cuda(
 
         # Process cluster starting from this core point
         _find_and_process_cluster_cuda(i, neighbors, core_points, labels, cluster_id)
-        
+
         # Move to next cluster
         cluster_id += 1
 
@@ -1968,16 +1965,16 @@ def _apply_dbscan_cuda(
 
 def _select_dbscan_backend(backend: str) -> str:
     """Select appropriate backend for DBSCAN clustering based on availability.
-    
+
     Args:
         backend: Requested backend ('cuda', 'cupy', 'mps', 'metalgpu', 'auto')
-        
+
     Returns:
         str: Selected backend name
     """
     if backend != "auto":
         return backend
-        
+
     # Auto-select based on availability
     if CUPY_AVAILABLE:
         return "cupy"
@@ -1993,7 +1990,7 @@ def _select_dbscan_backend(backend: str) -> str:
 
 def _is_gpu_available() -> bool:
     """Check if any GPU backend is available for DBSCAN.
-    
+
     Returns:
         bool: True if at least one GPU backend is available
     """
@@ -2004,30 +2001,30 @@ def _try_gpu_backend(
     backend: str, data: np.ndarray, eps: float, min_samples: int, n_samples: int
 ) -> Optional[np.ndarray]:
     """Try to run DBSCAN using the specified GPU backend.
-    
+
     Args:
         backend: Backend to use
         data: Input data points
         eps: Epsilon parameter
         min_samples: Minimum samples parameter
         n_samples: Number of samples
-        
+
     Returns:
         Optional[np.ndarray]: Cluster labels if successful, None if failed
     """
     # Select the appropriate implementation based on backend
     if backend == "mps" and MPS_AVAILABLE:
         return _apply_dbscan_mps(data, eps, min_samples)
-    
+
     if backend == "metalgpu" and METALGPU_AVAILABLE:
         return _apply_dbscan_metalgpu(data, eps, min_samples, n_samples)
-        
+
     if backend == "cupy" and CUPY_AVAILABLE:
         return _apply_dbscan_cupy(data, eps, min_samples, n_samples)
-        
+
     if backend == "cuda" and CUDA_AVAILABLE and NUMBA_AVAILABLE:
         return _apply_dbscan_cuda(data, eps, min_samples, n_samples)
-        
+
     return None
 
 
@@ -2049,18 +2046,18 @@ def apply_dbscan_clustering_gpu(
         np.ndarray: Cluster labels for each point. Noisy samples are labeled as -1.
     """
     n_samples = data.shape[0]
-    
+
     # Select appropriate backend
     selected_backend = _select_dbscan_backend(backend)
-    
+
     # Use CPU if requested or if no GPU available
     if selected_backend == "cpu" or not _is_gpu_available():
         return _apply_dbscan_cpu(data, eps, min_samples, n_samples)
-    
+
     # Try the selected GPU backend
     result = _try_gpu_backend(selected_backend, data, eps, min_samples, n_samples)
     if result is not None:
         return result
-    
+
     # Fallback to CPU implementation
     return _apply_dbscan_cpu(data, eps, min_samples, n_samples)

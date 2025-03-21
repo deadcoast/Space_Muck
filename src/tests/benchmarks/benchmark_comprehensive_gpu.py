@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_comprehensive_gpu.py
+
 Comprehensive GPU Benchmarking Script for Space Muck.
 
 This script provides a unified framework for benchmarking all GPU-accelerated operations

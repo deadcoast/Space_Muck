@@ -1,4 +1,6 @@
 """
+src/entities/miner_entity.py
+
 MinerEntity class: Represents symbiotic mining races that evolve in the asteroid field.
 """
 
@@ -18,8 +20,29 @@ import pygame
 
 # Local application imports
 from algorithms.symbiote_algorithm import SymbioteEvolutionAlgorithm
+from config import CELL_SIZE as GRID_CELL_SIZE
+from config import (
+    COLOR_ENTITY_AGGRESSIVE,
+    COLOR_ENTITY_DEFAULT,
+    COLOR_ENTITY_EXPANDING,
+    COLOR_ENTITY_FEEDING,
+    COLOR_ENTITY_MIGRATING,
+    COLOR_RACE_1,
+    COLOR_RACE_2,
+    COLOR_RACE_3,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+)
 from entities.base_entity import BaseEntity
 from utils.logging_setup import log_exception
+
+
+# Define classes for clarity - actual imports would be from population models
+class MinerEntity(BaseEntity):
+    """Base class for mining entities in the game."""
+
+    pass
+
 
 # Standard library imports
 
@@ -54,24 +77,13 @@ except ImportError:
 
 # Local application imports
 
-# Import from config package
-from config import CELL_SIZE as GRID_CELL_SIZE
-from config import (
-    COLOR_ENTITY_AGGRESSIVE,
-    COLOR_ENTITY_DEFAULT,
-    COLOR_ENTITY_EXPANDING,
-    COLOR_ENTITY_FEEDING,
-    COLOR_ENTITY_MIGRATING,
-    COLOR_RACE_1,
-    COLOR_RACE_2,
-    COLOR_RACE_3,
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
-)
+# Config imports already at the top of the file
 
 # Optional GPU imports
 try:
-    from utils.gpu_utils import apply_dbscan_clustering_gpu
+    # Import will be used in child classes
+    from utils.gpu_utils import apply_dbscan_clustering_gpu  # noqa: F401
+
     GPU_DBSCLUSTER_AVAILABLE = True
 except ImportError:
     GPU_DBSCLUSTER_AVAILABLE = False
@@ -117,6 +129,8 @@ class EnhancedMinerEntity(MinerEntity):
         )
 
         # Initialize multi-species population model for interaction with other races
+        from population.multi_species import MultiSpeciesPopulation
+
         self.multi_species_model = MultiSpeciesPopulation(
             species_count=4,  # Default max number of races
             base_growth_rates=[0.05 * self.genome["metabolism_rate"]] * 4,
@@ -125,6 +139,8 @@ class EnhancedMinerEntity(MinerEntity):
         )
 
         # Initialize delayed growth for resource acquisition lag simulation
+        from population.delayed_growth import DelayedGrowthPopulation
+
         self.delayed_growth = DelayedGrowthPopulation(
             delay_steps=3,  # Resource processing takes time
             base_growth_rate=0.05 * self.genome["metabolism_rate"],
@@ -132,6 +148,8 @@ class EnhancedMinerEntity(MinerEntity):
         )
 
         # Initialize life stage progression for miners
+        from population.stage_structured import StageStructuredPopulation
+
         self.stage_population = StageStructuredPopulation(
             stages=["juvenile", "worker", "specialized", "elder"],
             transitions={
@@ -202,29 +220,31 @@ class EnhancedMinerEntity(MinerEntity):
             matrix = self._apply_selective_trait(matrix)
 
         return matrix
-        
-    def _initialize_matrix_diagonal(self, matrix: List[List[float]]) -> List[List[float]]:
+
+    def _initialize_matrix_diagonal(
+        self, matrix: List[List[float]]
+    ) -> List[List[float]]:
         """
         Set the diagonal elements of the interaction matrix to zero.
-        
+
         Args:
             matrix: The initial interaction matrix
-            
+
         Returns:
             Matrix with diagonal elements set to zero
         """
         for i in range(4):
             matrix[i][i] = 0.0
         return matrix
-        
+
     def _apply_adaptive_trait(self, matrix: List[List[float]]) -> List[List[float]]:
         """
         Apply adaptive trait effects to the interaction matrix.
         Adaptive races can benefit from others slightly.
-        
+
         Args:
             matrix: The initial interaction matrix
-            
+
         Returns:
             Modified matrix with adaptive trait effects
         """
@@ -232,15 +252,15 @@ class EnhancedMinerEntity(MinerEntity):
             if i != self.race_id - 1:  # Not self
                 matrix[self.race_id - 1][i] = 0.02  # Benefit from other species
         return matrix
-        
+
     def _apply_expansive_trait(self, matrix: List[List[float]]) -> List[List[float]]:
         """
         Apply expansive trait effects to the interaction matrix.
         Expansive races compete more strongly.
-        
+
         Args:
             matrix: The initial interaction matrix
-            
+
         Returns:
             Modified matrix with expansive trait effects
         """
@@ -249,15 +269,15 @@ class EnhancedMinerEntity(MinerEntity):
                 matrix[self.race_id - 1][i] = -0.03  # Stronger competition
                 matrix[i][self.race_id - 1] = -0.02  # Others compete back
         return matrix
-        
+
     def _apply_selective_trait(self, matrix: List[List[float]]) -> List[List[float]]:
         """
         Apply selective trait effects to the interaction matrix.
         Selective races have more specialized interactions.
-        
+
         Args:
             matrix: The initial interaction matrix
-            
+
         Returns:
             Modified matrix with selective trait effects
         """

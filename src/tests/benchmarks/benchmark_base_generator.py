@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_base_generator.py
+
 Benchmark script for BaseGenerator performance testing.
 
 This script measures the performance of the BaseGenerator's refactored methods
@@ -19,11 +21,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Third-party library imports
 import numpy as np
 
-# Create a random number generator with a fixed seed for reproducibility
-rng = np.random.default_rng(42)
-
 # Local application imports
 from entities.base_generator import BaseGenerator
+
+# Create a random number generator with a fixed seed for reproducibility
+rng = np.random.default_rng(42)
 
 # Import the classes to benchmark
 

@@ -9,14 +9,13 @@ optional integration.
 
 # Standard library imports
 import logging
+import time
 
 # Local application imports
 from typing import Any, Dict
-
 from src.ui.ui_base.component_event_bridge import connect_systems
 
 # Third-party library imports
-
 
 # Track initialization status
 _initialization_status = {"initialized": False, "error": None, "timestamp": None}
@@ -33,9 +32,6 @@ def initialize_ui_systems() -> bool:
     Returns:
         True if initialization was successful, False otherwise
     """
-    import time
-
-    global _initialization_status
 
     try:
         # Connect component registry with event system

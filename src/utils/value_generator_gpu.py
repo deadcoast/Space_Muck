@@ -51,10 +51,10 @@ except ImportError:
 def _select_backend(backend: str) -> str:
     """
     Select the appropriate backend based on availability.
-    
+
     Args:
         backend: Requested backend ('cuda', 'cupy', 'auto', 'cpu')
-        
+
     Returns:
         str: Selected backend based on availability
     """
@@ -69,18 +69,22 @@ def _select_backend(backend: str) -> str:
 
 
 def _apply_value_distribution_cupy(
-    grid: np.ndarray, base_grid: np.ndarray, value_mean: float, value_stddev: float, min_value: int
+    grid: np.ndarray,
+    base_grid: np.ndarray,
+    value_mean: float,
+    value_stddev: float,
+    min_value: int,
 ) -> np.ndarray:
     """
     Apply value distribution using CuPy backend.
-    
+
     Args:
         grid: Binary grid indicating entity presence
         base_grid: Noise grid for value distribution
         value_mean: Mean value for resources
         value_stddev: Standard deviation for resource values
         min_value: Minimum value for non-zero cells
-        
+
     Returns:
         np.ndarray: Grid with resource values
     """
@@ -103,21 +107,26 @@ def _apply_value_distribution_cupy(
 
 
 def _apply_value_distribution_cuda(
-    grid: np.ndarray, base_grid: np.ndarray, value_mean: float, value_stddev: float, min_value: int
+    grid: np.ndarray,
+    base_grid: np.ndarray,
+    value_mean: float,
+    value_stddev: float,
+    min_value: int,
 ) -> np.ndarray:
     """
     Apply value distribution using CUDA backend.
-    
+
     Args:
         grid: Binary grid indicating entity presence
         base_grid: Noise grid for value distribution
         value_mean: Mean value for resources
         value_stddev: Standard deviation for resource values
         min_value: Minimum value for non-zero cells
-        
+
     Returns:
         np.ndarray: Grid with resource values
     """
+
     @cuda.jit
     def value_distribution_kernel(
         grid, base_grid, value_grid, value_mean, value_stddev, min_value
@@ -178,9 +187,13 @@ def generate_value_distribution_gpu(
     # GPU implementation
     try:
         if backend == "cupy" and CUPY_AVAILABLE:
-            return _apply_value_distribution_cupy(grid, base_grid, value_mean, value_stddev, min_value)
+            return _apply_value_distribution_cupy(
+                grid, base_grid, value_mean, value_stddev, min_value
+            )
         elif backend == "cuda" and CUDA_AVAILABLE:
-            return _apply_value_distribution_cuda(grid, base_grid, value_mean, value_stddev, min_value)
+            return _apply_value_distribution_cuda(
+                grid, base_grid, value_mean, value_stddev, min_value
+            )
 
     except Exception as e:
         logging.warning(
@@ -194,40 +207,42 @@ def generate_value_distribution_gpu(
 def _get_cluster_centers(value_grid: np.ndarray, num_clusters: int) -> np.ndarray:
     """
     Find valid cluster centers from non-zero cells in the grid.
-    
+
     Args:
         value_grid: Grid with entity values
         num_clusters: Number of high-value clusters to create
-        
+
     Returns:
         np.ndarray: Selected cluster centers or empty array if none available
     """
     # Find cells with entities
     entity_cells = np.argwhere(value_grid > 0)
-    
+
     if len(entity_cells) == 0:
         return np.array([])
-        
+
     # Adjust number of clusters if needed
     if len(entity_cells) < num_clusters:
         num_clusters = len(entity_cells)
-    
+
     # Select random cluster centers
     center_indices = rng.choice(len(entity_cells), size=num_clusters, replace=False)
     return entity_cells[center_indices]
 
 
-def _get_subgrid_boundaries(center_y: int, center_x: int, radius: int, height: int, width: int):
+def _get_subgrid_boundaries(
+    center_y: int, center_x: int, radius: int, height: int, width: int
+):
     """
     Calculate the boundaries of a subgrid around a center point.
-    
+
     Args:
         center_y: Y-coordinate of center
         center_x: X-coordinate of center
         radius: Radius around center
         height: Grid height
         width: Grid width
-        
+
     Returns:
         tuple: (y_min, y_max, x_min, x_max) boundaries
     """
@@ -235,30 +250,30 @@ def _get_subgrid_boundaries(center_y: int, center_x: int, radius: int, height: i
     y_max = min(height, center_y + radius + 1)
     x_min = max(0, center_x - radius)
     x_max = min(width, center_x + radius + 1)
-    
+
     return y_min, y_max, x_min, x_max
 
 
 def _apply_value_clusters_cupy(
-    value_grid: np.ndarray, 
-    cluster_centers: np.ndarray, 
-    cluster_radius: int, 
-    cluster_value_multiplier: float
+    value_grid: np.ndarray,
+    cluster_centers: np.ndarray,
+    cluster_radius: int,
+    cluster_value_multiplier: float,
 ) -> np.ndarray:
     """
     Apply value clusters using the CuPy backend.
-    
+
     Args:
         value_grid: Grid with entity values
         cluster_centers: Centers of clusters to create
         cluster_radius: Radius of each cluster
         cluster_value_multiplier: Multiplier for values in clusters
-        
+
     Returns:
         np.ndarray: Grid with value clusters added
     """
     height, width = value_grid.shape
-    
+
     # Transfer data to GPU
     value_grid_gpu = cp.asarray(value_grid)
     result_grid_gpu = cp.copy(value_grid_gpu)
@@ -267,8 +282,9 @@ def _apply_value_clusters_cupy(
     for center_y, center_x in cluster_centers:
         # Get subgrid boundaries
         y_min, y_max, x_min, x_max = _get_subgrid_boundaries(
-            center_y, center_x, cluster_radius, height, width)
-        
+            center_y, center_x, cluster_radius, height, width
+        )
+
         # Create coordinate grids for vectorized distance calculation
         y_coords, x_coords = cp.mgrid[y_min:y_max, x_min:x_max]
 
@@ -276,7 +292,9 @@ def _apply_value_clusters_cupy(
         distances = cp.sqrt((x_coords - center_x) ** 2 + (y_coords - center_y) ** 2)
 
         # Create mask for cells within radius and with values
-        mask = (distances <= cluster_radius) & (value_grid_gpu[y_min:y_max, x_min:x_max] > 0)
+        mask = (distances <= cluster_radius) & (
+            value_grid_gpu[y_min:y_max, x_min:x_max] > 0
+        )
 
         # Calculate falloff and multipliers
         falloff = 1.0 - (distances / cluster_radius)
@@ -292,25 +310,25 @@ def _apply_value_clusters_cupy(
 
 
 def _apply_value_clusters_cuda(
-    value_grid: np.ndarray, 
-    cluster_centers: np.ndarray, 
-    cluster_radius: int, 
-    cluster_value_multiplier: float
+    value_grid: np.ndarray,
+    cluster_centers: np.ndarray,
+    cluster_radius: int,
+    cluster_value_multiplier: float,
 ) -> np.ndarray:
     """
     Apply value clusters using the CUDA backend.
-    
+
     Args:
         value_grid: Grid with entity values
         cluster_centers: Centers of clusters to create
         cluster_radius: Radius of each cluster
         cluster_value_multiplier: Multiplier for values in clusters
-        
+
     Returns:
         np.ndarray: Grid with value clusters added
     """
     height, width = value_grid.shape
-    
+
     @cuda.jit
     def apply_cluster_kernel(
         value_grid, result_grid, centers, radius, multiplier, width, height
@@ -387,22 +405,24 @@ def add_value_clusters_gpu(
             cluster_radius=cluster_radius,
             cluster_value_multiplier=cluster_value_multiplier,
         )
-    
+
     # Get cluster centers
     cluster_centers = _get_cluster_centers(value_grid, num_clusters)
-    
+
     # If no valid centers found, return a copy of the original grid
     if len(cluster_centers) == 0:
         return value_grid.copy()
-    
+
     # GPU implementation
     try:
         if backend == "cupy" and CUPY_AVAILABLE:
             return _apply_value_clusters_cupy(
-                value_grid, cluster_centers, cluster_radius, cluster_value_multiplier)
+                value_grid, cluster_centers, cluster_radius, cluster_value_multiplier
+            )
         elif backend == "cuda" and CUDA_AVAILABLE:
             return _apply_value_clusters_cuda(
-                value_grid, cluster_centers, cluster_radius, cluster_value_multiplier)
+                value_grid, cluster_centers, cluster_radius, cluster_value_multiplier
+            )
 
     except Exception as e:
         logging.warning(

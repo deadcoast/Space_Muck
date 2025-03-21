@@ -9,7 +9,7 @@ in a consistent and optimized way, separating the rendering logic from the game 
 import itertools
 import math
 import random
-from typing import Tuple, List, Dict
+from typing import Dict, List, Tuple
 
 # Third-party library imports
 import numpy as np
@@ -204,8 +204,10 @@ class AsteroidFieldRenderer:
         self._draw_entities(surface, entity_grid, min_x, min_y, max_x, max_y, cell_size)
 
         # Draw asteroids
-        self._draw_asteroids(surface, grid, rare_grid, min_x, min_y, max_x, max_y, cell_size)
-    
+        self._draw_asteroids(
+            surface, grid, rare_grid, min_x, min_y, max_x, max_y, cell_size
+        )
+
     def _draw_grid_lines(
         self,
         surface: pygame.Surface,
@@ -213,11 +215,11 @@ class AsteroidFieldRenderer:
         min_y: int,
         max_x: int,
         max_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw grid lines on the surface.
-        
+
         Args:
             surface: Pygame surface to render on
             min_x: Minimum x coordinate of view bounds
@@ -235,7 +237,7 @@ class AsteroidFieldRenderer:
                 ((x - min_x) * cell_size, surface.get_height()),
                 1,
             )
-        
+
         # Draw horizontal grid lines
         for y in range(min_y, max_y + 1):
             pygame.draw.line(
@@ -245,7 +247,7 @@ class AsteroidFieldRenderer:
                 (surface.get_width(), (y - min_y) * cell_size),
                 1,
             )
-    
+
     def _draw_entities(
         self,
         surface: pygame.Surface,
@@ -254,11 +256,11 @@ class AsteroidFieldRenderer:
         min_y: int,
         max_x: int,
         max_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw entities on the surface.
-        
+
         Args:
             surface: Pygame surface to render on
             entity_grid: The entity grid
@@ -273,24 +275,20 @@ class AsteroidFieldRenderer:
                 entity_id = entity_grid[y, x]
                 if entity_id > 0:
                     self._draw_entity(
-                        surface, 
-                        entity_id, 
-                        x - min_x, 
-                        y - min_y, 
-                        cell_size
+                        surface, entity_id, x - min_x, y - min_y, cell_size
                     )
-    
+
     def _draw_entity(
         self,
         surface: pygame.Surface,
         entity_id: int,
         screen_x_idx: int,
         screen_y_idx: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a single entity on the surface.
-        
+
         Args:
             surface: Pygame surface to render on
             entity_id: ID of the entity to draw
@@ -301,7 +299,7 @@ class AsteroidFieldRenderer:
         color = self.entity_colors.get(entity_id, (255, 255, 255))
         screen_x = screen_x_idx * cell_size
         screen_y = screen_y_idx * cell_size
-        
+
         # Draw entity as small shapes based on race
         if entity_id == 1:  # First race (blue)
             self._draw_diamond_entity(surface, color, screen_x, screen_y, cell_size)
@@ -309,18 +307,18 @@ class AsteroidFieldRenderer:
             self._draw_triangle_entity(surface, color, screen_x, screen_y, cell_size)
         else:  # Third race (orange)
             self._draw_circle_entity(surface, color, screen_x, screen_y, cell_size)
-    
+
     def _draw_diamond_entity(
         self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a diamond-shaped entity.
-        
+
         Args:
             surface: Pygame surface to render on
             color: Color of the entity
@@ -338,18 +336,18 @@ class AsteroidFieldRenderer:
                 (screen_x, screen_y + cell_size // 2),
             ],
         )
-    
+
     def _draw_triangle_entity(
         self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a triangle-shaped entity.
-        
+
         Args:
             surface: Pygame surface to render on
             color: Color of the entity
@@ -366,18 +364,18 @@ class AsteroidFieldRenderer:
                 (screen_x, screen_y + cell_size),
             ],
         )
-    
+
     def _draw_circle_entity(
         self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a circle-shaped entity.
-        
+
         Args:
             surface: Pygame surface to render on
             color: Color of the entity
@@ -391,7 +389,7 @@ class AsteroidFieldRenderer:
             (screen_x + cell_size // 2, screen_y + cell_size // 2),
             cell_size // 2,
         )
-    
+
     def _draw_asteroids(
         self,
         surface: pygame.Surface,
@@ -401,11 +399,11 @@ class AsteroidFieldRenderer:
         min_y: int,
         max_x: int,
         max_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw asteroids on the surface.
-        
+
         Args:
             surface: Pygame surface to render on
             grid: The asteroid value grid
@@ -423,16 +421,11 @@ class AsteroidFieldRenderer:
                     screen_x = (x - min_x) * cell_size
                     screen_y = (y - min_y) * cell_size
                     is_rare = rare_grid[y, x] == 1
-                    
+
                     self._draw_asteroid(
-                        surface,
-                        value,
-                        is_rare,
-                        screen_x,
-                        screen_y,
-                        cell_size
+                        surface, value, is_rare, screen_x, screen_y, cell_size
                     )
-    
+
     def _draw_asteroid(
         self,
         surface: pygame.Surface,
@@ -440,11 +433,11 @@ class AsteroidFieldRenderer:
         is_rare: bool,
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a single asteroid on the surface.
-        
+
         Args:
             surface: Pygame surface to render on
             value: Asteroid value
@@ -461,7 +454,7 @@ class AsteroidFieldRenderer:
             self._draw_simple_asteroid(
                 surface, value, is_rare, screen_x, screen_y, cell_size
             )
-    
+
     def _draw_detailed_asteroid(
         self,
         surface: pygame.Surface,
@@ -469,11 +462,11 @@ class AsteroidFieldRenderer:
         is_rare: bool,
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a detailed asteroid with surface blitting.
-        
+
         Args:
             surface: Pygame surface to render on
             value: Asteroid value
@@ -484,14 +477,14 @@ class AsteroidFieldRenderer:
         """
         if cell_surface := self.get_cell_surface(value, cell_size):
             surface.blit(cell_surface, (screen_x, screen_y))
-            
+
             # Add rare overlay if needed
             if is_rare:
                 rare_scaled = pygame.transform.scale(
                     self.rare_overlay, (cell_size, cell_size)
                 )
                 surface.blit(rare_scaled, (screen_x, screen_y))
-    
+
     def _draw_simple_asteroid(
         self,
         surface: pygame.Surface,
@@ -499,11 +492,11 @@ class AsteroidFieldRenderer:
         is_rare: bool,
         screen_x: int,
         screen_y: int,
-        cell_size: int
+        cell_size: int,
     ) -> None:
         """
         Draw a simple asteroid as a rectangle for performance.
-        
+
         Args:
             surface: Pygame surface to render on
             value: Asteroid value
@@ -513,9 +506,8 @@ class AsteroidFieldRenderer:
             cell_size: Size of each cell in pixels
         """
         color = self.get_cell_color(value, is_rare)
-        pygame.draw.rect(
-            surface, color, (screen_x, screen_y, cell_size, cell_size)
-        )
+        pygame.draw.rect(surface, color, (screen_x, screen_y, cell_size, cell_size))
+
 
 class PlayerRenderer:
     """Handles rendering of the player and player-related UI elements."""
@@ -684,23 +676,25 @@ class PlayerRenderer:
             # Check if ship is in view
             if not (min_x <= ship_x <= max_x and min_y <= ship_y <= max_y):
                 continue
-                
+
             # Render visible fleet ship
-            self._render_fleet_ship(surface, ship_x, ship_y, ship_health[i], min_x, min_y, cell_size)
-            
+            self._render_fleet_ship(
+                surface, ship_x, ship_y, ship_health[i], min_x, min_y, cell_size
+            )
+
     def _render_fleet_ship(
-        self, 
-        surface: pygame.Surface, 
-        ship_x: int, 
-        ship_y: int, 
-        health: int, 
-        min_x: int, 
-        min_y: int, 
-        cell_size: int
+        self,
+        surface: pygame.Surface,
+        ship_x: int,
+        ship_y: int,
+        health: int,
+        min_x: int,
+        min_y: int,
+        cell_size: int,
     ) -> None:
         """
         Render a single fleet ship.
-        
+
         Args:
             surface: Pygame surface to render on
             ship_x: X coordinate of the ship
@@ -720,26 +714,28 @@ class PlayerRenderer:
         ship_scale = max(int(cell_size * 1.5 * health_factor), 6)
 
         # Draw ship
-        self._draw_fleet_ship_shape(surface, screen_x, screen_y, ship_scale, health_factor)
-        
+        self._draw_fleet_ship_shape(
+            surface, screen_x, screen_y, ship_scale, health_factor
+        )
+
         # Draw health bar if needed
         if health < 100:
             self._draw_health_bar(surface, screen_x, screen_y, cell_size, health)
-            
+
     def _draw_fleet_ship_shape(
         self,
         surface: pygame.Surface,
         screen_x: int,
         screen_y: int,
         ship_scale: int,
-        health_factor: float
+        health_factor: float,
     ) -> None:
         """
         Draw the ship polygon shape.
         """
         # Calculate ship color based on health
         ship_color = (0, int(220 * health_factor), 0)
-        
+
         # Draw ship polygon
         pygame.draw.polygon(
             surface,
@@ -750,31 +746,31 @@ class PlayerRenderer:
                 (screen_x, screen_y + ship_scale),
             ],
         )
-        
+
     def _draw_health_bar(
         self,
         surface: pygame.Surface,
         screen_x: int,
         screen_y: int,
         cell_size: int,
-        health: int
+        health: int,
     ) -> None:
         """
         Draw a health bar for the ship.
         """
         bar_width = cell_size
         bar_height = 3
-        
+
         # Draw background bar
         pygame.draw.rect(
             surface,
             (50, 50, 50),
             (screen_x, screen_y - bar_height - 1, bar_width, bar_height),
         )
-        
+
         # Determine health bar color based on health level
         bar_color = self._get_health_bar_color(health)
-        
+
         # Draw health fill
         pygame.draw.rect(
             surface,
@@ -786,14 +782,14 @@ class PlayerRenderer:
                 bar_height,
             ),
         )
-    
+
     def _get_health_bar_color(self, health: int) -> Tuple[int, int, int]:
         """
         Get the appropriate color for a health bar based on health percentage.
-        
+
         Args:
             health: Health value (0-100)
-            
+
         Returns:
             RGB color tuple
         """
@@ -803,6 +799,7 @@ class PlayerRenderer:
             return (255, 255, 0)  # Yellow
         else:
             return (255, 0, 0)  # Red
+
 
 class EffectsRenderer:
     """Handles rendering of special effects like explosions, particles, etc."""
@@ -930,28 +927,28 @@ class EffectsRenderer:
             # Update particles if present
             if "particles" in effect:
                 self._update_effect_particles(effect)
-                
+
     def _update_effect_particles(self, effect: Dict) -> None:
         """Update particles for a specific effect."""
         for particle in effect["particles"][:]:
             self._update_particle_position(particle)
-            
+
             # Apply effect-specific physics
             if effect["type"] == "explosion":
                 self._apply_explosion_physics(particle)
-                
+
             # Update lifetime
             particle["lifetime"] -= 1
-            
+
             # Remove expired particles
             if particle["lifetime"] <= 0:
                 effect["particles"].remove(particle)
-                
+
     def _update_particle_position(self, particle: Dict) -> None:
         """Update the position of a particle based on its velocity."""
         particle["pos"][0] += particle["velocity"][0]
         particle["pos"][1] += particle["velocity"][1]
-        
+
     def _apply_explosion_physics(self, particle: Dict) -> None:
         """Apply explosion-specific physics to a particle."""
         # Slow down particles over time and add gravity
@@ -1027,6 +1024,7 @@ class EffectsRenderer:
                         ),
                     )
 
+
 class UIStateRenderer:
     """Handles rendering of UI state overlays and transitions."""
 
@@ -1057,45 +1055,45 @@ class UIStateRenderer:
         self._update_transitions()
         # Update notifications
         self._update_notifications()
-        
+
     def _update_transitions(self) -> None:
         """Update all active screen transitions."""
         for trans_type, trans in list(self.transitions.items()):
             if not trans["active"]:
                 continue
-                
+
             trans["progress"] += 1
             # Update fade overlay alpha based on transition type
             self._update_transition_alpha(trans_type, trans)
-            
+
             # Check if transition is complete
             if trans["progress"] >= trans["duration"]:
                 self._complete_transition(trans_type, trans)
-                
+
     def _update_transition_alpha(self, trans_type: str, trans: Dict) -> None:
         """Update the fade alpha value based on transition type and progress."""
         progress_ratio = trans["progress"] / trans["duration"]
-        
+
         if trans_type == "fade_in":
             self.fade_alpha = 255 - int(255 * progress_ratio)
         elif trans_type == "fade_out":
             self.fade_alpha = int(255 * progress_ratio)
-            
+
     def _complete_transition(self, trans_type: str, trans: Dict) -> None:
         """Mark transition as complete and set final state."""
         trans["active"] = False
-        
+
         # Set final alpha value
         if trans_type == "fade_in":
             self.fade_alpha = 0
         elif trans_type == "fade_out":
             self.fade_alpha = 255
-            
+
     def _update_notifications(self) -> None:
         """Update all active notifications."""
         for notification in self.notifications[:]:
             notification["lifetime"] -= 1
-            
+
             if notification["lifetime"] <= 0:
                 self.notifications.remove(notification)
 
@@ -1138,64 +1136,71 @@ class UIStateRenderer:
         # Render fade overlay if needed
         if self.fade_alpha > 0:
             self._render_surface_handler(surface)
-            
+
         # Render notifications
         self._render_notifications(surface)
-        
+
         # Render transitions
         self._render_transitions(surface)
-    
+
     def _render_surface_handler(self, surface: pygame.Surface) -> None:
         """Create and render fade overlay surface if needed."""
-        if self.fade_overlay is None or self.fade_overlay.get_size() != surface.get_size():
+        if (
+            self.fade_overlay is None
+            or self.fade_overlay.get_size() != surface.get_size()
+        ):
             self.fade_overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-            
+
         self.fade_overlay.fill((0, 0, 0, self.fade_alpha))
         surface.blit(self.fade_overlay, (0, 0))
-        
+
     def _render_notifications(self, surface: pygame.Surface) -> None:
         """Render all active notifications."""
         for notification in self.notifications[:]:
             self._render_single_notification(surface, notification)
-            
-    def _render_single_notification(self, surface: pygame.Surface, notification: Dict) -> None:
+
+    def _render_single_notification(
+        self, surface: pygame.Surface, notification: Dict
+    ) -> None:
         """Render a single notification."""
         # Extract notification properties
         text = notification["text"]
         color = notification["color"]
         size = notification["size"]
         position = notification["position"]
-        
+
         # Calculate alpha based on lifetime
         alpha = self._calculate_notification_alpha(notification)
-        
+
         # Calculate position coordinates
         x, y = self._calculate_notification_position(surface, position)
-        
+
         # Draw notification text with shadow for visibility
         self._draw_notification_text(surface, text, x, y, size, color, alpha)
-        
+
         # Update lifetime
         notification["lifetime"] -= 1
         if notification["lifetime"] <= 0:
             self.notifications.remove(notification)
-    
+
     def _calculate_notification_alpha(self, notification: Dict) -> int:
         """Calculate alpha value for a notification based on its lifetime."""
         lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
-        
+
         # Default alpha
         alpha = 255
-        
+
         # Fade in/out logic
         if lifetime_ratio > 0.8:  # Fade in
             alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
         elif lifetime_ratio < 0.2:  # Fade out
             alpha = int(255 * lifetime_ratio * 5)
-            
+
         return alpha
-    
-    def _calculate_notification_position(self, surface: pygame.Surface, position: str) -> Tuple[int, int]:
+
+    def _calculate_notification_position(
+        self, surface: pygame.Surface, position: str
+    ) -> Tuple[int, int]:
         """Calculate position coordinates for a notification."""
         if position == "bottom":
             return surface.get_width() // 2, surface.get_height() - 50
@@ -1205,13 +1210,21 @@ class UIStateRenderer:
             return surface.get_width() // 2, 50
         else:  # default to top-left
             return 50, 50
-    
-    def _draw_notification_text(self, surface: pygame.Surface, text: str, x: int, y: int, 
-                               size: int, color: Tuple[int, int, int], alpha: int) -> None:
+
+    def _draw_notification_text(
+        self,
+        surface: pygame.Surface,
+        text: str,
+        x: int,
+        y: int,
+        size: int,
+        color: Tuple[int, int, int],
+        alpha: int,
+    ) -> None:
         """Draw notification text with shadow."""
         # Determine alignment based on position
         text_align = "center" if x == surface.get_width() // 2 else "left"
-        
+
         # Draw text with shadow
         draw_text(
             surface,
@@ -1225,29 +1238,29 @@ class UIStateRenderer:
             shadow_color=(0, 0, 0),
             alpha=alpha,
         )
-    
+
     def _render_transitions(self, surface: pygame.Surface) -> None:
         """Render all active transitions."""
         # Process active transitions
         self._process_active_transitions(surface)
-        
+
         # Process remaining UI elements
         self._process_ui_elements(surface)
-        
+
     def _process_active_transitions(self, surface: pygame.Surface) -> None:
         """Process and render active transitions."""
         for trans_type, trans in list(self.transitions.items()):
             if not trans["active"]:
                 continue
-                
+
             # Update alpha based on progress
             self._update_transition_alpha(trans_type, trans)
-            
+
             # Apply fade effect if overlay exists
             if self.fade_alpha > 0 and self.fade_overlay:
                 self.fade_overlay.fill((0, 0, 0, self.fade_alpha))
                 surface.blit(self.fade_overlay, (0, 0))
-            
+
             # Check if transition is complete
             if trans["progress"] >= trans["duration"]:
                 self._complete_transition(trans_type, trans)
@@ -1256,28 +1269,28 @@ class UIStateRenderer:
         """Process and render UI elements."""
         # Update notifications
         self._update_notification_lifetimes()
-        
+
         # Render UI components if visible
         self._render_visible_ui_components(surface)
-    
+
     def _update_notification_lifetimes(self) -> None:
         """Update lifetimes for all notifications."""
         for notification in self.notifications[:]:
             notification["lifetime"] -= 1
             if notification["lifetime"] <= 0:
                 self.notifications.remove(notification)
-    
+
     def _render_visible_ui_components(self, surface: pygame.Surface) -> None:
         """Render all visible UI components."""
         # Render UI elements
         self._render_ui_elements(surface)
-        
+
         # Render overlay elements
         self._render_overlay_elements(surface)
-        
+
         # Render notification items
         self._render_notification_items(surface)
-        
+
     def _render_ui_elements(self, surface: pygame.Surface) -> None:
         """Render basic UI elements if visible."""
         # Render minimap
@@ -1287,7 +1300,7 @@ class UIStateRenderer:
         # Render shop
         if self.show_shop:
             self.shop.render(surface)
-            
+
     def _render_overlay_elements(self, surface: pygame.Surface) -> None:
         """Render overlay UI elements if visible."""
         # Render cursor
@@ -1309,20 +1322,22 @@ class UIStateRenderer:
         # Render fade overlay if needed
         if self.fade_alpha > 0:
             self._render_surface_handler(surface)
-            
+
     def _calculate_notification_alpha(self, notification: Dict) -> int:
         """Calculate the alpha value for a notification based on its lifetime."""
         lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
         alpha = 255
-            
+
         if lifetime_ratio > 0.8:  # Fade in
             alpha = int(255 * (1 - (lifetime_ratio - 0.8) * 5))
         elif lifetime_ratio < 0.2:  # Fade out
             alpha = int(255 * lifetime_ratio * 5)
-            
+
         return alpha
-    
-    def _calculate_notification_position(self, surface: pygame.Surface, position: str) -> Tuple[int, int]:
+
+    def _calculate_notification_position(
+        self, surface: pygame.Surface, position: str
+    ) -> Tuple[int, int]:
         """Calculate the position coordinates for a notification."""
         if position == "bottom":
             x = surface.get_width() // 2
@@ -1335,9 +1350,9 @@ class UIStateRenderer:
             y = 50
         else:
             x, y = 50, 50
-            
+
         return x, y
-    
+
     def _render_notification_items(self, surface: pygame.Surface) -> None:
         """Render individual notification items."""
         for notification in self.notifications:
@@ -1346,10 +1361,10 @@ class UIStateRenderer:
             color = notification["color"]
             size = notification["size"]
             position = notification["position"]
-            
+
             # Calculate alpha for fade in/out
             alpha = self._calculate_notification_alpha(notification)
-            
+
             # Calculate position coordinates
             x, y = self._calculate_notification_position(surface, position)
 
@@ -1363,7 +1378,18 @@ class UIStateRenderer:
             draw_text(surface, text, x, y, size, color, "left", False, (0, 0, 0), alpha)
 
             # Draw with transparency and shadow for visibility
-            draw_text(surface, text, x + 2, y + 2, size, (0, 0, 0), "left", True, (0, 0, 0), alpha)
+            draw_text(
+                surface,
+                text,
+                x + 2,
+                y + 2,
+                size,
+                (0, 0, 0),
+                "left",
+                True,
+                (0, 0, 0),
+                alpha,
+            )
 
             # Update lifetime
             notification["lifetime"] = max(0, notification["lifetime"] - 1)

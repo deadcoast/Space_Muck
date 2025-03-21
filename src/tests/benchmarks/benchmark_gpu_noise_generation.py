@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_gpu_noise_generation.py
+
 Benchmark script for testing GPU-accelerated noise generation performance.
 
 This script compares the performance of GPU-accelerated noise generation

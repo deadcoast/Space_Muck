@@ -1,14 +1,19 @@
+"""
+src/algorithms/symbiote_algorithm.py
+
+Symbiote Evolution Algorithm
+"""
+
+# Standard library imports
 import logging
 import math
 
-# Standard library imports
+# Local application imports
 from collections import deque
 from typing import Dict, List, Optional, Set, Tuple
 
-
-import numpy as np
-
 # Third-party library imports
+import numpy as np
 from scipy import ndimage, stats
 
 # Create a modern NumPy random number generator with a fixed seed for reproducibility
@@ -710,37 +715,37 @@ class SymbioteEvolutionAlgorithm:
         """
         # Get base rules plus race-specific modifications
         birth_set, survival_set = self._get_race_specific_rules(race_id)
-        
+
         # Apply additional rule modifications
         birth_set, survival_set = self._apply_hunger_rule_modifications(
             birth_set, survival_set, hunger_level
         )
-        
+
         birth_set, survival_set = self._apply_genome_rule_modifications(
             birth_set, survival_set, genome
         )
-        
+
         # Apply random evolutionary mutations
         birth_set, survival_set = self._apply_random_rule_mutations(
             birth_set, survival_set
         )
-        
+
         return birth_set, survival_set
 
     def _get_race_specific_rules(self, race_id: int) -> Tuple[Set[int], Set[int]]:
         """
         Get the base cellular automaton rules modified by race-specific traits.
-        
+
         Args:
             race_id: The ID of the symbiote race
-            
+
         Returns:
             Tuple of (birth_set, survival_set) with base rules for the specified race
         """
         # Standard Conway's Game of Life base rules
         base_birth_set = {3}
         base_survival_set = {2, 3, 4}
-        
+
         # Apply race-specific modifications
         if race_id == 1:  # Blue race - adaptive metabolism
             return base_birth_set.union({4}), base_survival_set.union({1})
@@ -756,19 +761,19 @@ class SymbioteEvolutionAlgorithm:
     ) -> Tuple[Set[int], Set[int]]:
         """
         Modify cellular automaton rules based on hunger level.
-        
+
         Args:
             birth_set: Current birth rules
             survival_set: Current survival rules
             hunger_level: Current hunger level (0-1)
-            
+
         Returns:
             Modified (birth_set, survival_set)
         """
         # Create copies to avoid modifying the originals
         modified_birth = birth_set.copy()
         modified_survival = survival_set.copy()
-        
+
         if hunger_level > 0.7:  # Very hungry
             # Hungry symbiotes try to expand more aggressively
             modified_birth = modified_birth.union({2})  # Easier to birth new cells
@@ -777,8 +782,10 @@ class SymbioteEvolutionAlgorithm:
                 modified_survival.discard(4)
         elif hunger_level < 0.3:  # Well fed
             # Well-fed symbiotes are more stable
-            modified_survival = modified_survival.union({4})  # Can survive with more neighbors
-        
+            modified_survival = modified_survival.union(
+                {4}
+            )  # Can survive with more neighbors
+
         return modified_birth, modified_survival
 
     def _apply_genome_rule_modifications(
@@ -786,19 +793,19 @@ class SymbioteEvolutionAlgorithm:
     ) -> Tuple[Set[int], Set[int]]:
         """
         Modify cellular automaton rules based on genome traits.
-        
+
         Args:
             birth_set: Current birth rules
             survival_set: Current survival rules
             genome: The symbiote genome dictionary
-            
+
         Returns:
             Modified (birth_set, survival_set)
         """
         # Create copies to avoid modifying the originals
         modified_birth = birth_set.copy()
         modified_survival = survival_set.copy()
-        
+
         # Apply expansion drive modifications
         expansion_drive = genome.get("expansion_drive", 1.0)
         if expansion_drive > 1.3 and rng.random() < 0.3:
@@ -818,7 +825,7 @@ class SymbioteEvolutionAlgorithm:
         elif metabolism_rate > 1.3:  # Inefficient/fast metabolism
             # Needs more resources, harder to survive
             modified_survival.discard(1)
-            
+
         return modified_birth, modified_survival
 
     def _apply_random_rule_mutations(
@@ -826,12 +833,12 @@ class SymbioteEvolutionAlgorithm:
     ) -> Tuple[Set[int], Set[int]]:
         """
         Apply random evolutionary mutations to cellular automaton rules.
-        
+
         Args:
             birth_set: Current birth rules
             survival_set: Current survival rules
             mutation_chance: Probability of mutation (default 1%)
-            
+
         Returns:
             Modified (birth_set, survival_set)
         """
@@ -1143,15 +1150,20 @@ class SymbioteEvolutionAlgorithm:
         interaction_range = 10 * territorial_factor
 
         # Process all colony pairs
-        self._process_colony_pairs(colony_stats, labeled_grid, grid, new_grid, 
-                                  interaction_range, aggression)
+        self._process_colony_pairs(
+            colony_stats, labeled_grid, grid, new_grid, interaction_range, aggression
+        )
 
         return new_grid
 
     def _process_colony_pairs(
-        self, colony_stats: List[Dict], labeled_grid: np.ndarray, 
-        original_grid: np.ndarray, new_grid: np.ndarray,
-        interaction_range: float, aggression: float
+        self,
+        colony_stats: List[Dict],
+        labeled_grid: np.ndarray,
+        original_grid: np.ndarray,
+        new_grid: np.ndarray,
+        interaction_range: float,
+        aggression: float,
     ) -> None:
         """
         Process interactions between each pair of colonies.
@@ -1175,13 +1187,18 @@ class SymbioteEvolutionAlgorithm:
                 # Only interact if colonies are close enough
                 if dist <= interaction_range:
                     self._handle_colony_interaction(
-                        colony_i, colony_j, i, j, dist, labeled_grid,
-                        original_grid, new_grid, aggression
+                        colony_i,
+                        colony_j,
+                        i,
+                        j,
+                        dist,
+                        labeled_grid,
+                        original_grid,
+                        new_grid,
+                        aggression,
                     )
 
-    def _calculate_colony_distance(
-        self, colony_i: Dict, colony_j: Dict
-    ) -> float:
+    def _calculate_colony_distance(self, colony_i: Dict, colony_j: Dict) -> float:
         """
         Calculate the Euclidean distance between two colonies' centroids.
 
@@ -1198,9 +1215,16 @@ class SymbioteEvolutionAlgorithm:
         )
 
     def _handle_colony_interaction(
-        self, colony_i: Dict, colony_j: Dict, i: int, j: int, 
-        distance: float, labeled_grid: np.ndarray, 
-        original_grid: np.ndarray, new_grid: np.ndarray, aggression: float
+        self,
+        colony_i: Dict,
+        colony_j: Dict,
+        i: int,
+        j: int,
+        distance: float,
+        labeled_grid: np.ndarray,
+        original_grid: np.ndarray,
+        new_grid: np.ndarray,
+        aggression: float,
     ) -> None:
         """
         Handle the interaction between two colonies based on random chance and traits.
@@ -1231,8 +1255,14 @@ class SymbioteEvolutionAlgorithm:
             )
 
     def _handle_colony_fight(
-        self, colony_i: Dict, colony_j: Dict, i: int, j: int,
-        labeled_grid: np.ndarray, original_grid: np.ndarray, new_grid: np.ndarray
+        self,
+        colony_i: Dict,
+        colony_j: Dict,
+        i: int,
+        j: int,
+        labeled_grid: np.ndarray,
+        original_grid: np.ndarray,
+        new_grid: np.ndarray,
     ) -> None:
         """
         Handle a fight interaction between two colonies.
@@ -1259,8 +1289,11 @@ class SymbioteEvolutionAlgorithm:
         self._damage_loser_colony(loser_id, labeled_grid, strength_ratio, new_grid)
 
     def _expand_winner_territory(
-        self, winner_id: int, labeled_grid: np.ndarray, 
-        original_grid: np.ndarray, new_grid: np.ndarray
+        self,
+        winner_id: int,
+        labeled_grid: np.ndarray,
+        original_grid: np.ndarray,
+        new_grid: np.ndarray,
     ) -> None:
         """
         Expand the winner colony's territory into nearby empty spaces.
@@ -1278,8 +1311,11 @@ class SymbioteEvolutionAlgorithm:
         new_grid[expansion_area & empty_cells] = 1  # Expand into empty cells
 
     def _damage_loser_colony(
-        self, loser_id: int, labeled_grid: np.ndarray, 
-        strength_ratio: float, new_grid: np.ndarray
+        self,
+        loser_id: int,
+        labeled_grid: np.ndarray,
+        strength_ratio: float,
+        new_grid: np.ndarray,
     ) -> None:
         """
         Apply damage to the loser colony based on strength difference.
@@ -1296,8 +1332,12 @@ class SymbioteEvolutionAlgorithm:
         new_grid[damage_mask] = 0
 
     def _handle_colony_merge(
-        self, colony_i: Dict, colony_j: Dict, distance: float, 
-        grid_shape: Tuple[int, int], new_grid: np.ndarray
+        self,
+        colony_i: Dict,
+        colony_j: Dict,
+        distance: float,
+        grid_shape: Tuple[int, int],
+        new_grid: np.ndarray,
     ) -> None:
         """
         Handle a merge interaction by creating a bridge between colonies.

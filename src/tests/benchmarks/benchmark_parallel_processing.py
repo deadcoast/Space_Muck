@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_parallel_processing.py
+
 Benchmark script for measuring the performance of parallel processing implementations
 in the BaseGenerator class across different grid sizes.
 """

@@ -16,17 +16,17 @@ from unittest.mock import patch
 # Add the parent directory to the path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import unittest
+
 # Import the modules after path setup
 from utils.dependency_config import (
-    NoiseGenerator,
     DependencyConfig,
+    NoiseGenerator,
     app_container,
     configure_dependencies,
-    register_noise_generator,
     load_config_from_file,
+    register_noise_generator,
 )
-
-import unittest
 
 # Third-party library imports
 

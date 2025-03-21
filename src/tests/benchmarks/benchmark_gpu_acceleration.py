@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/tests/benchmarks/benchmark_gpu_acceleration.py
+
 Benchmark script for GPU acceleration in Space Muck.
 
 This script measures the performance of GPU-accelerated operations

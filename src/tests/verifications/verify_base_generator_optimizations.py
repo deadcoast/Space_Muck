@@ -10,11 +10,16 @@ import os
 import sys
 import time
 
-# Add the src directory to the Python path
+# Add the src directories to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Third-party library imports
 import numpy as np
+
+# Local application imports
+from entities.base_generator import BaseGenerator
+from utils.visualization import GeneratorVisualizer
 
 # Create a random number generator with a fixed seed for reproducibility
 rng = np.random.default_rng(42)
@@ -23,16 +28,9 @@ rng = np.random.default_rng(42)
 RESULTS_MATCH = "  ✓ Results match"
 RESULTS_DONT_MATCH = "  ✗ Results don't match"
 
-# Local application imports
-from entities.base_generator import BaseGenerator
-from utils.visualization import GeneratorVisualizer
-
 # Only import what we need
 # import matplotlib.pyplot as plt
 # from typing import Dict, List, Tuple, Optional
-
-# Add the src directory to the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def test_noise_layer_generation():

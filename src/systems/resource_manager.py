@@ -75,9 +75,9 @@ class ResourceManager:
 
         # Flow management
         self.flows: List[ResourceFlow] = []
-        self.flow_history: Dict[
-            str, List[Tuple[float, float]]
-        ] = {}  # (timestamp, amount)
+        self.flow_history: Dict[str, List[Tuple[float, float]]] = (
+            {}
+        )  # (timestamp, amount)
 
         # System state
         self.active = True

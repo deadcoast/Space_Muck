@@ -1,22 +1,21 @@
-# Use absolute imports for consistency
+"""
+ui_menu.py
+
+Provides a menu UI element with cellular automaton-inspired behaviors.
+"""
 
 # Standard library imports
 import random
 
 # Local application imports
 from typing import List, Optional, Tuple
-
-import pygame
-
 from config import COLOR_BG, COLOR_TEXT
-
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_element.ascii_box import ASCIIBox
 from src.ui.ui_helpers import draw_utils
 
-
 # Third-party library imports
-
+import pygame
 
 # For backward compatibility, keep Menu as an alias of UIMenu
 Menu = UIStyle

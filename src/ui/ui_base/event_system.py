@@ -19,6 +19,17 @@ from typing import Any, Callable, Dict, List, Set
 # Third-party library imports
 
 
+# Define EventType enum to match UIEventType mappings
+class EventType(Enum):
+    """Main event system event types that UI events can map to."""
+
+    CONVERTER_SELECTED = auto()
+    PROCESS_STARTED = auto()
+    PROCESS_COMPLETED = auto()
+    PROCESS_CANCELLED = auto()
+    METRIC_UPDATED = auto()  # Default mapping for UI events
+
+
 # Use absolute imports for consistency
 
 

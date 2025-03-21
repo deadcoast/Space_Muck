@@ -1,3 +1,9 @@
+"""
+ascii_metrics_panel.py
+
+Provides a specialized panel for displaying production metrics and performance indicators.
+"""
+
 # Standard library imports
 
 # Third-party library imports

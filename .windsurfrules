@@ -1,68 +1,68 @@
-# .windsurfrules
+# .windsurfrules 
 
-## Correction Guidelines
-
-NEVER CORRECT CODE BY COMMENTING IT OUT WITH "\_". NEVER ADD WRAPPER FUNCTIONS AROUND EXISTING METHODS. NEVER ABSTRACT OR ALTER EXISTING FUNCTIONALITY. NEVER CREATE YOUR OWN IMPLEMENTATIONS OF EXISTING METHODS. NEVER MAKE ASSUMPTIONS ABOUT THE CODE - ALWAYS VERIFY FIRST. ONLY CREATE ACTUAL INSTANCES OF REAL CLASSES AND USE THEIR EXISTING METHODS DIRECTLY. AVOID CREATING NEW FILES WHEN ASKED TO CORRECT A FILE.
-
-## Primary Context Source
-
-### `.windsurfcontext.md`
-
-This file contains all essential codebase patterns, structures, interfaces, and relationships. Refer to this file first when seeking context for code generation, correction, or analysis. The document uses hashtag identifiers (#system_name) to mark major system sections.
+This file contains all essential codebase patterns, structures, interfaces, and relationships. Refer to this file first when seeking context for code generation, correction, or analysis.
 
 ## CRITICAL WORKFLOW ENFORCEMENT
 
 ALWAYS BEGIN BY CONSULTING .windsurfcontext.md BEFORE IMPLEMENTING ANY SOLUTION.
 
-DO NOT:
+### DO NOT:
 - Implement solutions based solely on existing code examples
 - Skip documentation review even when similar patterns exist elsewhere
 - Assume pattern consistency without verification
+- Add wrapper functions around existing methods
+- Alter existing functionality
+- Create your own implementations of existing methods
+- Make assumptions about the code - always verify first
+- Create actual instances of real classes and use their existing methods directly
+- Avoid creating new files when asked to correct a file
 
-REQUIRED STEPS:
-1. FIRST: Search .windsurfcontext.md for relevant system patterns using #hashtag identifiers
-2. SECOND: Document in Scratchpad which patterns were found and will be applied
-3. THIRD: Only after documentation review, proceed with implementation
-4. FOURTH: Verify implementation against documented patterns before submission
+### REQUIRED STEPS:
+1. Search .windsurfcontext.md for relevant system patterns using #hashtag identifiers
+2. Document in Scratchpad which patterns were found and will be applied
+3. Only after documentation review, proceed with implementation
+4. Verify implementation against documented patterns before submission
 
 ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
 
 ## Workflow & Instructions
 
-Context Retrieval Process:
-   - When analyzing or generating code, first search `.windsurfcontext` for relevant system sections using `(#hashtag)` identifiers
-   - Look for code patterns, interfaces, and type structures in the identified sections
-   - Verify implementation approaches against established patterns
-   - If context is insufficient, ask the user for clarification
+### Context Source:
+`src/.windsurfcontext.md` is the primary source of truth for code patterns, structures, interfaces, and relationships. Always refer to this file first when seeking context for code generation, correction, or analysis.
 
-Architecture Alignment:
-   - Ensure all implementations follow patterns documented in `.windsurfcontext`
-   - Maintain consistency with existing type structures and interfaces
-   - Follow established naming conventions and implementation patterns
-   - If context is missing, ask the user before implementing new patterns
+### Context Retrieval Process:
+- When analyzing or generating code, first search `.windsurfcontext` for relevant system sections using `(#hashtag)` identifiers
+- Look for code patterns, interfaces, and type structures in the identified sections
+- Verify implementation approaches against established patterns
+- If context is insufficient, ask the user for clarification
 
-Incremental Implementation:
-   - Generate code in manageable steps aligned with patterns in `.windsurfcontext`
-   - Review implementations for consistency with documented patterns
-   - Identify and resolve gaps between implementation and documentation
+### Architecture Alignment:
+- Ensure all implementations follow patterns documented in `.windsurfcontext`
+- Maintain consistency with existing type structures and interfaces
+- Follow established naming conventions and implementation patterns
+- If context is missing, ask the user before implementing new patterns
 
-Context Maintenance:
+### Incremental Implementation:
+- Generate code in manageable steps aligned with patterns in `.windsurfcontext`
+- Review implementations for consistency with documented patterns
+- Identify and resolve gaps between implementation and documentation
 
-   - When discovering new patterns or implementations, suggest updates to `.windsurfcontext`
-   - Format new context entries according to the established structure
-   - Ensure new entries include concrete code examples, not explanations
+### Context Maintenance:
+- When discovering new patterns or implementations, suggest updates to `.windsurfcontext`
+- Format new context entries according to the established structure
+- Ensure new entries include concrete code examples, not explanations
 
-Scratchpad Usage:
-   Maintain a task list in the `Scratchpad.md` file in this format:
+### Scratchpad Usage:
+- Maintain a `Tasklist` in the `Scratchpad.md` file in this format:
 
-   ```
-   ## Scratchpad
+```md
+## Scratchpad Tasklist
 
-   [X] Task 1
-   [ ] Task 2
-   ```
-
-   - Update progress markers as subtasks are completed
-   - Use the Scratchpad to maintain implementation context and track progress
-
----
+- [X] Task 1
+  - [ ] Subtask 1
+- [ ] Task 2
+```
+## Tasklist Instructions
+- When user makes a request, create a comprehensive `Tasklist` for all steps.
+- Update progress markers as subtasks are completed
+- Use the Scratchpad to maintain implementation context and track progress

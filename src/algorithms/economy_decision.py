@@ -10,7 +10,7 @@ and cost-benefit attack analysis for more realistic aggression.
 FEATURES
 --------------------------------------------------------------------------------
 
-1) MineralResourceOptimizer: 
+1) MineralResourceOptimizer:
    - Uses scipy.optimize to solve a multi-objective or constrained optimization
      that balances selling minerals vs. feeding them, under potential constraints
      like "minimum feeding to avoid aggression" or "desired revenue for fleet upgrades."
@@ -21,7 +21,7 @@ FEATURES
      to each player's style (e.g., "feeder" vs. "hoarder" cluster).
 
 3) Matrix-based Payoff Analysis:
-   - Demonstrates how to compute resource payoffs or partial equilibrium 
+   - Demonstrates how to compute resource payoffs or partial equilibrium
      using NumPy arrays for multiple players/factions, with vectorized operations.
 
 4) Game-TheoreticFeedingModel
@@ -56,9 +56,10 @@ Copyright (c) 2025 ...
 All rights reserved.
 """
 
+import contextlib
+
 # Standard library imports
 import importlib.util
-import contextlib
 import warnings
 from typing import Dict, List
 
@@ -69,21 +70,18 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
 
 # Local application imports - import only what we need
-from config import (
-    # Colors for mineral types and visualization
-    COLOR_ASTEROID_RARE,
-    COLOR_ASTEROID_PRECIOUS,
+from config import (  # Colors for mineral types and visualization; UI colors for data visualization; Entity behavior colors
     COLOR_ASTEROID_ANOMALY,
+    COLOR_ASTEROID_PRECIOUS,
+    COLOR_ASTEROID_RARE,
+    COLOR_ENTITY_FEEDING,
+    COLOR_ERROR,
     COLOR_GRID,
-    # UI colors for data visualization
+    COLOR_SUCCESS,
     COLOR_UI_BG,
     COLOR_UI_BORDER,
     COLOR_UI_TEXT,
-    COLOR_SUCCESS,
     COLOR_WARNING,
-    COLOR_ERROR,
-    # Entity behavior colors
-    COLOR_ENTITY_FEEDING,
 )
 
 # No need for availability flags - we're always using the advanced libraries

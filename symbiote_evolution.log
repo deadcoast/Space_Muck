@@ -1,0 +1,35 @@
+2025-03-20 12:22:27,335 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 12:22:29,280 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 12:22:29,281 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 12:22:29,394 - WARNING - AsteroidGenerator not available. Using ProceduralGenerator as fallback.
+2025-03-20 12:29:19,272 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 12:29:20,909 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 12:29:20,910 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 12:51:03,064 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 12:51:04,844 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 12:51:04,844 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 12:51:04,897 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-20 12:51:04,897 - INFO - EventBus 'GameEventBus' initialized
+2025-03-20 12:51:04,898 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-20 12:51:04,899 - INFO - GameLoop system initialized
+2025-03-20 12:59:18,355 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 12:59:20,167 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 12:59:20,167 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 12:59:20,209 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-20 12:59:20,209 - INFO - EventBus 'GameEventBus' initialized
+2025-03-20 12:59:20,209 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-20 12:59:20,211 - INFO - GameLoop system initialized
+2025-03-20 13:14:27,968 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 13:14:29,584 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 13:14:29,585 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 13:14:29,623 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-20 13:14:29,623 - INFO - EventBus 'GameEventBus' initialized
+2025-03-20 13:14:29,623 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-20 13:14:29,624 - INFO - GameLoop system initialized
+2025-03-20 13:16:47,743 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-20 13:16:49,414 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-20 13:16:49,415 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-20 13:16:49,460 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-20 13:16:49,460 - INFO - EventBus 'GameEventBus' initialized
+2025-03-20 13:16:49,460 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-20 13:16:49,460 - INFO - GameLoop system initialized

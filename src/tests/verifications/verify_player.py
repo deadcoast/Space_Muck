@@ -50,9 +50,9 @@ class MockSymbioteEvolutionAlgorithm:
 
 # Replace the actual algorithm with our mock
 sys.modules["src.algorithms.symbiote_algorithm"] = MagicMock()
-sys.modules[
-    "src.algorithms.symbiote_algorithm"
-].SymbioteEvolutionAlgorithm = MockSymbioteEvolutionAlgorithm
+sys.modules["src.algorithms.symbiote_algorithm"].SymbioteEvolutionAlgorithm = (
+    MockSymbioteEvolutionAlgorithm
+)
 
 # Now try to import and instantiate the Player class
 try:

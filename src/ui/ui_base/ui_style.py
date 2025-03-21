@@ -1,18 +1,23 @@
+"""
+ui_style.py
 
+Contains the UIStyle enum and related functions.
+"""
 
 # Standard library imports
 import logging
 from enum import Enum, auto
 from typing import Dict, Optional
 
+# Local application imports
+from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
+
 # Third-party library imports
 
-# Local application imports
-# Commented out unused color imports - may be needed for future style implementations
-# from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
 class UIStyle(Enum):
     """Different visual styles for UI components"""
+
     SYMBIOTIC = auto()  # Organic, evolving patterns
     ASTEROID = auto()  # Rough, mineral-like patterns
     MECHANICAL = auto()  # Ship/tech inspired rigid patterns

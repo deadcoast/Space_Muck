@@ -1,4 +1,6 @@
 """
+src/generators/procedural_generator.py
+
 ProceduralGenerator class: Handles procedural generation for asteroid fields.
 
 This module contains the ProceduralGenerator class which inherits from BaseGenerator
@@ -602,9 +604,9 @@ class ProceduralGenerator(BaseGenerator):
             # Apply bonuses from rare minerals
             rare_mask = rare_grid > 0
             if np.any(rare_mask & energy_mask):
-                energy_grid[rare_mask & energy_mask] *= (
-                    2.0  # Double energy in rare mineral locations
-                )
+                energy_grid[
+                    rare_mask & energy_mask
+                ] *= 2.0  # Double energy in rare mineral locations
 
             log_performance_end("generate_energy_sources", start_time)
             return energy_grid

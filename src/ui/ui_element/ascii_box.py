@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
 import pygame
 
-from config import COLOR_TEXT, COLOR_BG
+from config import COLOR_BG, COLOR_TEXT
 from src.ui.draw_utils import draw_text
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_base.ui_element import UIElement

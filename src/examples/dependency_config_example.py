@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+src/examples/dependency_config_example.py
+
 Example script demonstrating the dependency configuration system.
 
 This script shows how to use the dependency configuration system to

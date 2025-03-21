@@ -1,5 +1,5 @@
 """
-pattern_analysis.py
+src/algorithms/pattern_analysis.py
 
 Provides advanced pattern detection and analysis utilities for cellular automata
 and colony-based grids. Includes detection of complex oscillators (pulsars, toads,
@@ -37,9 +37,10 @@ Copyright (c) 2025 ...
 All rights reserved.
 """
 
-import numpy as np
-from typing import Dict, Tuple
 from collections import deque
+from typing import Dict, Tuple
+
+import numpy as np
 
 
 # ------------------------------------------------------------------------------

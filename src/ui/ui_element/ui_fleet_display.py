@@ -1,15 +1,18 @@
+"""
+ui_fleet_display.py
+"""
+
 # Standard library imports
-
-# Third-party library imports
-
 import contextlib
 import curses
 from typing import Any, Dict, List
 
-# Import config constants if needed in the future
-
 # Local application imports
 from src.ui.ui_base.ascii_base import UIElement, UIStyle
+
+# Third-party library imports
+
+# Import config constants if needed in the future
 
 # Ship pattern constants
 CAPITAL_SHIP_PATTERN = "<[≡≡≡≡≡]>"

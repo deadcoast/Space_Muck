@@ -40,9 +40,11 @@ LICENSE / COPYRIGHT NOTICE
 Copyright (c) 2025 ...
 All rights reserved.
 """
+
 import pickle
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import Any, Dict, List, Tuple, Optional, Callable
 
 # Create a NumPy random number generator with a fixed seed for reproducibility
 rng = np.random.default_rng(seed=42)
@@ -342,12 +344,12 @@ class NeuroEvolutionManager:
 
     def _create_combined_weight_matrix(self, weights_a, weights_b, shape):
         """Create a new weight matrix by randomly combining values from two parent networks.
-        
+
         Args:
             weights_a: Flattened weights from first parent network
             weights_b: Flattened weights from second parent network
             shape: Shape to reshape the resulting weights array into
-            
+
         Returns:
             Combined weight matrix with parent values randomly selected for each position
         """

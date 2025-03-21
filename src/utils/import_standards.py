@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# Standard library imports
-
 """
 Import Standards for Space Muck.
 
@@ -48,20 +46,26 @@ import abc  # noqa: F401 - Example import
 import logging  # noqa: F401 - Example import
 import math  # noqa: F401 - Example import
 import random  # noqa: F401 - Example import
-from typing import Dict, List, Optional, Set, Tuple, Union  # noqa: F401 - Example imports
+from typing import (  # noqa: F401 - Example imports
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 # Third-party library imports
 import numpy as np  # noqa: F401 - Example import
 
 # Local application imports - specific imports are preferred over wildcard imports
-from config import (  # noqa: F401 - Example import
-    COLOR_BG,
-    COLOR_FG,
-    GAME_TITLE
-)  
+from config import COLOR_BG, COLOR_FG, GAME_TITLE  # noqa: F401 - Example import
 from entities.base_entity import BaseEntity  # noqa: F401 - Example import
 from utils.dependency_injection import inject  # noqa: F401 - Example import
-from utils.noise_generator import NoiseGenerator, get_noise_generator  # noqa: F401 - Example import
+from utils.noise_generator import (  # noqa: F401 - Example import
+    NoiseGenerator,
+    get_noise_generator,
+)
 
 # ========================================================================
 # END OF EXAMPLE IMPORTS

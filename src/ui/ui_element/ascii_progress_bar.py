@@ -1,3 +1,9 @@
+"""
+ascii_progress_bar.py
+
+Provides a specialized progress bar for displaying ASCII-style progress indicators.
+"""
+
 # Standard library imports
 import logging
 import math
@@ -8,9 +14,9 @@ from typing import Optional, Tuple, TypeVar
 
 import pygame
 
-from src.ui.draw_utils import draw_text
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_base.ui_element import UIElement
+from ui.draw_utils import draw_text
+from ui.ui_base.ascii_base import UIStyle
+from ui.ui_base.ui_element import UIElement
 
 # Third-party library imports
 

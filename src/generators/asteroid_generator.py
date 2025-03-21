@@ -1,4 +1,6 @@
 """
+src/generators/asteroid_generator.py
+
 AsteroidGenerator class: Specialized generator for asteroid fields.
 
 This module contains the AsteroidGenerator class which inherits from BaseGenerator
@@ -27,14 +29,16 @@ from utils.logging_setup import (
 )
 from utils.noise_generator import NoiseGenerator
 from utils.pattern_generator import (
-    add_value_clusters,
     apply_weighted_patterns,
     generate_gradient_pattern,
-    generate_rare_resource_distribution,
     generate_ring_pattern,
     generate_spiral_pattern,
-    generate_value_distribution,
     generate_void_pattern,
+)
+from utils.value_generator import (
+    add_value_clusters,
+    generate_rare_resource_distribution,
+    generate_value_distribution,
 )
 
 # Import AsteroidField for create_asteroid_field method

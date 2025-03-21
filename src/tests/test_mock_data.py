@@ -3,17 +3,18 @@ Test the mock data generation functions.
 """
 
 import unittest
+
 import numpy as np
 
 from tests.tools.mock_data_test import (
+    _add_circular_cluster,
+    _create_asteroid_clusters,
+    _create_energy_grid,
+    _create_entity_grid,
+    _create_rare_grid,
     create_mock_field_data,
     create_mock_race,
     create_mock_shop_upgrade,
-    _create_asteroid_clusters,
-    _create_rare_grid,
-    _create_energy_grid,
-    _create_entity_grid,
-    _add_circular_cluster,
 )
 
 

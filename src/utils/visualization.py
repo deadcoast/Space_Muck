@@ -365,7 +365,7 @@ def _visualize_noise_layers(
 ) -> None:
     """
     Visualize noise layers from a generator if available.
-    
+
     Args:
         generator: Generator instance with generate_noise_layer method
         visualizer: GeneratorVisualizer instance
@@ -401,11 +401,11 @@ def _create_thresholded_grid(generator, base_grid) -> np.ndarray:
     """
     Create a thresholded binary grid using the generator's apply_threshold method if available,
     or a simple threshold operation if not.
-    
+
     Args:
         generator: Generator instance
         base_grid: Base grid to threshold
-        
+
     Returns:
         np.ndarray: Thresholded binary grid
     """
@@ -420,7 +420,7 @@ def _visualize_cellular_automaton(
 ) -> None:
     """
     Visualize cellular automaton evolution if available.
-    
+
     Args:
         generator: Generator instance with apply_cellular_automaton method
         visualizer: GeneratorVisualizer instance
@@ -475,7 +475,7 @@ def _visualize_clusters(
 ) -> None:
     """
     Visualize clustering if available.
-    
+
     Args:
         generator: Generator instance with create_clusters method
         visualizer: GeneratorVisualizer instance
@@ -535,12 +535,18 @@ def visualize_generator_output(
 
     # Visualize noise layers if available
     if hasattr(generator, "generate_noise_layer"):
-        _visualize_noise_layers(generator, visualizer, generator_name, show, save, colormap)
+        _visualize_noise_layers(
+            generator, visualizer, generator_name, show, save, colormap
+        )
 
     # Visualize cellular automaton if available
-    if hasattr(generator, "apply_cellular_automaton") and hasattr(generator, "generate_noise_layer"):
+    if hasattr(generator, "apply_cellular_automaton") and hasattr(
+        generator, "generate_noise_layer"
+    ):
         _visualize_cellular_automaton(generator, visualizer, generator_name, show, save)
 
     # Visualize clusters if available
-    if hasattr(generator, "create_clusters") and hasattr(generator, "generate_noise_layer"):
+    if hasattr(generator, "create_clusters") and hasattr(
+        generator, "generate_noise_layer"
+    ):
         _visualize_clusters(generator, visualizer, generator_name, show, save, colormap)

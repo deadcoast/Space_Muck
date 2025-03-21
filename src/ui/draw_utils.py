@@ -16,6 +16,7 @@ import pygame
 
 # Local application imports
 from config import COLOR_BG, COLOR_TEXT
+
 # Import render helper only when needed
 
 
@@ -664,9 +665,11 @@ def _header_handler(config, rect, panel, header):
     # Draw separator line
     pygame.draw.line(
         panel,
-        config.border_color
-        if len(config.border_color) == 4
-        else (*config.border_color, config.alpha),
+        (
+            config.border_color
+            if len(config.border_color) == 4
+            else (*config.border_color, config.alpha)
+        ),
         (0, config.header_height),
         (rect.width, config.header_height),
         2,

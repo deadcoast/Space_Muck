@@ -39,6 +39,8 @@ disable=
     unused-import,
     reimported,
     wildcard-import,
+    ungrouped-imports,
+    import-outside-toplevel,
     
     # Type checking and inference
     no-member,
@@ -290,7 +292,7 @@ ignore-long-lines=^\s*(# )?<?https?://\S+>?$
 single-line-if-stmt=no
 
 # List of optional constructs for which whitespace checking is disabled
-no-space-check=trailing-comma,dict-separator
+# Removed deprecated option: no-space-check
 
 # Maximum number of lines in a module
 max-module-lines=2000

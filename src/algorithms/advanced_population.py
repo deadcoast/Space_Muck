@@ -44,7 +44,7 @@ Copyright (c) 2025, ...
 All rights reserved.
 """
 
-from typing import List, Dict
+from typing import Dict, List
 
 
 class MultiSpeciesPopulation:
