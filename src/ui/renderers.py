@@ -13,15 +13,16 @@ from typing import Dict, List, Tuple
 
 # Third-party library imports
 import numpy as np
+import pygame
 
-from config import (  # Standard library imports; Third-party library imports; Local application imports
+# Local application imports
+from config import (
     COLOR_ASTEROID_RARE,
     COLOR_BG,
     COLOR_GRID,
     COLOR_RACE_1,
     COLOR_RACE_2,
     COLOR_RACE_3,
-    pygame,
 )
 
 # Local application imports

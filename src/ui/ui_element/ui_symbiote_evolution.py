@@ -4,16 +4,18 @@ ui_symbiote_evolution.py
 Provides a symbiote evolution monitor UI element with cellular automaton-inspired behaviors.
 """
 
+# Third-party library imports
+import contextlib
+
 # Standard library imports
 from typing import List
 
-# Local application imports
-from src.ui.ui_base.ascii_base import UIElement, UIStyle
+import pygame
+
 from config import COLOR_BG, COLOR_TEXT
 
-# Third-party library imports
-import contextlib
-import pygame
+# Local application imports
+from src.ui.ui_base.ascii_base import UIElement, UIStyle
 
 
 class SymbioteEvolutionMonitor(UIElement):

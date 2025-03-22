@@ -18,9 +18,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pygame
 
 from config import COLOR_TEXT
-from src.ui.ui_base.animation_style import AnimationStyle
-from src.ui.ui_base.ascii_base import UIStyle
-from src.ui.ui_helpers.render_helper import RenderHelper
+from ui.ui_base.ascii_base import AnimationStyle, UIStyle
+from ui.ui_helpers.render_helper import RenderHelper
 
 # Third-party library imports
 

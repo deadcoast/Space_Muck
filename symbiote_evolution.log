@@ -33,3 +33,540 @@
 2025-03-20 13:16:49,460 - INFO - EventBus 'GameEventBus' initialized
 2025-03-20 13:16:49,460 - INFO - EventBus 'ResourceEventBus' initialized
 2025-03-20 13:16:49,460 - INFO - GameLoop system initialized
+2025-03-21 13:00:09,114 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:00:09,114 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:00:09,114 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:00:09,235 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:00:09,235 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:00:09,235 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:00:09,238 - INFO - GameLoop system initialized
+2025-03-21 13:05:46,727 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:05:46,728 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:05:46,728 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:05:46,803 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:05:46,803 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:05:46,803 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:05:46,804 - INFO - GameLoop system initialized
+2025-03-21 13:06:14,149 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:06:14,149 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:06:14,149 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:06:14,198 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:06:14,198 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:06:14,198 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:06:14,199 - INFO - GameLoop system initialized
+2025-03-21 13:09:29,283 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:09:29,284 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:09:29,284 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:09:29,329 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:09:29,330 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:09:29,330 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:09:29,330 - INFO - GameLoop system initialized
+2025-03-21 13:10:14,755 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:10:14,755 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:10:14,756 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:10:14,797 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:10:14,797 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:10:14,797 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:10:14,798 - INFO - GameLoop system initialized
+2025-03-21 13:22:01,309 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:22:01,309 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:22:01,310 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:22:01,354 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:22:01,354 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:22:01,354 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:22:01,354 - INFO - GameLoop system initialized
+2025-03-21 13:23:30,376 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:23:30,377 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:23:30,377 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:23:30,418 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:23:30,419 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:23:30,419 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:23:30,419 - INFO - GameLoop system initialized
+2025-03-21 13:23:30,443 - INFO - Starting Space Muck game...
+2025-03-21 13:23:30,443 - INFO - Event system initialized
+2025-03-21 13:23:34,153 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 13:23:34,153 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3886, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3914, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 220, in __init__
+    self._init_state_tracking()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 263, in _init_state_tracking
+    self._record_state_transition(None, self.state)
+TypeError: Game._record_state_transition() takes 2 positional arguments but 3 were given
+
+2025-03-21 13:23:34,276 - INFO - Game shutdown complete
+2025-03-21 13:23:49,609 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:23:49,609 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:23:49,609 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:23:49,642 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:23:49,642 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:23:49,642 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:23:49,642 - INFO - GameLoop system initialized
+2025-03-21 13:23:49,656 - INFO - Starting Space Muck game...
+2025-03-21 13:23:49,656 - INFO - Event system initialized
+2025-03-21 13:23:50,551 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 13:23:50,552 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3886, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3914, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 220, in __init__
+    self._init_state_tracking()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 263, in _init_state_tracking
+    self._record_state_transition(None, self.state)
+TypeError: Game._record_state_transition() takes 2 positional arguments but 3 were given
+
+2025-03-21 13:23:50,660 - INFO - Game shutdown complete
+2025-03-21 13:49:20,118 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:49:20,118 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:49:20,118 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:49:20,159 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:49:20,159 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:49:20,159 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:49:20,159 - INFO - GameLoop system initialized
+2025-03-21 13:49:20,172 - INFO - Starting Space Muck game...
+2025-03-21 13:49:20,172 - INFO - Event system initialized
+2025-03-21 13:49:21,081 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 13:49:21,081 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3887, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3915, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 220, in __init__
+    self._init_state_tracking()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 263, in _init_state_tracking
+    self._record_state_transition(None, self.state)
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 455, in _record_state_transition
+    "game_time": self.game_time,
+                 ^^^^^^^^^^^^^^
+AttributeError: 'Game' object has no attribute 'game_time'
+
+2025-03-21 13:49:21,194 - INFO - Game shutdown complete
+2025-03-21 13:53:22,388 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:53:22,405 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:53:22,406 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:53:22,473 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:53:22,474 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:53:22,474 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:53:22,474 - INFO - GameLoop system initialized
+2025-03-21 13:53:22,495 - INFO - Starting Space Muck game...
+2025-03-21 13:53:22,495 - INFO - Event system initialized
+2025-03-21 13:53:23,427 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 13:53:23,427 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3891, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3919, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 220, in __init__
+    self._init_state_tracking()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 263, in _init_state_tracking
+    self._record_state_transition(None, self.state)
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 462, in _record_state_transition
+    self._state_history.append(transition)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Game' object has no attribute '_state_history'. Did you mean: 'state_history'?
+
+2025-03-21 13:53:23,530 - INFO - Game shutdown complete
+2025-03-21 13:54:22,201 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 13:54:22,201 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 13:54:22,201 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 13:54:22,253 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 13:54:22,253 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 13:54:22,253 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 13:54:22,254 - INFO - GameLoop system initialized
+2025-03-21 13:54:22,272 - INFO - Starting Space Muck game...
+2025-03-21 13:54:22,272 - INFO - Event system initialized
+2025-03-21 13:54:23,239 - INFO - Entity created: procedural (ID: 400)
+2025-03-21 13:54:23,239 - INFO - GPU acceleration enabled for generator 400 with available backends: mps
+2025-03-21 13:54:23,239 - INFO - Generator initialized: procedural (ID: 400, Seed: 300)
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: birth_set = {3}
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: survival_set = {2, 3}
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: iterations = 3
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: wrap = True
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: fractal_depth = 3
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: fractal_roughness = 0.6
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: anomaly_chance = 0.01
+2025-03-21 13:54:23,240 - INFO - Generator parameter set: anomaly_cluster_chance = 0.2
+2025-03-21 13:54:23,240 - INFO - ProceduralGenerator initialized: ID: 400, Seed: 300
+2025-03-21 13:54:23,242 - CRITICAL - Unhandled str: Field initialization failed
+2025-03-21 13:54:23,243 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 303, in initialize_patterns
+    self._initialize_field_with_generator()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 271, in _initialize_field_with_generator
+    self.grid = generator.generate_field(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+
+2025-03-21 13:54:23,243 - ERROR - Failed to initialize patterns: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+2025-03-21 13:54:23,243 - WARNING - Using legacy pattern initialization method
+2025-03-21 13:54:27,953 - INFO - Entity created: miner (ID: 0)
+2025-03-21 13:54:27,953 - INFO - Created race 0 with trait selective
+2025-03-21 13:54:27,953 - INFO - Player initialized with 1000 credits
+2025-03-21 13:54:27,953 - INFO - Combat system initialized
+2025-03-21 13:54:27,953 - INFO - Encounter generator initialized
+2025-03-21 13:54:27,953 - INFO - Game systems initialized successfully
+2025-03-21 13:54:27,953 - INFO - Entity created: miner (ID: 1)
+2025-03-21 13:54:27,953 - INFO - Created race 1 with trait selective
+2025-03-21 13:54:27,953 - INFO - Entity created: miner (ID: 2)
+2025-03-21 13:54:27,953 - INFO - Created race 2 with trait adaptive
+2025-03-21 13:54:27,953 - INFO - Entity created: miner (ID: 3)
+2025-03-21 13:54:27,953 - INFO - Created race 3 with trait selective
+2025-03-21 13:54:27,953 - INFO - Created race 1 with trait adaptive
+2025-03-21 13:54:27,953 - INFO - Created race 2 with trait expansive
+2025-03-21 13:54:27,953 - INFO - Created race 3 with trait selective
+2025-03-21 13:54:28,386 - ERROR - UI Initialization failed after 4.65ms: No module named 'src'
+2025-03-21 13:54:28,386 - ERROR - ModuleNotFoundError: No module named 'src'
+2025-03-21 13:54:28,386 - ERROR - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 17, in <module>
+    from src.ui.ui_base.ascii_base import UIStyle
+ModuleNotFoundError: No module named 'src'
+
+2025-03-21 13:54:28,387 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 13:54:28,387 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3904, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3932, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 17, in <module>
+    from src.ui.ui_base.ascii_base import UIStyle
+ModuleNotFoundError: No module named 'src'
+
+2025-03-21 13:54:28,497 - INFO - Game shutdown complete
+2025-03-21 14:02:13,623 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 14:02:13,623 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 14:02:13,624 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 14:02:13,665 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 14:02:13,665 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 14:02:13,665 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 14:02:13,665 - INFO - GameLoop system initialized
+2025-03-21 14:02:13,677 - INFO - Starting Space Muck game...
+2025-03-21 14:02:13,678 - INFO - Event system initialized
+2025-03-21 14:02:14,654 - INFO - Entity created: procedural (ID: 400)
+2025-03-21 14:02:14,654 - INFO - GPU acceleration enabled for generator 400 with available backends: mps
+2025-03-21 14:02:14,654 - INFO - Generator initialized: procedural (ID: 400, Seed: 300)
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: birth_set = {3}
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: survival_set = {2, 3}
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: iterations = 3
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: wrap = True
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: fractal_depth = 3
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: fractal_roughness = 0.6
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: anomaly_chance = 0.01
+2025-03-21 14:02:14,655 - INFO - Generator parameter set: anomaly_cluster_chance = 0.2
+2025-03-21 14:02:14,655 - INFO - ProceduralGenerator initialized: ID: 400, Seed: 300
+2025-03-21 14:02:14,657 - CRITICAL - Unhandled str: Field initialization failed
+2025-03-21 14:02:14,657 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 303, in initialize_patterns
+    self._initialize_field_with_generator()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 271, in _initialize_field_with_generator
+    self.grid = generator.generate_field(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+
+2025-03-21 14:02:14,658 - ERROR - Failed to initialize patterns: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+2025-03-21 14:02:14,658 - WARNING - Using legacy pattern initialization method
+2025-03-21 14:02:19,163 - INFO - Entity created: miner (ID: 0)
+2025-03-21 14:02:19,163 - INFO - Created race 0 with trait selective
+2025-03-21 14:02:19,163 - INFO - Player initialized with 1000 credits
+2025-03-21 14:02:19,163 - INFO - Combat system initialized
+2025-03-21 14:02:19,163 - INFO - Encounter generator initialized
+2025-03-21 14:02:19,163 - INFO - Game systems initialized successfully
+2025-03-21 14:02:19,163 - INFO - Entity created: miner (ID: 1)
+2025-03-21 14:02:19,163 - INFO - Created race 1 with trait selective
+2025-03-21 14:02:19,163 - INFO - Entity created: miner (ID: 2)
+2025-03-21 14:02:19,163 - INFO - Created race 2 with trait adaptive
+2025-03-21 14:02:19,163 - INFO - Entity created: miner (ID: 3)
+2025-03-21 14:02:19,163 - INFO - Created race 3 with trait selective
+2025-03-21 14:02:19,163 - INFO - Created race 1 with trait adaptive
+2025-03-21 14:02:19,163 - INFO - Created race 2 with trait expansive
+2025-03-21 14:02:19,163 - INFO - Created race 3 with trait selective
+2025-03-21 14:02:19,508 - ERROR - UI Initialization failed after 6.44ms: No module named 'ui.ui_base.ui_element'
+2025-03-21 14:02:19,509 - ERROR - ModuleNotFoundError: No module named 'ui.ui_base.ui_element'
+2025-03-21 14:02:19,509 - ERROR - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 14, in <module>
+    from ui.ui_base.ui_element import UIElement
+ModuleNotFoundError: No module named 'ui.ui_base.ui_element'
+
+2025-03-21 14:02:19,509 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 14:02:19,509 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3904, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3932, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 14, in <module>
+    from ui.ui_base.ui_element import UIElement
+ModuleNotFoundError: No module named 'ui.ui_base.ui_element'
+
+2025-03-21 14:02:19,616 - INFO - Game shutdown complete
+2025-03-21 14:03:02,318 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 14:03:02,318 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 14:03:02,318 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 14:03:02,360 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 14:03:02,360 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 14:03:02,360 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 14:03:02,361 - INFO - GameLoop system initialized
+2025-03-21 14:03:02,375 - INFO - Starting Space Muck game...
+2025-03-21 14:03:02,375 - INFO - Event system initialized
+2025-03-21 14:03:03,246 - INFO - Entity created: procedural (ID: 400)
+2025-03-21 14:03:03,246 - INFO - GPU acceleration enabled for generator 400 with available backends: mps
+2025-03-21 14:03:03,246 - INFO - Generator initialized: procedural (ID: 400, Seed: 300)
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: birth_set = {3}
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: survival_set = {2, 3}
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: iterations = 3
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: wrap = True
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: fractal_depth = 3
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: fractal_roughness = 0.6
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: anomaly_chance = 0.01
+2025-03-21 14:03:03,247 - INFO - Generator parameter set: anomaly_cluster_chance = 0.2
+2025-03-21 14:03:03,247 - INFO - ProceduralGenerator initialized: ID: 400, Seed: 300
+2025-03-21 14:03:03,250 - CRITICAL - Unhandled str: Field initialization failed
+2025-03-21 14:03:03,250 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 303, in initialize_patterns
+    self._initialize_field_with_generator()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 271, in _initialize_field_with_generator
+    self.grid = generator.generate_field(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+
+2025-03-21 14:03:03,250 - ERROR - Failed to initialize patterns: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+2025-03-21 14:03:03,250 - WARNING - Using legacy pattern initialization method
+2025-03-21 14:03:07,717 - INFO - Entity created: miner (ID: 0)
+2025-03-21 14:03:07,717 - INFO - Created race 0 with trait selective
+2025-03-21 14:03:07,717 - INFO - Player initialized with 1000 credits
+2025-03-21 14:03:07,717 - INFO - Combat system initialized
+2025-03-21 14:03:07,717 - INFO - Encounter generator initialized
+2025-03-21 14:03:07,717 - INFO - Game systems initialized successfully
+2025-03-21 14:03:07,717 - INFO - Entity created: miner (ID: 1)
+2025-03-21 14:03:07,718 - INFO - Created race 1 with trait selective
+2025-03-21 14:03:07,718 - INFO - Entity created: miner (ID: 2)
+2025-03-21 14:03:07,718 - INFO - Created race 2 with trait adaptive
+2025-03-21 14:03:07,718 - INFO - Entity created: miner (ID: 3)
+2025-03-21 14:03:07,718 - INFO - Created race 3 with trait selective
+2025-03-21 14:03:07,718 - INFO - Created race 1 with trait adaptive
+2025-03-21 14:03:07,718 - INFO - Created race 2 with trait expansive
+2025-03-21 14:03:07,718 - INFO - Created race 3 with trait selective
+2025-03-21 14:03:08,072 - ERROR - UI Initialization failed after 10.33ms: No module named 'src'
+2025-03-21 14:03:08,073 - ERROR - ModuleNotFoundError: No module named 'src'
+2025-03-21 14:03:08,073 - ERROR - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 15, in <module>
+    from ui.ui_element.ascii_box import ASCIIBox
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_box.py", line 18, in <module>
+    from src.ui.draw_utils import draw_text
+ModuleNotFoundError: No module named 'src'
+
+2025-03-21 14:03:08,073 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 14:03:08,073 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3904, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3932, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 15, in <module>
+    from ui.ui_element.ascii_box import ASCIIBox
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_box.py", line 18, in <module>
+    from src.ui.draw_utils import draw_text
+ModuleNotFoundError: No module named 'src'
+
+2025-03-21 14:03:08,190 - INFO - Game shutdown complete
+2025-03-21 14:03:47,311 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 14:03:47,311 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 14:03:47,311 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 14:03:47,348 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 14:03:47,348 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 14:03:47,348 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 14:03:47,348 - INFO - GameLoop system initialized
+2025-03-21 14:03:47,360 - INFO - Starting Space Muck game...
+2025-03-21 14:03:47,361 - INFO - Event system initialized
+2025-03-21 14:03:48,200 - INFO - Entity created: procedural (ID: 400)
+2025-03-21 14:03:48,200 - INFO - GPU acceleration enabled for generator 400 with available backends: mps
+2025-03-21 14:03:48,200 - INFO - Generator initialized: procedural (ID: 400, Seed: 300)
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: birth_set = {3}
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: survival_set = {2, 3}
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: iterations = 3
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: wrap = True
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: fractal_depth = 3
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: fractal_roughness = 0.6
+2025-03-21 14:03:48,201 - INFO - Generator parameter set: anomaly_chance = 0.01
+2025-03-21 14:03:48,202 - INFO - Generator parameter set: anomaly_cluster_chance = 0.2
+2025-03-21 14:03:48,202 - INFO - ProceduralGenerator initialized: ID: 400, Seed: 300
+2025-03-21 14:03:48,205 - CRITICAL - Unhandled str: Field initialization failed
+2025-03-21 14:03:48,205 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 303, in initialize_patterns
+    self._initialize_field_with_generator()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 271, in _initialize_field_with_generator
+    self.grid = generator.generate_field(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+
+2025-03-21 14:03:48,205 - ERROR - Failed to initialize patterns: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+2025-03-21 14:03:48,206 - WARNING - Using legacy pattern initialization method
+2025-03-21 14:03:52,654 - INFO - Entity created: miner (ID: 0)
+2025-03-21 14:03:52,655 - INFO - Created race 0 with trait selective
+2025-03-21 14:03:52,655 - INFO - Player initialized with 1000 credits
+2025-03-21 14:03:52,655 - INFO - Combat system initialized
+2025-03-21 14:03:52,655 - INFO - Encounter generator initialized
+2025-03-21 14:03:52,655 - INFO - Game systems initialized successfully
+2025-03-21 14:03:52,655 - INFO - Entity created: miner (ID: 1)
+2025-03-21 14:03:52,655 - INFO - Created race 1 with trait selective
+2025-03-21 14:03:52,655 - INFO - Entity created: miner (ID: 2)
+2025-03-21 14:03:52,655 - INFO - Created race 2 with trait adaptive
+2025-03-21 14:03:52,655 - INFO - Entity created: miner (ID: 3)
+2025-03-21 14:03:52,655 - INFO - Created race 3 with trait selective
+2025-03-21 14:03:52,655 - INFO - Created race 1 with trait adaptive
+2025-03-21 14:03:52,655 - INFO - Created race 2 with trait expansive
+2025-03-21 14:03:52,655 - INFO - Created race 3 with trait selective
+2025-03-21 14:03:52,993 - ERROR - UI Initialization failed after 8.39ms: No module named 'ui.ui_event'
+2025-03-21 14:03:52,993 - ERROR - ModuleNotFoundError: No module named 'ui.ui_event'
+2025-03-21 14:03:52,994 - ERROR - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 15, in <module>
+    from ui.ui_element.ascii_box import ASCIIBox
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_box.py", line 21, in <module>
+    from ui.ui_event import UIEventData, UIEventType
+ModuleNotFoundError: No module named 'ui.ui_event'
+
+2025-03-21 14:03:52,994 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 14:03:52,994 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3904, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3932, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 233, in __init__
+    from ui.minimap_panel import ASCIIMinimapPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/minimap_panel.py", line 18, in <module>
+    from ui.ui_element.ascii_panel import ASCIIPanel
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_panel.py", line 15, in <module>
+    from ui.ui_element.ascii_box import ASCIIBox
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/ui_element/ascii_box.py", line 21, in <module>
+    from ui.ui_event import UIEventData, UIEventType
+ModuleNotFoundError: No module named 'ui.ui_event'
+
+2025-03-21 14:03:53,097 - INFO - Game shutdown complete
+2025-03-21 14:08:15,619 - WARNING - CuPy not available. Some GPU operations will be disabled.
+2025-03-21 14:08:15,619 - INFO - PyTorch with MPS is available for GPU acceleration on macOS
+2025-03-21 14:08:15,619 - WARNING - metalgpu not available. Alternative macOS GPU acceleration will be disabled.
+2025-03-21 14:08:15,659 - INFO - EventBus 'ModuleEventBus' initialized
+2025-03-21 14:08:15,660 - INFO - EventBus 'GameEventBus' initialized
+2025-03-21 14:08:15,660 - INFO - EventBus 'ResourceEventBus' initialized
+2025-03-21 14:08:15,660 - INFO - GameLoop system initialized
+2025-03-21 14:08:15,674 - INFO - Starting Space Muck game...
+2025-03-21 14:08:15,674 - INFO - Event system initialized
+2025-03-21 14:08:16,621 - INFO - Entity created: procedural (ID: 400)
+2025-03-21 14:08:16,621 - INFO - GPU acceleration enabled for generator 400 with available backends: mps
+2025-03-21 14:08:16,621 - INFO - Generator initialized: procedural (ID: 400, Seed: 300)
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: birth_set = {3}
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: survival_set = {2, 3}
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: iterations = 3
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: wrap = True
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: fractal_depth = 3
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: fractal_roughness = 0.6
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: anomaly_chance = 0.01
+2025-03-21 14:08:16,622 - INFO - Generator parameter set: anomaly_cluster_chance = 0.2
+2025-03-21 14:08:16,622 - INFO - ProceduralGenerator initialized: ID: 400, Seed: 300
+2025-03-21 14:08:16,625 - CRITICAL - Unhandled str: Field initialization failed
+2025-03-21 14:08:16,625 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 303, in initialize_patterns
+    self._initialize_field_with_generator()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/generators/asteroid_field.py", line 271, in _initialize_field_with_generator
+    self.grid = generator.generate_field(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+
+2025-03-21 14:08:16,625 - ERROR - Failed to initialize patterns: ProceduralGenerator.generate_field() got an unexpected keyword argument 'complexity'
+2025-03-21 14:08:16,625 - WARNING - Using legacy pattern initialization method
+2025-03-21 14:08:21,143 - INFO - Entity created: miner (ID: 0)
+2025-03-21 14:08:21,143 - INFO - Created race 0 with trait selective
+2025-03-21 14:08:21,143 - INFO - Player initialized with 1000 credits
+2025-03-21 14:08:21,143 - INFO - Combat system initialized
+2025-03-21 14:08:21,143 - INFO - Encounter generator initialized
+2025-03-21 14:08:21,143 - INFO - Game systems initialized successfully
+2025-03-21 14:08:21,143 - INFO - Entity created: miner (ID: 1)
+2025-03-21 14:08:21,143 - INFO - Created race 1 with trait selective
+2025-03-21 14:08:21,143 - INFO - Entity created: miner (ID: 2)
+2025-03-21 14:08:21,143 - INFO - Created race 2 with trait adaptive
+2025-03-21 14:08:21,143 - INFO - Entity created: miner (ID: 3)
+2025-03-21 14:08:21,143 - INFO - Created race 3 with trait selective
+2025-03-21 14:08:21,143 - INFO - Created race 1 with trait adaptive
+2025-03-21 14:08:21,143 - INFO - Created race 2 with trait expansive
+2025-03-21 14:08:21,143 - INFO - Created race 3 with trait selective
+2025-03-21 14:08:21,491 - ERROR - UI Initialization failed after 13.09ms: ASCIIBox.__init__() missing 3 required positional arguments: 'y', 'width', and 'height'
+2025-03-21 14:08:21,492 - ERROR - TypeError: ASCIIBox.__init__() missing 3 required positional arguments: 'y', 'width', and 'height'
+2025-03-21 14:08:21,492 - ERROR - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 235, in __init__
+    self.game_screen = ASCIIGameScreen(
+                       ^^^^^^^^^^^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/game_screen.py", line 58, in __init__
+    self._initialize_layout()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/game_screen.py", line 77, in _initialize_layout
+    self.components["header"] = ASCIIBox(
+                                ^^^^^^^^^
+TypeError: ASCIIBox.__init__() missing 3 required positional arguments: 'y', 'width', and 'height'
+
+2025-03-21 14:08:21,492 - CRITICAL - Unhandled str: Critical error in main function
+2025-03-21 14:08:21,492 - CRITICAL - Traceback:
+Traceback (most recent call last):
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3904, in main
+    _initialize_game_and_run()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 3932, in _initialize_game_and_run
+    game = Game()
+           ^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/main.py", line 235, in __init__
+    self.game_screen = ASCIIGameScreen(
+                       ^^^^^^^^^^^^^^^^
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/game_screen.py", line 58, in __init__
+    self._initialize_layout()
+  File "/Users/deadcoast/PycharmProjects/Space_Muck/src/ui/game_screen.py", line 77, in _initialize_layout
+    self.components["header"] = ASCIIBox(
+                                ^^^^^^^^^
+TypeError: ASCIIBox.__init__() missing 3 required positional arguments: 'y', 'width', and 'height'
+
+2025-03-21 14:08:21,601 - INFO - Game shutdown complete

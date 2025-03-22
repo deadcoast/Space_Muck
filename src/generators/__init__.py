@@ -12,15 +12,9 @@ and provide specialized functionality for procedural generation in the game.
 # Local application imports
 from generators.asteroid_field import AsteroidField
 from generators.asteroid_generator import AsteroidGenerator
-from generators.procedural_generator import (
+from generators.procedural_generator import (  # The following are methods of ProceduralGenerator, not standalone functions; generate_asteroid_field,; generate_field,; generate_ore,; generate_rare_minerals,; generate_rare_ore,
     ProceduralGenerator,
     create_field_with_multiple_algorithms,
-    # The following are methods of ProceduralGenerator, not standalone functions
-    # generate_asteroid_field,
-    # generate_field,
-    # generate_ore,
-    # generate_rare_minerals, 
-    # generate_rare_ore,
 )
 from generators.symbiote_evolution_generator import SymbioteEvolutionGenerator
 

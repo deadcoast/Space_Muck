@@ -2,7 +2,6 @@
 ascii_panel.py
 """
 
-
 # Standard library imports
 import logging
 from typing import Any, List, Optional, Tuple, TypeVar
@@ -10,12 +9,12 @@ from typing import Any, List, Optional, Tuple, TypeVar
 import pygame
 
 from config import COLOR_TEXT
-from ui.ui_base.ascii_base import UIStyle
-from ui.ui_base.ui_element import UIElement
-from ui.ui_element.ascii_box import ASCIIBox
 
 # Local application imports
 from ui.draw_utils import draw_panel
+from ui.ui_base.ascii_base import UIStyle
+from ui.ui_element.ascii_box import ASCIIBox
+from ui.ui_element.ui_element import UIElement
 
 # Third-party library imports
 

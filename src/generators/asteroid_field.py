@@ -268,11 +268,8 @@ class AsteroidField:
         Handles grid generation, rare asteroids, energy grid, and life patterns.
         """
         generator = ProceduralGenerator(self.width, self.height)
-        self.grid = generator.generate_field(
-            density=self.field_density,
-            complexity=self.pattern_complexity,
-            turbulence=self.turbulence,
-        )
+        # Only pass the density parameter which is the only one supported by generate_field
+        self.grid = generator.generate_field(density=self.field_density)
 
         # Use numpy random Generator API instead of legacy functions
         # Use current time as seed for reproducibility
@@ -478,7 +475,7 @@ class AsteroidField:
         # Normalize grid values to 0-1 range for threshold comparison
         max_val = np.max(self.grid) if np.max(self.grid) > 0 else 1
         normalized_grid = self.grid / max_val
-        
+
         # Apply rare mineral distribution
         for y in range(self.height):
             for x in range(self.width):
