@@ -4,15 +4,16 @@ ui_mining_status.py
 Provides a mining status UI element with cellular automaton-inspired behaviors.
 """
 
+# Third-party library imports
+import contextlib
+import curses
+
 # Standard library imports
 from typing import Dict
 
 # Local application imports
 from ui.ui_base.ascii_base import UIElement, UIStyle
 
-# Third-party library imports
-import contextlib
-import curses
 
 class MiningStatus(UIElement):
     """Display for resource mining operations and statistics"""

@@ -200,9 +200,7 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         """
         # If pattern analysis is not available or disabled, skip initialization
         if not self.use_advanced_patterns:
-            logging.info(
-                "Advanced pattern analysis disabled or unavailable."
-            )
+            logging.info("Advanced pattern analysis disabled or unavailable.")
             return
 
         try:
@@ -806,7 +804,7 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         if not self.use_advanced_patterns:
             self.pattern_analyzer = None
             return
-            
+
         try:
             max_period = self.get_parameter("max_oscillator_period", 8)
             max_history = self.get_parameter("max_pattern_history", 20)
@@ -995,7 +993,11 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         Returns:
             np.ndarray or None: Territory map with colony IDs, or None if partitioning failed
         """
-        if not self.territory_analysis_enabled or not self.use_advanced_patterns or self.territory_partitioner is None:
+        if (
+            not self.territory_analysis_enabled
+            or not self.use_advanced_patterns
+            or self.territory_partitioner is None
+        ):
             return None
 
         try:
@@ -1023,7 +1025,9 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             # Use territory partitioner with these centers
             if centers and self.territory_partitioner is not None:
                 # Compute and return the territory map
-                return self.territory_partitioner.compute_voronoi(width=self.width, height=self.height, centers=centers)
+                return self.territory_partitioner.compute_voronoi(
+                    width=self.width, height=self.height, centers=centers
+                )
 
         except Exception as e:
             logging.warning(f"Error computing territory partition: {str(e)}")

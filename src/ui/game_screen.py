@@ -75,13 +75,23 @@ class ASCIIGameScreen:
         # Create header panel (title and quick modules)
         header_rect = pygame.Rect(0, 0, screen_width, header_height)
         self.components["header"] = ASCIIBox(
-            header_rect, title="SPACE MUCK", style=self.style
+            header_rect.x,
+            header_rect.y,
+            header_rect.width,
+            header_rect.height,
+            title="SPACE MUCK",
+            style=self.style,
         )
 
         # Create sidebar panel
         sidebar_rect = pygame.Rect(0, header_height, sidebar_width, main_content_height)
         self.components["sidebar"] = ASCIIBox(
-            sidebar_rect, title="QUICK MODULES", style=self.style
+            sidebar_rect.x,
+            sidebar_rect.y,
+            sidebar_rect.width,
+            sidebar_rect.height,
+            title="QUICK MODULES",
+            style=self.style,
         )
 
         # Create main content area
@@ -89,14 +99,25 @@ class ASCIIGameScreen:
             sidebar_width, header_height, main_area_width, main_content_height
         )
         self.components["main_content"] = ASCIIBox(
-            main_content_rect, title="MAIN DISPLAY", style=self.style
+            main_content_rect.x,
+            main_content_rect.y,
+            main_content_rect.width,
+            main_content_rect.height,
+            title="MAIN DISPLAY",
+            style=self.style,
         )
 
         # Create footer panel (status bar)
         footer_rect = pygame.Rect(
             0, header_height + main_content_height, screen_width, footer_height
         )
-        self.components["footer"] = ASCIIBox(footer_rect, style=self.style)
+        self.components["footer"] = ASCIIBox(
+            footer_rect.x,
+            footer_rect.y,
+            footer_rect.width,
+            footer_rect.height,
+            style=self.style,
+        )
 
         # Add sidebar navigation buttons
         self._initialize_sidebar_buttons()

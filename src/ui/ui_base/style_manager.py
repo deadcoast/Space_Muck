@@ -11,6 +11,7 @@ import logging
 
 # Local application imports
 from typing import Any, Dict, Tuple
+
 from src.ui.ui_base.ascii_base import COLOR_BG, COLOR_HIGHLIGHT, COLOR_TEXT, UIStyle
 
 # Third-party library imports

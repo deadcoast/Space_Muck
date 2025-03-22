@@ -5,9 +5,9 @@ main.py
 Entry point for the lazy formatting conversion tool with an interactive ASCII menu.
 """
 
+import importlib.util
 import os
 import sys
-import importlib.util
 
 # Dynamically import the lazy_menu module from the current directory
 try:

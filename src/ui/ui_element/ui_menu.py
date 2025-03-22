@@ -9,13 +9,14 @@ import random
 
 # Local application imports
 from typing import List, Optional, Tuple
+
+# Third-party library imports
+import pygame
+
 from config import COLOR_BG, COLOR_TEXT
 from src.ui.ui_base.ascii_base import UIStyle
 from src.ui.ui_element.ascii_box import ASCIIBox
 from src.ui.ui_helpers import draw_utils
-
-# Third-party library imports
-import pygame
 
 # For backward compatibility, keep Menu as an alias of UIMenu
 Menu = UIStyle

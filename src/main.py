@@ -260,6 +260,9 @@ class Game:
 
         # State history tracks transitions with timestamps
         self.state_history = []
+        self.state_transition_counts = {
+            state: 0 for state in GAME_CONFIG["states"].values()
+        }
         self._record_state_transition(None, self.state)
 
         # Performance tracking
@@ -441,25 +444,40 @@ class Game:
             logging.warning(f"State transition validation failed: {str(e)}")
             raise
 
-    def _record_state_transition(self, new_state: str) -> None:
+    def _record_state_transition(
+        self, from_state: Optional[str], new_state: str
+    ) -> None:
         """Record a state transition in history.
 
         Args:
+            from_state: The state being transitioned from (None for initial state)
             new_state: The state being transitioned to
         """
         transition = {
-            "from_state": self.state,
+            "from_state": from_state if from_state is not None else self.state,
             "to_state": new_state,
             "timestamp": time.time(),
-            "game_time": self.game_time,
-            "frame": self.frame_counter,
         }
-        self._state_history.append(transition)
-        self._state_transition_counts[new_state] += 1
+
+        # Add attributes that might not be initialized during the first state transition
+        if hasattr(self, "game_time"):
+            transition["game_time"] = self.game_time
+        if hasattr(self, "frame_counter"):
+            transition["frame"] = self.frame_counter
+
+        # Use the correct attribute names
+        self.state_history.append(transition)
+
+        # Initialize state_transition_counts if needed
+        if not hasattr(self, "state_transition_counts"):
+            self.state_transition_counts = {}
+        if new_state not in self.state_transition_counts:
+            self.state_transition_counts[new_state] = 0
+        self.state_transition_counts[new_state] += 1
 
         # Keep history size bounded
-        if len(self._state_history) > 1000:
-            self._state_history.pop(0)
+        if len(self.state_history) > 1000:
+            self.state_history.pop(0)
 
     def change_state(self, new_state: str) -> None:
         """Change the game state with validation and history tracking.
@@ -479,10 +497,14 @@ class Game:
             raise
 
     def _perform_state_transition(self, new_state):
-        self._record_state_transition(new_state)
+        self._record_state_transition(self.state, new_state)
         self.previous_state = self.state
         self.state = new_state
-        self._state_timestamps[new_state] = time.time()
+
+        # Initialize state_timestamps if needed
+        if not hasattr(self, "state_timestamps"):
+            self.state_timestamps = {}
+        self.state_timestamps[new_state] = time.time()
 
         # Emit state change event
         get_event_bus().emit(

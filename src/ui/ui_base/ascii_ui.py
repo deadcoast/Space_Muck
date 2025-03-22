@@ -9,12 +9,13 @@ import logging
 
 # Local application imports
 from typing import Callable, Dict, List, Optional, Tuple
-from config import COLOR_HIGHLIGHT, COLOR_TEXT
-from ui.ui_base.ui_element import UIElement
-from ui.ui_base.ui_style import UIStyle
 
 # Third-party library imports
 import pygame
+
+from config import COLOR_HIGHLIGHT, COLOR_TEXT
+from ui.ui_base.ui_style import UIStyle
+from ui.ui_element.ui_element import UIElement
 
 
 class ASCIIBox(UIElement):
@@ -665,17 +666,17 @@ class ASCIIProgressBar(UIElement):
         except Exception as e:
             logging.error(f"Error setting progress: {e}")
 
-    def update_animation(self, delta_time: float = 0.0) -> bool:
+    def update_animation(self, dt: float = 0.0) -> bool:
         """Update animation state based on elapsed time.
 
         Args:
-            delta_time: Time elapsed since last update (if 0, will calculate internally)
+            dt: Time elapsed since last update (if 0, will calculate internally)
 
         Returns:
             True if animation is still active, False if complete
         """
         # Update base animation
-        still_active = super().update_animation(delta_time)
+        still_active = super().update_animation(dt)
 
         try:
             # Update progress animation
