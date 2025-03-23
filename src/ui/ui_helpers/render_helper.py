@@ -1,17 +1,17 @@
 # Standard library imports
 import logging
 import math
-from typing import Tuple
+import random
+from typing import Tuple, Optional, List, Dict
 
 import pygame
 
 # Import all standard UI colors for consistency across components
-# COLOR_TEXT is currently used in draw_char
-# COLOR_BG and COLOR_HIGHLIGHT may be needed for future styling enhancements
 from config import COLOR_TEXT
 
 # Local application imports
-from ui.ui_base.ascii_base import UIStyle
+from ui.ui_base.ui_style import UIStyle
+from ui.ui_helpers.animation_helper import AnimationStyle
 
 # Third-party library imports
 
@@ -139,6 +139,7 @@ class RenderHelper:
         style: UIStyle,
         progress: float,
         phase: float = 0.0,
+        animation_type: Optional[AnimationStyle] = None,
     ) -> Tuple[int, int, int]:
         """Apply style-specific animation effects to a color.
 
@@ -147,12 +148,19 @@ class RenderHelper:
             style: UI style to apply effects for
             progress: Animation progress from 0.0 to 1.0
             phase: Animation phase for cyclic effects
+            animation_type: Optional specific animation type to override style-based animation
 
         Returns:
             Modified RGB color tuple with animation effects applied
         """
         try:
             r, g, b = color
+            
+            # Handle specific animation type if provided
+            if animation_type is not None:
+                return RenderHelper._apply_specific_animation(
+                    color, animation_type, progress, phase
+                )
 
             # Apply style-specific color effects
             if style == UIStyle.QUANTUM:
@@ -181,6 +189,209 @@ class RenderHelper:
                     int(min(255, g * factor)),
                     int(min(255, b * factor)),
                 )
+            return color
         except Exception as e:
             logging.error(f"Error applying animation effect: {e}")
             return color
+            
+    @staticmethod
+    def _apply_specific_animation(
+        color: Tuple[int, int, int],
+        animation_type: AnimationStyle,
+        progress: float,
+        phase: float,
+    ) -> Tuple[int, int, int]:
+        """Apply specific animation effect based on animation type
+        
+        Args:
+            color: Base RGB color tuple
+            animation_type: Animation type to apply
+            progress: Animation progress (0.0-1.0)
+            phase: Animation phase for cyclic effects
+            
+        Returns:
+            Modified RGB color tuple with animation applied
+        """
+        r, g, b = color
+        
+        # Apply different effects based on animation type
+        if animation_type == AnimationStyle.PULSE:
+            # Pulsing intensity effect
+            pulse = 0.7 + 0.5 * math.sin(phase * 6.0)
+            return (
+                int(min(255, r * pulse)), 
+                int(min(255, g * pulse)), 
+                int(min(255, b * pulse))
+            )
+            
+        elif animation_type == AnimationStyle.GLITCH:
+            # Random color channel shifts for glitch effect
+            if random.random() < 0.2:  # Only apply to some frames
+                glitch_value = random.choice([0.2, 0.5, 0.8, 1.2, 1.5])
+                channel = random.randint(0, 2)
+                if channel == 0:
+                    r = int(min(255, r * glitch_value))
+                elif channel == 1:
+                    g = int(min(255, g * glitch_value))
+                else:
+                    b = int(min(255, b * glitch_value))
+            return (r, g, b)
+            
+        elif animation_type == AnimationStyle.DATA_STREAM:
+            # Subtle color variation based on phase
+            blue_boost = int(min(255, b * (1.1 + 0.2 * math.sin(phase * 4.0))))
+            return (r, g, blue_boost)
+            
+        elif animation_type == AnimationStyle.PARTICLE:
+            # Particle-like fading based on progress
+            fade = 1.0 - progress  # Fade out as progress increases
+            return (
+                int(r * fade),
+                int(g * fade),
+                int(b * fade)
+            )
+            
+        elif animation_type == AnimationStyle.SPARKLE:
+            # Sparkling effect with random brightness
+            if random.random() < 0.15:  # Only sparkle sometimes
+                sparkle = 1.0 + random.uniform(0.2, 0.8)
+                return (
+                    int(min(255, r * sparkle)),
+                    int(min(255, g * sparkle)),
+                    int(min(255, b * sparkle))
+                )
+            return color
+            
+        # Return original color for unhandled types
+        return color
+        
+    @staticmethod
+    def get_character_set(
+        density_level: int = 1, 
+        style: UIStyle = UIStyle.MECHANICAL
+    ) -> List[str]:
+        """Get a set of ASCII characters for a given density level and style
+        
+        Args:
+            density_level: Density level (1-5, 1=sparse, 5=dense)
+            style: UI style to determine character set
+            
+        Returns:
+            List of characters for the specified density and style
+        """
+        # Base character sets by density level
+        density_sets = {
+            1: ['.', '·', ' '],                             # Very sparse
+            2: ['.', '·', ':', '·', ' '],                   # Sparse
+            3: ['.', ':', ';', '•', '·', '*', ' '],         # Medium
+            4: ['.', ':', ';', '*', '+', '=', '•', '%'],    # Dense
+            5: ['.', ':', ';', '*', '+', '=', '#', '%', '@'] # Very dense
+        }
+        
+        # Get base set and modify by style
+        level = max(1, min(5, density_level))
+        base_set = density_sets.get(level, density_sets[3])
+        
+        # Stylized character sets
+        if style == UIStyle.SYMBIOTIC:
+            if level >= 3:
+                return ['.', '~', '•', '*', '∞', '○', '●', '◌', '◍']
+            return ['.', '~', '•', '○', '◌']
+        elif style == UIStyle.MECHANICAL:
+            if level >= 3:
+                return ['.', ':', '=', '+', '#', '/', '\\', '{', '}']
+            return ['.', ':', '+', '/']
+        elif style == UIStyle.ASTEROID:
+            if level >= 3:  
+                return ['.', '°', '·', '*', '#', '○', '@', '&', '%']
+            return ['.', '°', '*', '○']
+        elif style == UIStyle.QUANTUM:
+            if level >= 3:
+                return ['.', '·', ':', '•', 'ᚉ', '⧿', '⊛', '⊗', 'Φ']
+            return ['.', '·', '•', '⊛']
+        elif style == UIStyle.FLEET:
+            if level >= 3:
+                return ['.', '·', '>', '<', '^', 'v', '|', '-', '+']
+            return ['.', '>', '<', '^']
+        
+        # Default
+        return base_set
+        
+    @staticmethod
+    def get_direction_characters(style: UIStyle = UIStyle.MECHANICAL) -> Dict[str, str]:
+        """Get directional characters for a given UI style
+        
+        Args:
+            style: UI style to determine character set
+            
+        Returns:
+            Dictionary mapping directions to characters
+        """
+        # Define character sets by style
+        if style == UIStyle.SYMBIOTIC:
+            return {
+                'up': '⋀',
+                'down': '⋁',
+                'left': '⊲',
+                'right': '⊳',
+                'upleft': '⌜',
+                'upright': '⌝',
+                'downleft': '⌞',
+                'downright': '⌟'
+            }
+        elif style == UIStyle.MECHANICAL:
+            return {
+                'up': '^',
+                'down': 'v',
+                'left': '<',
+                'right': '>',
+                'upleft': '/',
+                'upright': '\\',
+                'downleft': '\\',
+                'downright': '/'
+            }
+        elif style == UIStyle.ASTEROID:
+            return {
+                'up': '↑',
+                'down': '↓',
+                'left': '←',
+                'right': '→',
+                'upleft': '↖',
+                'upright': '↗',
+                'downleft': '↙',
+                'downright': '↘'
+            }
+        elif style == UIStyle.QUANTUM:
+            return {
+                'up': '△',
+                'down': '▽',
+                'left': '◁',
+                'right': '▷',
+                'upleft': '⋰',
+                'upright': '⋱',
+                'downleft': '⋯',
+                'downright': '⋮'
+            }
+        elif style == UIStyle.FLEET:
+            return {
+                'up': '^',
+                'down': 'v',
+                'left': '<',
+                'right': '>',
+                'upleft': '{',
+                'upright': '}',
+                'downleft': '(',
+                'downright': ')'
+            }
+        
+        # Default (MECHANICAL)
+        return {
+            'up': '^',
+            'down': 'v',
+            'left': '<',
+            'right': '>',
+            'upleft': '/',
+            'upright': '\\',
+            'downleft': '\\',
+            'downright': '/'
+        }

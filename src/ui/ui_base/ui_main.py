@@ -14,7 +14,7 @@ from enum import Enum, auto
 # Third-party library imports
 
 # Local application imports
-# No imports from config needed here
+from config import COLOR_TEXT, COLOR_BG, COLOR_HIGHLIGHT
 
 
 class AnimationStyle(Enum):
@@ -44,6 +44,10 @@ class Menu:
         self.style = style
         self.selected_index = 0
         self.active = False
+        # Store color theme from config
+        self.text_color = COLOR_TEXT
+        self.bg_color = COLOR_BG
+        self.highlight_color = COLOR_HIGHLIGHT
 
     def handle_input(self, key):
         if key == curses.KEY_UP:
@@ -55,13 +59,51 @@ class Menu:
         return None
 
     def render(self, stdscr):
-        # Drawing the menu with the title and options
-        # Title
-        stdscr.addstr(self.y, self.x, self.title, curses.A_BOLD)
-        # Options
+        """Render the menu with title and options using colors from config"""
+        # Determine color pair based on style using dictionary mapping
+        style_to_color = {
+            UIStyle.SYMBIOTIC: 1,
+            UIStyle.ASTEROID: 2,
+            UIStyle.MECHANICAL: 3,
+            UIStyle.QUANTUM: 4,
+            UIStyle.FLEET: 5
+        }
+        # Default to normal text color (6) if style not found in mapping
+        style_color_pair = style_to_color.get(self.style, 6)
+            
+        # Draw menu border with style color
+        stdscr.attron(curses.color_pair(style_color_pair))
+        for i in range(self.height):
+            if i in (0, self.height - 1):
+                # Draw horizontal border for top and bottom
+                border_line = '+' + '-' * (self.width - 2) + '+'
+                stdscr.addstr(self.y + i, self.x, border_line)
+            else:
+                # Draw vertical borders for sides
+                stdscr.addstr(self.y + i, self.x, '|')
+                stdscr.addstr(self.y + i, self.x + self.width - 1, '|')
+        stdscr.attroff(curses.color_pair(style_color_pair))
+            
+        # Draw title with highlight color (color pair 7)
+        title_display = f" {self.title} "
+        title_x = self.x + (self.width - len(title_display)) // 2
+        stdscr.attron(curses.color_pair(7) | curses.A_BOLD)
+        stdscr.addstr(self.y, title_x, title_display)
+        stdscr.attroff(curses.color_pair(7) | curses.A_BOLD)
+        
+        # Draw options with appropriate colors
         for i, option in enumerate(self.options):
-            attr = curses.A_REVERSE if i == self.selected_index else 0
-            stdscr.addstr(self.y + 2 + i, self.x + 2, option, attr)
+            # Use base color for normal options, highlight for selected
+            if i == self.selected_index and self.active:
+                # Selected option - use highlight color
+                stdscr.attron(curses.color_pair(7) | curses.A_REVERSE)
+                stdscr.addstr(self.y + 2 + i, self.x + 2, option)
+                stdscr.attroff(curses.color_pair(7) | curses.A_REVERSE)
+            else:
+                # Normal option - use theme color
+                stdscr.attron(curses.color_pair(style_color_pair))
+                stdscr.addstr(self.y + 2 + i, self.x + 2, option)
+                stdscr.attroff(curses.color_pair(style_color_pair))
 
 
 class SymbioteEvolutionMonitor:
@@ -71,6 +113,10 @@ class SymbioteEvolutionMonitor:
         self.width = width
         self.height = height
         self.style = style
+        # Store color theme from config for symbiote visualization
+        self.text_color = COLOR_TEXT
+        self.bg_color = COLOR_BG
+        self.highlight_color = COLOR_HIGHLIGHT
 
     def animate(self, stdscr, style):
         # Animation implementation would go here
@@ -85,6 +131,10 @@ class FleetDisplay:
         self.height = height
         self.fleet_data = fleet_data
         self.style = style
+        # Store color theme from config for fleet visualization
+        self.text_color = COLOR_TEXT
+        self.bg_color = COLOR_BG
+        self.highlight_color = COLOR_HIGHLIGHT
 
     def animate(self, stdscr, frame):
         # Animation implementation would go here
@@ -99,6 +149,10 @@ class AsteroidFieldVisualizer:
         self.height = height
         self.density = density
         self.style = style
+        # Store color theme from config for asteroid field visualization
+        self.text_color = COLOR_TEXT
+        self.bg_color = COLOR_BG
+        self.highlight_color = COLOR_HIGHLIGHT
 
     def animate(self, stdscr, frame):
         # Animation implementation would go here
@@ -114,6 +168,10 @@ class MiningStatus:
         self.resources = resources
         self.style = style
         self.extraction_rate = {}
+        # Store color theme from config for mining status visualization
+        self.text_color = COLOR_TEXT
+        self.bg_color = COLOR_BG
+        self.highlight_color = COLOR_HIGHLIGHT
 
     def animate(self, stdscr, style):
         # Animation implementation would go here
@@ -136,18 +194,60 @@ class SpaceMuckMainUI:
         # Create UI elements
         self._init_ui_elements()
 
+    def _map_rgb_to_curses_color(self, rgb_color):
+        """Map an RGB color tuple to the nearest curses color constant
+        
+        Args:
+            rgb_color (tuple): RGB color tuple (r, g, b) with values 0-255
+            
+        Returns:
+            int: The nearest curses color constant
+        """
+        # Define standard curses colors with their approximate RGB values
+        curses_colors = [
+            (0, 0, 0),       # BLACK
+            (255, 0, 0),     # RED
+            (0, 255, 0),     # GREEN
+            (255, 255, 0),   # YELLOW
+            (0, 0, 255),     # BLUE
+            (255, 0, 255),   # MAGENTA
+            (0, 255, 255),   # CYAN
+            (255, 255, 255), # WHITE
+        ]
+        
+        # Calculate Euclidean distance between the RGB color and each curses color
+        r, g, b = rgb_color
+        
+        # Use list comprehension to calculate distances more efficiently
+        distances = [(((r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2) ** 0.5, color_idx) 
+                    for color_idx, (cr, cg, cb) in enumerate(curses_colors)]
+        
+        # Return the curses color with the smallest distance
+        return sorted(distances)[0][1]
+
     def _init_colors(self):
         """Initialize color pairs for the UI"""
         if curses.has_colors():
             curses.start_color()
             curses.use_default_colors()
-
+            
+            # Convert RGB colors from config to nearest curses colors
+            # COLOR_TEXT, COLOR_BG, and COLOR_HIGHLIGHT are RGB tuples
+            # We need to map them to the closest curses colors
+            text_color = self._map_rgb_to_curses_color(COLOR_TEXT)
+            bg_color = self._map_rgb_to_curses_color(COLOR_BG)
+            highlight_color = self._map_rgb_to_curses_color(COLOR_HIGHLIGHT)
+            
             # Define color pairs for different UI elements
-            curses.init_pair(1, curses.COLOR_GREEN, -1)  # Symbiotic elements
-            curses.init_pair(2, curses.COLOR_YELLOW, -1)  # Asteroid elements
-            curses.init_pair(3, curses.COLOR_CYAN, -1)  # Mechanical elements
-            curses.init_pair(4, curses.COLOR_MAGENTA, -1)  # Quantum elements
-            curses.init_pair(5, curses.COLOR_BLUE, -1)  # Fleet elements
+            curses.init_pair(1, curses.COLOR_GREEN, bg_color)  # Symbiotic elements
+            curses.init_pair(2, curses.COLOR_YELLOW, bg_color)  # Asteroid elements
+            curses.init_pair(3, curses.COLOR_CYAN, bg_color)  # Mechanical elements
+            curses.init_pair(4, curses.COLOR_MAGENTA, bg_color)  # Quantum elements
+            curses.init_pair(5, curses.COLOR_BLUE, bg_color)  # Fleet elements
+            
+            # Define color pairs for text and highlights
+            curses.init_pair(6, text_color, bg_color)  # Normal text
+            curses.init_pair(7, highlight_color, bg_color)  # Highlighted text
 
     def _init_ui_elements(self):
         """Create and initialize all UI elements"""

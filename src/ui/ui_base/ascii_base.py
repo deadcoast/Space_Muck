@@ -15,6 +15,9 @@ from typing import Dict, Optional, Tuple
 # Third-party library imports
 import pygame
 
+# Local application imports
+from ui.ui_helpers.render_helper import RenderHelper
+
 # Define color constants
 COLOR_TEXT = (200, 200, 200)  # Light gray
 COLOR_BG = (10, 10, 10)  # Near black
@@ -277,8 +280,8 @@ class UIElement:
             title_x = self.x + (self.width // 2) - (len(title) // 2)
             title_y = self.y
 
-            # Draw title
-            self._draw_text(surface, font, title_x, title_y, title)
+            # Draw title using RenderHelper
+            RenderHelper.draw_text(surface, font, title_x, title_y, title)
 
         except Exception as e:
             logging.error(f"Error drawing title: {e}")
@@ -302,6 +305,28 @@ class UIElement:
             char_width, char_height = font.size(" ")
             pixel_x = x * char_width
             pixel_y = y * char_height
+
+            # Ensure we have a valid color before proceeding
+            try:
+                # Validate color format
+                if not isinstance(color, tuple) or len(color) != 3:
+                    logging.warning(f"Invalid color format: {color}, using default")
+                    color = COLOR_TEXT
+                
+                # Ensure all color components are integers in valid range
+                r, g, b = color
+                if not all(isinstance(c, int) and 0 <= c <= 255 for c in (r, g, b)):
+                    # If any component is out of range, clamp it
+                    color = (
+                        self._clamp_color_component(r if isinstance(r, int) else 0),
+                        self._clamp_color_component(g if isinstance(g, int) else 0),
+                        self._clamp_color_component(b if isinstance(b, int) else 0)
+                    )
+                    logging.debug(f"Color components out of range, clamped to: {color}")
+            except (ValueError, TypeError):
+                # If color validation fails, use default color
+                logging.warning(f"Color validation failed for: {color}, using default")
+                color = COLOR_TEXT
 
             # Apply animation effects if active
             if self.animation["active"]:
@@ -351,7 +376,13 @@ class UIElement:
             except Exception as e:
                 # If rendering fails, use a fallback character
                 logging.debug(f"Failed to render '{char_to_render}': {e}")
-                char_surface = font.render("?", True, color)
+                # Make one more attempt with default color
+                try:
+                    char_surface = font.render("?", True, COLOR_TEXT)
+                except Exception:
+                    # If still failing, log and return to avoid crash
+                    logging.error("Could not render fallback character with default color")
+                    return
 
             # Blit the character to the surface
             surface.blit(char_surface, (pixel_x, pixel_y))
@@ -378,6 +409,19 @@ class UIElement:
         except Exception as e:
             logging.error(f"Error drawing text: {e}")
 
+    def _clamp_color_component(self, value: int) -> int:
+        """Clamp a color component to the valid range (0-255)."""
+        return max(0, min(255, value))
+
+    def _apply_color_factor(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+        """Apply a factor to each component of a color and ensure values are valid."""
+        r, g, b = color
+        return (
+            self._clamp_color_component(int(r * factor)),
+            self._clamp_color_component(int(g * factor)),
+            self._clamp_color_component(int(b * factor))
+        )
+
     def _apply_animation_effect(
         self, color: Tuple[int, int, int]
     ) -> Tuple[int, int, int]:
@@ -386,40 +430,46 @@ class UIElement:
             if not self.animation["active"]:
                 return color
 
-            r, g, b = color
+            # Ensure the input color is valid
+            try:
+                r, g, b = color
+                # Quick validation of color values
+                if not all(isinstance(c, int) for c in (r, g, b)):
+                    raise TypeError("Color components must be integers")
+            except (ValueError, TypeError):
+                logging.error(f"Invalid color format: {color}")
+                return COLOR_TEXT  # Default to safe color
+
             progress = self.animation["progress"]
 
+            # Calculate new color based on animation style
             if self.animation["style"] == AnimationStyle.FADE_IN:
                 # Fade in: increase alpha from 0 to 1
-                factor = progress
-                return (int(r * factor), int(g * factor), int(b * factor))
+                factor = max(0.0, min(1.0, progress))  # Clamp progress
+                return self._apply_color_factor(color, factor)
 
             elif self.animation["style"] == AnimationStyle.FADE_OUT:
                 # Fade out: decrease alpha from 1 to 0
-                factor = 1.0 - progress
-                return (int(r * factor), int(g * factor), int(b * factor))
+                factor = max(0.0, min(1.0, 1.0 - progress))  # Clamp factor
+                return self._apply_color_factor(color, factor)
 
             elif self.animation["style"] == AnimationStyle.PULSE:
                 # Pulse: oscillate brightness
                 factor = 0.7 + 0.3 * math.sin(progress * math.pi * 2)
-                return (
-                    min(255, int(r * factor)),
-                    min(255, int(g * factor)),
-                    min(255, int(b * factor)),
-                )
+                return self._apply_color_factor(color, factor)
 
             elif self.animation["style"] == AnimationStyle.BLINK:
                 # Blink: on/off based on progress
                 blink_state = (progress * 4) % 1.0 > 0.5
                 factor = 1.0 if blink_state else 0.3
-                return (int(r * factor), int(g * factor), int(b * factor))
+                return self._apply_color_factor(color, factor)
 
             else:
                 return color
 
         except Exception as e:
             logging.error(f"Error applying animation effect: {e}")
-            return color
+            return COLOR_TEXT  # Return default color on error
 
     def contains_point(self, x: int, y: int) -> bool:
         """Check if a point is within the UI element's bounds."""

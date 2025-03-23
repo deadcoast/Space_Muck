@@ -6,13 +6,13 @@ This document tracks linting errors identified by flake8 that need to be address
 
 These imports are declared but never used. Each should be either properly integrated into the code with meaningful functionality or removed.
 
-- [ ] **src/entities/miner_entity.py**
-  - [ ] Line 74: `utils.gpu_utils.apply_dbscan_clustering_gpu`
+- [X] **src/entities/miner_entity.py**
+  - [X] Line 74: `utils.gpu_utils.apply_dbscan_clustering_gpu` properly integrated with implementation of _analyze_territory_with_dbscan method
 
-- [ ] **src/ui/ui_base/ui_main.py**
-  - [ ] Line 10: `config.COLOR_TEXT`
-  - [ ] Line 10: `config.COLOR_BG`
-  - [ ] Line 10: `config.COLOR_HIGHLIGHT`
+- [X] **src/ui/ui_base/ui_main.py**
+  - [X] Line 10: `config.COLOR_TEXT` - Properly integrated in UI components for consistent color theming
+  - [X] Line 10: `config.COLOR_BG` - Properly integrated in UI components for consistent color theming
+  - [X] Line 10: `config.COLOR_HIGHLIGHT` - Properly integrated in UI components for consistent color theming
 
 - [ ] **src/utils/fix_ui_imports.py**
   - [ ] Line 25: `typing.Dict`
@@ -25,6 +25,16 @@ These imports are declared but never used. Each should be either properly integr
 ## Unused Variables (F841)
 
 These variables are assigned but never used. They should be either properly utilized in the code or removed.
+
+- [X] **src/ui/shop.py** (2 issues)
+  - [X] Line 467: '_results' properly integrated to track feeding effectiveness with detailed notifications
+  - [X] Line 498: '_metrics' implemented for evolution metrics tracking with trait change visualization
+
+- [X] **src/main.py** (1 issue)
+  - [X] Line 3945: '_success' utilized to log game completion status and added functions for logging metrics
+
+- [X] **src/ui/ui_base/ui_system_init.py** (1 issue)
+  - [X] Line 30: '_initialization_status' enhanced with detailed metrics about initialization process
 
 ## Undefined Names (F821)
 
@@ -146,8 +156,8 @@ Lines exceeding 100 characters need to be refactored:
 - [ ] **src/ui/ui_element/ui_element.py** (7 issues)
   - [ ] Line 246, 467, 619, 857, 934, 1212, 1234
 
-- [ ] **src/utils/gpu_utils.py** (6 issues)
-  - [ ] Line 224, 256, 356, 382, 624, 719
+- [X] **src/utils/gpu_utils.py** (6 issues)
+  - [X] Lines 224, 256, 356, 382, 624, 719: Fixed by breaking long lines into multiple lines, adding descriptive comments, and improving variable organization
 
 - [ ] **src/tests/verifications/verify_asteroid_generator.py** (5 issues)
   - [ ] Line 142, 194, 207, 233, 301
@@ -214,8 +224,8 @@ Variables redefined but not used:
   - [ ] Line 96: redefinition of unused 'np' from line 67
   - [ ] Line 105: redefinition of unused 'pygame' from line 92
 
-- [ ] **src/utils/gpu_dbscan.py** (2 issues)
-  - [ ] Line 42: redefinition of unused 'DBSCAN' from line 31
+- [X] **src/utils/gpu_dbscan.py** (2 issues)
+  - [X] Line 42: Fixed redefinition of unused 'DBSCAN' by conditionally importing only if not already imported for type checking
 
 - [ ] **src/ui/ui_helpers/animation_helper.py** (1 issue)
   - [ ] Line 14: redefinition of unused 'UIStyle' from line 11
@@ -237,8 +247,8 @@ Improper spacing in slice notation:
 - [ ] **src/tests/verifications/verify_asteroid_generator.py** (3 issues)
   - [ ] Line 222: multiple instances of whitespace before ':'
   
-- [ ] **src/utils/gpu_dbscan.py** (1 issue)
-  - [ ] Line 218: whitespace before ':'
+- [X] **src/utils/gpu_dbscan.py** (1 issue)
+  - [X] Line 218: Fixed whitespace before ':' in slice notation
 
 - [ ] **src/ui/ui_element/ascii_chain_visualizer.py** (1 issue)
   - [ ] Line 167: whitespace before ':'

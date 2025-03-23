@@ -222,8 +222,8 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
             new_grid: New grid state to update
             width: Width of the grid
             height: Height of the grid
-            birth_set: Set of neighbor counts that cause cell birth
-            survival_set: Set of neighbor counts that allow cell survival
+            birth_set: Array of neighbor counts that cause cell birth
+            survival_set: Array of neighbor counts that allow survival
         """
         # Get current thread coordinates
         x, y = cuda.grid(2)
@@ -253,6 +253,8 @@ if NUMBA_AVAILABLE and CUDA_AVAILABLE:
         neighbors += grid[y, next_col] > 0
 
         # Bottom row
+        # Count bottom row neighbors
+        # Bottom left, bottom center, bottom right
         neighbors += grid[next_row, prev_col] > 0
         neighbors += grid[next_row, x] > 0
         neighbors += grid[next_row, next_col] > 0
@@ -352,9 +354,12 @@ def _apply_cellular_automaton_cuda(
     blockspergrid = (blockspergrid_x, blockspergrid_y)
 
     # Create device arrays for birth and survival sets
-    d_birth_set = numba.cuda.to_device(np.array(birth_list, dtype=np.int8))
-    d_survival_set = numba.cuda.to_device(np.array(survival_list, dtype=np.int8))
-
+    # Transfer birth and survival lists to GPU device memory
+    # Convert to NumPy arrays and transfer to device
+    birth_array = np.array(birth_list, dtype=np.int8)
+    survival_array = np.array(survival_list, dtype=np.int8)
+    d_birth_set = numba.cuda.to_device(birth_array)
+    d_survival_set = numba.cuda.to_device(survival_array)
     for _ in range(iterations):
         d_new_grid = np.zeros_like(d_grid)
         _apply_cellular_automaton_kernel[blockspergrid, threadsperblock](
@@ -379,9 +384,13 @@ def _count_neighbors_cupy(d_grid: Any, wrap: bool) -> Any:
     """
     neighbors_kernel = cp.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
     if wrap:
-        return cp.fft.ifft2(
-            cp.fft.fft2(d_grid) * cp.fft.fft2(neighbors_kernel, d_grid.shape)
-        ).real.astype(cp.int8)
+        # Apply FFT convolution for efficient neighbor counting
+        fft_input = cp.fft.fft2(d_grid)
+        # Transform kernel to match grid dimensions
+        fft_kernel = cp.fft.fft2(neighbors_kernel, d_grid.shape)
+        # Compute inverse FFT of the product
+        fft_result = cp.fft.ifft2(fft_input * fft_kernel)
+        return fft_result.real.astype(cp.int8)
     neighbor_count = cp.zeros_like(d_grid)
     for dy, dx in itertools.product(range(-1, 2), range(-1, 2)):
         if dx == 0 and dy == 0:
@@ -618,11 +627,11 @@ def _generate_noise_layer_mps(
             ),
             mode="reflect",
         )
-        noise_layer = (
-            torch.nn.functional.avg_pool2d(padded, blur_size, stride=1)
-            .squeeze(0)
-            .squeeze(0)
+        # Apply average pooling with stride=1
+        pooled = torch.nn.functional.avg_pool2d(
+            padded, kernel_size=blur_size, stride=1
         )
+        noise_layer = pooled.squeeze(0).squeeze(0)
 
     # Normalize
     min_val = torch.min(noise_layer)
@@ -715,9 +724,10 @@ def _generate_noise_metalgpu(
     import metalgpu
 
     # Log that we're using metalgpu for noise generation
-    logging.info(
-        f"Using metalgpu version {metalgpu.__version__ if hasattr(metalgpu, '__version__') else 'unknown'} for noise generation"
-    )
+    # Get metalgpu version for logging
+    has_version = hasattr(metalgpu, '__version__')
+    version = metalgpu.__version__ if has_version else 'unknown'
+    logging.info(f"Using metalgpu version {version} for noise generation")
 
     # Set random seed for reproducibility
     if seed is not None:

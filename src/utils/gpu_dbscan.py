@@ -39,7 +39,9 @@ if TORCH_AVAILABLE:
 
 if SKLEARN_AVAILABLE:
     try:
-        from sklearn.cluster import DBSCAN
+        # Import DBSCAN only at runtime if not already imported for type checking
+        if not TYPE_CHECKING:
+            from sklearn.cluster import DBSCAN
     except ImportError:
         SKLEARN_AVAILABLE = False
 
@@ -215,7 +217,7 @@ def _assign_final_labels(cluster_map, core_samples, labels, torch_data, eps):
     n_samples = torch_data.shape[0]
     for i in range(n_samples):
         if not core_samples[i]:
-            distances = torch.cdist(torch_data[i : i + 1], torch_data[core_samples])
+            distances = torch.cdist(torch_data[i:i + 1], torch_data[core_samples])
             if torch.any(distances <= eps):
                 nearest_core = torch.argmin(distances[0], dim=0)
                 core_points = torch.where(core_samples)[0]

@@ -81,13 +81,13 @@ except ImportError:
 
 # Optional GPU imports
 try:
-    # Import will be used in child classes
-    from utils.gpu_utils import apply_dbscan_clustering_gpu  # noqa: F401
+    # Import for GPU-accelerated DBSCAN clustering
+    from utils.gpu_utils import apply_dbscan_clustering_gpu
 
     GPU_DBSCLUSTER_AVAILABLE = True
 except ImportError:
     GPU_DBSCLUSTER_AVAILABLE = False
-    print("Warning: GPU DBSCAN clustering not available. Using CPU implementation.")
+    logging.warning("GPU DBSCAN clustering not available. Using CPU implementation.")
 
 
 class EnhancedMinerEntity(MinerEntity):
@@ -1199,7 +1199,18 @@ class MinerEntity(BaseEntity):
         # If only a few points, return simple stats
         if len(points) < 5:
             return self._calculate_territory_metrics(points)
-        # For larger populations, use KMeans to identify colonies
+            
+        # For larger populations, try DBSCAN for density-based clustering first
+        # This is especially useful for irregular territories
+        try:
+            # For large populations or irregular territories, use DBSCAN
+            if len(points) > 1000 or self.trait == "adaptive":
+                return self._analyze_territory_with_dbscan(points, entity_locations, field)
+        except Exception as e:
+            logging.warning(f"DBSCAN clustering failed, falling back to KMeans: {e}")
+            # Fall back to KMeans if DBSCAN fails
+            
+        # For regular clustering, use KMeans to identify colonies
         try:
             # Determine k based on population size
             population = len(points)
@@ -1218,6 +1229,122 @@ class MinerEntity(BaseEntity):
                 "fragmentation": 0,
             }
 
+    def _analyze_territory_with_dbscan(self, points, entity_locations, field=None):
+        """Analyze territory using DBSCAN clustering for more accurate territory analysis.
+        
+        This method is especially effective for irregularly shaped territories or when dealing
+        with large populations. It uses density-based clustering to identify territory regions.
+        
+        Args:
+            points: Array of (x,y) coordinates representing entity locations
+            entity_locations: Raw entity location data from the field grid
+            field: Optional field object for resource access calculation
+            
+        Returns:
+            Dictionary containing territory metrics including center, radius, density,
+            resource access, fragmentation, and cluster information
+        
+        Raises:
+            Exception: If DBSCAN clustering fails or GPU acceleration is unavailable
+        """
+        if not GPU_DBSCLUSTER_AVAILABLE:
+            raise RuntimeError("GPU DBSCAN clustering not available")
+
+        try:
+            return self._dbs_scan(points, field)
+        except Exception as e:
+            logging.error(f"Error in DBSCAN territory analysis: {e}")
+            log_exception(e)
+            # Re-raise to trigger fallback to KMeans in the calling method
+            raise
+
+    def _dbs_scan(self, points, field):
+        # For adaptive territories, use parameters suited for dispersed populations
+        if self.trait == "adaptive":
+            eps = 2.5  # Larger eps helps connect dispersed populations
+            min_samples = 3  # Smaller min_samples to identify sparse clusters
+        else:
+            # For larger populations, use smaller eps to identify distinct colonies
+            eps = 1.5
+            min_samples = 5
+
+        # Apply GPU-accelerated DBSCAN clustering
+        labels, n_clusters = apply_dbscan_clustering_gpu(
+            points,
+            eps=eps,
+            min_samples=min_samples
+        )
+
+        # If no meaningful clusters were found, use a larger eps
+        if n_clusters <= 0:
+            eps = 3.0  # Much larger eps to ensure finding clusters
+            min_samples = 2  # Very permissive clustering
+            labels, n_clusters = apply_dbscan_clustering_gpu(
+                points,
+                eps=eps,
+                min_samples=min_samples
+            )
+
+        # If still no clusters, fall back to simple metrics
+        if n_clusters <= 0:
+            logging.warning("DBSCAN found no clusters, falling back to simple territory metrics")
+            return self._calculate_territory_metrics(points)
+
+        # Find the main cluster (largest population)
+        cluster_sizes = [np.sum(labels == i) for i in range(-1, n_clusters)]
+        # Exclude noise points (label -1) when determining main cluster
+        main_cluster_idx = np.argmax(cluster_sizes[1:]) if len(cluster_sizes) > 1 else 0
+
+        # Get points in the main cluster
+        main_cluster_points = points[labels == main_cluster_idx]
+
+        # If main cluster is too small, fall back to simple metrics
+        if len(main_cluster_points) < 5:
+            return self._calculate_territory_metrics(points)
+
+        # Calculate center and radius of the main cluster
+        center = np.mean(main_cluster_points, axis=0)
+        distances = np.sqrt(np.sum((main_cluster_points - center) ** 2, axis=1))
+        radius = np.max(distances)
+
+        # Set territory properties
+        self.territory_center = (int(center[0]), int(center[1]))
+        self.territory_radius = int(radius)
+
+        # Calculate density
+        area = math.pi * radius**2
+        density = len(main_cluster_points) / area if area > 0 else 0
+        self.territory_density = density
+
+        # Calculate fragmentation based on number of clusters and noise points
+        fragmentation = 1.0 - (len(main_cluster_points) / len(points))
+
+        resource_access = (
+            self._calculate_resource_density(center, radius)
+            if field is not None
+            else 0
+        )
+        # Calculate cluster statistics
+        cluster_stats = {
+            "n_clusters": n_clusters,
+            "noise_points": int(np.sum(labels == -1)),
+            "main_cluster_size": len(main_cluster_points),
+            "main_cluster_idx": int(main_cluster_idx),
+            "eps_used": eps,
+            "min_samples_used": min_samples
+        }
+
+        # Additional territory metrics based on DBSCAN results
+        return {
+            "center": self.territory_center,
+            "radius": self.territory_radius,
+            "density": self.territory_density,
+            "resource_access": resource_access,
+            "fragmentation": fragmentation,
+            "cluster_stats": cluster_stats,
+            "clustering_method": "dbscan"
+        }
+            
     def _calculate_territory_metrics(self, points):
         """Calculate basic territory metrics for a small number of points.
 
@@ -1246,20 +1373,28 @@ class MinerEntity(BaseEntity):
         # Store territory metrics based on statistical analysis
         self.territory_center = (int(center_x), int(center_y))
         self.territory_radius = int(np.max(distances))
-        self.territory_density = len(points) / (math.pi * self.territory_radius**2)
+        self.territory_density = len(points) / (math.pi * self.territory_radius**2) if self.territory_radius > 0 else 0
 
         # Use skewness to determine if entities are clustered toward center or edge
         # Negative skew means more entities near the edge
         self.territory_centrality = -distance_stats["skewness"]
+        
+        # Calculate resource access if field is available
+        resource_access = 0
+        if hasattr(self, 'field') and self.field is not None:
+            resource_access = self._calculate_resource_density(
+                np.array([center_x, center_y]), self.territory_radius
+            )
 
         return {
             "center": self.territory_center,
             "radius": self.territory_radius,
             "density": self.territory_density,
-            "resource_access": 0,
+            "resource_access": resource_access,
             "fragmentation": 0,
             "centrality": self.territory_centrality,
             "distance_stats": distance_stats,
+            "clustering_method": "simple",
         }
 
     def _calculate_territory_metrics(
@@ -1279,7 +1414,7 @@ class MinerEntity(BaseEntity):
         # Calculate radius as distance to furthest entity in main cluster
         main_cluster_points = points[clusters == main_cluster_idx]
         distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
-        self.territory_radius = int(np.max(distances))
+        self.territory_radius = int(np.max(distances)) if len(distances) > 0 else 0
 
         # Calculate territory density
         area = math.pi * self.territory_radius**2
@@ -1300,6 +1435,17 @@ class MinerEntity(BaseEntity):
             # Fallback to simple centroid calculation if sklearn is not available
             logging.warning("sklearn not available, using simple clustering fallback")
             return self._perform_simple_clustering(points, k)
+            
+        # If race has the selective trait, try to use GPU acceleration for clustering
+        if self.trait == "selective" and len(points) > 500:
+            try:
+                # For selective races with many points, use GPU-accelerated clustering when available
+                from utils.gpu_utils import apply_kmeans_clustering_gpu
+                labels, centers = apply_kmeans_clustering_gpu(points, n_clusters=k)
+                cluster_sizes = [np.sum(labels == i) for i in range(k)]
+                return self._get_main_cluster_info(cluster_sizes, centers, labels)
+            except ImportError as e:
+                logging.warning(f"GPU-accelerated clustering failed due to import error: {e}, falling back to standard KMeans")
 
         try:
             return self._perform_kmeans_clustering(points, k)

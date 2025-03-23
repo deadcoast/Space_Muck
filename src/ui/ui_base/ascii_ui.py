@@ -16,6 +16,7 @@ import pygame
 from config import COLOR_HIGHLIGHT, COLOR_TEXT
 from ui.ui_base.ui_style import UIStyle
 from ui.ui_element.ui_element import UIElement
+from ui.ui_helpers.render_helper import RenderHelper
 
 
 class ASCIIBox(UIElement):
@@ -196,7 +197,7 @@ class ASCIIBox(UIElement):
                 line_index = i + self.scroll_offset
                 if 0 <= line_index < len(self.content_lines):
                     line = self.content_lines[line_index]
-                    self._draw_text(
+                    RenderHelper.draw_text(
                         surface, font, content_start_x, content_start_y + i, line
                     )
 
@@ -486,7 +487,7 @@ class ASCIIButton(UIElement):
         # Draw button text
         text_x = self.x + 1
         text_y = self.y + (self.height // 2)
-        self._draw_text(surface, font, text_x, text_y, self.centered_text, text_color)
+        RenderHelper.draw_text(surface, font, text_x, text_y, self.centered_text, text_color)
 
         # Draw focus indicator if focused
         if self.focused:
@@ -835,8 +836,8 @@ class ASCIIProgressBar(UIElement):
             text_x = self.x + (self.width // 2) - (len(text) // 2)
             text_y = self.y + self.height - 1
 
-            # Draw text
-            self._draw_text(surface, font, text_x, text_y, text)
+            # Draw text using RenderHelper
+            RenderHelper.draw_text(surface, font, text_x, text_y, text)
 
         except Exception as e:
             logging.error(f"Error drawing percentage text: {e}")

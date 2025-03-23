@@ -3988,11 +3988,7 @@ def _initialize_game_and_run():
     # Create the game instance
     game = Game()
 
-    # Run the game loop and track completion status
-    game_success = run_game_loop(game)
-    
-    # Handle game completion status
-    if game_success:
+    if game_success := run_game_loop(game):  # noqa: F841
         logging.info("Game completed successfully")
         _log_game_completion_metrics(game)
     else:

@@ -20,15 +20,20 @@ try:
 except ImportError:
     logging.warning("UIStyle could not be imported, using fallback")
 
-CELLULAR = auto()  # Cell-by-cell reveal mimicking Game of Life
-FRACTAL = auto()  # Recursive splitting pattern
-WARP = auto()  # Space-warp style transitions
-QUANTUM_FLUX = auto()  # Probability wave collapse
-MINERAL_GROWTH = auto()  # Crystal-like growth patterns
-
 
 class AnimationStyle(Enum):
     """Animation styles for transitions"""
+    # Define animation styles as enum members
+    CELLULAR = auto()  # Cell-by-cell reveal mimicking Game of Life
+    FRACTAL = auto()  # Recursive splitting pattern
+    WARP = auto()  # Space-warp style transitions
+    QUANTUM_FLUX = auto()  # Probability wave collapse
+    MINERAL_GROWTH = auto()  # Crystal-like growth patterns
+    PULSE = auto()  # Pulsating brightness/intensity for alerts
+    DATA_STREAM = auto()  # Matrix-like data stream effects
+    GLITCH = auto()  # Random character replacement for damaged systems
+    PARTICLE = auto()  # Particle-based effects for dynamic animations
+    SPARKLE = auto()  # Twinkling star-like effect for highlights
 
     @classmethod
     def get_animation_for_style(cls, ui_style: Any) -> "AnimationStyle":
