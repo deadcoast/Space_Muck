@@ -3,4 +3,4 @@
 /.venv
 .sourcery.yaml
 /.ruff_cache
-/.__pycache__
+/.__pycache__symbiote_evolution.log
