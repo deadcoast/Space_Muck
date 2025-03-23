@@ -14,8 +14,8 @@ import time
 import pygame
 
 # Local application imports
-from ui.ui_base.ascii_base import UIStyle
-from ui.ui_element.ascii_inventory_panel import ASCIIInventoryPanel
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ascii_inventory_panel import ASCIIInventoryPanel
 
 # Third-party library imports
 

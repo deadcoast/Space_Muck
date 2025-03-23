@@ -47,10 +47,28 @@ class ASCIIBox(UIElement):
         self.content_lines = []
         self.scroll_offset = 0
         self.max_scroll = 0
+        
+        # Add a rect property to make this compatible with Pygame-style interfaces
+        self.rect = self._create_rect()
 
         # Parse content into lines if provided
         if content:
             self.set_content(content)
+            
+    def _create_rect(self):
+        """Create a Pygame-style rect object with x, y, width, and height properties.
+        
+        Returns:
+            A simple object with the same interface as pygame.Rect for position and size
+        """
+        class SimpleRect:
+            def __init__(self, x, y, width, height):
+                self.x = x
+                self.y = y
+                self.width = width
+                self.height = height
+                
+        return SimpleRect(self.x, self.y, self.width, self.height)
 
     def _wrap_line(self, line: str, max_width: int) -> List[str]:
         """Wrap a single line of text to fit within the specified width.
@@ -246,6 +264,23 @@ class ASCIIBox(UIElement):
             logging.error(f"Error handling input: {e}")
 
         return None
+        
+    def add_component(self, component: UIElement) -> None:
+        """Add a UI component to the box.
+        
+        Args:
+            component: The UI element to add as a component
+        """
+        try:
+            # Store component if not already present
+            if not hasattr(self, 'components'):
+                self.components = []
+                
+            # Add the component to the list
+            self.components.append(component)
+            
+        except Exception as e:
+            logging.error(f"Error adding component: {e}")
 
 
 class ASCIIPanel(UIElement):
@@ -383,22 +418,22 @@ class ASCIIButton(UIElement):
         self,
         x: int,
         y: int,
-        width: int,
-        height: int,
-        style: UIStyle,
         text: str,
         callback: Optional[Callable[[], object]] = None,
+        style: UIStyle = UIStyle.MECHANICAL,
+        width: int = 20,
+        height: int = 3,
     ):
         """Initialize an ASCII button.
 
         Args:
             x: X coordinate of the top-left corner
             y: Y coordinate of the top-left corner
-            width: Width of the button in characters
-            height: Height of the button in characters
-            style: Visual style for the button
             text: Text to display on the button
             callback: Optional function to call when the button is clicked
+            style: Visual style for the button (default: UIStyle.MECHANICAL)
+            width: Width of the button in characters (default: 20)
+            height: Height of the button in characters (default: 3)
         """
         super().__init__(x, y, width, height, style)
         self.text = text

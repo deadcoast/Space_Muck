@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 # Third-party library imports
-import numpy as np
+from numpy.random import default_rng
 
 # Local application imports
 from config import NotificationManager, Shop
@@ -54,8 +54,10 @@ class TestAsteroidFieldPerformance(unittest.TestCase):
 
         # Add entities to the field
         entities_per_race = 1000
+        # Use the new Generator API with a fixed seed for reproducibility
+        rng = default_rng(42)  # Fixed seed for reproducible tests
         for race in self.field.races:
-            coords = np.random.randint(
+            coords = rng.integers(
                 0, min(self.field.width, self.field.height), size=(entities_per_race, 2)
             )
             for x, y in coords:
@@ -123,10 +125,13 @@ class TestPlayerPerformance(unittest.TestCase):
         """Test performance of fleet updates with many ships."""
         # Add maximum ships
         self.player.mining_ships = self.player.max_mining_ships
+        
+        # Use the new Generator API with a fixed seed for reproducibility
+        rng = default_rng(42)  # Fixed seed for reproducible tests
         self.player.ship_positions = list(
             zip(
-                np.random.randint(0, self.field.width, self.player.max_mining_ships),
-                np.random.randint(0, self.field.height, self.player.max_mining_ships),
+                rng.integers(0, self.field.width, self.player.max_mining_ships),
+                rng.integers(0, self.field.height, self.player.max_mining_ships),
             )
         )
         self.player.ship_health = [100] * self.player.max_mining_ships
@@ -152,7 +157,7 @@ class TestPlayerPerformance(unittest.TestCase):
 
         # Pathfinding should complete in reasonable time
         self.assertLess(end_time - start_time, 1.0, "Pathfinding took too long")
-        self.assertTrue(len(path) > 0, "No path found")
+        self.assertGreater(len(path), 0, "No path found")
 
 
 class TestUIPerformance(unittest.TestCase):

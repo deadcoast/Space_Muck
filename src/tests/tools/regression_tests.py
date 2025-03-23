@@ -102,27 +102,23 @@ class TestNumericalStability(unittest.TestCase):
 
     def test_very_large_mineral_values(self):
         """Test handling of extremely large mineral values."""
-        # Set up a very high value asteroid
-        self.field.grid[40, 50] = 10000
-        self.player.x = 50
-        self.player.y = 40
-
-        # Mining should handle large values without overflow
-        result = self.player.mine(self.field)
-        self.assertEqual(result, 10000)
+        self._verify_mining_location(10000, 10000)
 
     def test_very_high_efficiency(self):
         """Test very high mining efficiency values."""
         self.player.mining_efficiency = 100.0  # Extremely high
 
-        # Set up a normal asteroid
-        self.field.grid[40, 50] = 10
+        self._verify_mining_location(10, 1000)
+
+    def _verify_mining_location(self, arg0, arg1):
+        """
+        Execute mining in a specific location and verify the result.
+        """
+        self.field.grid[40, 50] = arg0
         self.player.x = 50
         self.player.y = 40
-
-        # Mining should apply efficiency and not crash
         result = self.player.mine(self.field)
-        self.assertEqual(result, 1000)  # 10 * 100.0
+        self.assertEqual(result, arg1)
 
     def test_zero_hunger(self):
         """Test race behavior with zero hunger."""

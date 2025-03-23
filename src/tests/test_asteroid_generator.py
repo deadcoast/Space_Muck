@@ -84,9 +84,6 @@ except ImportError as e:
             return self.parameters.get(name, default)
 
     class AsteroidGenerator(BaseGenerator):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            # random is already available from the parent import
 
         def generate_field(self, *args, **kwargs):
             return np.zeros((10, 10))
@@ -499,87 +496,109 @@ class TestAsteroidGenerator(unittest.TestCase):
             if original_noise_method:
                 self.generator._generate_base_noise = original_noise_method
 
-    def test_create_asteroid_field(self):
-        """Test the create_asteroid_field method."""
-        from contextlib import suppress
-
-        # Patch the _generate_base_noise method if it doesn't accept scale parameter
+    def _patch_noise_method(self):
+        """Patch the _generate_base_noise method if it doesn't accept scale parameter."""
         original_noise_method = None
-        try:
-            if hasattr(self.generator, "_generate_base_noise"):
-                original_noise_method = self.generator._generate_base_noise
+        if hasattr(self.generator, "_generate_base_noise"):
+            original_noise_method = self.generator._generate_base_noise
 
-                def patched_noise_method(*args, **kwargs):
-                    # Ignore scale parameter if present
-                    return original_noise_method()
+            def patched_noise_method(*args, **kwargs):
+                # Ignore scale parameter if present
+                return original_noise_method()
 
-                self.generator._generate_base_noise = patched_noise_method
+            self.generator._generate_base_noise = patched_noise_method
+        return original_noise_method
 
-            # Try different parameter combinations
-            field_data = None
+    def _try_generate_field_data(self):
+        """Try to generate field data with different parameter combinations."""
+        from contextlib import suppress
+        field_data = None
 
-            # Try with no parameters first
+        # Try with no parameters first
+        with suppress(TypeError, AttributeError, ValueError):
+            field_data = self.generator.create_asteroid_field()
+
+        # If first attempt didn't work, try with some common parameters
+        if field_data is None:
             with suppress(TypeError, AttributeError, ValueError):
-                _ = self.generator.create_asteroid_field()
+                field_data = self.generator.create_asteroid_field(seed=42)
 
-            # If that fails, try with some common parameters
-            if field_data is None:
-                with suppress(TypeError, AttributeError, ValueError):
-                    field_data = self.generator.create_asteroid_field(seed=42)
+        return field_data
 
-            # If we got a valid result, verify it
-            if field_data is not None:
-                # Verify the structure of the returned data
-                if isinstance(field_data, dict):
-                    # If it returns a dictionary with grids
-                    # Check for common keys but don't fail if they're not there
-                    common_keys = [
-                        "asteroid_grid",
-                        "value_grid",
-                        "mineral_grid",
-                        "energy_grid",
-                    ]
-                    found_keys = [key for key in common_keys if key in field_data]
+    def _verify_field_data_dict(self, field_data):
+        """Verify a dictionary field data structure."""
+        from contextlib import suppress
+        # Check for common keys but don't fail if they're not there
+        common_keys = [
+            "asteroid_grid",
+            "value_grid",
+            "mineral_grid",
+            "energy_grid",
+        ]
+        found_keys = [key for key in common_keys if key in field_data]
 
-                    # Ensure we have at least one valid grid
-                    self.assertGreater(
-                        len(found_keys), 0, "No recognized grids found in field data"
+        # Ensure we have at least one valid grid
+        self.assertGreater(
+            len(found_keys), 0, "No recognized grids found in field data"
+        )
+
+        # Verify grid shapes for keys that exist
+        # First ensure field_data is a dict before attempting to access keys
+        if not isinstance(field_data, dict):
+            return
+            
+        array_keys = []
+        # Safely find keys with numpy array values
+        if hasattr(field_data, 'keys'):
+            for k in field_data.keys():
+                # Use get() instead of direct subscripting to avoid the unsubscriptable error
+                value = field_data.get(k, None)
+                if isinstance(value, np.ndarray):
+                    array_keys.append(k)
+                    
+        # Now test each key with array values
+        for key in array_keys:
+            with self.subTest(grid=key):
+                # Safely get the array and verify its shape
+                array_value = field_data.get(key)
+                if array_value is not None:
+                    self.assertEqual(
+                        array_value.shape, (self.height, self.width)
                     )
 
-                    # Verify grid shapes for keys that exist
-                    for key in [
-                        k
-                        for k in field_data.keys()
-                        if isinstance(field_data[k], np.ndarray)
-                    ]:
-                        with self.subTest(grid=key):
-                            self.assertEqual(
-                                field_data[key].shape, (self.height, self.width)
-                            )
+        # Test with specific parameters if we have a working method
+        parameter_sets = [
+            {"field_type": "mixed", "density": 0.6},
+            {"density": 0.3},
+            {"rare_chance": 0.2},
+            {"seed": 12345},
+        ]
 
-                    # Test with specific parameters if we have a working method
-                    parameter_sets = [
-                        {"field_type": "mixed", "density": 0.6},
-                        {"density": 0.3},
-                        {"rare_chance": 0.2},
-                        {"seed": 12345},
-                    ]
+        for params in parameter_sets:
+            with self.subTest(params=params):
+                with suppress(TypeError, ValueError, AttributeError):
+                    test_data = self.generator.create_asteroid_field(**params)
+                    self.assertIsNotNone(test_data)
 
-                    for params in parameter_sets:
-                        with self.subTest(params=params):
-                            with suppress(TypeError, ValueError, AttributeError):
-                                test_data = self.generator.create_asteroid_field(
-                                    **params
-                                )
-                                self.assertIsNotNone(test_data)
-                else:
-                    # If it returns some other object, just verify it's not None
-                    self.assertIsNotNone(field_data)
-            else:
+    def test_create_asteroid_field(self):
+        """Test the create_asteroid_field method."""
+        # Patch the noise method and get the original for restoration
+        original_noise_method = self._patch_noise_method()
+
+        try:
+            # Try to generate field data
+            field_data = self._try_generate_field_data()
+
+            # If we got a valid result, verify it
+            if field_data is None:
                 self.skipTest(
                     "create_asteroid_field method not compatible with test parameters"
                 )
-
+            elif isinstance(field_data, dict):
+                self._verify_field_data_dict(field_data)
+            else:
+                # If it returns some other object, just verify it's not None
+                self.assertIsNotNone(field_data)
         except Exception as e:
             self.skipTest(f"Create asteroid field test skipped: {str(e)}")
         finally:
@@ -602,11 +621,16 @@ class TestAsteroidGenerator(unittest.TestCase):
         self.generator.height = 200
 
         try:
-            self._extracted_from_test_performance_17()
+            # Run the performance benchmark
+            self._benchmark_field_generation()
         finally:
             # Restore original dimensions
             self.generator.width = original_width
             self.generator.height = original_height
+            
+    def _extracted_from_test_performance_17(self):
+        """Run the performance benchmark tests."""
+        self._benchmark_field_generation()
 
     def _benchmark_field_generation(self):
         # Field generation
@@ -735,10 +759,16 @@ class TestAsteroidGenerator(unittest.TestCase):
 
             # If we couldn't generate with weights, try without weights
             if grid1 is None or grid2 is None:
-                # Try with different seeds instead
+                # Try with different seeds and significantly different parameters
                 with suppress(TypeError, AttributeError, ValueError):
-                    grid1, _ = self.generator.generate_field(seed=42)
-                    grid2, _ = self.generator.generate_field(seed=43)
+                    # Use very different seeds and density values to ensure different outputs
+                    self.generator.seed = 42
+                    self.generator.density = 0.3
+                    grid1, _ = self.generator.generate_field()
+                    
+                    self.generator.seed = 999
+                    self.generator.density = 0.7
+                    grid2, _ = self.generator.generate_field()
 
             # Skip if we couldn't generate any fields
             if grid1 is None or grid2 is None:

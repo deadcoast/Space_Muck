@@ -11,17 +11,16 @@ import random
 import sys
 import time
 
+# Add the src directory to the path so we can import modules properly
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pygame
 
 # Local application imports
-from ui.ui_base.ascii_base import UIStyle
-from ui.ui_element.ascii_ship_status_panel import ASCIIShipStatusPanel
+from src.ui.ui_base.ascii_base import UIStyle
+from src.ui.ui_element.ascii_ship_status_panel import ASCIIShipStatusPanel
 
 # Third-party library imports
-
-
-# Add the src directory to the path so we can import modules properly
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def main():

@@ -7,6 +7,7 @@ and customizable upgrade options that affect different aspects of gameplay.
 
 # Standard library imports
 import random
+import time
 from typing import Any, Dict, List, Tuple
 
 # Third-party library imports
@@ -463,10 +464,50 @@ class Shop:
         if player.currency < amount:
             return
 
-        # Store results for potential future use
-        _results = player.feed_symbiotes(field, amount)
-        notifier.add(f"Fed {amount} minerals to symbiotic races.", category="race")
+        # Store and utilize feeding results for notification and tracking
+        feeding_results = player.feed_symbiotes(field, amount)
+        
+        # Process feeding results and send notification
+        self._process_feeding_results(feeding_results, amount, notifier)
+        
+        # Check for and process any race evolutions
+        self._check_for_race_evolution(field, notifier)
 
+    def _process_feeding_results(self, feeding_results: Dict[str, Any], amount: int, notifier: NotificationManager) -> None:
+        """
+        Process feeding results and send appropriate notification.
+        
+        Args:
+            feeding_results: Results from feeding operation
+            amount: Amount of minerals fed
+            notifier: NotificationManager for sending notifications
+        """
+        # Add detailed notification based on feeding results
+        if feeding_results and isinstance(feeding_results, dict):
+            # Extract feeding effectiveness if available
+            effectiveness = feeding_results.get('effectiveness', 0)
+            races_fed = feeding_results.get('races_fed', 0)
+            
+            # Add more detailed notification
+            notifier.add(
+                f"Fed {amount} minerals to {races_fed} symbiotic races (Effectiveness: {effectiveness:.1f}).", 
+                category="race"
+            )
+            
+            # Track feeding statistics for future enhancement
+            self._track_feeding_statistics(feeding_results)
+        else:
+            # Simple notification if results format is different
+            notifier.add(f"Fed {amount} minerals to symbiotic races.", category="race")
+    
+    def _check_for_race_evolution(self, field: AsteroidField, notifier: NotificationManager) -> None:
+        """
+        Check if any races in the field have evolved and process evolutions.
+        
+        Args:
+            field: AsteroidField containing races
+            notifier: NotificationManager for sending notifications
+        """
         # Check if feeding triggered any evolution
         for race in field.races:
             if (
@@ -474,15 +515,135 @@ class Shop:
                 and race.hunger < 0.3
                 and race.evolution_points >= race.evolution_threshold
             ):
-                # Store metrics for potential future use
-                _metrics = race.evolve()
-                notifier.add(
-                    f"Race {race.race_id} evolved to stage {race.evolution_stage}!",
-                    color=(255, 100, 255),
-                    category="race",
-                    importance=3,
-                )
-
+                self._process_race_evolution(race, notifier)
+    
+    def _process_race_evolution(self, race: Any, notifier: NotificationManager) -> None:
+        """
+        Process a single race evolution and send notifications.
+        
+        Args:
+            race: Race object that evolved
+            notifier: NotificationManager for sending notifications
+        """
+        # Get evolution metrics and utilize them for enhanced notifications
+        evolution_metrics = race.evolve()
+        
+        # Track evolution metrics for analysis and future visualizations
+        self._track_evolution_metrics(race.race_id, evolution_metrics)
+        
+        # Create detailed evolution notification with metrics data
+        evolution_message = f"Race {race.race_id} evolved to stage {race.evolution_stage}!"
+        
+        # Add detailed trait changes if available in metrics
+        if evolution_metrics and isinstance(evolution_metrics, dict) and (trait_changes := evolution_metrics.get('trait_changes', {})):
+            traits_msg = ', '.join([f"{trait}: {change:+.2f}" for trait, change in trait_changes.items()])
+            evolution_message += f"\nTrait changes: {traits_msg}"
+        
+        notifier.add(
+            evolution_message,
+            color=(255, 100, 255),
+            category="race",
+            importance=3,
+        )
+    
+    def _track_evolution_metrics(self, race_id: int, evolution_metrics: Dict[str, Any]) -> None:
+        """
+        Track and analyze symbiote evolution metrics for future visualization and analysis.
+        
+        Args:
+            race_id: ID of the race that evolved
+            evolution_metrics: Dictionary containing evolution metrics and trait changes
+        """
+        # Initialize evolution_data dictionary if it doesn't exist yet
+        if not hasattr(self, "evolution_data"):
+            self.evolution_data = {
+                "total_evolutions": 0,
+                "race_evolutions": {},
+                "evolution_history": [],
+            }
+        
+        # Update global evolution statistics
+        self.evolution_data["total_evolutions"] += 1
+        
+        # Add to evolution history for timeline visualization
+        self.evolution_data["evolution_history"].append({
+            "timestamp": time.time(),
+            "race_id": race_id,
+            "metrics": evolution_metrics
+        })
+        
+        # Update race-specific evolution data
+        if race_id not in self.evolution_data["race_evolutions"]:
+            self.evolution_data["race_evolutions"][race_id] = {
+                "evolution_count": 0,
+                "evolution_stages": [],
+                "trait_history": {}
+            }
+        
+        race_data = self.evolution_data["race_evolutions"][race_id]
+        race_data["evolution_count"] += 1
+        
+        # Track evolution stage if available
+        if evolution_metrics and isinstance(evolution_metrics, dict):
+            if "stage" in evolution_metrics:
+                race_data["evolution_stages"].append(evolution_metrics["stage"])
+            
+            # Track trait changes over time
+            trait_changes = evolution_metrics.get("trait_changes", {})
+            for trait, change in trait_changes.items():
+                if trait not in race_data["trait_history"]:
+                    race_data["trait_history"][trait] = []
+                
+                race_data["trait_history"][trait].append({
+                    "timestamp": time.time(),
+                    "change": change,
+                    "absolute_value": evolution_metrics.get("traits", {}).get(trait)
+                })
+    
+    def _track_feeding_statistics(self, feeding_results: Dict[str, Any]) -> None:
+        """
+        Track and analyze symbiote feeding statistics for future metrics.
+        
+        Args:
+            feeding_results: Dictionary containing feeding operation results
+        """
+        # Initialize feeding_stats dictionary if it doesn't exist yet
+        if not hasattr(self, "feeding_stats"):
+            self.feeding_stats = {
+                "total_feedings": 0,
+                "total_minerals_fed": 0,
+                "race_stats": {},
+                "effectiveness_history": [],
+            }
+        
+        # Update statistics
+        self.feeding_stats["total_feedings"] += 1
+        self.feeding_stats["total_minerals_fed"] += feeding_results.get("amount", 0)
+        
+        # Track effectiveness over time for potential UI graphs
+        self.feeding_stats["effectiveness_history"].append({
+            "timestamp": time.time(),
+            "effectiveness": feeding_results.get("effectiveness", 0),
+            "races_fed": feeding_results.get("races_fed", 0)
+        })
+        
+        # Update per-race statistics
+        for race_id, race_data in feeding_results.get("race_details", {}).items():
+            if race_id not in self.feeding_stats["race_stats"]:
+                self.feeding_stats["race_stats"][race_id] = {
+                    "feedings": 0,
+                    "minerals_fed": 0,
+                    "evolutions_triggered": 0
+                }
+            
+            race_stats = self.feeding_stats["race_stats"][race_id]
+            race_stats["feedings"] += 1
+            race_stats["minerals_fed"] += race_data.get("amount", 0)
+            
+            # Track if this feeding triggered an evolution
+            if race_data.get("evolution_triggered", False):
+                race_stats["evolutions_triggered"] += 1
+    
     def discover_race(
         self, field: AsteroidField, notifier: NotificationManager
     ) -> bool:

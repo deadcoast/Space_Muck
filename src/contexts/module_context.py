@@ -14,8 +14,7 @@ from enum import Enum, auto
 from typing import Callable, Dict, List, Optional, Set
 
 # Local application imports
-from .game_context import GameContext, GameEvent, GameEventType
-
+from src.contexts.game_context import GameContext, GameEvent, GameEventType
 # Third-party library imports
 
 

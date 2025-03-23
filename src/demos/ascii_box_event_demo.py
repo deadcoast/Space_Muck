@@ -190,28 +190,31 @@ def run_demo() -> None:
     print("-" * 50)
 
     try:
-        # Create demo boxes
-        basic_box = demo_basic_event_integration()
-        interactive_box, _ = demo_interactive_box_creation()
-        multiple_boxes = demo_multiple_boxes()
-        custom_event_box = demo_custom_event_handling()
-
-        # Collect all boxes
-        all_boxes = [basic_box, interactive_box] + multiple_boxes + [custom_event_box]
-
-        print("\nDemo boxes created successfully!")
-        print(f"Created {len(all_boxes)} interactive boxes")
-        print("\nTo interact with these boxes:")
-        print("1. Use mouse events to hover over and click boxes")
-        print("2. Watch for event messages in the console")
-        print("3. Observe visual changes in the boxes")
-
-        # Note: In a real application, you would now enter the main loop
-        # and handle mouse events using handle_mouse_events()
+        _create_demo_boxes()
+            # Note: In a real application, you would now enter the main loop
+            # and handle mouse events using handle_mouse_events()
 
     except Exception as e:
         logging.error(f"Error in demo: {e}")
         print(f"Demo failed with error: {e}")
+
+
+def _create_demo_boxes():
+    # Create demo boxes
+    basic_box = demo_basic_event_integration()
+    interactive_box, _ = demo_interactive_box_creation()
+    multiple_boxes = demo_multiple_boxes()
+    custom_event_box = demo_custom_event_handling()
+
+    # Collect all boxes
+    all_boxes = [basic_box, interactive_box] + multiple_boxes + [custom_event_box]
+
+    print("\nDemo boxes created successfully!")
+    print(f"Created {len(all_boxes)} interactive boxes")
+    print("\nTo interact with these boxes:")
+    print("1. Use mouse events to hover over and click boxes")
+    print("2. Watch for event messages in the console")
+    print("3. Observe visual changes in the boxes")
 
 
 if __name__ == "__main__":

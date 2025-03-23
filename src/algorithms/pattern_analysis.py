@@ -17,7 +17,7 @@ FEATURES
 
 2. VoronoiTerritoryPartitioner
    - After labeling colonies (connected components), compute approximate Voronoi
-     regions for each colony’s center or key point.
+     regions for each colonys center or key point.
    - Useful for deciding how territories are partitioned among multiple colonies,
      or how symbiotes decide who to fight or merge with.
 

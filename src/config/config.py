@@ -7,23 +7,77 @@ are strongly typed for better IDE support and error checking.
 """
 
 # Standard library imports
+import logging
+from typing import Any, Dict, List, Tuple
 
 # Third-party library imports
 
 # Local application imports
-from typing import Any, Dict, List, Tuple
-
-# Standard library imports
 
 # Version information
 VERSION: str = "1.0.0"
 BUILD_DATE: str = "2025-03-01"
+
+# Debug configuration
+DEBUG_CONFIG: Dict[str, Any] = {
+    "log_to_file": True,
+    "log_performance": True,
+    "show_fps": True,
+    "show_grid_coords": False,
+    "show_debug_info": False,
+    "enable_assertions": True,
+    "profile_code": False
+}
+
+# Logging configuration
+LOG_LEVEL: int = logging.INFO
 
 # Grid and window configuration
 CELL_SIZE: int = 8  # Smaller cells for larger world
 GRID_WIDTH: int = 400  # Much larger grid for extensive exploration
 GRID_HEIGHT: int = 300
 GAME_MAP_SIZE: Tuple[int, int] = (GRID_WIDTH, GRID_HEIGHT)  # Size of the game map
+
+# Player configuration
+PLAYER_CONFIG: Dict[str, Any] = {
+    "starting_health": 100,
+    "starting_energy": 50,
+    "move_speed": 1.0,
+    "inventory_slots": 10,
+    "starting_credits": 1000,
+    "visibility_radius": 15,
+    "scanning_range": 5
+}
+
+# World configuration
+WORLD_CONFIG: Dict[str, Any] = {
+    "asteroid_density": 0.3,
+    "resource_richness": 0.7,
+    "environmental_hazards": 0.4,
+    "anomaly_frequency": 0.2,
+    "space_station_count": 3
+}
+
+# UI configuration
+UI_CONFIG: Dict[str, Any] = {
+    "font_size": 14,
+    "tooltip_delay": 0.5,
+    "animation_speed": 1.0,
+    "ui_scale": 1.0,
+    "theme": "dark"
+}
+
+# Display options
+SHOW_FPS: bool = True  # Show FPS counter
+SHOW_MINIMAP: bool = True  # Show minimap
+SHOW_DEBUG: bool = False  # Show debug information
+SHOW_TOOLTIPS: bool = True  # Show tooltips
+
+# Colors (for examples and documentation)
+COLOR_FG: Tuple[int, int, int] = (255, 255, 255)  # White foreground color
+
+# Game information
+GAME_TITLE: str = "Space Muck"  # Title of the game
 WINDOW_WIDTH: int = 1600  # Fixed window size
 WINDOW_HEIGHT: int = 1200
 VIEW_WIDTH: int = WINDOW_WIDTH // CELL_SIZE  # Visible grid cells

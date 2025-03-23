@@ -78,14 +78,16 @@ def check_import_patterns(file_path: str) -> Tuple[bool, List[str]]:
     """
     issues = []
     try:
-        return _extracted_from_check_import_patterns_(file_path, issues)
+        return _verify_import_pattern(file_path, issues)
     except Exception as e:
         issues.append(f"Error checking import patterns: {e}")
         return False, issues
 
 
-# TODO Rename this here and in `check_import_patterns`
-def _extracted_from_check_import_patterns_(file_path, issues):
+def _verify_import_pattern(file_path, issues):
+    """
+    Check if import statements follow the standardized pattern.
+    """
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 

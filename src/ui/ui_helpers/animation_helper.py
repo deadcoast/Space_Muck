@@ -2,13 +2,23 @@
 
 # Standard library imports
 import logging
-
-# Local application imports
 from enum import Enum, auto
+from typing import TYPE_CHECKING, Any
 
-# Third-party library imports
-# Color imports removed - add back if needed in the future
-from src.ui.ui_base.ui_style import UIStyle
+# Proper handling of imports to avoid circular dependencies
+if TYPE_CHECKING:
+    # Use fully qualified import to avoid linting errors
+    from src.ui.ui_base.ui_style import UIStyle
+
+# Define a placeholder
+UIStyle: Any = None
+
+# Runtime import handling
+try:
+    # Use absolute import to avoid relative import beyond top-level package
+    from ui.ui_base.ui_style import UIStyle
+except ImportError:
+    logging.warning("UIStyle could not be imported, using fallback")
 
 CELLULAR = auto()  # Cell-by-cell reveal mimicking Game of Life
 FRACTAL = auto()  # Recursive splitting pattern
@@ -21,7 +31,7 @@ class AnimationStyle(Enum):
     """Animation styles for transitions"""
 
     @classmethod
-    def get_animation_for_style(cls, ui_style: UIStyle) -> "AnimationStyle":
+    def get_animation_for_style(cls, ui_style: Any) -> "AnimationStyle":
         """Get appropriate animation style based on UI style
 
         Args:

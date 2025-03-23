@@ -12,27 +12,6 @@ This script uses the LibCST library to parse and transform Python code.
 It requires Python 3.7 or higher.
 It is designed to be run from the command line and can process multiple files or directories.
 It will recursively search for .py files in the specified directories.
-It will transform all logging calls with f-strings into lazy-format style.
-It will write the transformed code back to the original files.
-It will print the transformed code to stdout if the -n option is used.
-It will skip any non-Python files or directories.
-It will print any errors or warnings to stderr.
-It will print the transformed file names to stdout.
-It will print the original file names to stderr if they are not Python files.
-It will print the number of files transformed to stdout.
-It will print the number of files skipped to stderr.
-It will print the number of files with errors to stderr.
-It will print the number of files with warnings to stderr.
-It will print the number of files with no changes to stdout.
-It will print the number of files with changes to stdout.
-It will print the number of files with no errors to stdout.
-It will print the number of files with no warnings to stdout.
-It will print the number of files with no changes to stdout.
-It will print the number of files with no errors to stdout.
-It will print the number of files with no warnings to stdout.
-It will print the number of files with no changes to stdout.
-It will print the number of files with no errors to stdout.
-It will print the number of files with no warnings to stdout.
 """
 #!/usr/bin/env python3
 
@@ -631,10 +610,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         """Handle an opening brace in a format string."""
         # Check for escaped braces
         if idx + 1 < len(base_str_val) and base_str_val[idx + 1] == "{":
-            processed_text, new_idx = self._handle_escaped_braces(base_str_val, idx)
-            final_format_str += processed_text
-            return new_idx
-
+            return self._add_escaped_braces_to_format(
+                base_str_val, idx, final_format_str
+            )
         return self._process_format_placeholder(
             base_str_val,
             idx,
@@ -647,6 +625,13 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
     def _handle_closing_brace(self, base_str_val, idx, final_format_str):
         """Handle a closing brace in a format string."""
+        return self._add_escaped_braces_to_format(
+            base_str_val, idx, final_format_str
+        )
+
+    def _add_escaped_braces_to_format(self, base_str_val, idx, final_format_str):
+        # Handle escaped braces using the base implementation
+        # and add the result to the format string
         processed_text, new_idx = self._handle_escaped_braces(base_str_val, idx)
         final_format_str += processed_text
         return new_idx
@@ -1667,44 +1652,50 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
         # Validate the format string
         if not self._validate_format_string(format_str, expressions):
-            # Attempt recovery: convert all placeholders to %s for safety
-            safe_format = self._convert_to_safe_format(
-                format_str
-            )  # Convert all non-%s, non-%% to %s
-
-            # Ensure we have the right number of placeholders
-            placeholder_count = len(
-                re.findall(r"%[^%]", safe_format)
-            )  # Count all % not followed by %
-            if placeholder_count < len(expressions):
-                # Add more %s placeholders if needed
-                extra_placeholders = " " + " ".join(
-                    ["%s"] * (len(expressions) - placeholder_count)
-                )
-                safe_format += extra_placeholders
-            elif placeholder_count > len(expressions):
-                # Get just the first part with correct placeholders
-                parts = re.split(r"%[^%]", safe_format)
-                safe_format = ""
-                for i, part in enumerate(parts):
-                    safe_format += part
-                    if i < len(expressions):
-                        safe_format += "%s"
-
-            # Double-check our recovery worked
-            if not self._validate_format_string(safe_format, expressions):
-                # Last resort fallback: just use each expression as a string
-                placeholders = " ".join(["%s"] * len(expressions))
-                logger.warning(
-                    f"Format string recovery failed. Using simplest form: {placeholders}"
-                )
-                return placeholders, expressions
-
-            logger.info(f"Recovered format string: {safe_format}")
-            return safe_format, expressions
-
+            return self._placeholder_coversion(
+                format_str, expressions
+            )
         # Original format string is valid
         return format_str, expressions
+
+    def _placeholder_coversion(self, format_str, expressions):
+        """
+        Attempt recovery: convert all placeholders to %s for safety
+        """
+        safe_format = self._convert_to_safe_format(
+            format_str
+        )  # Convert all non-%s, non-%% to %s
+
+        # Ensure we have the right number of placeholders
+        placeholder_count = len(
+            re.findall(r"%[^%]", safe_format)
+        )  # Count all % not followed by %
+        if placeholder_count < len(expressions):
+            # Add more %s placeholders if needed
+            extra_placeholders = " " + " ".join(
+                ["%s"] * (len(expressions) - placeholder_count)
+            )
+            safe_format += extra_placeholders
+        elif placeholder_count > len(expressions):
+            # Get just the first part with correct placeholders
+            parts = re.split(r"%[^%]", safe_format)
+            safe_format = ""
+            for i, part in enumerate(parts):
+                safe_format += part
+                if i < len(expressions):
+                    safe_format += "%s"
+
+        # Double-check our recovery worked
+        if not self._validate_format_string(safe_format, expressions):
+            # Last resort fallback: just use each expression as a string
+            placeholders = " ".join(["%s"] * len(expressions))
+            logger.warning(
+                f"Format string recovery failed. Using simplest form: {placeholders}"
+            )
+            return placeholders, expressions
+
+        logger.info(f"Recovered format string: {safe_format}")
+        return safe_format, expressions
 
     def _extract_parts_from_fstring(
         self, fstring_node: cst.FormattedString

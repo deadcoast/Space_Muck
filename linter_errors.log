@@ -1,0 +1,354 @@
+[1msrc/algorithms/economy_decision.py[m[36m:[m73[36m:[m101[36m:[m [1m[31mE501[m line too long (124 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m96[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'np' from line 67
+[1msrc/algorithms/economy_decision.py[m[36m:[m105[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'pygame' from line 92
+[1msrc/algorithms/economy_decision.py[m[36m:[m164[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m174[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m189[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m190[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m195[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m510[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m524[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m673[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m675[36m:[m101[36m:[m [1m[31mE501[m line too long (114 > 100 characters)
+[1msrc/algorithms/economy_decision.py[m[36m:[m777[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/algorithms/extended_ca.py[m[36m:[m466[36m:[m39[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/extended_ca.py[m[36m:[m466[36m:[m68[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/mip_optimizer.py[m[36m:[m321[36m:[m101[36m:[m [1m[31mE501[m line too long (117 > 100 characters)
+[1msrc/algorithms/mip_optimizer.py[m[36m:[m322[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/algorithms/pareto_optimizer.py[m[36m:[m329[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/algorithms/pde_spatial.py[m[36m:[m241[36m:[m26[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m241[36m:[m42[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m256[36m:[m26[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m256[36m:[m42[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m530[36m:[m32[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m531[36m:[m32[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m537[36m:[m32[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/pde_spatial.py[m[36m:[m538[36m:[m32[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/population_models.py[m[36m:[m7[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m9[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m57[36m:[m101[36m:[m [1m[31mE501[m line too long (113 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m61[36m:[m101[36m:[m [1m[31mE501[m line too long (114 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m78[36m:[m101[36m:[m [1m[31mE501[m line too long (117 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m103[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/algorithms/population_models.py[m[36m:[m256[36m:[m101[36m:[m [1m[31mE501[m line too long (114 > 100 characters)
+[1msrc/algorithms/spatial_economic_model.py[m[36m:[m261[36m:[m57[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/spatial_economic_model.py[m[36m:[m264[36m:[m57[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/algorithms/symbiote_algorithm.py[m[36m:[m23[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'ndimage' from line 17
+[1msrc/algorithms/symbiote_algorithm.py[m[36m:[m31[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'ndimage' from line 23
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.DEBUG_CONFIG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.LOG_LEVEL' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.PLAYER_CONFIG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.WORLD_CONFIG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.UI_CONFIG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.SHOW_FPS' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.SHOW_MINIMAP' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.SHOW_DEBUG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.SHOW_TOOLTIPS' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.COLOR_FG' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mF401[m '.config.GAME_TITLE' imported but unused
+[1msrc/config/__init__.py[m[36m:[m24[36m:[m101[36m:[m [1m[31mE501[m line too long (118 > 100 characters)
+[1msrc/contexts/threshold_context.py[m[36m:[m468[36m:[m101[36m:[m [1m[31mE501[m line too long (120 > 100 characters)
+[1msrc/contexts/threshold_context.py[m[36m:[m520[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/demos/ascii_box_event_demo.py[m[36m:[m194[36m:[m13[36m:[m [1m[31mE116[m unexpected indentation (comment)
+[1msrc/demos/ascii_box_event_demo.py[m[36m:[m195[36m:[m13[36m:[m [1m[31mE116[m unexpected indentation (comment)
+[1msrc/demos/ascii_crew_management_panel_demo.py[m[36m:[m279[36m:[m67[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/demos/ascii_ship_status_panel_demo.py[m[36m:[m17[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/demos/ascii_ship_status_panel_demo.py[m[36m:[m20[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/demos/ascii_ship_status_panel_demo.py[m[36m:[m21[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/demos/ascii_ui_demo.py[m[36m:[m515[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/demos/symbiote_evolution_demo.py[m[36m:[m157[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/demos/symbiote_evolution_demo.py[m[36m:[m256[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/demos/symbiote_evolution_demo.py[m[36m:[m276[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/entities/miner_entity.py[m[36m:[m721[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/entities/miner_entity.py[m[36m:[m724[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/entities/miner_entity.py[m[36m:[m1265[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_calculate_territory_metrics' from line 1221
+[1msrc/entities/miner_entity.py[m[36m:[m1732[36m:[m101[36m:[m [1m[31mE501[m line too long (174 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m55[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m219[36m:[m101[36m:[m [1m[31mE501[m line too long (129 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m307[36m:[m101[36m:[m [1m[31mE501[m line too long (146 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m560[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m661[36m:[m101[36m:[m [1m[31mE501[m line too long (133 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m668[36m:[m101[36m:[m [1m[31mE501[m line too long (144 > 100 characters)
+[1msrc/entities/player.py[m[36m:[m675[36m:[m101[36m:[m [1m[31mE501[m line too long (135 > 100 characters)
+[1msrc/events/event_bus.py[m[36m:[m86[36m:[m73[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/game.py[m[36m:[m552[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/game.py[m[36m:[m573[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/game.py[m[36m:[m3180[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_update_shop_inventory' from line 1625
+[1msrc/game.py[m[36m:[m3206[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/game.py[m[36m:[m3707[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_reset_player_inventory' from line 1008
+[1msrc/generators/__init__.py[m[36m:[m15[36m:[m101[36m:[m [1m[31mE501[m line too long (226 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m78[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'count_neighbors' from line 70
+[1msrc/generators/asteroid_field.py[m[36m:[m79[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'apply_life_rules' from line 70
+[1msrc/generators/asteroid_field.py[m[36m:[m80[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'diffuse_energy' from line 70
+[1msrc/generators/asteroid_field.py[m[36m:[m81[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'CustomNeighborhoodAutomaton' from line 75
+[1msrc/generators/asteroid_field.py[m[36m:[m329[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1290[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1316[36m:[m101[36m:[m [1m[31mE501[m line too long (130 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1347[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1370[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1393[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1415[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1465[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1501[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1580[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1583[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1618[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1650[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1672[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1813[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_field.py[m[36m:[m1919[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/generators/asteroid_generator.py[m[36m:[m163[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/generators/asteroid_generator.py[m[36m:[m682[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_value_handler' from line 241
+[1msrc/generators/base_generator.py[m[36m:[m137[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m276[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m418[36m:[m101[36m:[m [1m[31mE501[m line too long (111 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m497[36m:[m101[36m:[m [1m[31mE501[m line too long (131 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m587[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m760[36m:[m67[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/base_generator.py[m[36m:[m763[36m:[m45[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/base_generator.py[m[36m:[m769[36m:[m63[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/base_generator.py[m[36m:[m1064[36m:[m24[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/base_generator.py[m[36m:[m1209[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_count_neighbors' from line 935
+[1msrc/generators/base_generator.py[m[36m:[m1331[36m:[m101[36m:[m [1m[31mE501[m line too long (117 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m1339[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m1382[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m1582[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m1646[36m:[m101[36m:[m [1m[31mE501[m line too long (113 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m1649[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/generators/base_generator.py[m[36m:[m2116[36m:[m101[36m:[m [1m[31mE501[m line too long (119 > 100 characters)
+[1msrc/generators/encounter_generator.py[m[36m:[m4[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/generators/encounter_generator.py[m[36m:[m216[36m:[m101[36m:[m [1m[31mE501[m line too long (106 > 100 characters)
+[1msrc/generators/encounter_generator.py[m[36m:[m298[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/generators/procedural_generator.py[m[36m:[m92[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m62[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'AdvancedPatternAnalyzer' from line 53
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m62[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'ColonyMerger' from line 53
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m62[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'VoronoiTerritoryPartitioner' from line 53
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m75[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'AdvancedPatternAnalyzer' from line 62
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m76[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'VoronoiTerritoryPartitioner' from line 62
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m77[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'ColonyMerger' from line 62
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m255[36m:[m33[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m256[36m:[m32[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m634[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/generators/symbiote_evolution_generator.py[m[36m:[m1065[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/main.py[m[36m:[m210[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/main.py[m[36m:[m395[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_validate_state_transition' from line 281
+[1msrc/main.py[m[36m:[m450[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_record_state_transition' from line 296
+[1msrc/main.py[m[36m:[m1821[36m:[m101[36m:[m [1m[31mE501[m line too long (112 > 100 characters)
+[1msrc/main.py[m[36m:[m1948[36m:[m101[36m:[m [1m[31mE501[m line too long (106 > 100 characters)
+[1msrc/main.py[m[36m:[m2777[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/main.py[m[36m:[m2972[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/main.py[m[36m:[m3423[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/main.py[m[36m:[m3639[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/main.py[m[36m:[m3945[36m:[m8[36m:[m [1m[31mF841[m local variable '_success' is assigned to but never used
+[1msrc/systems/combat_system.py[m[36m:[m205[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m256[36m:[m101[36m:[m [1m[31mE501[m line too long (111 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m257[36m:[m101[36m:[m [1m[31mE501[m line too long (119 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m258[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m272[36m:[m101[36m:[m [1m[31mE501[m line too long (114 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m356[36m:[m101[36m:[m [1m[31mE501[m line too long (150 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m360[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m366[36m:[m101[36m:[m [1m[31mE501[m line too long (134 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m370[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m414[36m:[m101[36m:[m [1m[31mE501[m line too long (120 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m418[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m424[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m428[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m505[36m:[m101[36m:[m [1m[31mE501[m line too long (106 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m514[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/systems/combat_system.py[m[36m:[m714[36m:[m101[36m:[m [1m[31mE501[m line too long (125 > 100 characters)
+[1msrc/systems/encounter_generator.py[m[36m:[m4[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/systems/encounter_generator.py[m[36m:[m223[36m:[m101[36m:[m [1m[31mE501[m line too long (106 > 100 characters)
+[1msrc/systems/encounter_generator.py[m[36m:[m305[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m329[36m:[m67[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/systems/fleet_manager.py[m[36m:[m543[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m577[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m598[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m610[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m637[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m644[36m:[m101[36m:[m [1m[31mE501[m line too long (135 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m690[36m:[m101[36m:[m [1m[31mE501[m line too long (118 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m694[36m:[m101[36m:[m [1m[31mE501[m line too long (120 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m1423[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m1626[36m:[m101[36m:[m [1m[31mE501[m line too long (106 > 100 characters)
+[1msrc/systems/fleet_manager.py[m[36m:[m1917[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m49[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m223[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m699[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m751[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m782[36m:[m101[36m:[m [1m[31mE501[m line too long (125 > 100 characters)
+[1msrc/systems/trading_system.py[m[36m:[m818[36m:[m101[36m:[m [1m[31mE501[m line too long (118 > 100 characters)
+[1msrc/tests/benchmarks/benchmark_base_generator.py[m[36m:[m22[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/benchmarks/benchmark_base_generator.py[m[36m:[m25[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/benchmarks/benchmark_comprehensive_gpu.py[m[36m:[m105[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'torch' from line 50
+[1msrc/tests/benchmarks/benchmark_parallel_processing.py[m[36m:[m56[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/tests/benchmarks/benchmark_parallel_processing.py[m[36m:[m202[36m:[m101[36m:[m [1m[31mE501[m line too long (155 > 100 characters)
+[1msrc/tests/benchmarks/benchmark_parallel_processing.py[m[36m:[m290[36m:[m101[36m:[m [1m[31mE501[m line too long (155 > 100 characters)
+[1msrc/tests/test_asteroid_generator.py[m[36m:[m549[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/test_asteroid_generator.py[m[36m:[m558[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/test_asteroid_generator.py[m[36m:[m630[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/test_asteroid_generator.py[m[36m:[m768[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/test_asteroid_generator.py[m[36m:[m833[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_patch_noise_method' from line 499
+[1msrc/tests/test_base_entity.py[m[36m:[m248[36m:[m101[36m:[m [1m[31mE501[m line too long (111 > 100 characters)
+[1msrc/tests/test_base_generator.py[m[36m:[m662[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/tests/test_fleet_manager.py[m[36m:[m560[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m23[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m387[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m410[36m:[m101[36m:[m [1m[31mE501[m line too long (118 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m489[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m586[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/tests/test_procedural_generator.py[m[36m:[m707[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/tests/test_symbiote_evolution_generator.py[m[36m:[m770[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/tests/tools/check_linting.py[m[36m:[m127[36m:[m101[36m:[m [1m[31mE501[m line too long (151 > 100 characters)
+[1msrc/tests/tools/performance_tests.py[m[36m:[m128[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/regression_tests.py[m[36m:[m71[36m:[m30[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tests/tools/regression_tests.py[m[36m:[m71[36m:[m69[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m32[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m35[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m38[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m41[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m48[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m51[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m57[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m61[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m64[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m72[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m75[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m78[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m84[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m87[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m91[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m96[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m100[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m106[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m109[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m112[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m165[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m168[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m174[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m176[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m180[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m190[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m193[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m200[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m214[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m217[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m223[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m225[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m228[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m231[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m235[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m241[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m255[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m259[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m267[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m281[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m285[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m289[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m298[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m307[36m:[m101[36m:[m [1m[31mE501[m line too long (112 > 100 characters)
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m408[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m433[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m508[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m517[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m520[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m537[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m589[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_combat_system.py[m[36m:[m592[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_dependency_config.py[m[36m:[m19[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/tools/test_dependency_config.py[m[36m:[m22[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m40[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m43[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m49[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m53[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m57[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m60[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m69[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m84[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m88[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m178[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m186[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/tools/test_encounter_generator.py[m[36m:[m265[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m222[36m:[m46[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m222[36m:[m61[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m367[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'ndimage' from line 44
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m377[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'plt' from line 36
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m444[36m:[m101[36m:[m [1m[31mE501[m line too long (119 > 100 characters)
+[1msrc/tests/verifications/verify_asteroid_generator.py[m[36m:[m500[36m:[m101[36m:[m [1m[31mE501[m line too long (127 > 100 characters)
+[1msrc/tests/verifications/verify_base_generator_optimizations.py[m[36m:[m18[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/verifications/verify_base_generator_optimizations.py[m[36m:[m21[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/verifications/verify_base_generator_optimizations.py[m[36m:[m22[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/verifications/verify_procedural_generator.py[m[36m:[m20[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/verifications/verify_procedural_generator.py[m[36m:[m23[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/tests/verifications/verify_symbiote_evolution_generator.py[m[36m:[m6[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/tests/verifications/verify_symbiote_evolution_generator.py[m[36m:[m414[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/tests/verifications/verify_symbiote_evolution_generator.py[m[36m:[m538[36m:[m101[36m:[m [1m[31mE501[m line too long (103 > 100 characters)
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m16[36m:[m1[36m:[m [1m[31mE265[m block comment should start with '# '
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m671[36m:[m48[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m730[36m:[m35[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m1423[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_is_complex_expression' from line 1361
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m1501[36m:[m101[36m:[m [1m[31mE501[m line too long (122 > 100 characters)
+[1msrc/tools/convert_lazy_formatting/convert_to_lazy_formatting.py[m[36m:[m1596[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/tools/convert_lazy_formatting/lazy_menu.py[m[36m:[m21[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'os' from line 10
+[1msrc/tools/convert_lazy_formatting/lazy_menu.py[m[36m:[m188[36m:[m101[36m:[m [1m[31mE501[m line too long (105 > 100 characters)
+[1msrc/ui/renderers.py[m[36m:[m1327[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_calculate_notification_alpha' from line 1187
+[1msrc/ui/renderers.py[m[36m:[m1339[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_calculate_notification_position' from line 1202
+[1msrc/ui/renderers.py[m[36m:[m1505[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused '_render_surface_handler' from line 1147
+[1msrc/ui/shop.py[m[36m:[m107[36m:[m101[36m:[m [1m[31mE501[m line too long (113 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m121[36m:[m101[36m:[m [1m[31mE501[m line too long (113 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m135[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m149[36m:[m101[36m:[m [1m[31mE501[m line too long (110 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m163[36m:[m101[36m:[m [1m[31mE501[m line too long (108 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m182[36m:[m101[36m:[m [1m[31mE501[m line too long (112 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m196[36m:[m101[36m:[m [1m[31mE501[m line too long (111 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m210[36m:[m101[36m:[m [1m[31mE501[m line too long (124 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m224[36m:[m101[36m:[m [1m[31mE501[m line too long (109 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m246[36m:[m101[36m:[m [1m[31mE501[m line too long (112 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m261[36m:[m101[36m:[m [1m[31mE501[m line too long (115 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m275[36m:[m101[36m:[m [1m[31mE501[m line too long (120 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m289[36m:[m101[36m:[m [1m[31mE501[m line too long (137 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m309[36m:[m101[36m:[m [1m[31mE501[m line too long (125 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m330[36m:[m101[36m:[m [1m[31mE501[m line too long (123 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m345[36m:[m101[36m:[m [1m[31mE501[m line too long (125 > 100 characters)
+[1msrc/ui/shop.py[m[36m:[m467[36m:[m9[36m:[m [1m[31mF841[m local variable '_results' is assigned to but never used
+[1msrc/ui/shop.py[m[36m:[m478[36m:[m17[36m:[m [1m[31mF841[m local variable '_metrics' is assigned to but never used
+[1msrc/ui/tests/test_ascii_box_drawing.py[m[36m:[m23[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/ui/tests/test_ascii_box_drawing.py[m[36m:[m24[36m:[m1[36m:[m [1m[31mE402[m module level import not at top of file
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m50[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m57[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m60[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m70[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m267[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m270[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m278[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ascii_ui.py[m[36m:[m281[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_base/ui_system_init.py[m[36m:[m56[36m:[m9[36m:[m [1m[31mF841[m local variable '_initialization_status' is assigned to but never used
+[1msrc/ui/ui_element/ascii_box.py[m[36m:[m325[36m:[m101[36m:[m [1m[31mE501[m line too long (107 > 100 characters)
+[1msrc/ui/ui_element/ascii_chain_visualizer.py[m[36m:[m167[36m:[m45[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/ui/ui_element/ascii_chain_visualizer.py[m[36m:[m350[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/ui/ui_element/ascii_chain_visualizer.py[m[36m:[m355[36m:[m101[36m:[m [1m[31mE501[m line too long (122 > 100 characters)
+[1msrc/ui/ui_element/ascii_chain_visualizer.py[m[36m:[m361[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/ui/ui_element/ascii_crew_management_panel.py[m[36m:[m493[36m:[m101[36m:[m [1m[31mE501[m line too long (101 > 100 characters)
+[1msrc/ui/ui_element/ascii_template_listview.py[m[36m:[m125[36m:[m101[36m:[m [1m[31mE501[m line too long (113 > 100 characters)
+[1msrc/ui/ui_element/ascii_template_manager.py[m[36m:[m116[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+[1msrc/ui/ui_element/ui_element.py[m[36m:[m946[36m:[m1[36m:[m [1m[31mW293[m blank line contains whitespace
+[1msrc/ui/ui_element/ui_element.py[m[36m:[m1234[36m:[m101[36m:[m [1m[31mE501[m line too long (123 > 100 characters)
+[1msrc/ui/ui_helpers/animation_helper.py[m[36m:[m14[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'UIStyle' from line 11
+[1msrc/utils/cellular_automaton_utils.py[m[36m:[m31[36m:[m101[36m:[m [1m[31mE501[m line too long (102 > 100 characters)
+[1msrc/utils/dependency_injection.py[m[36m:[m124[36m:[m101[36m:[m [1m[31mE501[m line too long (114 > 100 characters)
+[1msrc/utils/gpu_dbscan.py[m[36m:[m42[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'DBSCAN' from line 31
+[1msrc/utils/gpu_dbscan.py[m[36m:[m218[36m:[m49[36m:[m [1m[31mE203[m whitespace before ':'
+[1msrc/utils/gpu_utils.py[m[36m:[m47[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'numba' from line 42
+[1msrc/utils/gpu_utils.py[m[36m:[m48[36m:[m9[36m:[m [1m[31mF811[m redefinition of unused 'cuda' from line 43
+[1msrc/utils/gpu_utils.py[m[36m:[m62[36m:[m1[36m:[m [1m[31mF811[m redefinition of unused 'cp' from line 41
+[1msrc/utils/gpu_utils.py[m[36m:[m74[36m:[m5[36m:[m [1m[31mF811[m redefinition of unused 'cp' from line 65
+[1msrc/utils/gpu_utils.py[m[36m:[m719[36m:[m101[36m:[m [1m[31mE501[m line too long (128 > 100 characters)
+[1msrc/utils/value_generator.py[m[36m:[m142[36m:[m101[36m:[m [1m[31mE501[m line too long (104 > 100 characters)
+2     E116 unexpected indentation (comment)
+29    E203 whitespace before ':'
+1     E265 block comment should start with '# '
+14    E402 module level import not at top of file
+167   E501 line too long (124 > 100 characters)
+11    F401 '.config.DEBUG_CONFIG' imported but unused
+36    F811 redefinition of unused 'np' from line 67
+4     F841 local variable '_success' is assigned to but never used
+81    W293 blank line contains whitespace

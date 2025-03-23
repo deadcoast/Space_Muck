@@ -715,8 +715,13 @@ class MinerEntity(BaseEntity):
         asteroid_cells = []
         asteroid_values = []
 
-        for y, x in itertools.product(range(field.height), range(field.width)):
-            if field.grid[y, x] > 0:
+        # Ensure we stay within array bounds
+        height = min(field.height, field.grid.shape[0])
+        width = min(field.width, field.grid.shape[1])
+        
+        for y, x in itertools.product(range(height), range(width)):
+            # Double-check bounds to be safe
+            if 0 <= y < field.grid.shape[0] and 0 <= x < field.grid.shape[1] and field.grid[y, x] > 0:
                 value = field.grid[y, x]
                 if field.rare_grid[y, x] == 1:
                     value *= field.rare_bonus_multiplier

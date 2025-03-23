@@ -207,6 +207,9 @@ class Game:
             pygame.init()
             pygame.mixer.init()  # Initialize sound system
             pygame.font.init()  # Ensure fonts are initialized
+            
+            # Initialize game clock
+            self.clock = pygame.time.Clock()
 
             # Create display surface
             self.screen: pygame.Surface = pygame.display.set_mode(
@@ -3417,6 +3420,9 @@ class Game:
 
             # End performance timing
             log_performance_end("Render frame", render_start)
+            
+            # Update the display to make the rendered content visible
+            pygame.display.flip()
 
         except Exception as e:
             log_exception("Error in render process", e)
@@ -3863,6 +3869,53 @@ class Game:
         event_batcher.dispatch_batch()
 
 
+def _log_game_completion_metrics(game):
+    """
+    Log metrics about a successfully completed game session.
+    
+    Args:
+        game: The Game instance containing session data
+    """
+    # Log basic session information
+    logging.info(f"Game session completed. Session duration: {game.session_time:.2f} seconds")
+    
+    # Log player statistics
+    if hasattr(game, "player") and game.player:
+        logging.info(f"Final player stats - Currency: {game.player.currency}, Level: {game.player.level}")
+        
+        # Log discovered races if applicable
+        if hasattr(game.player, "discovered_races"):
+            logging.info(f"Discovered races: {len(game.player.discovered_races)}")
+    
+    # Log game world statistics if available
+    if hasattr(game, "world") and game.world:
+        logging.info(f"World generation seed: {game.world.seed}")
+        logging.info(f"Generated regions: {len(game.world.regions) if hasattr(game.world, 'regions') else 'N/A'}")
+
+
+def _log_game_error_metrics(game):
+    """
+    Log metrics about game session that terminated with errors.
+    
+    Args:
+        game: The Game instance containing session data
+    """
+    # Log basic error session information
+    logging.warning(f"Game session terminated with errors. Session duration: {game.session_time:.2f} seconds")
+    
+    # Log system metrics that might help diagnose issues
+    if hasattr(game, "performance_metrics"):
+        logging.warning(f"Performance metrics: {game.performance_metrics}")
+    
+    # Log last known game state before failure
+    if hasattr(game, "last_state"):
+        logging.warning(f"Last game state before failure: {game.last_state}")
+    
+    # Check for exception information
+    if hasattr(game, "last_exception"):
+        logging.error(f"Last exception: {game.last_exception}")
+
+
 def run_game_loop(game):
     """Run the main game loop.
 
@@ -3935,11 +3988,16 @@ def _initialize_game_and_run():
     # Create the game instance
     game = Game()
 
-    # Use _ prefix for assignment expression to indicate unused variable
-    if _success := run_game_loop(game):
+    # Run the game loop and track completion status
+    game_success = run_game_loop(game)
+    
+    # Handle game completion status
+    if game_success:
         logging.info("Game completed successfully")
+        _log_game_completion_metrics(game)
     else:
         logging.warning("Game loop terminated with errors")
+        _log_game_error_metrics(game)
 
 
 if __name__ == "__main__":

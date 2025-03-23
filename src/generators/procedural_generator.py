@@ -12,6 +12,7 @@ noise algorithms and cellular automaton rules.
 import logging
 
 import numpy as np
+from numpy.random import default_rng
 
 # Third-party library imports
 from scipy import stats
@@ -86,6 +87,9 @@ class ProceduralGenerator(BaseGenerator):
             noise_generator=noise_generator,
         )
 
+        # Initialize random number generator with the provided seed
+        self.rng = default_rng(seed)
+        
         # Statistical parameters
         self.value_distribution = stats.lognorm(s=0.6, scale=50)  # For asteroid values
 
@@ -152,7 +156,7 @@ class ProceduralGenerator(BaseGenerator):
         except Exception as e:
             log_exception(e)
             # Return a simple fallback grid if generation fails
-            return np.random.Generator(1, density * 0.5, (self.height, self.width)) * 50
+            return self.rng.random((self.height, self.width)) * density * 50
 
     def generate_multi_layer_asteroid_field(
         self,
@@ -399,11 +403,11 @@ class ProceduralGenerator(BaseGenerator):
 
         for _ in range(count):
             # Random center point
-            cx = np.random.Generator(0, self.width)
-            cy = np.random.Generator(0, self.height)
+            cx = self.rng.integers(0, self.width)
+            cy = self.rng.integers(0, self.height)
 
             # Random size
-            size = np.random.Generator(10, max_size)
+            size = self.rng.integers(10, max_size)
 
             # Create void
             for y in range(max(0, cy - size), min(self.height, cy + size + 1)):
@@ -412,7 +416,7 @@ class ProceduralGenerator(BaseGenerator):
                     dist = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
 
                     # Clear cells within the void radius with some noise at the edges
-                    if dist < size * (0.7 + np.random.Generator() * 0.3):
+                    if dist < size * (0.7 + self.rng.random() * 0.3):
                         result_grid[y, x] = 0
 
         return result_grid

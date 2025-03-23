@@ -18,8 +18,15 @@ from typing import Any, Dict, List, Optional, Tuple
 import pygame
 
 from config import COLOR_TEXT
-from ui.ui_base.ascii_base import AnimationStyle, UIStyle
+from ui.ui_base.ui_style import UIStyle
 from ui.ui_helpers.render_helper import RenderHelper
+
+# Define animation types locally to avoid circular imports
+CELLULAR = "cellular"  # Cell-by-cell reveal mimicking Game of Life
+FRACTAL = "fractal"  # Recursive splitting pattern
+WARP = "warp"  # Space-warp style transitions
+QUANTUM_FLUX = "quantum_flux"  # Probability wave collapse
+MINERAL_GROWTH = "mineral_growth"  # Crystal-like growth patterns
 
 # Third-party library imports
 
@@ -62,7 +69,15 @@ class UIElement:
         self.hover = False
         self.border_chars = UIStyle.get_border_chars(style)
         self.animation_history: List[Any] = []  # Tracks cellular automaton states
-        self.animation_style = AnimationStyle.get_animation_for_style(style)
+        # Map UI styles to animation styles directly to avoid circular imports
+        animation_map = {
+            UIStyle.SYMBIOTIC: CELLULAR,
+            UIStyle.ASTEROID: MINERAL_GROWTH,
+            UIStyle.MECHANICAL: FRACTAL,
+            UIStyle.QUANTUM: QUANTUM_FLUX,
+            UIStyle.FLEET: WARP,
+        }
+        self.animation_style = animation_map.get(style, CELLULAR)
 
         # Standardized animation state structure for all UI components
         self.animation: Dict[str, Any] = {
@@ -918,18 +933,20 @@ class UIElement:
             # Draw the particle
             RenderHelper.draw_char(surface, font, int(new_x), int(new_y), char, color)
 
-    def animate(self, stdscr, style: AnimationStyle = AnimationStyle.FADE_IN):
+    def animate(self, stdscr, style: str = CELLULAR):
         """Animate the appearance of the element"""
-        if style == AnimationStyle.FADE_IN:
-            self._cellular_animation(stdscr)
-        elif style == AnimationStyle.FADE_OUT:
-            self._fractal_animation(stdscr)
-        elif style == AnimationStyle.SLIDE_IN:
-            self._warp_animation(stdscr)
-        elif style == AnimationStyle.SLIDE_OUT:
-            self._quantum_animation(stdscr)
-        elif style == AnimationStyle.PULSE:
-            self._mineral_growth_animation(stdscr)
+        # Use a dictionary to map animation styles to their methods
+        animation_functions = {
+            CELLULAR: self._cellular_animation,
+            FRACTAL: self._fractal_animation,
+            WARP: self._warp_animation,
+            QUANTUM_FLUX: self._quantum_animation,
+            MINERAL_GROWTH: self._mineral_growth_animation,
+        }
+        
+        # Get the appropriate animation function or default to cellular
+        animation_func = animation_functions.get(style, self._cellular_animation)
+        animation_func(stdscr)
 
     def _draw_fleet_animation(
         self,

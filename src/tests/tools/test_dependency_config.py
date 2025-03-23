@@ -185,7 +185,7 @@ class TestConfigFileLoading(unittest.TestCase):
 
         # Create a temporary config file
         self.temp_file = "temp_config.py"
-        with open(self.temp_file, "w") as f:
+        with open(self.temp_file, "w", encoding="utf-8") as f:
             f.write('NOISE_GENERATOR_TYPE = "simplex"\n')
             f.write("NOISE_GENERATOR_SINGLETON = False\n")
 

@@ -11,7 +11,7 @@ OVERVIEW
 --------------------------------------------------------------------------------
 1. MultiSpeciesPopulation:
    - Simulate multiple interacting species (including player or other factions)
-     using an extended Lotka–Volterra or competitive-coexistence model.
+     using an extended Lotka Volterra or competitive-coexistence model.
    - Each species can have its own logistic baseline (growth rate, carrying capacity)
      plus pairwise interaction coefficients (predation, competition, mutualism).
    - Interactions update each timestep, influencing population sizes and resource usage.
@@ -50,7 +50,7 @@ from typing import Dict, List
 class MultiSpeciesPopulation:
     """
     Implements a multi-species population model using an extended
-    Lotka–Volterra approach. Each species i has:
+    LotkaVolterra approach. Each species i has:
       - A logistic growth baseline: dN_i/dt = r_i * N_i * (1 - N_i/K_i)
       - Interaction terms for every other species j, scaled by interaction[i][j].
         * Positive values => i preys on j or benefits from j

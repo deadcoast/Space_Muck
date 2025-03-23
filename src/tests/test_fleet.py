@@ -68,16 +68,7 @@ class TestFleet(unittest.TestCase):
 
         # Test default values
         self.assertIsNotNone(fleet.entity_id)
-        self.assertEqual(fleet.entity_type, "fleet")
-        self.assertIsNone(fleet.owner_id)
-        self.assertEqual(fleet.fleet_name, "Unnamed Fleet")
-        self.assertEqual(fleet.color, (100, 100, 255))
-        self.assertIsNone(fleet.position)
-        self.assertEqual(fleet.ships, {})
-        self.assertEqual(fleet.formation, "standard")
-        self.assertEqual(fleet.speed, 1.0)
-        self.assertFalse(fleet.is_moving)
-        self.assertIsNone(fleet.destination)
+        self._verify_default_values(fleet)
         self.assertEqual(fleet.path, [])
         self.assertEqual(fleet.fuel, 100)
         self.assertEqual(fleet.max_fuel, 100)
@@ -311,6 +302,12 @@ class TestFleet(unittest.TestCase):
 
         # Verify default values are used for missing fields
         self.assertEqual(fleet.entity_id, "fleet-789")
+        self._verify_default_values(fleet)
+        self.assertEqual(fleet.fuel, 100)
+        self.assertEqual(fleet.max_fuel, 100)
+
+    def _verify_default_values(self, fleet):
+        # Verify default values
         self.assertEqual(fleet.entity_type, "fleet")
         self.assertIsNone(fleet.owner_id)
         self.assertEqual(fleet.fleet_name, "Unnamed Fleet")
@@ -321,8 +318,6 @@ class TestFleet(unittest.TestCase):
         self.assertEqual(fleet.speed, 1.0)
         self.assertFalse(fleet.is_moving)
         self.assertIsNone(fleet.destination)
-        self.assertEqual(fleet.fuel, 100)
-        self.assertEqual(fleet.max_fuel, 100)
 
 
 if __name__ == "__main__":

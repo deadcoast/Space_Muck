@@ -28,7 +28,8 @@ ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
 ## Workflow & Instructions
 
 ### Context Source:
-`src/.windsurfcontext.md` is the primary source of truth for code patterns, structures, interfaces, and relationships. Always refer to this file first when seeking context for code generation, correction, or analysis.
+
+`.windsurfcontext.md` is the primary source of truth for code patterns, structures, interfaces, and relationships. Always refer to this file first when seeking context for code generation, correction, or analysis.
 
 ### Context Retrieval Process:
 - When analyzing or generating code, first search `.windsurfcontext` for relevant system sections using `(#hashtag)` identifiers
@@ -37,7 +38,7 @@ ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
 - If context is insufficient, ask the user for clarification
 
 ### Architecture Alignment:
-- Ensure all implementations follow patterns documented in `.windsurfcontext`
+- Ensure all implementations follow patterns in `.windsurfcontext`
 - Maintain consistency with existing type structures and interfaces
 - Follow established naming conventions and implementation patterns
 - If context is missing, ask the user before implementing new patterns
@@ -53,7 +54,7 @@ ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
 - Ensure new entries include concrete code examples, not explanations
 
 ### Scratchpad Usage:
-- Maintain a `Tasklist` in the `Scratchpad.md` file in this format:
+- Maintain a `Tasklist` in the `windsurf-scratchpad.md` file in this format:
 
 ```md
 ## Scratchpad Tasklist
@@ -62,6 +63,7 @@ ANY CODE CHANGES WITHOUT EXPLICIT DOCUMENTATION REFERENCE WILL BE REJECTED.
   - [ ] Subtask 1
 - [ ] Task 2
 ```
+
 ## Tasklist Instructions
 - When user makes a request, create a comprehensive `Tasklist` for all steps.
 - Update progress markers as subtasks are completed

@@ -388,14 +388,15 @@ class AsteroidField:
             # Create an AsteroidGenerator with optimized caching
             generator = AsteroidGenerator(**common_params)
 
-            # Set parameters
+            # Set parameters for other methods
             generator.set_parameter("density", self.field_density)
             generator.set_parameter("pattern_strength", self.pattern_complexity)
             generator.set_parameter("cluster_tendency", self.turbulence)
             generator.set_parameter("rare_chance", self.rare_chance)
 
-            # Generate the asteroid field
-            asteroid_grid, _ = generator.generate_field()
+            # Generate the asteroid field - only pass density to generate_field
+            # as it's the only parameter it accepts
+            asteroid_grid, _ = generator.generate_field(pattern_weights=None)
 
             # Generate values for asteroids
             value_grid = generator.generate_values(asteroid_grid)
@@ -431,6 +432,7 @@ class AsteroidField:
             generator = ProceduralGenerator(**common_params)
 
             # Set parameters individually instead of using a parameters dict
+            # These parameters are used by the generate() method, not generate_field()
             generator.set_parameter("pattern_complexity", self.pattern_complexity)
             generator.set_parameter("field_density", self.field_density)
             generator.set_parameter("turbulence", self.turbulence)
