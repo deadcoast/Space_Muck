@@ -219,15 +219,17 @@ class AdvectionDiffusionSystem:
             raise ValueError(f"Field '{field_name}' not found in PDE system.")
         return self.fields[field_name].copy()
 
-    def boundary_wrap(self, arr: np.ndarray, shift_x: int, shift_y: int) -> np.ndarray:
+    @staticmethod
+    def boundary_wrap(arr: np.ndarray, shift_x: int, shift_y: int) -> np.ndarray:
         """
         Shifts an array with wrap-around boundary conditions (toroidal domain).
         Utility function for advection/diffusion.
         """
         return np.roll(np.roll(arr, shift_x, axis=0), shift_y, axis=1)
 
+    @staticmethod
     def boundary_reflect(
-        self, arr: np.ndarray, shift_x: int, shift_y: int
+        arr: np.ndarray, shift_x: int, shift_y: int
     ) -> np.ndarray:
         """
         Shifts an array with reflection boundary conditions.
@@ -240,8 +242,9 @@ class AdvectionDiffusionSystem:
         left = 1 + shift_y
         return padded[top : top + w, left : left + h]
 
+    @staticmethod
     def boundary_constant(
-        self, arr: np.ndarray, shift_x: int, shift_y: int
+        arr: np.ndarray, shift_x: int, shift_y: int
     ) -> np.ndarray:
         """
         Shifts an array with constant boundary conditions.

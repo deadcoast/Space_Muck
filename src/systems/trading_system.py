@@ -192,7 +192,8 @@ class TradingSystem:
             event for event in self.active_events if event["end_time"] > game_time
         ]
 
-    def _generate_market_event(self, game_time: int) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def _generate_market_event(game_time: int) -> Optional[Dict[str, Any]]:
         """
         Generate a random market event.
 
@@ -616,7 +617,8 @@ class TradingSystem:
                 difficulty_multiplier,
             )
 
-    def _select_quest_type_for_level(self, player_level: int) -> str:
+    @staticmethod
+    def _select_quest_type_for_level(player_level: int) -> str:
         """Select an appropriate quest type based on player level."""
         quest_types = ["delivery", "procurement"]
         if player_level >= 3:
@@ -630,7 +632,8 @@ class TradingSystem:
 
         return random.choice(quest_types)
 
-    def _select_commodity_for_quest(self, quest_type: str, player_level: int) -> str:
+    @staticmethod
+    def _select_commodity_for_quest(quest_type: str, player_level: int) -> str:
         """Select an appropriate commodity based on quest type and player level."""
         if quest_type == "rare_commodity" or (
             quest_type == "procurement" and player_level >= 4
@@ -656,8 +659,8 @@ class TradingSystem:
         # If no faction stations or no faction specified, choose any station
         return random.choice(list(self.trading_stations.keys()))
 
+    @staticmethod
     def _calculate_quantity_and_reward(
-        self,
         base_value: int,
         difficulty_multiplier: float,
         quantity_base: int,
@@ -876,8 +879,9 @@ class TradingSystem:
             buy_transactions, sell_transactions, quest, player
         )
 
+    @staticmethod
     def _get_commodity_transactions(
-        self, trading_history, commodity_id: str
+        trading_history, commodity_id: str
     ) -> Tuple[list, list]:
         """
         Extract buy and sell transactions for a specific commodity.
@@ -993,8 +997,9 @@ class TradingSystem:
 
         return self._apply_quest_rewards_and_reputation(quest, player, 5, 2)
 
+    @staticmethod
     def _apply_quest_rewards_and_reputation(
-        self, quest, player, reputation_base, reputation_multiplier
+        quest, player, reputation_base, reputation_multiplier
     ):
         # Award credits and update reputation
         player.credits += quest["reward"]

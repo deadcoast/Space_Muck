@@ -65,7 +65,8 @@ class GeneratorVisualizer:
             "space": self._create_space_colormap() if MATPLOTLIB_AVAILABLE else None,
         }
 
-    def _create_space_colormap(self):
+    @staticmethod
+    def _create_space_colormap():
         """Create a custom space-themed colormap."""
         if not MATPLOTLIB_AVAILABLE:
             return None

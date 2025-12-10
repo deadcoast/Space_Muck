@@ -187,8 +187,9 @@ class SymbioteEvolutionAlgorithm:
 
         return new_population, new_aggression, mutations
 
+    @staticmethod
     def _process_anomaly_minerals(
-        self, count: int, population: int, aggression: float
+        count: int, population: int, aggression: float
     ) -> Tuple[int, float, List[Dict]]:
         """Process effects of feeding anomaly minerals to symbiotes."""
         new_population = population
@@ -523,8 +524,9 @@ class SymbioteEvolutionAlgorithm:
 
         return attack_occurs, attack_strength
 
+    @staticmethod
     def _process_successful_attack(
-        self, population: int, aggression: float, player_casualties: int
+        population: int, aggression: float, player_casualties: int
     ) -> Tuple[int, float]:
         """Process the outcome of a successful symbiote attack."""
         # Update aggression - successful attack encourages more aggression
@@ -542,8 +544,9 @@ class SymbioteEvolutionAlgorithm:
 
         return new_population, new_aggression
 
+    @staticmethod
     def _process_failed_attack(
-        self, population: int, aggression: float, symbiote_casualties: int
+        population: int, aggression: float, symbiote_casualties: int
     ) -> float:
         """Process the outcome of a failed symbiote attack."""
         # Failed attack reduces aggression temporarily
@@ -601,8 +604,9 @@ class SymbioteEvolutionAlgorithm:
 
         return new_population, new_aggression
 
+    @staticmethod
     def _apply_standard_mutation(
-        self, genome: Dict[str, float], mutation: Dict
+        genome: Dict[str, float], mutation: Dict
     ) -> Dict[str, float]:
         """Apply standard mutations (minor, significant, beneficial) to the genome."""
         attribute = mutation.get("attribute", "")
@@ -614,8 +618,9 @@ class SymbioteEvolutionAlgorithm:
 
         return genome
 
+    @staticmethod
     def _apply_special_mutation(
-        self, genome: Dict[str, float], mutation_type: str
+        genome: Dict[str, float], mutation_type: str
     ) -> Dict[str, float]:
         """Apply special mutation types to the genome."""
         if mutation_type == "population_surge":
@@ -654,7 +659,8 @@ class SymbioteEvolutionAlgorithm:
 
         return genome
 
-    def _normalize_genome_values(self, genome: Dict[str, float]) -> Dict[str, float]:
+    @staticmethod
+    def _normalize_genome_values(genome: Dict[str, float]) -> Dict[str, float]:
         """Ensure all genome values stay within reasonable bounds."""
         for key in genome:
             # Prevent values from getting too extreme
@@ -732,7 +738,8 @@ class SymbioteEvolutionAlgorithm:
 
         return birth_set, survival_set
 
-    def _get_race_specific_rules(self, race_id: int) -> Tuple[Set[int], Set[int]]:
+    @staticmethod
+    def _get_race_specific_rules(race_id: int) -> Tuple[Set[int], Set[int]]:
         """
         Get the base cellular automaton rules modified by race-specific traits.
 
@@ -756,8 +763,9 @@ class SymbioteEvolutionAlgorithm:
         else:
             return base_birth_set, base_survival_set
 
+    @staticmethod
     def _apply_hunger_rule_modifications(
-        self, birth_set: Set[int], survival_set: Set[int], hunger_level: float
+        birth_set: Set[int], survival_set: Set[int], hunger_level: float
     ) -> Tuple[Set[int], Set[int]]:
         """
         Modify cellular automaton rules based on hunger level.
@@ -788,8 +796,9 @@ class SymbioteEvolutionAlgorithm:
 
         return modified_birth, modified_survival
 
+    @staticmethod
     def _apply_genome_rule_modifications(
-        self, birth_set: Set[int], survival_set: Set[int], genome: Dict[str, float]
+        birth_set: Set[int], survival_set: Set[int], genome: Dict[str, float]
     ) -> Tuple[Set[int], Set[int]]:
         """
         Modify cellular automaton rules based on genome traits.
@@ -828,8 +837,9 @@ class SymbioteEvolutionAlgorithm:
 
         return modified_birth, modified_survival
 
+    @staticmethod
     def _apply_random_rule_mutations(
-        self, birth_set: Set[int], survival_set: Set[int], mutation_chance: float = 0.01
+        birth_set: Set[int], survival_set: Set[int], mutation_chance: float = 0.01
     ) -> Tuple[Set[int], Set[int]]:
         """
         Apply random evolutionary mutations to cellular automaton rules.
@@ -905,8 +915,9 @@ class SymbioteEvolutionAlgorithm:
                 if ratio > 0.5 and self.mineral_influence[mineral_type] > 0.005:
                     self.mineral_influence[mineral_type] *= 0.95
 
+    @staticmethod
     def update_cellular_automaton(
-        self, grid: np.ndarray, birth_set: Set[int], survival_set: Set[int]
+        grid: np.ndarray, birth_set: Set[int], survival_set: Set[int]
     ) -> np.ndarray:
         """
         Update the cellular automaton grid based on the current rules.
@@ -938,7 +949,8 @@ class SymbioteEvolutionAlgorithm:
 
         return new_grid
 
-    def detect_patterns(self, grid: np.ndarray) -> Dict[str, int]:
+    @staticmethod
+    def detect_patterns(grid: np.ndarray) -> Dict[str, int]:
         """
         Detect common cellular automaton patterns in the grid.
 
@@ -976,8 +988,9 @@ class SymbioteEvolutionAlgorithm:
 
         return patterns
 
+    @staticmethod
     def calculate_expansion_index(
-        self, grid: np.ndarray, previous_grid: Optional[np.ndarray] = None
+        grid: np.ndarray, previous_grid: Optional[np.ndarray] = None
     ) -> float:
         """
         Calculate how aggressively the symbiotes are expanding.
@@ -1014,8 +1027,8 @@ class SymbioteEvolutionAlgorithm:
 
         return (edge_ratio * 0.7) + (max(0, growth_rate) * 0.3)
 
+    @staticmethod
     def apply_environmental_effects(
-        self,
         grid: np.ndarray,
         mineral_map: np.ndarray,
         environment_hostility: float = 0.1,
@@ -1060,7 +1073,8 @@ class SymbioteEvolutionAlgorithm:
 
         return new_grid
 
-    def identify_colonies(self, grid: np.ndarray) -> Tuple[np.ndarray, int]:
+    @staticmethod
+    def identify_colonies(grid: np.ndarray) -> Tuple[np.ndarray, int]:
         """
         Identify distinct colonies in the symbiote grid using connected component labeling.
 
@@ -1075,8 +1089,9 @@ class SymbioteEvolutionAlgorithm:
 
         return labeled_grid, num_colonies
 
+    @staticmethod
     def get_colony_stats(
-        self, grid: np.ndarray, labeled_grid: np.ndarray, num_colonies: int
+        grid: np.ndarray, labeled_grid: np.ndarray, num_colonies: int
     ) -> List[Dict]:
         """
         Calculate statistics for each colony.
@@ -1198,7 +1213,8 @@ class SymbioteEvolutionAlgorithm:
                         aggression,
                     )
 
-    def _calculate_colony_distance(self, colony_i: Dict, colony_j: Dict) -> float:
+    @staticmethod
+    def _calculate_colony_distance(colony_i: Dict, colony_j: Dict) -> float:
         """
         Calculate the Euclidean distance between two colonies' centroids.
 
@@ -1288,8 +1304,8 @@ class SymbioteEvolutionAlgorithm:
         self._expand_winner_territory(winner_id, labeled_grid, original_grid, new_grid)
         self._damage_loser_colony(loser_id, labeled_grid, strength_ratio, new_grid)
 
+    @staticmethod
     def _expand_winner_territory(
-        self,
         winner_id: int,
         labeled_grid: np.ndarray,
         original_grid: np.ndarray,
@@ -1310,8 +1326,8 @@ class SymbioteEvolutionAlgorithm:
         empty_cells = original_grid == 0
         new_grid[expansion_area & empty_cells] = 1  # Expand into empty cells
 
+    @staticmethod
     def _damage_loser_colony(
-        self,
         loser_id: int,
         labeled_grid: np.ndarray,
         strength_ratio: float,
@@ -1331,8 +1347,8 @@ class SymbioteEvolutionAlgorithm:
         damage_mask = loser_mask & (rng.random(labeled_grid.shape) < damage_percent)
         new_grid[damage_mask] = 0
 
+    @staticmethod
     def _handle_colony_merge(
-        self,
         colony_i: Dict,
         colony_j: Dict,
         distance: float,
@@ -1451,8 +1467,8 @@ class SymbioteEvolutionAlgorithm:
             for trait, base_rate in base_rates.items()
         }
 
+    @staticmethod
     def apply_differential_evolution(
-        self,
         population: int,
         genome: Dict[str, float],
         environment_factors: Dict[str, float],

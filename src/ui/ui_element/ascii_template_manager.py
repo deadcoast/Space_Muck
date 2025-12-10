@@ -90,8 +90,8 @@ class ASCIIChainTemplateManager:
             print(f"Loading template: {template['name']}")
             # This would be handled by the main game logic
 
+    @staticmethod
     def _draw_template_entry(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,

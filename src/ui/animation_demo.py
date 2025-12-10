@@ -167,7 +167,8 @@ class AnimationDemo:
             if isinstance(progress_bar, ASCIIProgressBar):
                 setattr(self, f"{name.lower()}_progress", progress_bar)
     
-    def toggle_animation(self, style: AnimationStyle) -> None:
+    @staticmethod
+    def toggle_animation(style: AnimationStyle) -> None:
         """Toggle an animation on/off based on its style.
         
         Args:

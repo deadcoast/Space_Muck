@@ -459,8 +459,8 @@ class ASCIIChainVisualizer:
                 surface, font, start_x, end_x, start_y, dx, needs_vertical, color
             )
 
+    @staticmethod
     def _draw_vertical_segments(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         start_x: int,
@@ -660,7 +660,8 @@ class ASCIIChainVisualizer:
             color=dimmed_color,
         )
 
-    def _format_flow_rate(self, flow_rate: float, resource_char: str) -> str:
+    @staticmethod
+    def _format_flow_rate(flow_rate: float, resource_char: str) -> str:
         """Format flow rate with appropriate units.
 
         Args:
@@ -814,8 +815,9 @@ class ASCIIChainVisualizer:
 
         return pattern, pattern_pos
 
+    @staticmethod
     def _calculate_vertical_animation_points(
-        self, start_x: int, start_y: int, end_x: int, end_y: int, offset: int
+        start_x: int, start_y: int, end_x: int, end_y: int, offset: int
     ) -> List[Tuple[int, int]]:
         """Calculate points for vertical animation.
 
@@ -841,8 +843,8 @@ class ASCIIChainVisualizer:
             if (y + offset) % v_spacing == 0
         ]
 
+    @staticmethod
     def _draw_horizontal_animation(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         coords: Dict[str, int],  # Contains start_x, start_y, end_x, end_y, dx

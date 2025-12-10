@@ -184,7 +184,8 @@ class BaseGenerator:
         # Default rule: cells with 2-3 neighbors survive, cells with 3 neighbors are born
         return np.where((neighbors == 3) | ((grid > 0) & (neighbors == 2)), 1.0, 0.0)
 
-    def _apply_conway_rule_vectorized(self, grid, neighbors):
+    @staticmethod
+    def _apply_conway_rule_vectorized(grid, neighbors):
         """Apply Conway's Game of Life rules using vectorized operations.
 
         Args:
@@ -224,7 +225,8 @@ class BaseGenerator:
 
         return new_grid
 
-    def _apply_rule_to_cell(self, cell_value, neighbors, rule):
+    @staticmethod
+    def _apply_rule_to_cell(cell_value, neighbors, rule):
         """Apply cellular automaton rule to a single cell.
 
         Args:
@@ -350,7 +352,8 @@ try:
 except ImportError:
     # Create a simple visualizer if the module is not available
     class GeneratorVisualizer:
-        def visualize_multiple_grids(self, grids, layout, figsize):
+        @staticmethod
+        def visualize_multiple_grids(grids, layout, figsize):
             fig, axes = plt.subplots(layout[0], layout[1], figsize=figsize)
             axes = axes.flatten()
 

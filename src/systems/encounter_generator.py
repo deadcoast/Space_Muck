@@ -46,7 +46,8 @@ class EncounterGenerator:
 
         logging.info("Encounter generator initialized")
 
-    def _initialize_zone_danger(self) -> Dict[str, float]:
+    @staticmethod
+    def _initialize_zone_danger() -> Dict[str, float]:
         """
         Initialize danger levels for different zones of the map.
 

@@ -71,7 +71,8 @@ class ASCIIBox(UIElement):
                 
         return SimpleRect(self.x, self.y, self.width, self.height)
 
-    def _wrap_line(self, line: str, max_width: int) -> List[str]:
+    @staticmethod
+    def _wrap_line(line: str, max_width: int) -> List[str]:
         """Wrap a single line of text to fit within the specified width.
 
         Args:

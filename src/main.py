@@ -1423,7 +1423,8 @@ class Game:
         else:
             logging.debug(f"Invalid grid position: ({grid_x}, {grid_y})")
 
-    def _handle_paused_state_click(self, _: Tuple[int, int]) -> None:
+    @staticmethod
+    def _handle_paused_state_click(_: Tuple[int, int]) -> None:
         """Handle mouse clicks in paused state.
 
         Args:
@@ -1431,7 +1432,8 @@ class Game:
         """
         logging.debug("Click ignored in paused state")
 
-    def _handle_game_over_state_click(self, _: Tuple[int, int]) -> None:
+    @staticmethod
+    def _handle_game_over_state_click(_: Tuple[int, int]) -> None:
         """Handle mouse clicks in game over state.
 
         Args:
@@ -2016,7 +2018,8 @@ class Game:
         except Exception as e:
             log_exception("Error handling player movement", e)
 
-    def _get_movement_direction(self) -> Tuple[int, int]:
+    @staticmethod
+    def _get_movement_direction() -> Tuple[int, int]:
         """Get movement direction based on keyboard input.
 
         Returns:
@@ -2253,8 +2256,9 @@ class Game:
         # Analyze and log territory control
         self._log_territory_metrics(race, metrics)
 
+    @staticmethod
     def _log_territory_metrics(
-        self, race: Any, metrics: Optional[Dict[str, Any]]
+        race: Any, metrics: Optional[Dict[str, Any]]
     ) -> None:
         """Log territory metrics for a race if available.
 
@@ -2789,7 +2793,8 @@ class Game:
             log_exception("Encounter processing error", e)
             log_performance_end(LOG_ENCOUNTER_PROCESSING, encounter_start, "error")
 
-    def get_current_zone(self, position: Tuple[int, int]) -> str:
+    @staticmethod
+    def get_current_zone(position: Tuple[int, int]) -> str:
         """Determine which zone the player is currently in based on position.
 
         Args:
@@ -3191,7 +3196,8 @@ class Game:
             except Exception as recovery_error:
                 log_exception("Failed to recover from fleet error", recovery_error)
 
-    def _extract_combat_info(self, combat_result: Dict[str, Any]) -> Dict[str, Any]:
+    @staticmethod
+    def _extract_combat_info(combat_result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract relevant information from combat result.
 
         Args:
@@ -3212,7 +3218,8 @@ class Game:
             "raw_result": combat_result,  # Keep original data for reference
         }
 
-    def _log_combat_outcome(self, combat_info: Dict[str, Any]) -> None:
+    @staticmethod
+    def _log_combat_outcome(combat_info: Dict[str, Any]) -> None:
         """Log details about the combat outcome.
 
         Args:

@@ -409,7 +409,8 @@ class UIElement:
         except Exception as e:
             logging.error(f"Error drawing text: {e}")
 
-    def _clamp_color_component(self, value: int) -> int:
+    @staticmethod
+    def _clamp_color_component(value: int) -> int:
         """Clamp a color component to the valid range (0-255)."""
         return max(0, min(255, value))
 
@@ -475,7 +476,8 @@ class UIElement:
         """Check if a point is within the UI element's bounds."""
         return self.x <= x < self.x + self.width and self.y <= y < self.y + self.height
 
-    def handle_input(self) -> Optional[str]:
+    @staticmethod
+    def handle_input() -> Optional[str]:
         """Handle input for the UI element.
 
         Returns:

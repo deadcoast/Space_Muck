@@ -194,7 +194,8 @@ class SpaceMuckMainUI:
         # Create UI elements
         self._init_ui_elements()
 
-    def _map_rgb_to_curses_color(self, rgb_color):
+    @staticmethod
+    def _map_rgb_to_curses_color(rgb_color):
         """Map an RGB color tuple to the nearest curses color constant
         
         Args:

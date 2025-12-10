@@ -281,7 +281,8 @@ class Game:
             self._logger.error(f"Error during save game validation: {e}")
             return False
 
-    def _get_save_game_paths(self) -> Tuple[str, List[str]]:
+    @staticmethod
+    def _get_save_game_paths() -> Tuple[str, List[str]]:
         """Get the save game directory and list of save files.
 
         Returns:
@@ -330,7 +331,8 @@ class Game:
 
         return save_dir, save_files
 
-    def _get_most_recent_save(self, save_files: List[str]) -> Optional[str]:
+    @staticmethod
+    def _get_most_recent_save(save_files: List[str]) -> Optional[str]:
         """Get the most recent save file based on modification time.
 
         Args:
@@ -349,7 +351,8 @@ class Game:
 
         return recent_files[0] if recent_files else None
 
-    def _validate_save_data(self, save_file_path: str) -> Tuple[bool, str]:
+    @staticmethod
+    def _validate_save_data(save_file_path: str) -> Tuple[bool, str]:
         """Validate the save data's integrity and format.
 
         Args:
@@ -1114,7 +1117,8 @@ class Game:
 
         self._logger.info("Main menu activated successfully")
 
-    def _set_menu_visibility(self, menu, is_visible: bool) -> None:
+    @staticmethod
+    def _set_menu_visibility(menu, is_visible: bool) -> None:
         """Set the visibility of a UI element."""
         if hasattr(menu, "visible"):
             menu.visible = is_visible
@@ -2310,7 +2314,8 @@ class Game:
 
         return field_data
 
-    def _collect_basic_field_properties(self, field) -> Dict[str, Any]:
+    @staticmethod
+    def _collect_basic_field_properties(field) -> Dict[str, Any]:
         """Collect basic field properties like dimensions and tiles.
 
         Args:
@@ -2333,7 +2338,8 @@ class Game:
 
         return field_data
 
-    def _add_field_objects_data(self, field, field_data: Dict[str, Any]) -> None:
+    @staticmethod
+    def _add_field_objects_data(field, field_data: Dict[str, Any]) -> None:
         """Add field objects data to the field data dictionary.
 
         Args:
@@ -2391,7 +2397,8 @@ class Game:
         except Exception as e:
             self._logger.error(f"Error creating save directory: {e}")
 
-    def _get_save_directory(self) -> str:
+    @staticmethod
+    def _get_save_directory() -> str:
         """Get the directory path for saving game data.
 
         Returns:
@@ -2818,7 +2825,8 @@ class Game:
 
         return processed_purchases
 
-    def _is_valid_purchase_data(self, purchase: Dict[str, Any]) -> bool:
+    @staticmethod
+    def _is_valid_purchase_data(purchase: Dict[str, Any]) -> bool:
         """Check if purchase data contains required fields.
 
         Args:
@@ -2887,7 +2895,8 @@ class Game:
             player, cost
         )
 
-    def _has_enough_currency(self, player, cost: Dict[str, int]) -> bool:
+    @staticmethod
+    def _has_enough_currency(player, cost: Dict[str, int]) -> bool:
         """Check if player has enough currency for the purchase.
 
         Args:
@@ -2904,7 +2913,8 @@ class Game:
             and player.currency < cost["currency"]
         )
 
-    def _has_enough_resources(self, player, cost: Dict[str, int]) -> bool:
+    @staticmethod
+    def _has_enough_resources(player, cost: Dict[str, int]) -> bool:
         """Check if player has enough resources for the purchase.
 
         Args:
@@ -3054,7 +3064,8 @@ class Game:
 
         return True
 
-    def _try_add_via_dict(self, inventory, item_id: str, quantity: int) -> bool:
+    @staticmethod
+    def _try_add_via_dict(inventory, item_id: str, quantity: int) -> bool:
         """Try to add items to inventory using its items dictionary.
 
         Args:
@@ -3075,7 +3086,8 @@ class Game:
 
         return True
 
-    def _try_add_via_list(self, inventory, item_id: str, quantity: int) -> bool:
+    @staticmethod
+    def _try_add_via_list(inventory, item_id: str, quantity: int) -> bool:
         """Try to add items to inventory using its append method (list).
 
         Args:
@@ -3688,7 +3700,8 @@ class Game:
 
         self._logger.debug("Reset player attributes manually")
 
-    def _reset_player_basic_stats(self, player, player_config: Dict[str, Any]) -> None:
+    @staticmethod
+    def _reset_player_basic_stats(player, player_config: Dict[str, Any]) -> None:
         """Reset player's basic stats like health and energy.
 
         Args:
@@ -3704,7 +3717,8 @@ class Game:
         if hasattr(player, "resources") and isinstance(player.resources, dict):
             player.resources = player_config.get("resources", {})
 
-    def _reset_player_inventory(self, player) -> None:
+    @staticmethod
+    def _reset_player_inventory(player) -> None:
         """Reset player's inventory.
 
         Args:
@@ -3719,8 +3733,9 @@ class Game:
         elif hasattr(inventory, "items") and isinstance(inventory.items, dict):
             inventory.items = {}
 
+    @staticmethod
     def _reset_player_position_and_score(
-        self, player, player_config: Dict[str, Any]
+        player, player_config: Dict[str, Any]
     ) -> None:
         """Reset player's position and score.
 

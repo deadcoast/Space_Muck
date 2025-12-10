@@ -555,8 +555,9 @@ class ASCIICrewManagementPanel:
             # Add spacing between crew members
             y += 5
 
+    @staticmethod
     def _draw_empty_crew_message(
-        self, surface: pygame.Surface, font: pygame.font.Font, x: int, y: int
+        surface: pygame.Surface, font: pygame.font.Font, x: int, y: int
     ) -> None:
         """Draw message when no crew members are available.
 
@@ -651,8 +652,8 @@ class ASCIICrewManagementPanel:
         # Draw skills
         return self._draw_crew_skills(surface, font, x, y, crew)
 
+    @staticmethod
     def _draw_crew_highlight(
-        self,
         surface: pygame.Surface,
         x: int,
         y: int,
@@ -812,7 +813,8 @@ class ASCIICrewManagementPanel:
 
             y += font.get_height() + 5
 
-    def _get_skill_level_name(self, level: int) -> str:
+    @staticmethod
+    def _get_skill_level_name(level: int) -> str:
         """Get the name of a skill level.
 
         Args:

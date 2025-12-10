@@ -41,10 +41,12 @@ class MockSymbioteEvolutionAlgorithm:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def process_mineral_feeding(self, *args, **kwargs):
+    @staticmethod
+    def process_mineral_feeding(*args, **kwargs):
         return 100, 0.5, []
 
-    def generate_cellular_automaton_rules(self, *args, **kwargs):
+    @staticmethod
+    def generate_cellular_automaton_rules(*args, **kwargs):
         return {3, 6}, {2, 3}
 
 

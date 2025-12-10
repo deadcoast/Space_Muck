@@ -121,8 +121,8 @@ class ParticleEffectManager:
             # Default to a basic particle effect (also used for PARTICLE type)
             return self._create_general_particle_effect(system, x, y, width, height, duration, **kwargs)
     
-    def _create_sparkle_effect(self, 
-                              system: ASCIIParticleSystem, 
+    @staticmethod
+    def _create_sparkle_effect(system: ASCIIParticleSystem, 
                               x: int, 
                               y: int, 
                               width: int, 
@@ -174,8 +174,8 @@ class ParticleEffectManager:
             duration=duration
         )
     
-    def _create_glitch_effect(self, 
-                             system: ASCIIParticleSystem, 
+    @staticmethod
+    def _create_glitch_effect(system: ASCIIParticleSystem, 
                              x: int, 
                              y: int, 
                              width: int, 
@@ -241,7 +241,8 @@ class ParticleEffectManager:
             duration=duration
         )
     
-    def _get_velocity_for_direction(self, direction: str) -> Tuple[float, float]:
+    @staticmethod
+    def _get_velocity_for_direction(direction: str) -> Tuple[float, float]:
         """Get velocity components based on direction.
         
         Args:
@@ -261,7 +262,8 @@ class ParticleEffectManager:
             vx = random.uniform(-2.0, -5.0)
         return vx, vy
     
-    def _get_stream_position(self, direction: str, width: int, height: int) -> Tuple[float, float]:
+    @staticmethod
+    def _get_stream_position(direction: str, width: int, height: int) -> Tuple[float, float]:
         """Get initial position for a data stream particle.
         
         Args:
@@ -350,8 +352,8 @@ class ParticleEffectManager:
             duration=duration
         )
     
-    def _create_general_particle_effect(self, 
-                                       system: ASCIIParticleSystem, 
+    @staticmethod
+    def _create_general_particle_effect(system: ASCIIParticleSystem, 
                                        x: int, 
                                        y: int, 
                                        width: int, 

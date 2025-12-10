@@ -130,8 +130,9 @@ class AsteroidFieldRenderer:
             size = random.randint(1, 3)
             pygame.draw.circle(self.rare_overlay, (*self.rare_color, 230), (x, y), size)
 
+    @staticmethod
     def _interpolate_color(
-        self, color1: Tuple[int, int, int], color2: Tuple[int, int, int], t: float
+        color1: Tuple[int, int, int], color2: Tuple[int, int, int], t: float
     ) -> Tuple[int, int, int]:
         """Interpolate between two colors."""
         r = int(color1[0] * (1 - t) + color2[0] * t)
@@ -209,8 +210,8 @@ class AsteroidFieldRenderer:
             surface, grid, rare_grid, min_x, min_y, max_x, max_y, cell_size
         )
 
+    @staticmethod
     def _draw_grid_lines(
-        self,
         surface: pygame.Surface,
         min_x: int,
         min_y: int,
@@ -309,8 +310,8 @@ class AsteroidFieldRenderer:
         else:  # Third race (orange)
             self._draw_circle_entity(surface, color, screen_x, screen_y, cell_size)
 
+    @staticmethod
     def _draw_diamond_entity(
-        self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
@@ -338,8 +339,8 @@ class AsteroidFieldRenderer:
             ],
         )
 
+    @staticmethod
     def _draw_triangle_entity(
-        self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
@@ -366,8 +367,8 @@ class AsteroidFieldRenderer:
             ],
         )
 
+    @staticmethod
     def _draw_circle_entity(
-        self,
         surface: pygame.Surface,
         color: Tuple[int, int, int],
         screen_x: int,
@@ -723,8 +724,8 @@ class PlayerRenderer:
         if health < 100:
             self._draw_health_bar(surface, screen_x, screen_y, cell_size, health)
 
+    @staticmethod
     def _draw_fleet_ship_shape(
-        self,
         surface: pygame.Surface,
         screen_x: int,
         screen_y: int,
@@ -784,7 +785,8 @@ class PlayerRenderer:
             ),
         )
 
-    def _get_health_bar_color(self, health: int) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_health_bar_color(health: int) -> Tuple[int, int, int]:
         """
         Get the appropriate color for a health bar based on health percentage.
 
@@ -945,12 +947,14 @@ class EffectsRenderer:
             if particle["lifetime"] <= 0:
                 effect["particles"].remove(particle)
 
-    def _update_particle_position(self, particle: Dict) -> None:
+    @staticmethod
+    def _update_particle_position(particle: Dict) -> None:
         """Update the position of a particle based on its velocity."""
         particle["pos"][0] += particle["velocity"][0]
         particle["pos"][1] += particle["velocity"][1]
 
-    def _apply_explosion_physics(self, particle: Dict) -> None:
+    @staticmethod
+    def _apply_explosion_physics(particle: Dict) -> None:
         """Apply explosion-specific physics to a particle."""
         # Slow down particles over time and add gravity
         particle["velocity"] = (
@@ -1184,7 +1188,8 @@ class UIStateRenderer:
         if notification["lifetime"] <= 0:
             self.notifications.remove(notification)
 
-    def _calculate_notification_alpha(self, notification: Dict) -> int:
+    @staticmethod
+    def _calculate_notification_alpha(notification: Dict) -> int:
         """Calculate alpha value for a notification based on its lifetime."""
         lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
 
@@ -1199,8 +1204,9 @@ class UIStateRenderer:
 
         return alpha
 
+    @staticmethod
     def _calculate_notification_position(
-        self, surface: pygame.Surface, position: str
+        surface: pygame.Surface, position: str
     ) -> Tuple[int, int]:
         """Calculate position coordinates for a notification."""
         if position == "bottom":
@@ -1212,8 +1218,8 @@ class UIStateRenderer:
         else:  # default to top-left
             return 50, 50
 
+    @staticmethod
     def _draw_notification_text(
-        self,
         surface: pygame.Surface,
         text: str,
         x: int,
@@ -1324,7 +1330,8 @@ class UIStateRenderer:
         if self.fade_alpha > 0:
             self._render_surface_handler(surface)
 
-    def _calculate_notification_alpha(self, notification: Dict) -> int:
+    @staticmethod
+    def _calculate_notification_alpha(notification: Dict) -> int:
         """Calculate the alpha value for a notification based on its lifetime."""
         lifetime_ratio = notification["lifetime"] / notification["max_lifetime"]
         alpha = 255
@@ -1336,8 +1343,9 @@ class UIStateRenderer:
 
         return alpha
 
+    @staticmethod
     def _calculate_notification_position(
-        self, surface: pygame.Surface, position: str
+        surface: pygame.Surface, position: str
     ) -> Tuple[int, int]:
         """Calculate the position coordinates for a notification."""
         if position == "bottom":

@@ -402,7 +402,8 @@ class TestGPUClustering(unittest.TestCase):
         plt.savefig(self.output_dir / f"{filename}.png")
         plt.close()
 
-    def _calculate_inertia(self, data, labels, centroids):
+    @staticmethod
+    def _calculate_inertia(data, labels, centroids):
         """Calculate the sum of squared distances from points to their centroids.
 
         This is a measure of clustering quality - lower is better.

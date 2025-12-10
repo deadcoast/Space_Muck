@@ -221,8 +221,9 @@ class EnhancedMinerEntity(MinerEntity):
 
         return matrix
 
+    @staticmethod
     def _initialize_matrix_diagonal(
-        self, matrix: List[List[float]]
+        matrix: List[List[float]]
     ) -> List[List[float]]:
         """
         Set the diagonal elements of the interaction matrix to zero.
@@ -611,7 +612,8 @@ class MinerEntity(BaseEntity):
         for _ in range(3):
             self._create_adaptive_cluster(field, start_x, start_y, noise_func)
 
-    def _create_noise_function(self):
+    @staticmethod
+    def _create_noise_function():
         """Create a noise function for adaptive race population.
 
         Returns:
@@ -701,8 +703,9 @@ class MinerEntity(BaseEntity):
             # Not enough points for clustering, use simple proximity
             self._populate_using_proximity(field, asteroid_cells, asteroid_values)
 
+    @staticmethod
     def _collect_asteroid_data(
-        self, field: AsteroidField
+        field: AsteroidField
     ) -> Tuple[List[Tuple[int, int]], List[float]]:
         """Collect asteroid locations and their values.
 
@@ -906,7 +909,8 @@ class MinerEntity(BaseEntity):
 
         return colony_graph, colony_centers
 
-    def _connect_nodes(self, graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
+    @staticmethod
+    def _connect_nodes(graph: nx.Graph, nodes: List[Tuple[int, int]]) -> None:
         """Connect nodes with a 70% probability."""
         CONNECTION_PROBABILITY = 0.7
 
@@ -933,8 +937,9 @@ class MinerEntity(BaseEntity):
             if component != largest_component:
                 self._connect_components(graph, component, largest_component)
 
+    @staticmethod
     def _connect_components(
-        self, graph: nx.Graph, component1: Set, component2: Set
+        graph: nx.Graph, component1: Set, component2: Set
     ) -> None:
         """Connect two components by adding an edge between their closest nodes."""
         min_dist = float("inf")
@@ -1053,7 +1058,8 @@ class MinerEntity(BaseEntity):
                     ):
                         field.entity_grid[ny, nx] = self.race_id
 
-    def _is_valid_position(self, x: int, y: int, field: AsteroidField) -> bool:
+    @staticmethod
+    def _is_valid_position(x: int, y: int, field: AsteroidField) -> bool:
         """Check if a position is within field boundaries."""
         return 0 <= x < field.width and 0 <= y < field.height
 
@@ -1519,7 +1525,8 @@ class MinerEntity(BaseEntity):
         cluster_sizes = [np.sum(clusters == i) for i in range(len(centers))]
         return self._get_main_cluster_info(cluster_sizes, centers, clusters)
 
-    def _get_main_cluster_info(self, cluster_sizes, centers, clusters):
+    @staticmethod
+    def _get_main_cluster_info(cluster_sizes, centers, clusters):
         """Identify the main (largest) cluster and return clustering information.
 
         Args:

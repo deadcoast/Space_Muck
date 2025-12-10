@@ -162,7 +162,8 @@ class Player(MinerEntity):
             return True
         return False
 
-    def _calculate_xp_gain(self, mining_value: int, mineral_type: str) -> int:
+    @staticmethod
+    def _calculate_xp_gain(mining_value: int, mineral_type: str) -> int:
         """
         Calculate XP gain based on mining value and mineral type.
 
@@ -412,7 +413,8 @@ class Player(MinerEntity):
         # If no factions available (all hostile), return None for a generic non-faction quest
         return random.choice(available_factions) if available_factions else None
 
-    def _select_quest_type(self, faction: Optional[str]) -> str:
+    @staticmethod
+    def _select_quest_type(faction: Optional[str]) -> str:
         """Select a quest type based on faction preferences or random if no faction."""
         # Quest types - each faction has preferred quest types
         faction_quest_preferences = {

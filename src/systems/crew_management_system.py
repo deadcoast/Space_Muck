@@ -324,8 +324,8 @@ class CrewManagementSystem:
         self._track_experience_gain(crew_id, crew_member, work_result, results)
         self._track_level_up(crew_id, crew_member, work_result, results)
 
+    @staticmethod
     def _track_fatigue_increase(
-        self,
         crew_id: str,
         crew_member: CrewMember,
         work_result: Dict[str, Any],
@@ -341,8 +341,8 @@ class CrewManagementSystem:
                 }
             )
 
+    @staticmethod
     def _track_morale_decrease(
-        self,
         crew_id: str,
         crew_member: CrewMember,
         work_result: Dict[str, Any],
@@ -358,8 +358,8 @@ class CrewManagementSystem:
                 }
             )
 
+    @staticmethod
     def _track_experience_gain(
-        self,
         crew_id: str,
         crew_member: CrewMember,
         work_result: Dict[str, Any],
@@ -375,8 +375,8 @@ class CrewManagementSystem:
                 }
             )
 
+    @staticmethod
     def _track_level_up(
-        self,
         crew_id: str,
         crew_member: CrewMember,
         work_result: Dict[str, Any],
@@ -467,8 +467,8 @@ class CrewManagementSystem:
                         results, crew_id, crew_member, rest_result
                     )
 
+    @staticmethod
     def _update_rest_results(
-        self,
         results: Dict[str, List[Dict[str, Any]]],
         crew_id: str,
         crew_member: CrewMember,

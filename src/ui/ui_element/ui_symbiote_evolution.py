@@ -36,7 +36,8 @@ class SymbioteEvolutionMonitor(UIElement):
         self.title_font = pygame.font.Font(None, 28)
         self.pattern_font = pygame.font.Font(None, 36)
 
-    def _generate_patterns(self) -> List[List[str]]:
+    @staticmethod
+    def _generate_patterns() -> List[List[str]]:
         """Generate evolving patterns for symbiotes at different stages"""
         return [
             # Stage 0: Simple forms

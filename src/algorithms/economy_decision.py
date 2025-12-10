@@ -765,8 +765,9 @@ class SymbioteAttackEVCalculator:
         """
         self.discount_factor = discount_factor
 
+    @staticmethod
     def calculate_ev_attack(
-        self, p_victory: float, spoils_value: float, p_defeat: float, defeat_loss: float
+        p_victory: float, spoils_value: float, p_defeat: float, defeat_loss: float
     ) -> float:
         """
         EV(attack) = p_victory * spoils_value - p_defeat * defeat_loss
@@ -804,8 +805,8 @@ class SymbioteAttackEVCalculator:
         """
         return immediate_gain + self.discount_factor * future_gain_estimate
 
+    @staticmethod
     def pick_best_action(
-        self,
         ev_attack: float,
         ev_wait: float,
         optional_actions: Dict[str, float] = None,

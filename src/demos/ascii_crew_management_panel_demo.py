@@ -345,7 +345,8 @@ class ASCIICrewManagementPanelDemo:
             except Exception as event_error:
                 logging.error(f"Error handling input: {event_error}", exc_info=True)
 
-    def _should_exit(self, event):
+    @staticmethod
+    def _should_exit(event):
         """Determine if the application should exit based on the event."""
         return event.type == pygame.QUIT or (
             event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE

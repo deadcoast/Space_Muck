@@ -492,8 +492,9 @@ class MultiScaleAutomaton:
             )
         return new_grid
 
+    @staticmethod
     def _count_cell_neighbors(
-        self, grid: np.ndarray, x: int, y: int, width: int, height: int
+        grid: np.ndarray, x: int, y: int, width: int, height: int
     ) -> int:
         """
         Count the number of living neighbors for a cell in the grid.
@@ -518,8 +519,8 @@ class MultiScaleAutomaton:
                 count += grid[nx, ny]
         return count
 
+    @staticmethod
     def _determine_new_state(
-        self,
         current_state: int,
         neighbors: int,
         birth_set: Set[int],

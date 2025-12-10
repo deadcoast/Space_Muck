@@ -155,8 +155,8 @@ class UIComponentEnhancer:
         # Replace the draw method
         element.draw = enhanced_draw
     
-    def _draw_pulsing_border(self, 
-                            element: UIElement, 
+    @staticmethod
+    def _draw_pulsing_border(element: UIElement, 
                             surface: pygame.Surface, 
                             font: pygame.font.Font,
                             intensity: float) -> None:
@@ -197,8 +197,8 @@ class UIComponentEnhancer:
                     pos = (x * font.size(' ')[0], y * font.size(' ')[1])
                     surface.blit(font.render('█', True, pulsed_color), pos)
     
-    def _draw_glitch_effect(self, 
-                          element: UIElement, 
+    @staticmethod
+    def _draw_glitch_effect(element: UIElement, 
                           surface: pygame.Surface, 
                           font: pygame.font.Font,
                           intensity: float) -> None:
@@ -237,8 +237,8 @@ class UIComponentEnhancer:
                 pos = (x * font.size(' ')[0], y * font.size(' ')[1])
                 surface.blit(font.render(char, True, color), pos)
     
-    def _draw_data_effect(self, 
-                        element: UIElement, 
+    @staticmethod
+    def _draw_data_effect(element: UIElement, 
                         surface: pygame.Surface, 
                         font: pygame.font.Font,
                         intensity: float) -> None:

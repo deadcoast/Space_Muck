@@ -201,7 +201,8 @@ class CrewMember:
 
         logging.info(f"Crew member {self.name} initialized with ID {self.id}")
 
-    def _generate_random_name(self) -> str:
+    @staticmethod
+    def _generate_random_name() -> str:
         """Generate a random name for the crew member.
 
         Returns:
@@ -225,7 +226,8 @@ class CrewMember:
                 # Secondary skills are lower
                 self.skills[skill] = random.randint(0, 2)
 
-    def _generate_random_traits(self) -> List[str]:
+    @staticmethod
+    def _generate_random_traits() -> List[str]:
         """Generate random traits for the crew member.
 
         Returns:

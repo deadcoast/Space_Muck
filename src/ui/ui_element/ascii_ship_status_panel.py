@@ -498,8 +498,8 @@ class ASCIIShipStatusPanel:
             logging.error(f"Error drawing ship status panel: {e}")
             return self.rect
 
+    @staticmethod
     def _draw_status_bar(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,

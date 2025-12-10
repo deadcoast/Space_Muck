@@ -437,8 +437,8 @@ class BaseGenerator(BaseEntity):
         # Preserve original values where cells are alive
         return grid * result_grid
 
+    @staticmethod
     def _prepare_cellular_automaton_grid(
-        self,
         grid: np.ndarray,
         birth_set: Optional[Set[int]],
         survival_set: Optional[Set[int]],
@@ -471,8 +471,8 @@ class BaseGenerator(BaseEntity):
 
         return binary_grid, birth_set, survival_set
 
+    @staticmethod
     def _get_ca_cache_key(
-        self,
         binary_grid: np.ndarray,
         birth_set: Set[int],
         survival_set: Set[int],
@@ -651,7 +651,8 @@ class BaseGenerator(BaseEntity):
 
         return new_grid
 
-    def _setup_parallel_processing(self, grid_height: int) -> Tuple[int, int]:
+    @staticmethod
+    def _setup_parallel_processing(grid_height: int) -> Tuple[int, int]:
         """
         Set up parameters for parallel processing.
 
@@ -739,8 +740,9 @@ class BaseGenerator(BaseEntity):
         else:
             return self._prepare_bounded_chunk(grid, start_row, end_row)
 
+    @staticmethod
     def _prepare_wrapped_chunk(
-        self, grid: np.ndarray, start_row: int, end_row: int
+        grid: np.ndarray, start_row: int, end_row: int
     ) -> Tuple[np.ndarray, int]:
         """
         Prepare input chunk with wrapping at edges.
@@ -770,8 +772,9 @@ class BaseGenerator(BaseEntity):
 
         return input_chunk, process_start
 
+    @staticmethod
     def _prepare_bounded_chunk(
-        self, grid: np.ndarray, start_row: int, end_row: int
+        grid: np.ndarray, start_row: int, end_row: int
     ) -> Tuple[np.ndarray, int]:
         """
         Prepare input chunk with boundaries (no wrapping).
@@ -859,8 +862,9 @@ class BaseGenerator(BaseEntity):
 
         return self._cellular_automation_chunk(input_chunk, survival_mask, birth_mask)
 
+    @staticmethod
     def _create_rule_mask(
-        self, neighbors: np.ndarray, rule_set: Set[int]
+        neighbors: np.ndarray, rule_set: Set[int]
     ) -> np.ndarray:
         """
         Create a mask for cells that match a rule set.
@@ -921,7 +925,8 @@ class BaseGenerator(BaseEntity):
                     result_chunk[y, x] = 1  # Cell survives
         return result_chunk
 
-    def _get_neighbor_offsets(self) -> List[Tuple[int, int]]:
+    @staticmethod
+    def _get_neighbor_offsets() -> List[Tuple[int, int]]:
         """
         Get the offsets for the 8 neighboring cells.
 
@@ -932,8 +937,8 @@ class BaseGenerator(BaseEntity):
             (dx, dy) for dy in [-1, 0, 1] for dx in [-1, 0, 1] if dx != 0 or dy != 0
         ]
 
+    @staticmethod
     def _count_neighbors(
-        self,
         grid: np.ndarray,
         x: int,
         y: int,
@@ -1006,8 +1011,8 @@ class BaseGenerator(BaseEntity):
                 result_chunk, start_row, process_start, end_row
             )
 
+    @staticmethod
     def _trim_wrapped_chunk(
-        self,
         result_chunk: np.ndarray,
         grid_height: int,
         start_row: int,
@@ -1040,8 +1045,8 @@ class BaseGenerator(BaseEntity):
             # Only last row was padded
             return result_chunk[:-1]
 
+    @staticmethod
     def _trim_bounded_chunk(
-        self,
         result_chunk: np.ndarray,
         start_row: int,
         process_start: int,
@@ -1102,7 +1107,8 @@ class BaseGenerator(BaseEntity):
 
         return self._cellular_automation_chunk(grid, survival_mask, birth_mask)
 
-    def _cellular_automation_chunk(self, arg0, survival_mask, birth_mask):
+    @staticmethod
+    def _cellular_automation_chunk(arg0, survival_mask, birth_mask):
         alive_mask = arg0 == 1
         dead_mask = arg0 == 0
         result_chunk = np.zeros_like(arg0)
@@ -1110,8 +1116,8 @@ class BaseGenerator(BaseEntity):
         result_chunk[dead_mask & birth_mask] = 1
         return result_chunk
 
+    @staticmethod
     def _create_neighbor_masks(
-        self,
         neighbors: np.ndarray,
         birth_set: Set[int],
         survival_set: Set[int],
@@ -1182,8 +1188,8 @@ class BaseGenerator(BaseEntity):
 
         return new_grid
 
+    @staticmethod
     def _apply_rule_to_cell(
-        self,
         cell_state: int,
         neighbor_count: int,
         birth_set: Set[int],
@@ -1431,8 +1437,8 @@ class BaseGenerator(BaseEntity):
         self._cache_cluster_result(cache_key, result_grid)
         return result_grid
 
+    @staticmethod
     def _prepare_cluster_grid(
-        self,
         grid: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -1454,8 +1460,8 @@ class BaseGenerator(BaseEntity):
 
         return result_grid, non_zero_coords
 
+    @staticmethod
     def _get_cluster_cache_key(
-        self,
         grid: np.ndarray,
         num_clusters: int,
         cluster_value_multiplier: float,
@@ -1525,8 +1531,8 @@ class BaseGenerator(BaseEntity):
         # Cache the result
         self._cluster_cache[cache_key] = result_grid
 
+    @staticmethod
     def _select_cluster_centers(
-        self,
         non_zero_coords: np.ndarray,
         num_clusters: int,
     ) -> np.ndarray:

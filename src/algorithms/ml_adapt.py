@@ -342,7 +342,8 @@ class NeuroEvolutionManager:
 
         return child
 
-    def _create_combined_weight_matrix(self, weights_a, weights_b, shape):
+    @staticmethod
+    def _create_combined_weight_matrix(weights_a, weights_b, shape):
         """Create a new weight matrix by randomly combining values from two parent networks.
 
         Args:

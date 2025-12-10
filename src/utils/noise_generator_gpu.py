@@ -118,8 +118,8 @@ class GPUNoiseGenerator(NoiseGenerator):
                 width=width, height=height, scale=scale, octaves=octaves, seed=seed
             )
 
+    @staticmethod
     def _normalize_parameters(
-        self,
         octaves: List[int] = None,
         weights: List[float] = None,
         seed: Optional[int] = None,
@@ -143,8 +143,8 @@ class GPUNoiseGenerator(NoiseGenerator):
 
         return octaves, normalized_weights
 
+    @staticmethod
     def _generate_octave_noise(
-        self,
         width: int,
         height: int,
         scale: float,
@@ -336,8 +336,8 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
 
         return warp_x, warp_y
 
+    @staticmethod
     def _create_warped_coordinates(
-        self,
         width: int,
         height: int,
         warp_x: np.ndarray,
@@ -375,8 +375,8 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
 
         return warped_x, warped_y
 
+    @staticmethod
     def _generate_cupy_warped_noise(
-        self,
         width: int,
         height: int,
         warped_x: np.ndarray,
@@ -477,8 +477,8 @@ class FractalNoiseGenerator(GPUNoiseGenerator):
         # Ensure values are in [0, 1]
         return np.clip(result, 0, 1)
 
+    @staticmethod
     def _sample_noise_at_warped_coordinates(
-        self,
         noise: np.ndarray,
         warped_x: np.ndarray,
         warped_y: np.ndarray,

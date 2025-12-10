@@ -181,7 +181,8 @@ class ASCIIParticleSystem:
         """
         self.particles = [p for p in self.particles if p.update(dt)]
     
-    def _check_emitter_expired(self, emitter: dict, dt: float) -> bool:
+    @staticmethod
+    def _check_emitter_expired(emitter: dict, dt: float) -> bool:
         """Check if an emitter has expired due to duration or max count
         
         Args:

@@ -155,8 +155,9 @@ class MixedIntegerMineralOptimizer:
         )
         return profit_term, appeasement_term
 
+    @staticmethod
     def _set_objective_function(
-        self, prob, profit_term, appeasement_term, aggression_coef
+        prob, profit_term, appeasement_term, aggression_coef
     ):  # NOSONAR
         """Helper method to set the objective function based on aggression coefficient"""
         if aggression_coef <= 0:
@@ -194,8 +195,8 @@ class MixedIntegerMineralOptimizer:
                     m, total_minerals.get(m, 0) - feed_vars[m]
                 ) <= total_minerals.get(m, 0)
 
+    @staticmethod
     def _add_min_feeding_constraints(
-        self,
         prob,
         feed_vars,
         min_feeding_requirements,
@@ -220,8 +221,9 @@ class MixedIntegerMineralOptimizer:
                         # Standard minimum constraint
                         prob += feed_vars[m] >= min_amount
 
+    @staticmethod
     def _add_max_feeding_constraints(
-        self, prob, feed_vars, max_feeding_limits
+        prob, feed_vars, max_feeding_limits
     ):  # noqa: ARG001 # NOSONAR
         """Helper method to add maximum feeding constraints
 
