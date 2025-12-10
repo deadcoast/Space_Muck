@@ -42,7 +42,8 @@ class TestPlayerFieldInteraction(unittest.TestCase):
         self.field.rare_grid[38:42, 48:52] = 1  # Some rare asteroids
 
         # Verify grid shape using numpy
-        assert np.shape(self.field.grid)[0] == 100, "Field width should be 100"
+        if np.shape(self.field.grid)[0] != 100:
+            raise AssertionError("Field width should be 100")
 
     def test_player_mining_cycle(self):
         """Test a complete mining cycle and its effects."""
@@ -152,7 +153,8 @@ class TestGameCycle(unittest.TestCase):
         self.mock_surface = mock_surface.return_value
 
         # Verify pygame is properly mocked
-        assert pygame.Surface is mock_surface, "pygame.Surface should be mocked"
+        if pygame.Surface is not mock_surface:
+            raise AssertionError("pygame.Surface should be mocked")
 
         # Initialize game components
         self.field = AsteroidField(width=100, height=80)

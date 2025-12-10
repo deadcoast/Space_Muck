@@ -395,12 +395,16 @@ def test_asteroid_generator():
     generator = AsteroidGenerator(seed=42, width=100, height=100)
 
     # Verify basic properties
-    assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
-    assert generator.width == 100, f"Expected width 100, got {generator.width}"
-    assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert (
-        generator.entity_type == "asteroid"
-    ), f"Expected entity_type 'asteroid', got {generator.entity_type}"
+    if generator.seed != 42:
+        raise AssertionError(f"Expected seed 42, got {generator.seed}")
+    if generator.width != 100:
+        raise AssertionError(f"Expected width 100, got {generator.width}")
+    if generator.height != 100:
+        raise AssertionError(f"Expected height 100, got {generator.height}")
+    if (
+        generator.entity_type != "asteroid"
+    ):
+        raise AssertionError(f"Expected entity_type 'asteroid', got {generator.entity_type}")
 
     # Test noise generation with performance measurement
     print("Testing noise generation performance...")
@@ -416,8 +420,10 @@ def test_asteroid_generator():
     _ = _test_asteroid_generator_handler(
         start_time, "Field generation time: ", asteroid_grid
     )
-    assert np.sum(asteroid_grid > 0) > 0, "No asteroids were generated"
-    assert "seed" in metadata, "Metadata missing seed information"
+    if np.sum(asteroid_grid > 0) <= 0:
+        raise AssertionError("No asteroids were generated")
+    if "seed" not in metadata:
+        raise AssertionError("Metadata missing seed information")
 
     # Test value generation with performance measurement
     print("Testing asteroid value generation performance...")
@@ -426,7 +432,8 @@ def test_asteroid_generator():
     _ = _test_asteroid_generator_handler(
         start_time, "Value generation time: ", value_grid
     )
-    assert np.sum(value_grid > 0) > 0, "No asteroid values were generated"
+    if np.sum(value_grid > 0) <= 0:
+        raise AssertionError("No asteroid values were generated")
 
     # Test rare resource generation with performance measurement
     print("Testing rare resource generation performance...")
@@ -443,7 +450,8 @@ def test_asteroid_generator():
     print(
         f"Cached noise generation time: {noise_time2:.4f} seconds (Speed improvement: {noise_time / noise_time2:.2f}x)"
     )
-    assert np.array_equal(noise, noise2), "Cached noise layer does not match original"
+    if not np.array_equal(noise, noise2):
+        raise AssertionError("Cached noise layer does not match original")
 
     print("All basic tests passed!")
     return generator, asteroid_grid, value_grid, rare_grid
@@ -452,7 +460,8 @@ def test_asteroid_generator():
 def _test_asteroid_generator_handler(start_time, arg1, arg2):
     result = time.time() - start_time
     print(f"{arg1}{result:.4f} seconds")
-    assert arg2.shape == (100, 100), f"Expected shape (100, 100), got {arg2.shape}"
+    if arg2.shape != (100, 100):
+        raise AssertionError(f"Expected shape (100, 100), got {arg2.shape}")
 
     return result
 
@@ -470,13 +479,15 @@ def test_pattern_generation():
     pattern_time = time.time() - start_time
     print(f"Pattern-based field generation time: {pattern_time:.4f} seconds")
 
-    assert asteroid_grid.shape == (
+    if asteroid_grid.shape != (
         80,
         80,
-    ), f"Expected shape (80, 80), got {asteroid_grid.shape}"
-    assert (
-        np.sum(asteroid_grid > 0) > 0
-    ), "No asteroids were generated with pattern weights"
+    ):
+        raise AssertionError(f"Expected shape (80, 80), got {asteroid_grid.shape}")
+    if (
+        np.sum(asteroid_grid > 0) <= 0
+    ):
+        raise AssertionError("No asteroids were generated with pattern weights")
 
     # Test individual pattern generation performance
     print("Testing individual pattern generation performance...")
@@ -500,9 +511,10 @@ def test_pattern_generation():
         f"Cached spiral pattern time: {spiral_time2:.4f} seconds (Speed improvement: {spiral_time / spiral_time2:.2f}x if > 1)"
     )
 
-    assert np.array_equal(
+    if not np.array_equal(
         spiral, spiral2
-    ), "Cached spiral pattern does not match original"
+    ):
+        raise AssertionError("Cached spiral pattern does not match original")
 
     print("Pattern generation tests passed!")
     return asteroid_grid, spiral, rings

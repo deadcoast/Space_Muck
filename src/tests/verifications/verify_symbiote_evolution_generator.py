@@ -92,66 +92,82 @@ def test_symbiote_evolution_generator():
     )
 
     # Verify basic properties
-    assert generator.seed == 42, f"Expected seed 42, got {generator.seed}"
-    assert generator.width == 100, f"Expected width 100, got {generator.width}"
-    assert generator.height == 100, f"Expected height 100, got {generator.height}"
-    assert (
-        generator.entity_type == "symbiote"
-    ), f"Expected entity_type 'symbiote', got {generator.entity_type}"
+    if generator.seed != 42:
+        raise AssertionError(f"Expected seed 42, got {generator.seed}")
+    if generator.width != 100:
+        raise AssertionError(f"Expected width 100, got {generator.width}")
+    if generator.height != 100:
+        raise AssertionError(f"Expected height 100, got {generator.height}")
+    if (
+        generator.entity_type != "symbiote"
+    ):
+        raise AssertionError(f"Expected entity_type 'symbiote', got {generator.entity_type}")
 
     # Verify SymbioteEvolutionAlgorithm integration
-    assert hasattr(
+    if not hasattr(
         generator, "evolution_algorithm"
-    ), "Missing evolution_algorithm attribute"
+    ):
+        raise AssertionError("Missing evolution_algorithm attribute")
     assert isinstance(
         generator.evolution_algorithm, SymbioteEvolutionAlgorithm
     ), "evolution_algorithm is not an instance of SymbioteEvolutionAlgorithm"
-    assert (
-        generator.evolution_algorithm.aggression == 0.3
-    ), f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}"
+    if (
+        generator.evolution_algorithm.aggression != 0.3
+    ):
+        raise AssertionError(f"Expected initial_aggression 0.3, got {generator.evolution_algorithm.aggression}")
 
     # Test noise generation
     print("Testing noise generation...")
     noise = generator.generate_noise_layer("medium", scale=0.05)
-    assert noise.shape == (100, 100), f"Expected shape (100, 100), got {noise.shape}"
+    if noise.shape != (100, 100):
+        raise AssertionError(f"Expected shape (100, 100), got {noise.shape}")
 
     # Test initial colony generation
     print("Testing initial colony generation...")
     colony_grid, metadata = generator.generate_initial_colonies(num_colonies=3)
-    assert colony_grid.shape == (
+    if colony_grid.shape != (
         100,
         100,
-    ), f"Expected shape (100, 100), got {colony_grid.shape}"
-    assert np.sum(colony_grid > 0) > 0, "No colonies were generated"
-    assert "seed" in metadata, "Metadata missing seed information"
-    assert "num_colonies" in metadata, "Metadata missing num_colonies information"
-    assert (
-        "colony_population" in metadata
-    ), "Metadata missing colony_population information"
+    ):
+        raise AssertionError(f"Expected shape (100, 100), got {colony_grid.shape}")
+    if np.sum(colony_grid > 0) <= 0:
+        raise AssertionError("No colonies were generated")
+    if "seed" not in metadata:
+        raise AssertionError("Metadata missing seed information")
+    if "num_colonies" not in metadata:
+        raise AssertionError("Metadata missing num_colonies information")
+    if (
+        "colony_population" not in metadata
+    ):
+        raise AssertionError("Metadata missing colony_population information")
 
     # Test mineral distribution generation
     print("Testing mineral distribution generation...")
     mineral_grid = generator.generate_mineral_distribution()
-    assert mineral_grid.shape == (
+    if mineral_grid.shape != (
         100,
         100,
-    ), f"Expected shape (100, 100), got {mineral_grid.shape}"
-    assert (
-        np.min(mineral_grid) >= 0
-    ), f"Expected min value >= 0, got {np.min(mineral_grid)}"
-    assert (
-        np.max(mineral_grid) <= 1
-    ), f"Expected max value <= 1, got {np.max(mineral_grid)}"
+    ):
+        raise AssertionError(f"Expected shape (100, 100), got {mineral_grid.shape}")
+    if (
+        np.min(mineral_grid) < 0
+    ):
+        raise AssertionError(f"Expected min value >= 0, got {np.min(mineral_grid)}")
+    if (
+        np.max(mineral_grid) > 1
+    ):
+        raise AssertionError(f"Expected max value <= 1, got {np.max(mineral_grid)}")
 
     # Test evolution simulation
     print("Testing evolution simulation...")
     evolved_grid, evolution_history = generator.simulate_evolution(
         colony_grid, mineral_grid, iterations=5
     )
-    assert evolved_grid.shape == (
+    if evolved_grid.shape != (
         100,
         100,
-    ), f"Expected shape (100, 100), got {evolved_grid.shape}"
+    ):
+        raise AssertionError(f"Expected shape (100, 100), got {evolved_grid.shape}")
     assert (
         len(evolution_history) == 5
     ), f"Expected 5 evolution steps, got {len(evolution_history)}"
@@ -159,10 +175,11 @@ def test_symbiote_evolution_generator():
     # Test mutation map generation
     print("Testing mutation map generation...")
     mutation_map = generator.generate_mutation_map(evolved_grid, evolution_history)
-    assert mutation_map.shape == (
+    if mutation_map.shape != (
         100,
         100,
-    ), f"Expected shape (100, 100), got {mutation_map.shape}"
+    ):
+        raise AssertionError(f"Expected shape (100, 100), got {mutation_map.shape}")
 
     print("All basic tests passed!")
     return (
@@ -203,7 +220,8 @@ def test_evolution_over_time():
         _extracted_from_test_evolution_over_time_24(step, i)
     # Verify population changes over time
     populations = [step["population"] for step in evolution_history]
-    assert len(set(populations)) > 1, "Population did not change during evolution"
+    if len(set(populations)) <= 1:
+        raise AssertionError("Population did not change during evolution")
 
     print("Evolution over time test passed!")
     return evolved_grid, evolution_history
@@ -211,14 +229,20 @@ def test_evolution_over_time():
 
 # TODO Rename this here and in `test_evolution_over_time`
 def _extracted_from_test_evolution_over_time_24(step, i):
-    assert "iteration" in step, f"Step {i} missing 'iteration' field"
-    assert "population" in step, f"Step {i} missing 'population' field"
-    assert "aggression" in step, f"Step {i} missing 'aggression' field"
-    assert "genome" in step, f"Step {i} missing 'genome' field"
-    assert "mutations" in step, f"Step {i} missing 'mutations' field"
-    assert (
-        "mineral_consumption" in step
-    ), f"Step {i} missing 'mineral_consumption' field"
+    if "iteration" not in step:
+        raise AssertionError(f"Step {i} missing 'iteration' field")
+    if "population" not in step:
+        raise AssertionError(f"Step {i} missing 'population' field")
+    if "aggression" not in step:
+        raise AssertionError(f"Step {i} missing 'aggression' field")
+    if "genome" not in step:
+        raise AssertionError(f"Step {i} missing 'genome' field")
+    if "mutations" not in step:
+        raise AssertionError(f"Step {i} missing 'mutations' field")
+    if (
+        "mineral_consumption" not in step
+    ):
+        raise AssertionError(f"Step {i} missing 'mineral_consumption' field")
 
 
 def test_mineral_consumption_impact():
