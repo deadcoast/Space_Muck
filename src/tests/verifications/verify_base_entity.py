@@ -65,28 +65,33 @@ def verify_base_entity():
     entity = BaseEntity(entity_type="test", color=(255, 0, 0), position=(10, 20))
 
     # Verify basic attributes
-    assert (
-        entity.entity_type == "test"
-    ), f"Expected entity_type 'test', got {entity.entity_type}"
-    assert entity.color == (
+    if (
+        entity.entity_type != "test"
+    ):
+        raise AssertionError(f"Expected entity_type 'test', got {entity.entity_type}")
+    if entity.color != (
         255,
         0,
         0,
-    ), f"Expected color (255, 0, 0), got {entity.color}"
+    ):
+        raise AssertionError(f"Expected color (255, 0, 0), got {entity.color}")
 
     # Check that position is not None before comparing
     assert entity.position is not None, "Entity position should not be None"
     if entity.position:  # Type guard for position
-        assert entity.position == (
+        if entity.position != (
             10,
             20,
-        ), f"Expected position (10, 20), got {entity.position}"
+        ):
+            raise AssertionError(f"Expected position (10, 20), got {entity.position}")
 
-    assert entity.active is True, f"Expected active True, got {entity.active}"
+    if entity.active is not True:
+        raise AssertionError(f"Expected active True, got {entity.active}")
 
     # Test methods
     entity.add_tag("important")
-    assert entity.has_tag("important"), "Tag 'important' should be present"
+    if not entity.has_tag("important"):
+        raise AssertionError("Tag 'important' should be present")
 
     entity.set_position(30, 40)
 
@@ -94,27 +99,32 @@ def verify_base_entity():
     position = entity.get_position()
     assert position is not None, "Entity position should not be None after set_position"
     if position:  # Type guard for position
-        assert position == (
+        if position != (
             30,
             40,
-        ), f"Expected position (30, 40), got {position}"
+        ):
+            raise AssertionError(f"Expected position (30, 40), got {position}")
 
     entity.deactivate()
-    assert not entity.is_active(), "Entity should be inactive after deactivate()"
+    if entity.is_active():
+        raise AssertionError("Entity should be inactive after deactivate()")
 
     entity.activate()
-    assert entity.is_active(), "Entity should be active after activate()"
+    if not entity.is_active():
+        raise AssertionError("Entity should be active after activate()")
 
     # Test serialization
     data = entity.to_dict()
-    assert (
-        data["entity_type"] == "test"
-    ), f"Expected entity_type 'test', got {data['entity_type']}"
+    if (
+        data["entity_type"] != "test"
+    ):
+        raise AssertionError(f"Expected entity_type 'test', got {data['entity_type']}")
 
     new_entity = BaseEntity.from_dict(data)
-    assert (
-        new_entity.entity_type == entity.entity_type
-    ), "Entity types should match after deserialization"
+    if (
+        new_entity.entity_type != entity.entity_type
+    ):
+        raise AssertionError("Entity types should match after deserialization")
 
     print("BaseEntity tests passed!")
     return True
@@ -141,21 +151,26 @@ def verify_inheritance():
     ), "MockPlayer should be an instance of BaseEntity"
 
     # Verify entity types
-    assert (
-        base.entity_type == "base"
-    ), f"Expected entity_type 'base', got {base.entity_type}"
-    assert (
-        miner.entity_type == "miner"
-    ), f"Expected entity_type 'miner', got {miner.entity_type}"
+    if (
+        base.entity_type != "base"
+    ):
+        raise AssertionError(f"Expected entity_type 'base', got {base.entity_type}")
+    if (
+        miner.entity_type != "miner"
+    ):
+        raise AssertionError(f"Expected entity_type 'miner', got {miner.entity_type}")
 
     # Verify player-specific attributes
-    assert player.is_player is True, "Player should have is_player=True"
-    assert (
-        player.credits == 1000
-    ), f"Player should start with 1000 credits, got {player.credits}"
-    assert (
-        player.trait == "adaptive"
-    ), f"Player should have 'adaptive' trait, got {player.trait}"
+    if player.is_player is not True:
+        raise AssertionError("Player should have is_player=True")
+    if (
+        player.credits != 1000
+    ):
+        raise AssertionError(f"Player should start with 1000 credits, got {player.credits}")
+    if (
+        player.trait != "adaptive"
+    ):
+        raise AssertionError(f"Player should have 'adaptive' trait, got {player.trait}")
 
     print("Inheritance tests passed!")
     return True
