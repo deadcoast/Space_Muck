@@ -37,7 +37,8 @@ logger = getLogger(__name__)
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
@@ -135,7 +136,8 @@ class TestGPUClustering(unittest.TestCase):
             self.assertGreater(np.sum(labels == i), 0)
 
         # Visualize results
-        self._plot_kmeans_results(self.data, labels, centroids, f"kmeans_{backend}")
+        self._plot_kmeans_results(
+            self.data, labels, centroids, f"kmeans_{backend}")
 
     def test_dbscan_clustering_cpu(self):
         """Test DBSCAN clustering using CPU backend."""
@@ -150,7 +152,8 @@ class TestGPUClustering(unittest.TestCase):
         # Check that we have some clusters and some noise
         unique_labels = np.unique(labels)
         self.assertGreater(-1 in unique_labels, 0)  # Noise should be present
-        self.assertGreater(len(unique_labels), 1)  # Should have at least one cluster
+        # Should have at least one cluster
+        self.assertGreater(len(unique_labels), 1)
 
         # Visualize results
         self._plot_dbscan_results(self.data_with_noise, labels, "dbscan_cpu")
@@ -174,16 +177,19 @@ class TestGPUClustering(unittest.TestCase):
         # Check that we have some clusters and some noise
         unique_labels = np.unique(labels)
         self.assertIn(-1, unique_labels)  # Noise should be present
-        self.assertGreater(len(unique_labels), 1)  # Should have at least one cluster
+        # Should have at least one cluster
+        self.assertGreater(len(unique_labels), 1)
 
         # Visualize results
-        self._plot_dbscan_results(self.data_with_noise, labels, f"dbscan_{backend}")
+        self._plot_dbscan_results(
+            self.data_with_noise, labels, f"dbscan_{backend}")
 
     def test_kmeans_consistency(self):
         """Test that K-means results are consistent across backends."""
         # Check if GPU is available using the actual implementation
         if not is_gpu_available():
-            logger.info("GPU not available - running CPU-only consistency test")
+            logger.info(
+                "GPU not available - running CPU-only consistency test")
 
             # Even without GPU, we can test consistency of the CPU backend
             # with different random seeds
@@ -231,13 +237,16 @@ class TestGPUClustering(unittest.TestCase):
         )
 
         # Calculate inertia for both results
-        inertia_cpu = self._calculate_inertia(self.data, labels_cpu, centroids_cpu)
-        inertia_gpu = self._calculate_inertia(self.data, labels_gpu, centroids_gpu)
+        inertia_cpu = self._calculate_inertia(
+            self.data, labels_cpu, centroids_cpu)
+        inertia_gpu = self._calculate_inertia(
+            self.data, labels_gpu, centroids_gpu)
 
         # The clustering quality (measured by inertia) should be comparable
         # Allow for some difference due to implementation variations
         logger.info(f"CPU inertia: {inertia_cpu}, GPU inertia: {inertia_gpu}")
-        relative_diff = abs(inertia_cpu - inertia_gpu) / max(inertia_cpu, inertia_gpu)
+        relative_diff = abs(inertia_cpu - inertia_gpu) / \
+            max(inertia_cpu, inertia_gpu)
         self.assertLess(relative_diff, 0.5)  # Allow up to 50% difference
 
         # Count points in each cluster
@@ -258,12 +267,14 @@ class TestGPUClustering(unittest.TestCase):
         """Test that DBSCAN results are consistent across backends."""
         # Check scikit-learn availability
         if not SKLEARN_AVAILABLE:
-            logger.info("scikit-learn not available - skipping DBSCAN consistency test")
+            logger.info(
+                "scikit-learn not available - skipping DBSCAN consistency test")
             self.skipTest("scikit-learn not available for DBSCAN testing")
 
         # Check if GPU is available
         if not is_gpu_available():
-            logger.info("GPU not available - running CPU-only DBSCAN consistency test")
+            logger.info(
+                "GPU not available - running CPU-only DBSCAN consistency test")
 
             # Even without GPU, we can test consistency of the CPU backend
             # with different parameters
@@ -281,8 +292,10 @@ class TestGPUClustering(unittest.TestCase):
             n_clusters2 = len(np.unique(labels2)) - (1 if -1 in labels2 else 0)
 
             # Verify both runs found some clusters
-            self.assertGreater(n_clusters1, 0, "First CPU run found no clusters")
-            self.assertGreater(n_clusters2, 0, "Second CPU run found no clusters")
+            self.assertGreater(
+                n_clusters1, 0, "First CPU run found no clusters")
+            self.assertGreater(
+                n_clusters2, 0, "Second CPU run found no clusters")
 
             # The difference in cluster count should be reasonable
             self.assertLessEqual(abs(n_clusters1 - n_clusters2), 2)
@@ -294,7 +307,8 @@ class TestGPUClustering(unittest.TestCase):
         gpu_backends = [b for b in backends if b != "cpu"]
 
         if not gpu_backends:
-            logger.info("No GPU backends available - skipping GPU vs CPU comparison")
+            logger.info(
+                "No GPU backends available - skipping GPU vs CPU comparison")
             self.skipTest("No GPU backends available")
             return
 
@@ -311,14 +325,18 @@ class TestGPUClustering(unittest.TestCase):
         )
 
         # Count number of clusters and noise points
-        n_clusters_cpu = len(np.unique(labels_cpu)) - (1 if -1 in labels_cpu else 0)
-        n_clusters_gpu = len(np.unique(labels_gpu)) - (1 if -1 in labels_gpu else 0)
+        n_clusters_cpu = len(np.unique(labels_cpu)) - \
+            (1 if -1 in labels_cpu else 0)
+        n_clusters_gpu = len(np.unique(labels_gpu)) - \
+            (1 if -1 in labels_gpu else 0)
 
         n_noise_cpu = np.sum(labels_cpu == -1)
         n_noise_gpu = np.sum(labels_gpu == -1)
 
-        logger.info(f"CPU clusters: {n_clusters_cpu}, noise points: {n_noise_cpu}")
-        logger.info(f"GPU clusters: {n_clusters_gpu}, noise points: {n_noise_gpu}")
+        logger.info(
+            f"CPU clusters: {n_clusters_cpu}, noise points: {n_noise_cpu}")
+        logger.info(
+            f"GPU clusters: {n_clusters_gpu}, noise points: {n_noise_gpu}")
 
         # Check that number of clusters is similar with more flexibility
         # Different implementations might identify slightly different clusters
@@ -417,14 +435,14 @@ class TestGPUClustering(unittest.TestCase):
             float: Inertia (sum of squared distances)
         """
         inertia = 0.0
-        for i in range(len(centroids)):
+        for i, item in enumerate(centroids):
             # Get points in this cluster
             cluster_points = data[labels == i]
             if len(cluster_points) == 0:
                 continue
 
             # Calculate distance from each point to centroid
-            distances = np.sum((cluster_points - centroids[i]) ** 2, axis=1)
+            distances = np.sum((cluster_points - item) ** 2, axis=1)
             inertia += np.sum(distances)
 
         return inertia

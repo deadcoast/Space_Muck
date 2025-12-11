@@ -39,7 +39,8 @@ except ImportError:
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("symbiote_evolution.log"), logging.StreamHandler()],
+    handlers=[logging.FileHandler(
+        "symbiote_evolution.log"), logging.StreamHandler()],
 )
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,8 @@ class SymbioteEvolutionAlgorithm:
             "player_feeding_pattern": deque(
                 maxlen=10
             ),  # Remember last 10 feeding decisions
-            "attack_outcomes": deque(maxlen=20),  # Remember outcomes of last 20 attacks
+            # Remember outcomes of last 20 attacks
+            "attack_outcomes": deque(maxlen=20),
         }
 
         # Game balance adapters (these adjust over time based on gameplay)
@@ -202,7 +204,8 @@ class SymbioteEvolutionAlgorithm:
             mutation = {}
 
             if effect < 0.25:  # 25% chance: population surge
-                surge = rng.integers(3, 10)  # Using integers instead of randint
+                # Using integers instead of randint
+                surge = rng.integers(3, 10)
                 new_population += surge
                 mutation = {
                     "type": "population_surge",
@@ -263,7 +266,8 @@ class SymbioteEvolutionAlgorithm:
         # If no minerals are fed, process hunger increase
         if sum(minerals.values()) == 0:
             # Increase aggression due to hunger
-            new_aggression = min(1.0, new_aggression + self.hunger_aggression_factor)
+            new_aggression = min(1.0, new_aggression +
+                                 self.hunger_aggression_factor)
             return new_population, new_aggression, mutations
 
         # Track mineral consumption for ML
@@ -328,7 +332,8 @@ class SymbioteEvolutionAlgorithm:
             mutations.extend(anomaly_mutations)
 
         # Apply the feeding effect on aggression (satiation reduces aggression)
-        satiation_effect = min(0.5, total_nutrition / max(10, current_population))
+        satiation_effect = min(0.5, total_nutrition /
+                               max(10, current_population))
         new_aggression = max(0.0, new_aggression - satiation_effect)
 
         # Cap population and aggression to valid ranges
@@ -358,10 +363,12 @@ class SymbioteEvolutionAlgorithm:
             return 0
 
         # Dynamic carrying capacity based on available resources
-        adjusted_capacity = self.carrying_capacity + (mineral_availability * 0.5)
+        adjusted_capacity = self.carrying_capacity + \
+            (mineral_availability * 0.5)
 
         # Apply logistic growth equation: dN/dt = r*N*(1-N/K)
-        growth = self.growth_rate * population * (1 - population / adjusted_capacity)
+        growth = self.growth_rate * population * \
+            (1 - population / adjusted_capacity)
 
         # Convert to integer growth (can be negative for population decline)
         int_growth = math.floor(growth)
@@ -440,7 +447,8 @@ class SymbioteEvolutionAlgorithm:
         # Compare to a soft carrying capacity threshold
         soft_cap = self.carrying_capacity * 0.8
         if population > soft_cap:
-            overpopulation_factor = min(0.2, (population - soft_cap) / soft_cap * 0.1)
+            overpopulation_factor = min(
+                0.2, (population - soft_cap) / soft_cap * 0.1)
             new_aggression += overpopulation_factor
 
         # 5. Apply machine learning adjustments if enabled
@@ -550,7 +558,8 @@ class SymbioteEvolutionAlgorithm:
     ) -> float:
         """Process the outcome of a failed symbiote attack."""
         # Failed attack reduces aggression temporarily
-        aggression_reduction = 0.1 + (symbiote_casualties / max(10, population)) * 0.3
+        aggression_reduction = 0.1 + \
+            (symbiote_casualties / max(10, population)) * 0.3
         new_aggression = max(0.0, aggression - aggression_reduction)
 
         # If casualties were severe, aggression drops more (retreat behavior)
@@ -692,10 +701,12 @@ class SymbioteEvolutionAlgorithm:
 
             # Handle specific mutation types
             if mutation_type in ["minor", "significant", "beneficial"]:
-                new_genome = self._apply_standard_mutation(new_genome, mutation)
+                new_genome = self._apply_standard_mutation(
+                    new_genome, mutation)
             else:
                 # Handle special mutation types
-                new_genome = self._apply_special_mutation(new_genome, mutation_type)
+                new_genome = self._apply_special_mutation(
+                    new_genome, mutation_type)
 
         # Apply natural random mutations
         new_genome = self._apply_natural_mutations(new_genome)
@@ -784,7 +795,8 @@ class SymbioteEvolutionAlgorithm:
 
         if hunger_level > 0.7:  # Very hungry
             # Hungry symbiotes try to expand more aggressively
-            modified_birth = modified_birth.union({2})  # Easier to birth new cells
+            modified_birth = modified_birth.union(
+                {2})  # Easier to birth new cells
             # But might die more easily too (resource scarcity)
             if 4 in modified_survival and rng.random() < 0.5:
                 modified_survival.discard(4)
@@ -882,7 +894,8 @@ class SymbioteEvolutionAlgorithm:
 
         # Calculate win/loss ratio
         total_attacks = (
-            self.ml_memory["successful_attacks"] + self.ml_memory["failed_attacks"]
+            self.ml_memory["successful_attacks"] +
+            self.ml_memory["failed_attacks"]
         )
         if total_attacks == 0:
             return
@@ -901,7 +914,8 @@ class SymbioteEvolutionAlgorithm:
         self.ml_memory["successful_attacks"] = int(
             self.ml_memory["successful_attacks"] * 0.5
         )
-        self.ml_memory["failed_attacks"] = int(self.ml_memory["failed_attacks"] * 0.5)
+        self.ml_memory["failed_attacks"] = int(
+            self.ml_memory["failed_attacks"] * 0.5)
 
         # Analyze mineral preferences to adapt behavior
         total_minerals = sum(self.ml_memory["minerals_consumed"].values())
@@ -976,7 +990,8 @@ class SymbioteEvolutionAlgorithm:
 
         blinker_h_matches = ndimage.binary_hit_or_miss(grid, blinker_h_kernel)
         blinker_v_matches = ndimage.binary_hit_or_miss(grid, blinker_v_kernel)
-        patterns["blinker"] = np.sum(blinker_h_matches) + np.sum(blinker_v_matches)
+        patterns["blinker"] = np.sum(
+            blinker_h_matches) + np.sum(blinker_v_matches)
 
         # Detect beehives (common still life pattern)
         beehive_kernel1 = np.array([[0, 1, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0]])
@@ -1005,7 +1020,8 @@ class SymbioteEvolutionAlgorithm:
         # Get edge cells (cells at the boundary of the colony)
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
 
-        neighbor_count = ndimage.convolve(grid, kernel, mode="constant", cval=0.0)
+        neighbor_count = ndimage.convolve(
+            grid, kernel, mode="constant", cval=0.0)
 
         # Edge cells are alive and don't have all 8 neighbors alive
         edge_cells = (grid == 1) & (neighbor_count < 8)
@@ -1067,7 +1083,8 @@ class SymbioteEvolutionAlgorithm:
 
         # 3. Apply erosion to isolated cells (symbiotes die if too isolated)
         neighbor_count = (
-            ndimage.convolve(grid, np.ones((3, 3)), mode="constant", cval=0.0) - grid
+            ndimage.convolve(grid, np.ones((3, 3)),
+                             mode="constant", cval=0.0) - grid
         )
         new_grid[(grid == 1) & (neighbor_count == 0)] = 0
 
@@ -1085,7 +1102,8 @@ class SymbioteEvolutionAlgorithm:
             Tuple of (labeled_grid, number_of_colonies)
         """
         # Use scipy.ndimage to label connected components
-        labeled_grid, num_colonies = ndimage.label(grid, structure=np.ones((3, 3)))
+        labeled_grid, num_colonies = ndimage.label(
+            grid, structure=np.ones((3, 3)))
 
         return labeled_grid, num_colonies
 
@@ -1191,9 +1209,8 @@ class SymbioteEvolutionAlgorithm:
             interaction_range: Maximum distance for colonies to interact
             aggression: Current aggression level
         """
-        for i in range(len(colony_stats)):
+        for i, colony_i in enumerate(colony_stats):
             for j in range(i + 1, len(colony_stats)):
-                colony_i = colony_stats[i]
                 colony_j = colony_stats[j]
 
                 # Calculate distance between colonies
@@ -1301,8 +1318,10 @@ class SymbioteEvolutionAlgorithm:
             strength_ratio = colony_j["size"] / max(1, colony_i["size"])
 
         # Apply winner expansion and loser damage
-        self._expand_winner_territory(winner_id, labeled_grid, original_grid, new_grid)
-        self._damage_loser_colony(loser_id, labeled_grid, strength_ratio, new_grid)
+        self._expand_winner_territory(
+            winner_id, labeled_grid, original_grid, new_grid)
+        self._damage_loser_colony(
+            loser_id, labeled_grid, strength_ratio, new_grid)
 
     @staticmethod
     def _expand_winner_territory(
@@ -1344,7 +1363,8 @@ class SymbioteEvolutionAlgorithm:
         """
         damage_percent = min(0.5, strength_ratio * 0.1)
         loser_mask = labeled_grid == loser_id
-        damage_mask = loser_mask & (rng.random(labeled_grid.shape) < damage_percent)
+        damage_mask = loser_mask & (rng.random(
+            labeled_grid.shape) < damage_percent)
         new_grid[damage_mask] = 0
 
     @staticmethod
@@ -1402,7 +1422,8 @@ class SymbioteEvolutionAlgorithm:
         if population > 0:
             # P = 1 / (1 + exp(-k * (N/K - threshold)))
             # Use growth rate to influence the steepness of the logistic curve
-            pressure = 1.0 / (1.0 + math.exp(-5.0 * r * (population / K - 0.7)))
+            pressure = 1.0 / \
+                (1.0 + math.exp(-5.0 * r * (population / K - 0.7)))
         else:
             pressure = 0.0
 
@@ -1463,7 +1484,8 @@ class SymbioteEvolutionAlgorithm:
         trend_factor = 1.0 - min(0.5, max(-0.5, population_trend)) * 0.5
 
         return {
-            trait: min(0.8, base_rate * mineral_factor * time_factor * trend_factor)
+            trait: min(0.8, base_rate * mineral_factor *
+                       time_factor * trend_factor)
             for trait, base_rate in base_rates.items()
         }
 
