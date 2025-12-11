@@ -356,9 +356,9 @@ class NeuroEvolutionManager:
         """
         # For each dimension, pick from parent A or B
         result = []
-        for i in range(len(weights_a)):
+        for i, item in enumerate(weights_a):
             if rng.random() < 0.5:
-                result.append(weights_a[i])
+                result.append(item)
             else:
                 result.append(weights_b[i])
         return np.array(result).reshape(shape)

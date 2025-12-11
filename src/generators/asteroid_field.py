@@ -3167,8 +3167,8 @@ class AsteroidField:
         # Check surrounding area for minerals
         search_radius = 3  # Look in a 3-cell radius
 
-        for i in range(len(entity_locations[0])):
-            y, x = entity_locations[0][i], entity_locations[1][i]
+        for i, item in enumerate(entity_locations[0]):
+            y, x = item, entity_locations[1][i]
             self._check_minerals_in_radius(x, y, search_radius, minerals_available)
 
         return minerals_available

@@ -1191,9 +1191,8 @@ class SymbioteEvolutionAlgorithm:
             interaction_range: Maximum distance for colonies to interact
             aggression: Current aggression level
         """
-        for i in range(len(colony_stats)):
+        for i, colony_i in enumerate(colony_stats):
             for j in range(i + 1, len(colony_stats)):
-                colony_i = colony_stats[i]
                 colony_j = colony_stats[j]
 
                 # Calculate distance between colonies

@@ -417,14 +417,14 @@ class TestGPUClustering(unittest.TestCase):
             float: Inertia (sum of squared distances)
         """
         inertia = 0.0
-        for i in range(len(centroids)):
+        for i, item in enumerate(centroids):
             # Get points in this cluster
             cluster_points = data[labels == i]
             if len(cluster_points) == 0:
                 continue
 
             # Calculate distance from each point to centroid
-            distances = np.sum((cluster_points - centroids[i]) ** 2, axis=1)
+            distances = np.sum((cluster_points - item) ** 2, axis=1)
             inertia += np.sum(distances)
 
         return inertia

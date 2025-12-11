@@ -901,9 +901,9 @@ class ASCIITable:
         """
         col_widths = []
 
-        for i in range(len(headers)):
+        for i, item in enumerate(headers):
             # Start with header width
-            col_width = len(headers[i])
+            col_width = len(item)
 
             # Check all rows for maximum content width
             for row in rows:
@@ -989,9 +989,9 @@ class ASCIITable:
         """
         data_row = b["v"]
 
-        for i in range(len(col_widths)):
+        for i, item in enumerate(col_widths):
             cell = row[i] if i < len(row) else ""
-            data_row += cell.ljust(col_widths[i]) + b["v"]
+            data_row += cell.ljust(item) + b["v"]
 
         return data_row
 

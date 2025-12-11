@@ -914,10 +914,10 @@ class MinerEntity(BaseEntity):
         """Connect nodes with a 70% probability."""
         CONNECTION_PROBABILITY = 0.7
 
-        for i in range(len(nodes)):
+        for i, item in enumerate(nodes):
             for j in range(i + 1, len(nodes)):
                 if random.random() < CONNECTION_PROBABILITY:
-                    graph.add_edge(nodes[i], nodes[j])
+                    graph.add_edge(item, nodes[j])
 
     def _ensure_connected_graph(
         self, graph: nx.Graph, nodes: List[Tuple[int, int]]
