@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Space Muck - Advanced Procedural Generation Edition
 
@@ -3797,43 +3796,12 @@ class Game:
         # y = 50  # Initial y position
 
         # # Player section
-        # player_text = [
-        #     f"Player Position: ({self.player.x}, {self.player.y})",
-        #     f"Player Health: {self.player.health}/{self.player.max_health}"
-        # ]
-        # for text in player_text:
-        #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
-        #     y += 18  # line height
 
         # # Field section
-        # y += 10  # Add spacing
-        # field_text = [
-        #     f"Field Size: {self.asteroid_field.width}x{self.asteroid_field.height}",
-        #     f"Entities: {len(self.asteroid_field.entities)}"
-        # ]
-        # for text in field_text:
-        #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
-        #     y += 18  # line height
 
         # # Game loop section
-        # y += 10  # Add spacing
-        # game_loop_text = [
-        #     f"FPS: {perf['current_fps']:.1f}",
-        #     f"Frame: {perf['frame_counter']}"
-        # ]
-        # for text in game_loop_text:
-        #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
-        #     y += 18  # line height
 
         # # Event system section
-        # y += 10  # Add spacing
-        # event_system_text = [
-        #     f"Event Queue Size: {len(self.event_queue)}",
-        #     f"Active Handlers: {len(self.event_handlers)}"
-        # ]
-        # for text in event_system_text:
-        #     draw_text(self.screen, text, 10, y, 14, COLOR_TEXT)
-        #     y += 18  # line height
 
     # Wrapper methods for the new game loop architecture
     def handle_events_wrapper(self) -> bool:
