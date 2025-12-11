@@ -357,7 +357,8 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
             return True
         return False
 
-    def _validate_evolution_history_fields(self, evolution_history):
+    @staticmethod
+    def _validate_evolution_history_fields(evolution_history):
         """Validate that the evolution history contains the expected fields."""
         expected_fields = [
             "iteration",
@@ -615,7 +616,8 @@ class TestSymbioteEvolutionGenerator(unittest.TestCase):
         self.assertEqual(generator.evolution_algorithm.carrying_capacity, 150)
         self.assertFalse(generator.evolution_algorithm.learning_enabled)
 
-    def _visualize_colorbar(self, data, cmap, label, title):
+    @staticmethod
+    def _visualize_colorbar(data, cmap, label, title):
         """Helper method to visualize data with a colorbar."""
         if not MATPLOTLIB_AVAILABLE:
             return

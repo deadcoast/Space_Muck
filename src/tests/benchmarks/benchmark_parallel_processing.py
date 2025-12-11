@@ -110,7 +110,8 @@ class BenchmarkResults:
 
         plt.show()
 
-    def _set_plot_data(self, ax, y_label, title, suffix):
+    @staticmethod
+    def _set_plot_data(ax, y_label, title, suffix):
         ax.set_xlabel("Grid Size")
         ax.set_ylabel(y_label)
         ax.set_title(f"{title}{suffix}")

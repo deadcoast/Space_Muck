@@ -367,7 +367,8 @@ class AsteroidField:
             # Log performance regardless of success or failure
             log_performance_end("generate_field_with_generator", start_time)
 
-    def _handle_asteroid_generation_error(self, e, error_prefix):
+    @staticmethod
+    def _handle_asteroid_generation_error(e, error_prefix):
         log_exception(e)
         logging.error(f"{error_prefix}{str(e)}")
         raise
@@ -648,7 +649,8 @@ class AsteroidField:
 
         return noise_map
 
-    def _normalize_noise_map(self, noise_map: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def _normalize_noise_map(noise_map: np.ndarray) -> np.ndarray:
         """
         Normalize the noise map to a 0-1 range.
 
@@ -762,8 +764,9 @@ class AsteroidField:
             noise_val, x, y, rare_threshold, anomaly_threshold
         )
 
+    @staticmethod
     def _calculate_value_factor(
-        self, noise_val: float, asteroid_threshold: float
+        noise_val: float, asteroid_threshold: float
     ) -> float:
         """
         Calculate the value factor for mineral richness based on noise value.
@@ -852,7 +855,8 @@ class AsteroidField:
         # Place patterns in the field
         self._place_life_patterns(life_patterns, num_patterns)
 
-    def _get_life_patterns(self) -> list:
+    @staticmethod
+    def _get_life_patterns() -> list:
         """
         Define and return a list of Game of Life patterns.
 
@@ -1082,7 +1086,8 @@ class AsteroidField:
         # Generate random position within valid ranges
         return self._generate_random_position(min_x, max_x, min_y, max_y)
 
-    def _calculate_pattern_dimensions(self, pattern: list) -> Optional[tuple]:
+    @staticmethod
+    def _calculate_pattern_dimensions(pattern: list) -> Optional[tuple]:
         """
         Calculate the dimensions of a pattern.
 
@@ -1141,8 +1146,9 @@ class AsteroidField:
 
         return min_x, max_x, min_y, max_y
 
+    @staticmethod
     def _generate_random_position(
-        self, min_x: int, max_x: int, min_y: int, max_y: int
+        min_x: int, max_x: int, min_y: int, max_y: int
     ) -> tuple:
         """
         Generate a random position within the given ranges.
@@ -1407,7 +1413,8 @@ class AsteroidField:
 
         return new_grid
 
-    def _get_neighborhood_offsets(self, pattern: str) -> List[Tuple[int, int]]:
+    @staticmethod
+    def _get_neighborhood_offsets(pattern: str) -> List[Tuple[int, int]]:
         """
         Get neighborhood offsets for different cellular automaton patterns.
 
@@ -2221,7 +2228,8 @@ class AsteroidField:
         new_energy += energy_neighborhood * self.energy_spread / 8.0
         return new_energy
 
-    def _create_cell_state_masks(self, binary_grid, new_binary_grid):
+    @staticmethod
+    def _create_cell_state_masks(binary_grid, new_binary_grid):
         """Create masks for cells that are alive in current and next generation.
 
         Args:
@@ -2235,7 +2243,8 @@ class AsteroidField:
         new_alive = new_binary_grid > 0
         return old_alive, new_alive
 
-    def _create_transition_masks(self, old_alive, new_alive):
+    @staticmethod
+    def _create_transition_masks(old_alive, new_alive):
         """Create masks for different cell state transitions.
 
         Args:
@@ -2685,7 +2694,8 @@ class AsteroidField:
         """
         return self.entity_grid == race.race_id
 
-    def _identify_colonies(self, race_mask):
+    @staticmethod
+    def _identify_colonies(race_mask):
         """
         Identify connected regions (colonies) in the race mask.
 
@@ -2722,7 +2732,8 @@ class AsteroidField:
         # Update race population based on colony data
         race.population = int(race.colony_data["total_population"])
 
-    def _calculate_colony_sizes(self, race_mask, labeled_regions, num_regions):
+    @staticmethod
+    def _calculate_colony_sizes(race_mask, labeled_regions, num_regions):
         """
         Calculate the size of each colony.
 
@@ -2779,7 +2790,8 @@ class AsteroidField:
         # Update the entity grid with surviving cells
         self._update_grid_with_survivors(survival_mask, new_entity_grid, race.race_id)
 
-    def _get_adjusted_survival_set(self, race):
+    @staticmethod
+    def _get_adjusted_survival_set(race):
         """
         Get the adjusted survival set based on race hunger.
 
@@ -2794,7 +2806,8 @@ class AsteroidField:
 
         return race.survival_set.union({n + hunger_modifier for n in race.survival_set})
 
-    def _create_survival_mask(self, own_neighbors, race_mask, survival_set):
+    @staticmethod
+    def _create_survival_mask(own_neighbors, race_mask, survival_set):
         """
         Create a mask of cells that survive based on neighbor counts and rules.
 
@@ -2813,7 +2826,8 @@ class AsteroidField:
 
         return survival_mask
 
-    def _update_grid_with_survivors(self, survival_mask, new_entity_grid, race_id):
+    @staticmethod
+    def _update_grid_with_survivors(survival_mask, new_entity_grid, race_id):
         """
         Update the entity grid with cells that survive.
 
@@ -2853,7 +2867,8 @@ class AsteroidField:
         # Apply final birth probability based on hunger
         self._apply_final_birth_probability(race, birth_mask, new_entity_grid)
 
-    def _calculate_neighbor_counts(self, race_mask):
+    @staticmethod
+    def _calculate_neighbor_counts(race_mask):
         """
         Calculate the number of neighbors for each cell using convolution.
 
@@ -2868,7 +2883,8 @@ class AsteroidField:
             race_mask.astype(np.int8), neighbors_kernel, mode="constant", cval=0
         )
 
-    def _get_adjusted_birth_set(self, race):
+    @staticmethod
+    def _get_adjusted_birth_set(race):
         """
         Get the adjusted birth set based on race behavior and hunger.
 
@@ -2889,7 +2905,8 @@ class AsteroidField:
 
         return adjusted_birth_set
 
-    def _create_birth_mask(self, own_neighbors, empty_mask, birth_set):
+    @staticmethod
+    def _create_birth_mask(own_neighbors, empty_mask, birth_set):
         """
         Create a mask of cells where new entities should be born.
 
@@ -2935,7 +2952,8 @@ class AsteroidField:
 
         return birth_mask
 
-    def _apply_final_birth_probability(self, race, birth_mask, new_entity_grid):
+    @staticmethod
+    def _apply_final_birth_probability(race, birth_mask, new_entity_grid):
         """
         Apply final birth probability based on race hunger and update the grid.
 
@@ -3042,7 +3060,8 @@ class AsteroidField:
         # Process mineral availability for each race
         self._process_mineral_availability()
 
-    def _update_race_population(self, race, population):
+    @staticmethod
+    def _update_race_population(race, population):
         """
         Update a race's population and population history.
 
@@ -3178,7 +3197,8 @@ class AsteroidField:
                 rare_type = self.rare_grid[ny, nx]
                 self._update_mineral_counts(rare_type, minerals_available)
 
-    def _update_mineral_counts(self, rare_type, minerals_available):
+    @staticmethod
+    def _update_mineral_counts(rare_type, minerals_available):
         """
         Update mineral counts based on the rare type.
 

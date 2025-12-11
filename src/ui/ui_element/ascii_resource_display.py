@@ -136,7 +136,8 @@ class ASCIIResourceDisplay:
         except Exception as e:
             logging.error(f"Error updating critical stats: {e}")
 
-    def _get_state_indicator(self, state: ResourceState) -> str:
+    @staticmethod
+    def _get_state_indicator(state: ResourceState) -> str:
         """Get a text indicator for resource state.
 
         Args:

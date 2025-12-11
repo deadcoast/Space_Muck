@@ -364,7 +364,8 @@ class StageStructuredPopulation:
 
         return new_populations
 
-    def calculate_total_population(self, stage_populations: Dict[str, float]) -> float:
+    @staticmethod
+    def calculate_total_population(stage_populations: Dict[str, float]) -> float:
         """
         Calculate the total population across all stages.
 

@@ -85,10 +85,12 @@ except ImportError as e:
 
     class AsteroidGenerator(BaseGenerator):
 
-        def generate_field(self, *args, **kwargs):
+        @staticmethod
+        def generate_field(*args, **kwargs):
             return np.zeros((10, 10))
 
-        def _ring_pattern(self, *args, **kwargs):
+        @staticmethod
+        def _ring_pattern(*args, **kwargs):
             return np.zeros((10, 10))
 
 
@@ -878,7 +880,8 @@ class TestAsteroidGenerator(unittest.TestCase):
 
         return field_data
 
-    def _process_field_result(self, field_result):
+    @staticmethod
+    def _process_field_result(field_result):
         """Process field result into a dictionary of grids."""
         from contextlib import suppress
 
@@ -950,7 +953,8 @@ class TestAsteroidGenerator(unittest.TestCase):
             return False
         return True
 
-    def _prepare_grids_for_visualization(self, field_data):
+    @staticmethod
+    def _prepare_grids_for_visualization(field_data):
         """Prepare grids for visualization."""
         # Prepare grids for visualization (only include those that exist)
         grid_configs = [

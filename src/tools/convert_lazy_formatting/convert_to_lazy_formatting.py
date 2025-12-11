@@ -411,7 +411,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
         return base_string, base_str_val, first_arg.args
 
-    def _separate_format_args(self, format_args):
+    @staticmethod
+    def _separate_format_args(format_args):
         """Separate .format() arguments into positional and keyword collections.
 
         Args:
@@ -469,7 +470,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
         return self._replace_arg_with_lambda(call_node, lambda_func)
 
-    def _handle_escaped_braces(self, str_val, idx):
+    @staticmethod
+    def _handle_escaped_braces(str_val, idx):
         """Handle escaped braces in format strings.
 
         Args:
@@ -585,11 +587,13 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         final_format_str += base_str_val[idx]
         return idx + 1
 
-    def _is_opening_brace(self, base_str_val, idx):
+    @staticmethod
+    def _is_opening_brace(base_str_val, idx):
         """Check if the character at index is an opening brace."""
         return base_str_val[idx] == "{"
 
-    def _is_closing_brace(self, base_str_val, idx):
+    @staticmethod
+    def _is_closing_brace(base_str_val, idx):
         """Check if the character at index is a closing brace with possible escape sequence."""
         return (
             base_str_val[idx] == "}"
@@ -710,7 +714,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         return call_node.with_changes(args=transformed_args)
 
     # Helper: parse out placeholders from string manually (simple approach)
-    def _find_placeholders_in_string(self, s: str):
+    @staticmethod
+    def _find_placeholders_in_string(s: str):
         """
         Return a list of substring placeholders like "{}", "{0}", "{name}", "{name:0.2f}".
         This method is here mainly for illustration; we won't do advanced checks,
@@ -769,7 +774,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
             "",
         )
 
-    def _get_expression_for_positional_placeholder(self, index, pos_args):
+    @staticmethod
+    def _get_expression_for_positional_placeholder(index, pos_args):
         """Get the expression for a positional placeholder.
 
         Args:
@@ -917,7 +923,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
             )
             return self._handle_malformed_fstring(fstring_node)
 
-    def _get_raw_fstring_value(self, fstring_node: cst.FormattedString) -> str:
+    @staticmethod
+    def _get_raw_fstring_value(fstring_node: cst.FormattedString) -> str:
         """Extract the raw string value from an f-string node for pattern matching.
 
         Args:
@@ -1091,7 +1098,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         # Fallback: everything else => %s
         return "s"
 
-    def _infer_type_from_function_call(self, expr: cst.Call) -> str:
+    @staticmethod
+    def _infer_type_from_function_call(expr: cst.Call) -> str:
         """Infer type from function call based on common function naming patterns."""
         if not isinstance(expr.func, cst.Name) and not isinstance(
             expr.func, cst.Attribute
@@ -1283,12 +1291,14 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         # For other operations, check the operand types
         return self._determine_operand_result_type(expr.left, expr.right)
 
-    def _is_arithmetic_operation(self, operator) -> bool:
+    @staticmethod
+    def _is_arithmetic_operation(operator) -> bool:
         """Check if an operator is arithmetic."""
         return isinstance(operator, (cst.Add, cst.Subtract, cst.Multiply, cst.Divide))
 
+    @staticmethod
     def _determine_operand_result_type(
-        self, left: cst.BaseExpression, right: cst.BaseExpression
+        left: cst.BaseExpression, right: cst.BaseExpression
     ) -> str:
         """Determine the result type based on operand types."""
         has_float_operand = any(isinstance(op, cst.Float) for op in (left, right))
@@ -1305,7 +1315,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
     # -------------------------------------------------------------------------
     # 5) Misc Helpers
     # -------------------------------------------------------------------------
-    def _strip_string_quotes(self, val: str) -> str:
+    @staticmethod
+    def _strip_string_quotes(val: str) -> str:
         """
         Given a string literal token (e.g. '"hello"' or "'world'"),
         strip surrounding quotes. This is naive but works for typical cases.
@@ -1341,8 +1352,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         # Consider complex if we have many expressions or complex expressions with format specs
         return expression_count > 2 and (has_complex_expr or has_format_specs)
 
+    @staticmethod
     def _get_formatted_string_expressions(
-        self, formatted_string: cst.FormattedString
+        formatted_string: cst.FormattedString
     ) -> List[cst.BaseExpression]:
         """Extract all expressions from a formatted string.
 
@@ -1416,7 +1428,8 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
         return expression_count, has_complex_expr, has_format_specs, has_debug_expr
 
-    def _has_format_spec(self, part: cst.FormattedStringExpression) -> bool:
+    @staticmethod
+    def _has_format_spec(part: cst.FormattedStringExpression) -> bool:
         """Check if a formatted string expression has a format specifier."""
         return part.format_spec and part.format_spec.strip()
 
@@ -1495,8 +1508,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         # Build transformed call with format string and expressions
         return self._transform_call_with_format(call_node, fmt_value, expr_values)
 
+    @staticmethod
     def _transform_call_with_format(
-        self, call_node: cst.Call, fmt_value: str, expr_values: List[cst.BaseExpression]
+        call_node: cst.Call, fmt_value: str, expr_values: List[cst.BaseExpression]
     ) -> cst.Call:
         """Transform a call node by replacing its first argument with a format string and adding expressions as arguments.
 
@@ -1523,8 +1537,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
 
         return call_node.with_changes(args=transformed_args)
 
+    @staticmethod
     def _create_lambda_for_fstring(
-        self, fstring_node: cst.FormattedString
+        fstring_node: cst.FormattedString
     ) -> cst.Lambda:
         """
         Create a lambda function that wraps an f-string to preserve its evaluation semantics.
@@ -1543,8 +1558,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
             ),
         )
 
+    @staticmethod
     def _replace_arg_with_lambda(
-        self, call_node: cst.Call, lambda_func: cst.Lambda
+        call_node: cst.Call, lambda_func: cst.Lambda
     ) -> cst.Call:
         """
         Replace the first argument of a call with a lambda function.
@@ -1563,8 +1579,9 @@ class LazyLoggingTransformer(cst.CSTTransformer):
         return call_node.with_changes(args=transformed_args)
 
     # Error handling and validation methods
+    @staticmethod
     def _validate_format_string(
-        self, format_string: str, expressions: List[cst.BaseExpression]
+        format_string: str, expressions: List[cst.BaseExpression]
     ) -> bool:
         """
         Validate that a format string has the correct number and type of placeholders

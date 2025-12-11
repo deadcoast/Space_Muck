@@ -97,7 +97,8 @@ class AsteroidFieldVisualizer(UIElement):
             new_value = current + variation
             new_grid[y][x] = max(0, min(1.0, new_value))
 
-    def _evolve_empty_cell(self, x: int, y: int, avg: float, new_grid: list) -> None:
+    @staticmethod
+    def _evolve_empty_cell(x: int, y: int, avg: float, new_grid: list) -> None:
         """Evolve an empty cell based on neighborhood average.
 
         Args:
@@ -271,7 +272,8 @@ class AsteroidFieldVisualizer(UIElement):
         else:
             return self._get_collapsed_quantum_state(y, x)
 
-    def _get_uncertain_quantum_state(self, x, y, phase, quantum_chars):
+    @staticmethod
+    def _get_uncertain_quantum_state(x, y, phase, quantum_chars):
         """Get character and attributes for a cell in an uncertain quantum state.
 
         Args:

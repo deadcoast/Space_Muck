@@ -189,7 +189,8 @@ class ASCIIBox(UIElement):
             logging.error(f"Error updating cellular pattern: {e}")
             # Don't deactivate animation on error, just skip this update
 
-    def _calculate_mutation_rate(self, progress: float) -> float:
+    @staticmethod
+    def _calculate_mutation_rate(progress: float) -> float:
         """Calculate mutation rate based on animation progress.
 
         Args:
@@ -249,7 +250,8 @@ class ASCIIBox(UIElement):
             and 0 <= (ny := y + dy) < self.height
         )
 
-    def _apply_cell_rules(self, current: bool, neighbors: int, progress: float) -> bool:
+    @staticmethod
+    def _apply_cell_rules(current: bool, neighbors: int, progress: float) -> bool:
         """Apply modified Game of Life rules to determine next cell state.
 
         Args:
@@ -1113,8 +1115,8 @@ class ASCIIBox(UIElement):
         else:
             return self._enhance_color(base_color, red_boost=30, green_boost=30)
 
+    @staticmethod
     def _enhance_color(
-        self,
         base_color: Tuple[int, int, int],
         red_boost: int = 0,
         green_boost: int = 0,

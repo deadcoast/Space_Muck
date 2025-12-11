@@ -143,8 +143,9 @@ class EnhancedMinerEntity(MinerEntity):
 
         return matrix
 
+    @staticmethod
     def _initialize_matrix_diagonal(
-        self, matrix: List[List[float]]
+        matrix: List[List[float]]
     ) -> List[List[float]]:
         """
         Set the diagonal elements of the interaction matrix to zero.

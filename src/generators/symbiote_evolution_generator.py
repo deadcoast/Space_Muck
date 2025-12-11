@@ -385,7 +385,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
             for x in range(x_start, x_end):
                 self._try_place_colony_cell(grid, x, y, center_x, center_y, colony_size)
 
-    def _try_place_colony_cell(self, grid, x, y, center_x, center_y, colony_size):
+    @staticmethod
+    def _try_place_colony_cell(grid, x, y, center_x, center_y, colony_size):
         """
         Try to place a colony cell at the given coordinates based on distance and probability.
 
@@ -720,7 +721,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         return updated_grid, updated_genome, new_aggression, minerals
 
-    def _apply_mutations(self, genome, mutations):
+    @staticmethod
+    def _apply_mutations(genome, mutations):
         """
         Apply mutations to the genome.
 
@@ -916,7 +918,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         return updated_grid
 
-    def _create_colony_data_for_merging(self, grid):
+    @staticmethod
+    def _create_colony_data_for_merging(grid):
         """Create colony data for the merging process based on grid state.
 
         Args:
@@ -1034,7 +1037,8 @@ class SymbioteEvolutionGenerator(BaseGenerator):
 
         return None
 
-    def _create_evolution_record(self, iteration, grid, aggression, genome, minerals):
+    @staticmethod
+    def _create_evolution_record(iteration, grid, aggression, genome, minerals):
         """
         Create a record of the current evolution state.
 
@@ -1176,8 +1180,9 @@ class SymbioteEvolutionGenerator(BaseGenerator):
         log_performance_end("generate_mutation_map", start_time)
         return mutation_grid
 
+    @staticmethod
     def _calculate_mineral_consumption(
-        self, colony_grid: np.ndarray, mineral_grid: np.ndarray
+        colony_grid: np.ndarray, mineral_grid: np.ndarray
     ) -> Dict[str, float]:
         """
         Calculate mineral consumption based on colony distribution and mineral availability.

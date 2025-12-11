@@ -169,8 +169,8 @@ class AnimationIntegrator:
             return True
         return False
     
-    def get_animated_character(self, 
-                              char: str, 
+    @staticmethod
+    def get_animated_character(char: str, 
                               anim_type: AnimationStyle, 
                               progress: float, 
                               **kwargs: Any) -> str:
@@ -215,8 +215,8 @@ class AnimationIntegrator:
         # Default: return the original character
         return char
     
-    def get_animated_color(self, 
-                          base_color: Tuple[int, int, int], 
+    @staticmethod
+    def get_animated_color(base_color: Tuple[int, int, int], 
                           anim_type: AnimationStyle, 
                           progress: float, 
                           phase: float = 0.0, 

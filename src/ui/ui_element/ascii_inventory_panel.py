@@ -490,8 +490,8 @@ class ASCIIInventoryPanel:
 
         return y
 
+    @staticmethod
     def _draw_column_headers(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,
@@ -591,8 +591,8 @@ class ASCIIInventoryPanel:
 
         return y
 
+    @staticmethod
     def _get_truncated_item_name(
-        self,
         item_id: str,
         font: pygame.font.Font,
         content_x: int,

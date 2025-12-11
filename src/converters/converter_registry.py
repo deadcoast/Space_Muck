@@ -378,8 +378,9 @@ class ConverterRegistry:
         self.active_chains[chain_id] = new_chain
         return chain_id
 
+    @staticmethod
     def get_optimization_suggestions(
-        self, converter: Converter
+        converter: Converter
     ) -> List[OptimizationSuggestion]:
         """
         Get optimization suggestions for a converter.

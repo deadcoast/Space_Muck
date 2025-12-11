@@ -243,8 +243,9 @@ class GameContext:
 
         logging.info(f"Game state transitioned: {self.previous_state} -> {new_state}")
 
+    @staticmethod
     def _is_valid_transition(
-        self, current_state: GameState, new_state: GameState
+        current_state: GameState, new_state: GameState
     ) -> bool:
         """
         Check if a state transition is valid.

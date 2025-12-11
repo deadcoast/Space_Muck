@@ -354,7 +354,8 @@ class UIElement:
             # Reset to safe state
             self.animation["active"] = False
 
-    def _apply_easing(self, progress: float, easing_type: str) -> float:
+    @staticmethod
+    def _apply_easing(progress: float, easing_type: str) -> float:
         """Apply easing function to the progress value.
 
         Args:
@@ -546,8 +547,8 @@ class UIElement:
             # Return a safe default rect
             return pygame.Rect(self.x, self.y, self.width, self.height)
 
+    @staticmethod
     def _draw_char(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,
@@ -706,7 +707,8 @@ class UIElement:
 
         return neighbors
 
-    def _apply_game_of_life_rules(self, current_state: bool, neighbors: int) -> bool:
+    @staticmethod
+    def _apply_game_of_life_rules(current_state: bool, neighbors: int) -> bool:
         """Apply Conway's Game of Life rules to determine the next state of a cell.
 
         Args:
@@ -1254,8 +1256,9 @@ class UIElement:
                     neighbors.append(probs[ny][nx])
         return neighbors
 
+    @staticmethod
     def _calculate_new_probability(
-        self, current_prob: float, neighbors: List[float]
+        current_prob: float, neighbors: List[float]
     ) -> float:
         """Calculate new probability value based on neighbors and randomness.
 

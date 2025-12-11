@@ -57,7 +57,8 @@ class TestGPUUtils(unittest.TestCase):
         self.assertIsInstance(backends, list)
         self.assertGreater(len(backends), 0)  # At least CPU should be available
 
-    def test_array_transfer(self):
+    @staticmethod
+    def test_array_transfer():
         """Test array transfer between CPU and GPU."""
         # Create a test array
         rng = np.random.default_rng(42)  # Use a fixed seed for reproducibility

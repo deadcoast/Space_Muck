@@ -244,8 +244,9 @@ class TestMinerEntity(unittest.TestCase):
         # Create a simple deterministic evolution algorithm for testing
         # This replaces any mock-based approaches with a real implementation
         class SimpleEvolutionAlgorithm:
+            @staticmethod
             def process_mineral_feeding(
-                self, race_id, minerals, population, aggression=0.2
+                race_id, minerals, population, aggression=0.2
             ):
                 # Deterministic response for testing
                 # Calculate new population based on minerals

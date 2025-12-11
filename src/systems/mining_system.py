@@ -167,8 +167,9 @@ class MiningSystem:
 
         return mining_targets
 
+    @staticmethod
     def _resolve_mining_claim_conflicts(
-        self, mining_targets: Dict[int, List[Tuple[int, int]]]
+        mining_targets: Dict[int, List[Tuple[int, int]]]
     ) -> Dict[Tuple[int, int], List[int]]:
         """
         Resolve mining conflicts where multiple races target the same cell.

@@ -187,8 +187,8 @@ class MultiObjectiveOptimizer:
 
         return mineral_order, bounds, constraints, x0, objective
 
+    @staticmethod
     def _extract_solution(
-        self,
         result,
         mineral_order: List[str],
         total_minerals: Dict[str, float],
@@ -294,8 +294,8 @@ class MultiObjectiveOptimizer:
 
         return pareto_front
 
+    @staticmethod
     def visualize_pareto_front(
-        self,
         pareto_solutions: List[ParetoOptimalSolution],
         title: str = "Pareto Front: Profit vs. Appeasement",
     ) -> None:
@@ -336,8 +336,8 @@ class MultiObjectiveOptimizer:
         plt.tight_layout()
         plt.show()
 
+    @staticmethod
     def find_solution_with_desired_tradeoff(
-        self,
         pareto_solutions: List[ParetoOptimalSolution],
         preference_function: Callable[[Dict[str, float]], float],
     ) -> Optional[ParetoOptimalSolution]:
@@ -362,8 +362,9 @@ class MultiObjectiveOptimizer:
         best_index = np.argmax(scores)
         return pareto_solutions[best_index]
 
+    @staticmethod
     def weighted_sum_preference(
-        self, profit_weight: float, appeasement_weight: float
+        profit_weight: float, appeasement_weight: float
     ) -> Callable[[Dict[str, float]], float]:
         """
         Create a weighted sum preference function for finding solutions.

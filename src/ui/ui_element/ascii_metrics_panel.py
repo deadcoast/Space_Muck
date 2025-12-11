@@ -123,7 +123,8 @@ class ASCIIMetricsPanel:
                 if len(self.history[key]) > self.max_history:
                     self.history[key].pop(0)
 
-    def _get_trend_indicator(self, values: List[float]) -> str:
+    @staticmethod
+    def _get_trend_indicator(values: List[float]) -> str:
         """Get trend indicator based on recent values."""
         if len(values) < 2:
             return "-"
@@ -147,8 +148,8 @@ class ASCIIMetricsPanel:
             if condition(ratio)
         )
 
+    @staticmethod
     def _draw_metric_label(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,
@@ -161,7 +162,8 @@ class ASCIIMetricsPanel:
         draw_text(surface, text, x, y, size=font.get_height(), color=color)
         return font.size(text)[0]
 
-    def _get_bar_chars(self, fill_width: int, bar_width: int) -> str:
+    @staticmethod
+    def _get_bar_chars(fill_width: int, bar_width: int) -> str:
         """Generate the bar string with appropriate characters."""
         chars = ["=", "#", "%", "@"]
         return "".join(

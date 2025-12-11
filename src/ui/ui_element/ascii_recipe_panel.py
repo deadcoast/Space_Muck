@@ -105,8 +105,8 @@ class ASCIIRecipePanel:
         # This is a placeholder method that should be overridden by the game code
         pass
 
+    @staticmethod
     def _draw_recipe_entry(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,

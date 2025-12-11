@@ -500,7 +500,8 @@ class ASCIIUIDemo:
             y += 30
         return y
 
-    def get_converter_tooltip_lines(self, conv: dict) -> list:
+    @staticmethod
+    def get_converter_tooltip_lines(conv: dict) -> list:
         """Get the tooltip lines for a converter."""
         lines = [
             f"Status: {conv['status'].title()}",
@@ -517,7 +518,8 @@ class ASCIIUIDemo:
             )
         return lines
 
-    def get_recipe_tooltip_lines(self, recipe: dict) -> list:
+    @staticmethod
+    def get_recipe_tooltip_lines(recipe: dict) -> list:
         """Get the tooltip lines for a recipe."""
         return [
             f"Type: {recipe['type']}",

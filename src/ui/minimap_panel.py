@@ -325,7 +325,8 @@ class ASCIIMinimapPanel:
 
         return panel_rect
 
-    def _get_cell_color(self, cell_type: str) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_cell_color(cell_type: str) -> Tuple[int, int, int]:
         """Get the appropriate color for a cell type."""
         colors = {
             "empty": (100, 100, 100),  # Gray
@@ -337,7 +338,8 @@ class ASCIIMinimapPanel:
         }
         return colors.get(cell_type, COLOR_TEXT)
 
-    def _get_pulsing_color(self, pulse_factor: float) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_pulsing_color(pulse_factor: float) -> Tuple[int, int, int]:
         """Get a pulsing color based on the animation state."""
         base_color = (0, 255, 255)  # Cyan
         return tuple(int(c * pulse_factor) for c in base_color)

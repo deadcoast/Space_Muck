@@ -731,7 +731,8 @@ class ChainManagementInterface:
             "flow_rates": flow_rates,
         }
 
-    def _create_converter_info(self, converter: Converter, step: ChainStep) -> Dict:
+    @staticmethod
+    def _create_converter_info(converter: Converter, step: ChainStep) -> Dict:
         """Create converter info dictionary for visualization.
 
         Args:
@@ -796,7 +797,8 @@ class ChainManagementInterface:
 
         return type_counts
 
-    def _wrap_text(self, text: str, width: int) -> List[str]:
+    @staticmethod
+    def _wrap_text(text: str, width: int) -> List[str]:
         """
         Wrap text to fit within a given width.
 
@@ -1051,7 +1053,8 @@ class EfficiencyMonitor:
 
         return y_pos + 1  # Add spacing
 
-    def _get_factor_color(self, factor_value: float) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_factor_color(factor_value: float) -> Tuple[int, int, int]:
         """
         Get color based on factor value.
 
@@ -1110,7 +1113,8 @@ class EfficiencyMonitor:
 
         return y_pos + 3  # Space for next suggestion
 
-    def _get_gain_color(self, gain: float) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_gain_color(gain: float) -> Tuple[int, int, int]:
         """
         Get color based on potential gain value.
 
@@ -1127,7 +1131,8 @@ class EfficiencyMonitor:
         else:  # Gray for low impact
             return (200, 200, 200)
 
-    def _get_cost_color(self, cost: float) -> Tuple[int, int, int]:
+    @staticmethod
+    def _get_cost_color(cost: float) -> Tuple[int, int, int]:
         """
         Get color based on cost value.
 

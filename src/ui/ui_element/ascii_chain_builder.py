@@ -93,8 +93,9 @@ class ASCIIChainBuilder:
             print(f"Saving chain with {len(self.selected_converters)} converters")
             # This would be handled by the main game logic
 
+    @staticmethod
     def _check_compatibility(
-        self, from_conv: Dict[str, Any], to_conv: Dict[str, Any]
+        from_conv: Dict[str, Any], to_conv: Dict[str, Any]
     ) -> bool:
         """Check if two converters can be connected.
 
@@ -111,8 +112,8 @@ class ASCIIChainBuilder:
         inputs = to_conv.get("inputs", {})
         return bool(set(outputs) & set(inputs))
 
+    @staticmethod
     def _draw_converter_entry(
-        self,
         surface: pygame.Surface,
         font: pygame.font.Font,
         x: int,

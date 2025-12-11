@@ -465,7 +465,8 @@ class ProceduralGenerator(BaseGenerator):
 
         return edges
 
-    def _has_empty_neighbor(self, grid: np.ndarray, y: int, x: int) -> bool:
+    @staticmethod
+    def _has_empty_neighbor(grid: np.ndarray, y: int, x: int) -> bool:
         """
         Check if a cell has at least one empty neighboring cell.
 

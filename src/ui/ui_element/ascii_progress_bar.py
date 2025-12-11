@@ -115,7 +115,8 @@ class ASCIIProgressBar(UIElement):
             logging.error(f"Error setting progress: {e}")
             self.progress = target_progress  # Fallback to direct setting
 
-    def _get_quantum_filled_text(self, filled_width: int) -> str:
+    @staticmethod
+    def _get_quantum_filled_text(filled_width: int) -> str:
         """Generate filled text for quantum style.
 
         Args:

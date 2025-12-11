@@ -263,7 +263,8 @@ class ASCIITable:
         }
         self.animation["duration"] = durations.get(anim_type, 0.3)
 
-    def _safe_sort_key(self, row: List[Any], column_index: int) -> Any:
+    @staticmethod
+    def _safe_sort_key(row: List[Any], column_index: int) -> Any:
         """Get a safe sort key for a row at the specified column index.
 
         Args:
@@ -611,7 +612,8 @@ class ASCIITable:
 
             current_x += width + 5  # Add spacing between columns
 
-    def _format_cell_text(self, cell_text: str, width: int) -> str:
+    @staticmethod
+    def _format_cell_text(cell_text: str, width: int) -> str:
         """Format cell text, truncating if necessary.
 
         Args:
@@ -811,8 +813,9 @@ class ASCIITable:
         # Render the table
         return self._render_ascii_table_strings(table_strings, x, y, font, color)
 
+    @staticmethod
     def _initialize_ascii_table_font(
-        self, font: Optional[pygame.font.Font]
+        font: Optional[pygame.font.Font]
     ) -> pygame.font.Font:
         """Initialize font for ASCII table drawing.
 
@@ -832,7 +835,8 @@ class ASCIITable:
         except Exception:
             return pygame.font.Font(None, 16)
 
-    def _get_border_chars_for_style(self, border_style: str) -> dict:
+    @staticmethod
+    def _get_border_chars_for_style(border_style: str) -> dict:
         """Get border characters based on style.
 
         Args:
@@ -882,8 +886,9 @@ class ASCIITable:
 
         return borders.get(border_style, borders["single"])
 
+    @staticmethod
     def _calculate_ascii_table_col_widths(
-        self, headers: List[str], rows: List[List[str]]
+        headers: List[str], rows: List[List[str]]
     ) -> List[int]:
         """Calculate optimal column widths based on content.
 
@@ -910,7 +915,8 @@ class ASCIITable:
 
         return col_widths
 
-    def _generate_top_border(self, col_widths: List[int], b: dict) -> str:
+    @staticmethod
+    def _generate_top_border(col_widths: List[int], b: dict) -> str:
         """Generate the top border of the table.
 
         Args:
@@ -928,8 +934,9 @@ class ASCIITable:
 
         return top_border
 
+    @staticmethod
     def _generate_header_row(
-        self, headers: List[str], col_widths: List[int], b: dict
+        headers: List[str], col_widths: List[int], b: dict
     ) -> str:
         """Generate the header row of the table.
 
@@ -948,7 +955,8 @@ class ASCIITable:
 
         return header_row
 
-    def _generate_separator(self, col_widths: List[int], b: dict) -> str:
+    @staticmethod
+    def _generate_separator(col_widths: List[int], b: dict) -> str:
         """Generate the separator between header and data rows.
 
         Args:
@@ -967,7 +975,8 @@ class ASCIITable:
 
         return separator
 
-    def _generate_data_row(self, row: List[str], col_widths: List[int], b: dict) -> str:
+    @staticmethod
+    def _generate_data_row(row: List[str], col_widths: List[int], b: dict) -> str:
         """Generate a data row string.
 
         Args:
@@ -986,7 +995,8 @@ class ASCIITable:
 
         return data_row
 
-    def _generate_bottom_border(self, col_widths: List[int], b: dict) -> str:
+    @staticmethod
+    def _generate_bottom_border(col_widths: List[int], b: dict) -> str:
         """Generate the bottom border of the table.
 
         Args:

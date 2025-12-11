@@ -1238,7 +1238,8 @@ class Fleet:
         if neighbor not in [pos for _, pos in open_set]:
             heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
-    def _heuristic(self, a: Tuple[int, int], b: Tuple[int, int]) -> float:
+    @staticmethod
+    def _heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
         """
         Calculate heuristic (estimated distance) between two points.
 
@@ -1252,7 +1253,8 @@ class Fleet:
         # Manhattan distance
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    def _distance(self, a: Tuple[int, int], b: Tuple[int, int]) -> float:
+    @staticmethod
+    def _distance(a: Tuple[int, int], b: Tuple[int, int]) -> float:
         """
         Calculate actual distance between two points.
 
@@ -1266,7 +1268,8 @@ class Fleet:
         # Euclidean distance
         return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
-    def _get_neighbors(self, position: Tuple[int, int]) -> List[Tuple[int, int]]:
+    @staticmethod
+    def _get_neighbors(position: Tuple[int, int]) -> List[Tuple[int, int]]:
         """
         Get all valid neighboring positions.
 
@@ -1294,8 +1297,8 @@ class Fleet:
 
         return neighbors
 
+    @staticmethod
     def _reconstruct_path(
-        self,
         came_from: Dict[Tuple[int, int], Tuple[int, int]],
         current: Tuple[int, int],
     ) -> List[Tuple[int, int]]:
@@ -1554,7 +1557,8 @@ class Fleet:
         if distance <= attack_range:
             self._execute_attack(delta_time)
 
-    def _get_ideal_combat_distance(self, stance: str) -> float:
+    @staticmethod
+    def _get_ideal_combat_distance(stance: str) -> float:
         """
         Determine the ideal combat distance based on the fleet's stance.
 
@@ -1719,7 +1723,8 @@ class Fleet:
             formation, self._distribute_damage_evenly
         )
 
-    def _handle_destroyed_ships(self, target_fleet: "Fleet") -> None:
+    @staticmethod
+    def _handle_destroyed_ships(target_fleet: "Fleet") -> None:
         """
         Remove destroyed ships and check if the fleet is empty.
 
@@ -1737,7 +1742,8 @@ class Fleet:
             logging.info(f"Fleet {target_fleet.fleet_id} has been destroyed")
             target_fleet.is_active = False
 
-    def _distribute_damage_evenly(self, target_fleet: "Fleet", damage: float) -> None:
+    @staticmethod
+    def _distribute_damage_evenly(target_fleet: "Fleet", damage: float) -> None:
         """
         Distribute damage evenly among all ships.
 
@@ -1753,8 +1759,9 @@ class Fleet:
         for ship in target_fleet.ships:
             ship.health -= damage_per_ship
 
+    @staticmethod
     def _distribute_damage_front_heavy(
-        self, target_fleet: "Fleet", damage: float
+        target_fleet: "Fleet", damage: float
     ) -> None:
         """
         Distribute damage with more damage to front ships (column formation).
@@ -1778,8 +1785,9 @@ class Fleet:
             for ship in target_fleet.ships[1:]:
                 ship.health -= damage_per_remaining_ship
 
+    @staticmethod
     def _distribute_damage_point_heavy(
-        self, target_fleet: "Fleet", damage: float
+        target_fleet: "Fleet", damage: float
     ) -> None:
         """
         Distribute damage with more damage to the point ship (wedge formation).
@@ -1824,7 +1832,8 @@ class Fleet:
             # If only one ship, it takes all damage
             target_fleet.ships[0].health -= damage
 
-    def _apply_damage_to_flank_and_others(self, target_fleet, damage):
+    @staticmethod
+    def _apply_damage_to_flank_and_others(target_fleet, damage):
         flank_ship = target_fleet.ships[-1]
         flank_ship_damage = damage * 0.4
         remaining_damage = damage * 0.6
@@ -1858,7 +1867,8 @@ class Fleet:
             # If no flagship or only one ship, distribute evenly
             self._distribute_damage_evenly(target_fleet, damage)
 
-    def _apply_damage_with_flagship_protection(self, damage, target_fleet):
+    @staticmethod
+    def _apply_damage_with_flagship_protection(damage, target_fleet):
         flagship_damage = damage * 0.1
         remaining_damage = damage * 0.9
 
@@ -1873,7 +1883,8 @@ class Fleet:
         for ship in other_ships:
             ship.health -= damage_per_remaining_ship
 
-    def _distribute_damage_randomly(self, target_fleet: "Fleet", damage: float) -> None:
+    @staticmethod
+    def _distribute_damage_randomly(target_fleet: "Fleet", damage: float) -> None:
         """
         Distribute damage randomly among ships (scatter formation).
 

@@ -104,7 +104,8 @@ class AdvancedPatternAnalyzer:
                 return recent_time - compare_time
         return 0
 
-    def detect_glider(self) -> int:
+    @staticmethod
+    def detect_glider() -> int:
         """
         A placeholder for more advanced detection of moving patterns like gliders.
         Typically requires analyzing translations across multiple timesteps, or
@@ -258,8 +259,8 @@ class ColonyMerger:
             # Remove source_id from colony_data
             del colony_data[source_id]
 
+    @staticmethod
     def _merge_genomes(
-        self,
         target_genome: Dict[str, float],
         source_genome: Dict[str, float],
         alpha: float,

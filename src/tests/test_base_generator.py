@@ -257,7 +257,8 @@ class TestBaseGenerator(unittest.TestCase):
 
         return new_grid
 
-    def _count_live_neighbors(self, grid, x, y, grid_size):
+    @staticmethod
+    def _count_live_neighbors(grid, x, y, grid_size):
         """Count the number of live neighbors for a cell at (x, y)."""
         neighbors = 0
         for dy in [-1, 0, 1]:
@@ -268,7 +269,8 @@ class TestBaseGenerator(unittest.TestCase):
                 neighbors += grid[ny, nx]
         return neighbors
 
-    def _apply_conway_rule(self, cell_state, neighbors):
+    @staticmethod
+    def _apply_conway_rule(cell_state, neighbors):
         """Apply Conway's Game of Life rules to a cell."""
         if cell_state == 1:
             # Cell is alive
@@ -637,7 +639,8 @@ class TestBaseGenerator(unittest.TestCase):
             noise_generator=self.mock_noise_generator,
         )
 
-    def _setup_clustering_mock(self, mock_executor):
+    @staticmethod
+    def _setup_clustering_mock(mock_executor):
         """Set up the mock for parallel clustering tests."""
         mock_future = MagicMock()
         mock_result = np.ones((250, 250)) * 1.5  # Simulated result with elevated values
@@ -675,14 +678,16 @@ class TestBaseGenerator(unittest.TestCase):
                 "Result shape should match input grid shape for parallel processing",
             )
 
-    def _create_glider_grid(self):
+    @staticmethod
+    def _create_glider_grid():
         """Create a grid with a glider pattern for cellular automaton tests."""
         controlled_grid = np.zeros((250, 250))
         glider = np.array([[0, 1, 0], [0, 0, 1], [1, 1, 1]])
         controlled_grid[10:13, 10:13] = glider
         return controlled_grid
 
-    def _setup_ca_mock(self, mock_executor):
+    @staticmethod
+    def _setup_ca_mock(mock_executor):
         """Set up the mock for parallel cellular automaton tests."""
         mock_future = MagicMock()
 

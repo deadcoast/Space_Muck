@@ -186,7 +186,8 @@ class TestFixersIntegration(unittest.TestCase):
             # Verify the result
             self.assertTrue(result)
 
-    def _setup_log_context_mock(self, mock_log_context):
+    @staticmethod
+    def _setup_log_context_mock(mock_log_context):
         """Set up the mock for LogContext."""
         # Mock the context manager behavior
         mock_log_context.return_value.__enter__.return_value = mock_log_context

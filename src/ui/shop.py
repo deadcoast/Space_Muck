@@ -423,7 +423,8 @@ class Shop:
 
         return filtered_options
 
-    def _get_option_cost(self, option: Dict[str, Any], player: Player) -> int:
+    @staticmethod
+    def _get_option_cost(option: Dict[str, Any], player: Player) -> int:
         """
         Calculate the cost of an option considering current level.
 
@@ -779,8 +780,9 @@ class Shop:
 
         return True
 
+    @staticmethod
     def _unlock_anomaly_detection(
-        self, player: Player, field: AsteroidField, notifier: NotificationManager
+        player: Player, field: AsteroidField, notifier: NotificationManager
     ) -> None:
         """Unlock anomaly detection feature."""
         # Set field anomaly detection enabled
@@ -798,8 +800,9 @@ class Shop:
             importance=3,
         )
 
+    @staticmethod
     def _unlock_symbiote_communication(
-        self, player: Player, field: AsteroidField, notifier: NotificationManager
+        player: Player, field: AsteroidField, notifier: NotificationManager
     ) -> None:
         """Unlock symbiote communication feature."""
         # Enable communication
@@ -1029,8 +1032,9 @@ class Shop:
 
         return bg_color, border_color, text_color
 
+    @staticmethod
     def _draw_item_icon(
-        self, surface: pygame.Surface, item_rect: pygame.Rect, option: Dict[str, Any]
+        surface: pygame.Surface, item_rect: pygame.Rect, option: Dict[str, Any]
     ) -> None:
         """Draw the icon for a shop item."""
         icon_size = 24
@@ -1055,8 +1059,9 @@ class Shop:
             align="center",
         )
 
+    @staticmethod
     def _draw_selection_arrow(
-        self, surface: pygame.Surface, item_rect: pygame.Rect
+        surface: pygame.Surface, item_rect: pygame.Rect
     ) -> None:
         """Draw the selection arrow for a selected item."""
         arrow_size = 20
@@ -1239,8 +1244,9 @@ class Shop:
             COLOR_TEXT,
         )
 
+    @staticmethod
     def _draw_tooltip(
-        self, surface: pygame.Surface, name: str, description: str, level: int
+        surface: pygame.Surface, name: str, description: str, level: int
     ) -> None:
         """Draw tooltip for selected item."""
         # Create tooltip rectangle

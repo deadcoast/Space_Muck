@@ -56,7 +56,8 @@ class InteractiveMenu:
         }
         self.last_message = ""
 
-    def clear_screen(self):
+    @staticmethod
+    def clear_screen():
         """Clear the terminal screen."""
         os.system("cls" if os.name == "nt" else "clear")
 
@@ -93,7 +94,8 @@ class InteractiveMenu:
             f"  [S] Skip complex expressions: {'ON' if self.options['skip_complex'] else 'OFF'}"
         )
 
-    def draw_actions(self):
+    @staticmethod
+    def draw_actions():
         """Draw the available actions."""
         print("\nACTIONS:")
         print("  [1] Add file(s)")
