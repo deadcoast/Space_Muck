@@ -206,7 +206,7 @@ class Game:
             pygame.init()
             pygame.mixer.init()  # Initialize sound system
             pygame.font.init()  # Ensure fonts are initialized
-            
+
             # Initialize game clock
             self.clock = pygame.time.Clock()
 
@@ -235,7 +235,8 @@ class Game:
             from ui.minimap_panel import ASCIIMinimapPanel
 
             self.game_screen = ASCIIGameScreen(
-                pygame.Rect(10, 10, WINDOW_WIDTH - 20, WINDOW_HEIGHT - 20), "SPACE MUCK"
+                pygame.Rect(10, 10, WINDOW_WIDTH - 20,
+                            WINDOW_HEIGHT - 20), "SPACE MUCK"
             )
 
             # Initialize minimap panel in the bottom right corner
@@ -315,7 +316,8 @@ class Game:
         # Update average time in state
         if old_state:
             if last_transition := next(
-                (t for t in reversed(self.state_history[:-1]) if t["to"] == old_state),
+                (t for t in reversed(
+                    self.state_history[:-1]) if t["to"] == old_state),
                 None,
             ):
                 time_in_state = timestamp - last_transition["timestamp"]
@@ -339,8 +341,10 @@ class Game:
 
         # Initialize state history tracking
         self._state_history = []
-        self._state_timestamps = {state: 0.0 for state in GAME_CONFIG["states"]}
-        self._state_transition_counts = {state: 0 for state in GAME_CONFIG["states"]}
+        self._state_timestamps = {
+            state: 0.0 for state in GAME_CONFIG["states"]}
+        self._state_transition_counts = {
+            state: 0 for state in GAME_CONFIG["states"]}
 
         # Initialize display and automation settings
         self.show_debug = False
@@ -407,10 +411,12 @@ class Game:
         try:
             # Validate state exists
             if new_state not in GAME_CONFIG["states"].values():
-                raise InvalidStateTransitionError(f"Invalid state: {new_state}")
+                raise InvalidStateTransitionError(
+                    f"Invalid state: {new_state}")
 
             # Validate transition is allowed
-            allowed_transitions = GAME_CONFIG["state_transitions"].get(self.state, [])
+            allowed_transitions = GAME_CONFIG["state_transitions"].get(
+                self.state, [])
             if new_state not in allowed_transitions:
                 raise InvalidStateTransitionError(
                     f"Cannot transition from {self.state} to {new_state}"
@@ -431,14 +437,16 @@ class Game:
                     0 <= self.player.x < self.field.width
                     and 0 <= self.player.y < self.field.height
                 ):
-                    raise StateValidationError("Player position invalid for play state")
+                    raise StateValidationError(
+                        "Player position invalid for play state")
 
             elif new_state == GAME_CONFIG["states"]["game_over"]:
                 # Log game stats before transitioning
                 logging.info(f"Game Over - Final Stats: {self.stats}")
 
             # Log successful validation
-            logging.debug(f"Validated transition from {self.state} to {new_state}")
+            logging.debug(
+                f"Validated transition from {self.state} to {new_state}")
             return True
 
         except (InvalidStateTransitionError, StateValidationError) as e:
@@ -613,7 +621,8 @@ class Game:
         event_bus = get_event_bus()
         event_bus.subscribe("state_change", self._handle_state_change)
         event_bus.subscribe("resource_update", self._handle_resource_update)
-        event_bus.subscribe("performance_warning", self._handle_performance_warning)
+        event_bus.subscribe("performance_warning",
+                            self._handle_performance_warning)
 
     def _handle_state_change(self, event_data: Dict[str, Any]) -> None:
         """Handle game state change events.
@@ -633,7 +642,8 @@ class Game:
         self.previous_state = self.state
         self.state = new_state
         self._state_timestamps[new_state] = time.time()
-        logging.info(f"Game state changed from {self.previous_state} to {self.state}")
+        logging.info(
+            f"Game state changed from {self.previous_state} to {self.state}")
 
     def _handle_resource_update(self, event_data: Dict[str, Any]) -> None:
         """Handle resource update events.
@@ -765,7 +775,8 @@ class Game:
 
         # Log race creation
         for race in self.available_races:
-            logging.info(f"Created race {race.race_id} with trait {race.trait}")
+            logging.info(
+                f"Created race {race.race_id} with trait {race.trait}")
 
         # Add races to field
         for race in self.available_races:
@@ -801,7 +812,8 @@ class Game:
         except Exception as e:
             logging.error(f"Error initializing visuals: {e}")
             log_exception(e)
-            raise GameInitializationError("Failed to initialize visual settings") from e
+            raise GameInitializationError(
+                "Failed to initialize visual settings") from e
 
     def _init_visual_config(self) -> None:
         """Initialize visual configuration with type-safe defaults."""
@@ -868,7 +880,8 @@ class Game:
         center = (self.cursor_size // 2, self.cursor_size // 2)
         radius = self.cursor_size // 2
 
-        pygame.draw.circle(self.cursor_surface, config["inner_color"], center, radius)
+        pygame.draw.circle(self.cursor_surface,
+                           config["inner_color"], center, radius)
         pygame.draw.circle(
             self.cursor_surface,
             config["outline_color"],
@@ -886,13 +899,17 @@ class Game:
         self.notifier.add(
             "Press SPACE to mine asteroids", category="system", duration=240
         )
-        self.notifier.add("Press S to open the shop", category="system", duration=240)
+        self.notifier.add("Press S to open the shop",
+                          category="system", duration=240)
         self.notifier.add(
             "Press N to toggle notification panel", category="system", duration=240
         )
-        self.notifier.add("Press M to toggle minimap", category="system", duration=240)
-        self.notifier.add("Use +/- to zoom in/out", category="system", duration=240)
-        self.notifier.add("Press F to feed symbiotes", category="system", duration=240)
+        self.notifier.add("Press M to toggle minimap",
+                          category="system", duration=240)
+        self.notifier.add("Use +/- to zoom in/out",
+                          category="system", duration=240)
+        self.notifier.add("Press F to feed symbiotes",
+                          category="system", duration=240)
         self.notifier.add(
             "Press A to toggle auto-mining", category="system", duration=240
         )
@@ -1418,7 +1435,8 @@ class Game:
             # Move player there
             self.player.move(dx, dy, self.field)
             self.player.has_moved = True  # For encounter checks
-            logging.debug(f"Player moved to grid position ({grid_x}, {grid_y})")
+            logging.debug(
+                f"Player moved to grid position ({grid_x}, {grid_y})")
         else:
             logging.debug(f"Invalid grid position: ({grid_x}, {grid_y})")
 
@@ -1533,7 +1551,8 @@ class Game:
 
             # Show notification if something was mined
             if minerals_mined > 0:
-                self.notifier.add(f"Mined {minerals_mined} minerals", category="mining")
+                self.notifier.add(
+                    f"Mined {minerals_mined} minerals", category="mining")
                 self.stats["total_mined"] += minerals_mined
 
     def feed_symbiotes(self) -> None:
@@ -1542,7 +1561,8 @@ class Game:
         feed_amount = min(100, self.player.currency // 2)
 
         if feed_amount <= 0:
-            self.notifier.add("Not enough currency to feed symbiotes", category="race")
+            self.notifier.add(
+                "Not enough currency to feed symbiotes", category="race")
             return
 
         # Feed symbiotes
@@ -1614,7 +1634,8 @@ class Game:
             log_performance_end("Update frame", update_start)
         except Exception as e:
             log_exception("Error in update process", e)
-            self.notifier.add(f"Error: {str(e)}", category="error", importance=3)
+            self.notifier.add(f"Error: {str(e)}",
+                              category="error", importance=3)
 
     def _update_time_tracking(self) -> None:
         """Update time-related tracking and statistics."""
@@ -1668,8 +1689,10 @@ class Game:
         try:
             # Start performance timing with detailed context
             play_state_start = log_performance_start("Play state update")
-            update_context = {"frame": self.frame_counter, "game_time": self.game_time}
-            logging.debug(f"Starting play state update for frame {self.frame_counter}")
+            update_context = {"frame": self.frame_counter,
+                              "game_time": self.game_time}
+            logging.debug(
+                f"Starting play state update for frame {self.frame_counter}")
 
             # System update pipeline - ordered by dependencies and data flow
             # Each stage has error isolation to prevent cascading failures
@@ -1677,9 +1700,11 @@ class Game:
             # STAGE 1: Input Processing and Player State
             try:
                 # Handle player movement and input
-                movement_start = log_performance_start("Player movement processing")
+                movement_start = log_performance_start(
+                    "Player movement processing")
                 self.handle_player_movement()
-                log_performance_end("Player movement processing", movement_start)
+                log_performance_end(
+                    "Player movement processing", movement_start)
 
                 # Calculate player context for other systems
                 player_stats = {
@@ -1727,9 +1752,11 @@ class Game:
             # STAGE 3: Encounter and Combat Systems
             try:
                 # Process encounters and potential combat
-                encounter_start = log_performance_start("Encounter and combat systems")
+                encounter_start = log_performance_start(
+                    "Encounter and combat systems")
                 self.process_encounters()
-                log_performance_end("Encounter and combat systems", encounter_start)
+                log_performance_end(
+                    "Encounter and combat systems", encounter_start)
 
                 # Track encounter contexts for statistics and future reference
                 encounter_stats = {
@@ -1769,7 +1796,8 @@ class Game:
                 )
                 self.handle_auto_mining()
                 # Future: Add trading system update here
-                log_performance_end("Economy and resources processing", economy_start)
+                log_performance_end(
+                    "Economy and resources processing", economy_start)
 
                 # Track economic context
                 economy_stats = {
@@ -1780,7 +1808,8 @@ class Game:
                 update_context["economy"] = economy_stats
 
             except Exception as stage5_error:
-                log_exception("Error in Economy processing (Stage 5)", stage5_error)
+                log_exception(
+                    "Error in Economy processing (Stage 5)", stage5_error)
                 self.notifier.add(
                     "Resource system error", category="error", importance=2
                 )
@@ -1788,7 +1817,8 @@ class Game:
             # STAGE 6: Fleet and Unit Management
             try:
                 # Update player fleet and unit behaviors
-                fleet_start = log_performance_start("Fleet management processing")
+                fleet_start = log_performance_start(
+                    "Fleet management processing")
                 self.update_player_fleet()
                 log_performance_end("Fleet management processing", fleet_start)
 
@@ -1804,7 +1834,8 @@ class Game:
                 log_exception(
                     "Error in Fleet Management processing (Stage 6)", stage6_error
                 )
-                self.notifier.add("Fleet system error", category="error", importance=2)
+                self.notifier.add("Fleet system error",
+                                  category="error", importance=2)
 
             # STAGE 7: Game State Evaluation
             # Evaluate game state and trigger events if necessary
@@ -1812,7 +1843,8 @@ class Game:
 
             # Performance tracking and logging for the entire update cycle
             update_duration = time.time() - play_state_start
-            log_performance_metric("play_state_update_time", update_duration * 1000)
+            log_performance_metric(
+                "play_state_update_time", update_duration * 1000)
 
             # Log completion with statistics
             if (
@@ -1824,7 +1856,8 @@ class Game:
                 log_memory_usage("Regular play state memory check")
 
             # Complete performance tracking
-            log_performance_end("Play state update", play_state_start, "complete")
+            log_performance_end("Play state update",
+                                play_state_start, "complete")
 
         except Exception as e:
             log_exception("Critical error in play state update", e)
@@ -1856,7 +1889,8 @@ class Game:
 
         except Exception as e:
             log_exception("Error in entity lifecycle processing", e)
-            self.notifier.add("Entity system error", category="error", importance=2)
+            self.notifier.add("Entity system error",
+                              category="error", importance=2)
         finally:
             # End performance timing
             log_performance_end("Entity lifecycle processing", entity_start)
@@ -1875,7 +1909,8 @@ class Game:
 
     def _process_discoveries(self) -> None:
         """Process resource discoveries with performance tracking."""
-        discovery_start = log_performance_start("Resource discovery processing")
+        discovery_start = log_performance_start(
+            "Resource discovery processing")
         try:
             self.check_for_discoveries()
             log_performance_metric("discoveries_checked", 1)
@@ -1883,7 +1918,8 @@ class Game:
             log_exception("Error processing discoveries", e)
             log_performance_metric("discovery_errors", 1)
         finally:
-            log_performance_end("Resource discovery processing", discovery_start)
+            log_performance_end(
+                "Resource discovery processing", discovery_start)
 
     def _update_entity_context(self, update_context: Dict[str, Any]) -> None:
         """Update the entity-related context in the update context dictionary.
@@ -1934,7 +1970,8 @@ class Game:
         try:
             # Get relevant context data
             player_pos = context.get("player", {}).get("position", (0, 0))
-            last_encounter = context.get("encounters", {}).get("last_encounter_time", 0)
+            last_encounter = context.get(
+                "encounters", {}).get("last_encounter_time", 0)
             current_time = self.game_time
 
             # Check for extended peaceful periods (no encounters for 2+ minutes)
@@ -1960,7 +1997,8 @@ class Game:
         """
         try:
             # Track currency milestones
-            player_currency = context.get("economy", {}).get("player_currency", 0)
+            player_currency = context.get(
+                "economy", {}).get("player_currency", 0)
             currency_milestone = (player_currency // 1000) * 1000
             last_milestone = self.stats.get("last_currency_milestone", 0)
 
@@ -1984,7 +2022,8 @@ class Game:
         """
         try:
             # Check asteroid density
-            asteroid_count = context.get("environment", {}).get("asteroid_count", 0)
+            asteroid_count = context.get(
+                "environment", {}).get("asteroid_count", 0)
             if asteroid_count > 200:  # High density field
                 player_health = context.get("player", {}).get("health", 100)
                 if player_health < 50:  # Player in danger
@@ -2065,14 +2104,16 @@ class Game:
 
             # Check if auto-mining should be performed this frame
             if not self._should_perform_auto_mining():
-                log_performance_end(LOG_AUTO_MINING_CHECK, mining_start, "skipped")
+                log_performance_end(LOG_AUTO_MINING_CHECK,
+                                    mining_start, "skipped")
                 return
 
             # Perform the auto-mining operation
             self._perform_auto_mining_operation()
 
             # End performance timing
-            log_performance_end(LOG_AUTO_MINING_CHECK, mining_start, "complete")
+            log_performance_end(LOG_AUTO_MINING_CHECK,
+                                mining_start, "complete")
 
         except Exception as e:
             log_exception("Error in auto-mining", e)
@@ -2120,7 +2161,8 @@ class Game:
         """Update asteroid field at intervals."""
         try:
             # Start performance timing
-            field_update_start = log_performance_start(LOG_ASTEROID_FIELD_UPDATE)
+            field_update_start = log_performance_start(
+                LOG_ASTEROID_FIELD_UPDATE)
 
             # Check if it's time to update the field
             if not self._should_update_asteroid_field():
@@ -2205,7 +2247,8 @@ class Game:
 
             # Log evolution statistics
             if evolution_count > 0:
-                log_performance_metric("race_evolutions_processed", evolution_count)
+                log_performance_metric(
+                    "race_evolutions_processed", evolution_count)
 
             # End performance timing
             log_performance_end(
@@ -2250,15 +2293,14 @@ class Game:
         )
 
         # Track in stats
-        self.stats["race_evolutions"] = self.stats.get("race_evolutions", 0) + 1
+        self.stats["race_evolutions"] = self.stats.get(
+            "race_evolutions", 0) + 1
 
         # Analyze and log territory control
         self._log_territory_metrics(race, metrics)
 
     @staticmethod
-    def _log_territory_metrics(
-        race: Any, metrics: Optional[Dict[str, Any]]
-    ) -> None:
+    def _log_territory_metrics(race: Any, metrics: Optional[Dict[str, Any]]) -> None:
         """Log territory metrics for a race if available.
 
         Args:
@@ -2274,10 +2316,12 @@ class Game:
 
             # Log metrics for performance tracking
             log_performance_metric(
-                f"race_{race.race_id}_territory_radius", metrics.get("radius", 0)
+                f"race_{race.race_id}_territory_radius", metrics.get(
+                    "radius", 0)
             )
             log_performance_metric(
-                f"race_{race.race_id}_territory_density", metrics.get("density", 0)
+                f"race_{race.race_id}_territory_density", metrics.get(
+                    "density", 0)
             )
 
     def check_for_discoveries(self) -> None:
@@ -2288,7 +2332,8 @@ class Game:
 
             # Check if discovery scan should be performed this frame
             if not self._should_perform_discovery_scan():
-                log_performance_end(LOG_DISCOVERY_CHECK, discovery_start, "skipped")
+                log_performance_end(LOG_DISCOVERY_CHECK,
+                                    discovery_start, "skipped")
                 return
 
             # Perform the discovery scan and track results
@@ -2508,18 +2553,21 @@ class Game:
 
             # Check if we should update the fleet this frame
             if not self._should_update_fleet():
-                log_performance_end(LOG_FLEET_UPDATE, fleet_update_start, "skipped")
+                log_performance_end(
+                    LOG_FLEET_UPDATE, fleet_update_start, "skipped")
                 return
 
             if fleet_results := self._perform_fleet_update():
                 self._process_fleet_update_results(fleet_results)
 
             # End performance timing
-            log_performance_end(LOG_FLEET_UPDATE, fleet_update_start, "complete")
+            log_performance_end(
+                LOG_FLEET_UPDATE, fleet_update_start, "complete")
 
         except Exception as e:
             log_exception("Error updating player fleet", e)
-            self.notifier.add("Fleet system error", category="error", importance=2)
+            self.notifier.add("Fleet system error",
+                              category="error", importance=2)
 
     def _should_update_fleet(self) -> bool:
         """Determine if the fleet should be updated this frame.
@@ -2602,7 +2650,8 @@ class Game:
             )
 
             # Update statistics
-            self.stats["ships_lost"] = self.stats.get("ships_lost", 0) + lost_count
+            self.stats["ships_lost"] = self.stats.get(
+                "ships_lost", 0) + lost_count
 
             # Track for analytics
             log_performance_metric("ships_lost", lost_count)
@@ -2707,13 +2756,15 @@ class Game:
             with LogContext("Encounter check"):
                 # Track checks by zone
                 zone_checks_key = f"encounter_checks_{current_zone}"
-                self.stats[zone_checks_key] = self.stats.get(zone_checks_key, 0) + 1
+                self.stats[zone_checks_key] = self.stats.get(
+                    zone_checks_key, 0) + 1
 
                 # Pass current gameplay context to encounter generator
                 encounter_context = {
                     "player_health": self.player.health,
                     "player_level": (
-                        self.player.level if hasattr(self.player, "level") else 1
+                        self.player.level if hasattr(
+                            self.player, "level") else 1
                     ),
                     "player_currency": self.player.currency,
                     "game_time": self.game_time,
@@ -2726,7 +2777,8 @@ class Game:
                     player_pos, encounter_context
                 )
                 log_performance_metric(
-                    "encounter_check_time", (time.time() - encounter_check_start) * 1000
+                    "encounter_check_time", (time.time(
+                    ) - encounter_check_start) * 1000
                 )
 
                 if not encounter_result:
@@ -2762,7 +2814,8 @@ class Game:
                     self._handle_trader_encounter(encounter_result)
 
                 else:  # Handle unknown encounter types gracefully
-                    logging.warning(f"Unknown encounter type: {encounter_type}")
+                    logging.warning(
+                        f"Unknown encounter type: {encounter_type}")
                     self.notifier.add(
                         "Strange phenomenon detected",
                         category="encounter",
@@ -2790,7 +2843,8 @@ class Game:
         except Exception as e:
             logging.error(f"Error processing encounters: {str(e)}")
             log_exception("Encounter processing error", e)
-            log_performance_end(LOG_ENCOUNTER_PROCESSING, encounter_start, "error")
+            log_performance_end(LOG_ENCOUNTER_PROCESSING,
+                                encounter_start, "error")
 
     @staticmethod
     def get_current_zone(position: Tuple[int, int]) -> str:
@@ -2843,7 +2897,8 @@ class Game:
             combat_initiation_start = time.time()
             combat_result = self.combat_system.initiate_combat(enemy)
             log_performance_metric(
-                "combat_initiation_time", (time.time() - combat_initiation_start) * 1000
+                "combat_initiation_time", (time.time(
+                ) - combat_initiation_start) * 1000
             )
 
             # Process the combat result
@@ -2851,7 +2906,8 @@ class Game:
 
             # Track overall combat handling time
             log_performance_metric(
-                "total_combat_handling_time", (time.time() - combat_start) * 1000
+                "total_combat_handling_time", (time.time(
+                ) - combat_start) * 1000
             )
 
         except Exception as e:
@@ -2868,7 +2924,8 @@ class Game:
         """
         discovery = encounter_result.get("discovery")
         if not discovery:
-            logging.warning("Discovery encounter missing discovery information")
+            logging.warning(
+                "Discovery encounter missing discovery information")
             return
 
         # Get discovery details
@@ -2898,7 +2955,8 @@ class Game:
 
             # Track discovery rewards by type
             self.stats["discovery_currency_gained"] = (
-                self.stats.get("discovery_currency_gained", 0) + currency_amount
+                self.stats.get("discovery_currency_gained",
+                               0) + currency_amount
             )
 
         if "items" in discovery and discovery["items"]:
@@ -2958,7 +3016,8 @@ class Game:
         # self.current_trader = trader
 
         # Update trader statistics
-        self.stats["trader_encounters"] = self.stats.get("trader_encounters", 0) + 1
+        self.stats["trader_encounters"] = self.stats.get(
+            "trader_encounters", 0) + 1
         self.stats[f"trader_{trader_type}_encounters"] = (
             self.stats.get(f"trader_{trader_type}_encounters", 0) + 1
         )
@@ -3007,11 +3066,13 @@ class Game:
             self._update_forced_encounter_stats(chosen_type)
 
             # Complete performance timing
-            log_performance_end(LOG_FORCE_ENCOUNTER, force_encounter_start, "success")
+            log_performance_end(LOG_FORCE_ENCOUNTER,
+                                force_encounter_start, "success")
 
         except Exception as e:
             log_exception("Error forcing encounter", e)
-            log_performance_end(LOG_FORCE_ENCOUNTER, force_encounter_start, "error")
+            log_performance_end(LOG_FORCE_ENCOUNTER,
+                                force_encounter_start, "error")
             self.notifier.add(
                 "Error generating encounter", category="error", importance=2
             )
@@ -3116,7 +3177,8 @@ class Game:
         )
 
         if not encounter_result:
-            logging.warning(f"Failed to generate forced {encounter_type} encounter")
+            logging.warning(
+                f"Failed to generate forced {encounter_type} encounter")
             log_performance_end(LOG_FORCE_ENCOUNTER, timing_start, "failed")
             return False
 
@@ -3136,7 +3198,8 @@ class Game:
         Args:
             encounter_type: The type of encounter that was forced
         """
-        self.stats["forced_encounters"] = self.stats.get("forced_encounters", 0) + 1
+        self.stats["forced_encounters"] = self.stats.get(
+            "forced_encounters", 0) + 1
         self.stats[f"forced_{encounter_type}_encounters"] = (
             self.stats.get(f"forced_{encounter_type}_encounters", 0) + 1
         )
@@ -3175,7 +3238,8 @@ class Game:
 
             # Performance tracking for specific combat types
             log_performance_metric(
-                f"combat_processing_{outcome}", time.time() - combat_processing_start
+                f"combat_processing_{outcome}", time.time(
+                ) - combat_processing_start
             )
 
             # Log combat result
@@ -3187,13 +3251,15 @@ class Game:
 
         except Exception as e:
             log_exception("Error processing combat result", e)
-            log_performance_end(LOG_COMBAT_RESULT, combat_processing_start, "error")
+            log_performance_end(LOG_COMBAT_RESULT,
+                                combat_processing_start, "error")
             # Attempt recovery
             try:
                 self.player.reset_fleet_state()
                 logging.info("Reset fleet state after error")
             except Exception as recovery_error:
-                log_exception("Failed to recover from fleet error", recovery_error)
+                log_exception(
+                    "Failed to recover from fleet error", recovery_error)
 
     @staticmethod
     def _extract_combat_info(combat_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -3243,7 +3309,8 @@ class Game:
         )
 
         # Process rewards
-        total_reward_value = self._process_combat_rewards(combat_info["rewards"])
+        total_reward_value = self._process_combat_rewards(
+            combat_info["rewards"])
 
         # Track reward value by difficulty
         difficulty = combat_info["difficulty"]
@@ -3288,7 +3355,8 @@ class Game:
                 f"Escape cost: {escape_cost} damage to ships", category="combat"
             )
             # Track escape costs
-            self.stats["escape_costs"] = self.stats.get("escape_costs", 0) + escape_cost
+            self.stats["escape_costs"] = self.stats.get(
+                "escape_costs", 0) + escape_cost
 
         # Track escapes by difficulty
         difficulty = combat_info["difficulty"]
@@ -3309,12 +3377,14 @@ class Game:
         if outcome == "defeat":
             self.stats["combats_lost"] = self.stats.get("combats_lost", 0) + 1
         elif outcome == "escape":
-            self.stats["combats_escaped"] = self.stats.get("combats_escaped", 0) + 1
+            self.stats["combats_escaped"] = self.stats.get(
+                "combats_escaped", 0) + 1
 
         elif outcome == "victory":
             self.stats["combats_won"] = self.stats.get("combats_won", 0) + 1
         self._track_combat_by_category(combat_info, "zone", "combats_in_")
-        self._track_combat_by_category(combat_info, "enemy_type", "combats_against_")
+        self._track_combat_by_category(
+            combat_info, "enemy_type", "combats_against_")
         if combat_stats := combat_info["stats"]:
             for stat_name, stat_value in combat_stats.items():
                 self.stats[f"combat_{stat_name}"] = (
@@ -3357,7 +3427,8 @@ class Game:
             items_count = len(rewards["items"])
 
             # Notify player
-            self.notifier.add(f"Acquired {items_count} items", category="combat")
+            self.notifier.add(
+                f"Acquired {items_count} items", category="combat")
 
             # Update stats
             self.stats["combat_items_gained"] = (
@@ -3396,7 +3467,8 @@ class Game:
         # Process ship losses
         if "ships" in penalties:
             ships_lost = penalties["ships"]
-            self.player.fleet_size = max(1, self.player.fleet_size - ships_lost)
+            self.player.fleet_size = max(
+                1, self.player.fleet_size - ships_lost)
 
             # Notify player
             if ships_lost > 0:
@@ -3405,7 +3477,8 @@ class Game:
                 )
 
             # Update stats
-            self.stats["ships_lost"] = self.stats.get("ships_lost", 0) + ships_lost
+            self.stats["ships_lost"] = self.stats.get(
+                "ships_lost", 0) + ships_lost
 
         # Track penalty value by difficulty
         difficulty_key = f"penalty_value_diff_{difficulty}"
@@ -3426,7 +3499,7 @@ class Game:
 
             # End performance timing
             log_performance_end("Render frame", render_start)
-            
+
             # Update the display to make the rendered content visible
             pygame.display.flip()
 
@@ -3501,7 +3574,8 @@ class Game:
 
         # Calculate average FPS
         avg_fps = (
-            sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
+            sum(self.fps_history) /
+            len(self.fps_history) if self.fps_history else 0
         )
 
         # Draw the FPS text
@@ -3513,7 +3587,8 @@ class Game:
             # Draw pause panel
             draw_panel(
                 self.screen,
-                pygame.Rect(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 - 30, 200, 60),
+                pygame.Rect(WINDOW_WIDTH // 2 - 100,
+                            WINDOW_HEIGHT // 2 - 30, 200, 60),
                 color=(30, 30, 40, 200),
                 header="PAUSED",
             )
@@ -3621,7 +3696,8 @@ class Game:
             self.fps_history.pop(0)
 
         avg_fps = (
-            sum(self.fps_history) / len(self.fps_history) if self.fps_history else 0
+            sum(self.fps_history) /
+            len(self.fps_history) if self.fps_history else 0
         )
 
         # Get state timing info
@@ -3713,7 +3789,8 @@ class Game:
         if not self._state_valid:
             warning_text = "WARNING: Invalid State Transition Detected!"
             text = self.debug_font.render(warning_text, True, (255, 100, 100))
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
+            text_rect = text.get_rect(
+                center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
             self.screen.blit(text, text_rect)
 
     def get_state_debug_info(self) -> Dict[str, Any]:
@@ -3847,45 +3924,54 @@ class Game:
 def _log_game_completion_metrics(game):
     """
     Log metrics about a successfully completed game session.
-    
+
     Args:
         game: The Game instance containing session data
     """
     # Log basic session information
-    logging.info(f"Game session completed. Session duration: {game.session_time:.2f} seconds")
-    
+    logging.info(
+        f"Game session completed. Session duration: {game.session_time:.2f} seconds"
+    )
+
     # Log player statistics
     if hasattr(game, "player") and game.player:
-        logging.info(f"Final player stats - Currency: {game.player.currency}, Level: {game.player.level}")
-        
+        logging.info(
+            f"Final player stats - Currency: {game.player.currency}, Level: {game.player.level}"
+        )
+
         # Log discovered races if applicable
         if hasattr(game.player, "discovered_races"):
-            logging.info(f"Discovered races: {len(game.player.discovered_races)}")
-    
+            logging.info(
+                f"Discovered races: {len(game.player.discovered_races)}")
+
     # Log game world statistics if available
     if hasattr(game, "world") and game.world:
         logging.info(f"World generation seed: {game.world.seed}")
-        logging.info(f"Generated regions: {len(game.world.regions) if hasattr(game.world, 'regions') else 'N/A'}")
+        logging.info(
+            f"Generated regions: {len(game.world.regions) if hasattr(game.world, 'regions') else 'N/A'}"
+        )
 
 
 def _log_game_error_metrics(game):
     """
     Log metrics about game session that terminated with errors.
-    
+
     Args:
         game: The Game instance containing session data
     """
     # Log basic error session information
-    logging.warning(f"Game session terminated with errors. Session duration: {game.session_time:.2f} seconds")
-    
+    logging.warning(
+        f"Game session terminated with errors. Session duration: {game.session_time:.2f} seconds"
+    )
+
     # Log system metrics that might help diagnose issues
     if hasattr(game, "performance_metrics"):
         logging.warning(f"Performance metrics: {game.performance_metrics}")
-    
+
     # Log last known game state before failure
     if hasattr(game, "last_state"):
         logging.warning(f"Last game state before failure: {game.last_state}")
-    
+
     # Check for exception information
     if hasattr(game, "last_exception"):
         logging.error(f"Last exception: {game.last_exception}")
