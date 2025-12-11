@@ -2,9 +2,21 @@ version = 1
 
 [[analyzers]]
 name = "python"
-dependency_file_paths = [
-  "requirements/requirements_project.txt"
-]
 
   [analyzers.meta]
-  max_line_length = 100
+  runtime_version = "3.x.x"
+
+[[code_formatters]]
+name = "isort"
+
+[[code_formatters]]
+name = "yapf"
+
+[[code_formatters]]
+name = "autopep8"
+
+[[code_formatters]]
+name = "black"
+
+[[code_formatters]]
+name = "ruff"
