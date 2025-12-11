@@ -40,7 +40,8 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-    logging.warning("scipy not available. Falling back to manual implementations.")
+    logging.warning(
+        "scipy not available. Falling back to manual implementations.")
 
 try:
     from perlin_noise import PerlinNoise
@@ -48,7 +49,8 @@ try:
     PERLIN_AVAILABLE = True
 except ImportError:
     PERLIN_AVAILABLE = False
-    logging.warning("perlin_noise package not available. Some features may be limited.")
+    logging.warning(
+        "perlin_noise package not available. Some features may be limited.")
 
 # Local application imports
 
@@ -63,7 +65,8 @@ from utils.logging_setup import (
 CELLULAR_AUTOMATON_AVAILABLE = (
     importlib.util.find_spec("algorithms.cellular_automaton") is not None
 )
-EXTENDED_CA_AVAILABLE = importlib.util.find_spec("algorithms.extended_ca") is not None
+EXTENDED_CA_AVAILABLE = importlib.util.find_spec(
+    "algorithms.extended_ca") is not None
 
 # For type checking only - these imports are not executed at runtime
 if TYPE_CHECKING:
@@ -197,7 +200,8 @@ class AsteroidField:
         self.current_neighborhood_pattern = (
             "moore"  # Default to standard Moore neighborhood
         )
-        self.custom_neighborhood_offsets = self._get_neighborhood_offsets("moore")
+        self.custom_neighborhood_offsets = self._get_neighborhood_offsets(
+            "moore")
         self.available_neighborhood_patterns = {
             "moore",
             "von_neumann",
@@ -274,7 +278,8 @@ class AsteroidField:
         # Use numpy random Generator API instead of legacy functions
         # Use current time as seed for reproducibility
         rng = np.random.default_rng(int(time.time()))
-        self.rare_grid = rng.random((self.height, self.width)) < self.rare_chance
+        self.rare_grid = rng.random(
+            (self.height, self.width)) < self.rare_chance
         self.energy_grid = rng.random((self.height, self.width))
 
         self.total_asteroids = np.sum(self.grid > 0)
@@ -391,7 +396,8 @@ class AsteroidField:
 
             # Set parameters for other methods
             generator.set_parameter("density", self.field_density)
-            generator.set_parameter("pattern_strength", self.pattern_complexity)
+            generator.set_parameter(
+                "pattern_strength", self.pattern_complexity)
             generator.set_parameter("cluster_tendency", self.turbulence)
             generator.set_parameter("rare_chance", self.rare_chance)
 
@@ -434,14 +440,16 @@ class AsteroidField:
 
             # Set parameters individually instead of using a parameters dict
             # These parameters are used by the generate() method, not generate_field()
-            generator.set_parameter("pattern_complexity", self.pattern_complexity)
+            generator.set_parameter(
+                "pattern_complexity", self.pattern_complexity)
             generator.set_parameter("field_density", self.field_density)
             generator.set_parameter("turbulence", self.turbulence)
             generator.set_parameter("birth_set", self.birth_set)
             generator.set_parameter("survival_set", self.survival_set)
             generator.set_parameter("anomaly_chance", self.anomaly_chance)
             generator.set_parameter("rare_chance", self.rare_chance)
-            generator.set_parameter("rare_bonus_multiplier", self.rare_bonus_multiplier)
+            generator.set_parameter(
+                "rare_bonus_multiplier", self.rare_bonus_multiplier)
 
             # Generate the asteroid field grid
             result = generator.generate()
@@ -472,7 +480,8 @@ class AsteroidField:
         """
         # Create thresholds for rare minerals
         asteroid_threshold = 0.7 - self.field_density * 0.3
-        rare_threshold = asteroid_threshold + ((1.0 - asteroid_threshold) * 0.6)
+        rare_threshold = asteroid_threshold + \
+            ((1.0 - asteroid_threshold) * 0.6)
         anomaly_threshold = rare_threshold + ((1.0 - rare_threshold) * 0.7)
 
         # Normalize grid values to 0-1 range for threshold comparison
@@ -512,7 +521,8 @@ class AsteroidField:
             if self.grid[y, x] > 0:
                 # Energy level based on asteroid value (normalized to 0-0.5 range)
                 max_val = 200  # Expected maximum asteroid value
-                self.energy_grid[y, x] = min(self.grid[y, x] / max_val, 1.0) * 0.5
+                self.energy_grid[y, x] = min(
+                    self.grid[y, x] / max_val, 1.0) * 0.5
 
     def generate_symbiote_evolution(
         self, num_colonies: int = None, iterations: int = None
@@ -527,7 +537,8 @@ class AsteroidField:
         try:
             # Create a SymbioteEvolutionGenerator with the same dimensions as the field
             generator = SymbioteEvolutionGenerator(
-                width=self.width, height=self.height, seed=random.randint(1, 10000)
+                width=self.width, height=self.height, seed=random.randint(
+                    1, 10000)
             )
 
             # Set parameters
@@ -672,7 +683,8 @@ class AsteroidField:
         """
         # Adjust threshold based on desired density
         asteroid_threshold = 0.7 - self.field_density * 0.3
-        rare_threshold = asteroid_threshold + ((1.0 - asteroid_threshold) * 0.6)
+        rare_threshold = asteroid_threshold + \
+            ((1.0 - asteroid_threshold) * 0.6)
         anomaly_threshold = rare_threshold + ((1.0 - rare_threshold) * 0.7)
 
         return asteroid_threshold, rare_threshold, anomaly_threshold
@@ -751,7 +763,8 @@ class AsteroidField:
             return
 
         # Calculate value factor for mineral richness
-        value_factor = self._calculate_value_factor(noise_val, asteroid_threshold)
+        value_factor = self._calculate_value_factor(
+            noise_val, asteroid_threshold)
 
         # Set the base asteroid value
         self.grid[y, x] = int(50 + 150 * value_factor)
@@ -765,9 +778,7 @@ class AsteroidField:
         )
 
     @staticmethod
-    def _calculate_value_factor(
-        noise_val: float, asteroid_threshold: float
-    ) -> float:
+    def _calculate_value_factor(noise_val: float, asteroid_threshold: float) -> float:
         """
         Calculate the value factor for mineral richness based on noise value.
 
@@ -1077,7 +1088,8 @@ class AsteroidField:
             return None
 
         # Calculate valid placement ranges
-        placement_ranges = self._calculate_placement_ranges(max_pattern_size, margin)
+        placement_ranges = self._calculate_placement_ranges(
+            max_pattern_size, margin)
         if not placement_ranges:
             return None
 
@@ -1183,7 +1195,8 @@ class AsteroidField:
                 self.grid[y, x] = random.randint(80, 120)  # Good value range
 
                 # Set energy level
-                self.energy_grid[y, x] = random.uniform(0.6, 0.9)  # High energy
+                self.energy_grid[y, x] = random.uniform(
+                    0.6, 0.9)  # High energy
 
                 # Process rare minerals
                 self._process_pattern_rare_minerals(x, y)
@@ -1323,7 +1336,8 @@ class AsteroidField:
 
             # Check if we have this result cached
             if cache_key in self._ca_cache:
-                log_performance_end("apply_cellular_automaton", start_time, "cached")
+                log_performance_end(
+                    "apply_cellular_automaton", start_time, "cached")
                 return self._ca_cache[cache_key]
         else:
             # Initialize cache if not exists
@@ -1480,7 +1494,8 @@ class AsteroidField:
                 return self._calculate_custom_neighbor_counts(grid)
             except Exception as e:
                 log_exception("Error using custom neighborhood", e)
-                logging.warning(f"Falling back to standard neighborhood: {str(e)}")
+                logging.warning(
+                    f"Falling back to standard neighborhood: {str(e)}")
 
         # Use optimized cellular automaton count_neighbors if available
         if CELLULAR_AUTOMATON_AVAILABLE:
@@ -1489,7 +1504,8 @@ class AsteroidField:
                 return count_neighbors(grid)
             except Exception as e:
                 log_exception("Error using optimized count_neighbors", e)
-                logging.warning(f"Falling back to internal count_neighbors: {str(e)}")
+                logging.warning(
+                    f"Falling back to internal count_neighbors: {str(e)}")
 
         # Fall back to internal implementation
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
@@ -1643,7 +1659,8 @@ class AsteroidField:
                 custom_ca.grid = grid.copy()
                 return custom_ca.count_neighbors()
             except Exception as e:
-                logging.warning(f"Error using CustomNeighborhoodAutomaton: {str(e)}")
+                logging.warning(
+                    f"Error using CustomNeighborhoodAutomaton: {str(e)}")
 
         # Fall back to manual calculation
         return self._calculate_custom_neighbors_manually(grid)
@@ -1724,7 +1741,8 @@ class AsteroidField:
             return False
 
         self.current_neighborhood_pattern = pattern
-        self.custom_neighborhood_offsets = self._get_neighborhood_offsets(pattern)
+        self.custom_neighborhood_offsets = self._get_neighborhood_offsets(
+            pattern)
         self.use_custom_neighborhood = True
         return True
 
@@ -1743,7 +1761,8 @@ class AsteroidField:
         """
         self.use_custom_neighborhood = False
         self.current_neighborhood_pattern = "moore"
-        self.custom_neighborhood_offsets = self._get_neighborhood_offsets("moore")
+        self.custom_neighborhood_offsets = self._get_neighborhood_offsets(
+            "moore")
 
     def demonstrate_neighborhood_patterns(self) -> Dict[str, Any]:
         """
@@ -1894,7 +1913,8 @@ class AsteroidField:
         new_binary_grid = self._apply_automaton_with_energy(
             binary_grid, energy_grid_normalized, energy_boost
         )
-        energy_neighborhood = self._calculate_energy_neighborhood(self.energy_grid)
+        energy_neighborhood = self._calculate_energy_neighborhood(
+            self.energy_grid)
         self._update_grid_values(
             binary_grid,
             new_binary_grid,
@@ -1964,7 +1984,8 @@ class AsteroidField:
         """
         binary_grid = (self.grid > 0).astype(np.int8)
         energy_grid_normalized = np.clip(self.energy_grid, 0, 1)
-        energy_boost = np.minimum(2, (energy_grid_normalized * 3).astype(np.int8))
+        energy_boost = np.minimum(
+            2, (energy_grid_normalized * 3).astype(np.int8))
         return binary_grid, energy_grid_normalized, energy_boost
 
     def _apply_automaton_with_energy(
@@ -2158,7 +2179,8 @@ class AsteroidField:
         except Exception as e:
             # Fall back to non-vectorized approach if vectorization fails
             log_exception(e)
-            logging.warning(f"Falling back to non-vectorized grid update: {str(e)}")
+            logging.warning(
+                f"Falling back to non-vectorized grid update: {str(e)}")
             self._update_grid_non_vectorized(
                 binary_grid,
                 new_binary_grid,
@@ -2210,7 +2232,8 @@ class AsteroidField:
         )
 
         # Process regeneration in dead cells
-        self._process_regeneration_cells(old_alive, new_alive, new_grid, new_rare_grid)
+        self._process_regeneration_cells(
+            old_alive, new_alive, new_grid, new_rare_grid)
 
         # Cap energy at 1.0 (vectorized)
         new_energy_grid[:] = np.minimum(1.0, new_energy)
@@ -2296,7 +2319,8 @@ class AsteroidField:
             # Small chance for rare asteroid in births
             if random.random() < self.rare_chance:
                 new_rare_grid[y, x] = 1
-                new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
+                new_grid[y, x] = int(
+                    new_grid[y, x] * self.rare_bonus_multiplier)
 
     def _process_regeneration_cells(
         self, old_alive, new_alive, new_grid, new_rare_grid
@@ -2319,7 +2343,8 @@ class AsteroidField:
                 new_grid[y, x] = int(30 + random.random() * 70)
                 if random.random() < self.rare_chance:
                     new_rare_grid[y, x] = 1
-                    new_grid[y, x] = int(new_grid[y, x] * self.rare_bonus_multiplier)
+                    new_grid[y, x] = int(
+                        new_grid[y, x] * self.rare_bonus_multiplier)
 
     def _update_grid_non_vectorized(
         self,
@@ -2344,7 +2369,8 @@ class AsteroidField:
         for y in range(self.height):
             for x in range(self.width):
                 # Calculate new energy for this cell
-                new_energy = self._calculate_new_cell_energy(y, x, energy_neighborhood)
+                new_energy = self._calculate_new_cell_energy(
+                    y, x, energy_neighborhood)
 
                 # Process cell based on its state transition
                 self._process_cell_state_transition(
@@ -2494,7 +2520,8 @@ class AsteroidField:
                 return self._low_density_mask(binary_grid)
             except Exception as e:
                 log_exception("Error using diffuse_energy", e)
-                logging.warning(f"Falling back to standard energy boost: {str(e)}")
+                logging.warning(
+                    f"Falling back to standard energy boost: {str(e)}")
 
         low_density_mask = self._neighbour_counts(binary_grid)
         self.energy_grid[low_density_mask] += 0.05
@@ -2680,7 +2707,8 @@ class AsteroidField:
 
         # Update race colony data if colonies exist
         if num_regions > 0:
-            self._update_colony_metrics(race, race_mask, labeled_regions, num_regions)
+            self._update_colony_metrics(
+                race, race_mask, labeled_regions, num_regions)
 
     def _create_race_mask(self, race):
         """
@@ -2718,7 +2746,8 @@ class AsteroidField:
             num_regions: Number of distinct regions (colonies)
         """
         # Calculate colony sizes
-        sizes = self._calculate_colony_sizes(race_mask, labeled_regions, num_regions)
+        sizes = self._calculate_colony_sizes(
+            race_mask, labeled_regions, num_regions)
 
         # Store colony metrics in race data
         race.colony_data = {
@@ -2788,7 +2817,8 @@ class AsteroidField:
         )
 
         # Update the entity grid with surviving cells
-        self._update_grid_with_survivors(survival_mask, new_entity_grid, race.race_id)
+        self._update_grid_with_survivors(
+            survival_mask, new_entity_grid, race.race_id)
 
     @staticmethod
     def _get_adjusted_survival_set(race):
@@ -2990,12 +3020,14 @@ class AsteroidField:
                     continue
 
                 # Find the race at this location
-                race = next((r for r in self.races if r.race_id == entity), None)
+                race = next(
+                    (r for r in self.races if r.race_id == entity), None)
                 if not race or self.grid[y, x] <= 0:
                     continue
 
                 # Process mining at this location
-                self._process_single_mining_interaction(race, y, x, race_income)
+                self._process_single_mining_interaction(
+                    race, y, x, race_income)
 
     def _process_single_mining_interaction(self, race, y, x, race_income):
         """
@@ -3112,7 +3144,8 @@ class AsteroidField:
         race.evolution_threshold = int(race.evolution_threshold * 1.5)
 
         # Log evolution
-        logging.info(f"Race {race.race_id} evolved to stage {race.evolution_stage}")
+        logging.info(
+            f"Race {race.race_id} evolved to stage {race.evolution_stage}")
         logging.info(
             f"  - Territory: {metrics['radius']} radius with density {metrics['density']:.2f}"
         )
@@ -3139,7 +3172,8 @@ class AsteroidField:
                 continue  # Race is extinct
 
             # Calculate mineral availability in race territory
-            minerals_available = self._calculate_race_mineral_availability(race_mask)
+            minerals_available = self._calculate_race_mineral_availability(
+                race_mask)
 
             # Update race's mineral availability
             race.mineral_availability = minerals_available
@@ -3169,7 +3203,8 @@ class AsteroidField:
 
         for i, item in enumerate(entity_locations[0]):
             y, x = item, entity_locations[1][i]
-            self._check_minerals_in_radius(x, y, search_radius, minerals_available)
+            self._check_minerals_in_radius(
+                x, y, search_radius, minerals_available)
 
         return minerals_available
 

@@ -136,7 +136,8 @@ class SymbioteQLearner:
         if max_future_q == float("-inf"):
             # No knowledge about new_state yet
             max_future_q = 0.0
-        new_q = old_q + self.alpha * (reward + self.gamma * max_future_q - old_q)
+        new_q = old_q + self.alpha * \
+            (reward + self.gamma * max_future_q - old_q)
         self.q_table[(old_state, action)] = new_q
 
     def adjust_epsilon(self, performance: float) -> None:
@@ -329,16 +330,20 @@ class NeuroEvolutionManager:
             flat_a_w2 = net_a.w2.flatten()
             flat_b_w2 = net_b.w2.flatten()
 
-            new_w1 = self._create_combined_weight_matrix(flat_a_w1, flat_b_w1, shape_w1)
-            new_w2 = self._create_combined_weight_matrix(flat_a_w2, flat_b_w2, shape_w2)
+            new_w1 = self._create_combined_weight_matrix(
+                flat_a_w1, flat_b_w1, shape_w1)
+            new_w2 = self._create_combined_weight_matrix(
+                flat_a_w2, flat_b_w2, shape_w2)
             child.w1 = new_w1
             child.w2 = new_w2
 
             # Same for biases if desired
             for i in range(len(child.b1)):
-                child.b1[i] = net_a.b1[i] if rng.random() < 0.5 else net_b.b1[i]
+                child.b1[i] = net_a.b1[i] if rng.random(
+                ) < 0.5 else net_b.b1[i]
             for i in range(len(child.b2)):
-                child.b2[i] = net_a.b2[i] if rng.random() < 0.5 else net_b.b2[i]
+                child.b2[i] = net_a.b2[i] if rng.random(
+                ) < 0.5 else net_b.b2[i]
 
         return child
 
@@ -427,7 +432,8 @@ class BayesianSymbioteBelief:
             self.belief = [1.0 / domain_size] * domain_size
 
         elif len(prior_distribution) != domain_size:
-            raise ValueError("Prior distribution length mismatch with domain_size.")
+            raise ValueError(
+                "Prior distribution length mismatch with domain_size.")
         else:
             self.belief = [float(p) for p in prior_distribution]
 

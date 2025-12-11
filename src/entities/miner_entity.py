@@ -87,7 +87,8 @@ try:
     GPU_DBSCLUSTER_AVAILABLE = True
 except ImportError:
     GPU_DBSCLUSTER_AVAILABLE = False
-    logging.warning("GPU DBSCAN clustering not available. Using CPU implementation.")
+    logging.warning(
+        "GPU DBSCAN clustering not available. Using CPU implementation.")
 
 
 class EnhancedMinerEntity(MinerEntity):
@@ -134,7 +135,8 @@ class EnhancedMinerEntity(MinerEntity):
         self.multi_species_model = MultiSpeciesPopulation(
             species_count=4,  # Default max number of races
             base_growth_rates=[0.05 * self.genome["metabolism_rate"]] * 4,
-            carrying_caps=[1000, 1000, 1000, 1000],  # Default carrying capacities
+            # Default carrying capacities
+            carrying_caps=[1000, 1000, 1000, 1000],
             interaction_matrix=self._initialize_interaction_matrix(),
         )
 
@@ -222,9 +224,7 @@ class EnhancedMinerEntity(MinerEntity):
         return matrix
 
     @staticmethod
-    def _initialize_matrix_diagonal(
-        matrix: List[List[float]]
-    ) -> List[List[float]]:
+    def _initialize_matrix_diagonal(matrix: List[List[float]]) -> List[List[float]]:
         """
         Set the diagonal elements of the interaction matrix to zero.
 
@@ -251,7 +251,8 @@ class EnhancedMinerEntity(MinerEntity):
         """
         for i in range(4):
             if i != self.race_id - 1:  # Not self
-                matrix[self.race_id - 1][i] = 0.02  # Benefit from other species
+                # Benefit from other species
+                matrix[self.race_id - 1][i] = 0.02
         return matrix
 
     def _apply_expansive_trait(self, matrix: List[List[float]]) -> List[List[float]]:
@@ -305,7 +306,8 @@ class EnhancedMinerEntity(MinerEntity):
         self.delayed_growth.record_population(self.population)
 
         # 2. Process multi-species interactions
-        new_populations = self.multi_species_model.multi_species_step(all_populations)
+        new_populations = self.multi_species_model.multi_species_step(
+            all_populations)
         potential_population = new_populations[self.race_id - 1]
 
         # 3. Apply delayed effect from resource acquisition
@@ -343,9 +345,12 @@ class EnhancedMinerEntity(MinerEntity):
         self.mining_efficiency = 0.5 + (0.3 * specialized_ratio)
 
         # 8. Update hunger based on elder-to-juvenile ratio (higher ratio = more hunger)
-        elder_ratio = self.stage_populations.get("elder", 0) / max(1, new_total)
-        juvenile_ratio = self.stage_populations.get("juvenile", 0) / max(1, new_total)
-        hunger_adjustment = self.hunger_rate * (1 + elder_ratio - juvenile_ratio)
+        elder_ratio = self.stage_populations.get(
+            "elder", 0) / max(1, new_total)
+        juvenile_ratio = self.stage_populations.get(
+            "juvenile", 0) / max(1, new_total)
+        hunger_adjustment = self.hunger_rate * \
+            (1 + elder_ratio - juvenile_ratio)
         self.hunger += hunger_adjustment
         self.hunger = min(1.0, max(0.0, self.hunger))
 
@@ -401,7 +406,8 @@ class EnhancedMinerEntity(MinerEntity):
         for stage, consumed in consumption_by_stage.items():
             if stage == "juvenile":
                 # Juveniles grow faster with food
-                self.stage_population.stage_growth["juvenile"] *= 1 + consumed * 0.01
+                self.stage_population.stage_growth["juvenile"] *= 1 + \
+                    consumed * 0.01
             elif stage == "worker":
                 # Workers get more efficient
                 self.mining_efficiency += consumed * 0.001
@@ -539,7 +545,8 @@ class MinerEntity(BaseEntity):
         )
 
         # Track mineral consumption for the algorithm
-        self.mineral_consumption = {"common": 0, "rare": 0, "precious": 0, "anomaly": 0}
+        self.mineral_consumption = {"common": 0,
+                                    "rare": 0, "precious": 0, "anomaly": 0}
 
     def _initialize_genome_by_trait(self) -> Dict[str, float]:
         """Initialize the genome based on the race's trait."""
@@ -646,7 +653,8 @@ class MinerEntity(BaseEntity):
         radius = random.randint(10, 20)
 
         # Populate cluster area using noise
-        self._populate_cluster_area(field, center_x, center_y, radius, noise_func)
+        self._populate_cluster_area(
+            field, center_x, center_y, radius, noise_func)
 
     def _populate_cluster_area(
         self,
@@ -665,8 +673,10 @@ class MinerEntity(BaseEntity):
             radius: Radius of the cluster
             noise_func: Function to generate noise values
         """
-        y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
-        x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
+        y_range = range(max(0, center_y - radius),
+                        min(field.height, center_y + radius))
+        x_range = range(max(0, center_x - radius),
+                        min(field.width, center_x + radius))
 
         for y, x in itertools.product(y_range, x_range):
             # Calculate distance from center
@@ -675,7 +685,8 @@ class MinerEntity(BaseEntity):
                 # Use noise to determine placement
                 noise_val = noise_func([x / field.width, y / field.height])
                 # Higher chance near center, affected by noise
-                chance = self.initial_density * (0.8 + noise_val) * (1 - dist / radius)
+                chance = self.initial_density * \
+                    (0.8 + noise_val) * (1 - dist / radius)
                 if random.random() < chance and field.entity_grid[y, x] == 0:
                     field.entity_grid[y, x] = self.race_id
 
@@ -701,11 +712,12 @@ class MinerEntity(BaseEntity):
             self._populate_using_kmeans(field, points, values)
         else:
             # Not enough points for clustering, use simple proximity
-            self._populate_using_proximity(field, asteroid_cells, asteroid_values)
+            self._populate_using_proximity(
+                field, asteroid_cells, asteroid_values)
 
     @staticmethod
     def _collect_asteroid_data(
-        field: AsteroidField
+        field: AsteroidField,
     ) -> Tuple[List[Tuple[int, int]], List[float]]:
         """Collect asteroid locations and their values.
 
@@ -721,10 +733,14 @@ class MinerEntity(BaseEntity):
         # Ensure we stay within array bounds
         height = min(field.height, field.grid.shape[0])
         width = min(field.width, field.grid.shape[1])
-        
+
         for y, x in itertools.product(range(height), range(width)):
             # Double-check bounds to be safe
-            if 0 <= y < field.grid.shape[0] and 0 <= x < field.grid.shape[1] and field.grid[y, x] > 0:
+            if (
+                0 <= y < field.grid.shape[0]
+                and 0 <= x < field.grid.shape[1]
+                and field.grid[y, x] > 0
+            ):
                 value = field.grid[y, x]
                 if field.rare_grid[y, x] == 1:
                     value *= field.rare_bonus_multiplier
@@ -806,8 +822,10 @@ class MinerEntity(BaseEntity):
             radius: Radius of the populated area
             density_multiplier: Multiplier for the initial density
         """
-        y_range = range(max(0, center_y - radius), min(field.height, center_y + radius))
-        x_range = range(max(0, center_x - radius), min(field.width, center_x + radius))
+        y_range = range(max(0, center_y - radius),
+                        min(field.height, center_y + radius))
+        x_range = range(max(0, center_x - radius),
+                        min(field.width, center_x + radius))
 
         for y, x in itertools.product(y_range, x_range):
             # Calculate distance from center
@@ -815,7 +833,8 @@ class MinerEntity(BaseEntity):
             if dist <= radius:
                 # Higher chance near center, drops off with distance
                 chance = (
-                    self.initial_density * density_multiplier * (1 - dist / radius) ** 2
+                    self.initial_density * density_multiplier *
+                    (1 - dist / radius) ** 2
                 )
                 if random.random() < chance and field.entity_grid[y, x] == 0:
                     field.entity_grid[y, x] = self.race_id
@@ -840,7 +859,8 @@ class MinerEntity(BaseEntity):
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist <= radius:
                     # Chance based on distance and asteroid value
-                    chance = self.initial_density * (value / 100) * (1 - dist / radius)
+                    chance = self.initial_density * \
+                        (value / 100) * (1 - dist / radius)
                     if random.random() < chance and field.entity_grid[ny, nx] == 0:
                         field.entity_grid[ny, nx] = self.race_id
 
@@ -938,9 +958,7 @@ class MinerEntity(BaseEntity):
                 self._connect_components(graph, component, largest_component)
 
     @staticmethod
-    def _connect_components(
-        graph: nx.Graph, component1: Set, component2: Set
-    ) -> None:
+    def _connect_components(graph: nx.Graph, component1: Set, component2: Set) -> None:
         """Connect two components by adding an edge between their closest nodes."""
         min_dist = float("inf")
         closest_pair = None
@@ -1205,17 +1223,20 @@ class MinerEntity(BaseEntity):
         # If only a few points, return simple stats
         if len(points) < 5:
             return self._calculate_territory_metrics(points)
-            
+
         # For larger populations, try DBSCAN for density-based clustering first
         # This is especially useful for irregular territories
         try:
             # For large populations or irregular territories, use DBSCAN
             if len(points) > 1000 or self.trait == "adaptive":
-                return self._analyze_territory_with_dbscan(points, entity_locations, field)
+                return self._analyze_territory_with_dbscan(
+                    points, entity_locations, field
+                )
         except Exception as e:
-            logging.warning(f"DBSCAN clustering failed, falling back to KMeans: {e}")
+            logging.warning(
+                f"DBSCAN clustering failed, falling back to KMeans: {e}")
             # Fall back to KMeans if DBSCAN fails
-            
+
         # For regular clustering, use KMeans to identify colonies
         try:
             # Determine k based on population size
@@ -1237,19 +1258,19 @@ class MinerEntity(BaseEntity):
 
     def _analyze_territory_with_dbscan(self, points, entity_locations, field=None):
         """Analyze territory using DBSCAN clustering for more accurate territory analysis.
-        
+
         This method is especially effective for irregularly shaped territories or when dealing
         with large populations. It uses density-based clustering to identify territory regions.
-        
+
         Args:
             points: Array of (x,y) coordinates representing entity locations
             entity_locations: Raw entity location data from the field grid
             field: Optional field object for resource access calculation
-            
+
         Returns:
             Dictionary containing territory metrics including center, radius, density,
             resource access, fragmentation, and cluster information
-        
+
         Raises:
             Exception: If DBSCAN clustering fails or GPU acceleration is unavailable
         """
@@ -1276,9 +1297,7 @@ class MinerEntity(BaseEntity):
 
         # Apply GPU-accelerated DBSCAN clustering
         labels, n_clusters = apply_dbscan_clustering_gpu(
-            points,
-            eps=eps,
-            min_samples=min_samples
+            points, eps=eps, min_samples=min_samples
         )
 
         # If no meaningful clusters were found, use a larger eps
@@ -1286,20 +1305,21 @@ class MinerEntity(BaseEntity):
             eps = 3.0  # Much larger eps to ensure finding clusters
             min_samples = 2  # Very permissive clustering
             labels, n_clusters = apply_dbscan_clustering_gpu(
-                points,
-                eps=eps,
-                min_samples=min_samples
+                points, eps=eps, min_samples=min_samples
             )
 
         # If still no clusters, fall back to simple metrics
         if n_clusters <= 0:
-            logging.warning("DBSCAN found no clusters, falling back to simple territory metrics")
+            logging.warning(
+                "DBSCAN found no clusters, falling back to simple territory metrics"
+            )
             return self._calculate_territory_metrics(points)
 
         # Find the main cluster (largest population)
         cluster_sizes = [np.sum(labels == i) for i in range(-1, n_clusters)]
         # Exclude noise points (label -1) when determining main cluster
-        main_cluster_idx = np.argmax(cluster_sizes[1:]) if len(cluster_sizes) > 1 else 0
+        main_cluster_idx = np.argmax(
+            cluster_sizes[1:]) if len(cluster_sizes) > 1 else 0
 
         # Get points in the main cluster
         main_cluster_points = points[labels == main_cluster_idx]
@@ -1310,7 +1330,8 @@ class MinerEntity(BaseEntity):
 
         # Calculate center and radius of the main cluster
         center = np.mean(main_cluster_points, axis=0)
-        distances = np.sqrt(np.sum((main_cluster_points - center) ** 2, axis=1))
+        distances = np.sqrt(
+            np.sum((main_cluster_points - center) ** 2, axis=1))
         radius = np.max(distances)
 
         # Set territory properties
@@ -1326,9 +1347,8 @@ class MinerEntity(BaseEntity):
         fragmentation = 1.0 - (len(main_cluster_points) / len(points))
 
         resource_access = (
-            self._calculate_resource_density(center, radius)
-            if field is not None
-            else 0
+            self._calculate_resource_density(
+                center, radius) if field is not None else 0
         )
         # Calculate cluster statistics
         cluster_stats = {
@@ -1337,7 +1357,7 @@ class MinerEntity(BaseEntity):
             "main_cluster_size": len(main_cluster_points),
             "main_cluster_idx": int(main_cluster_idx),
             "eps_used": eps,
-            "min_samples_used": min_samples
+            "min_samples_used": min_samples,
         }
 
         # Additional territory metrics based on DBSCAN results
@@ -1348,9 +1368,9 @@ class MinerEntity(BaseEntity):
             "resource_access": resource_access,
             "fragmentation": fragmentation,
             "cluster_stats": cluster_stats,
-            "clustering_method": "dbscan"
+            "clustering_method": "dbscan",
         }
-            
+
     def _calculate_territory_metrics(self, points):
         """Calculate basic territory metrics for a small number of points.
 
@@ -1372,22 +1392,28 @@ class MinerEntity(BaseEntity):
             "mean": np.mean(distances),
             "median": np.median(distances),
             "std": np.std(distances),
-            "skewness": stats.skew(distances),  # Using scipy.stats for skewness
-            "kurtosis": stats.kurtosis(distances),  # Using scipy.stats for kurtosis
+            # Using scipy.stats for skewness
+            "skewness": stats.skew(distances),
+            # Using scipy.stats for kurtosis
+            "kurtosis": stats.kurtosis(distances),
         }
 
         # Store territory metrics based on statistical analysis
         self.territory_center = (int(center_x), int(center_y))
         self.territory_radius = int(np.max(distances))
-        self.territory_density = len(points) / (math.pi * self.territory_radius**2) if self.territory_radius > 0 else 0
+        self.territory_density = (
+            len(points) / (math.pi * self.territory_radius**2)
+            if self.territory_radius > 0
+            else 0
+        )
 
         # Use skewness to determine if entities are clustered toward center or edge
         # Negative skew means more entities near the edge
         self.territory_centrality = -distance_stats["skewness"]
-        
+
         # Calculate resource access if field is available
         resource_access = 0
-        if hasattr(self, 'field') and self.field is not None:
+        if hasattr(self, "field") and self.field is not None:
             resource_access = self._calculate_resource_density(
                 np.array([center_x, center_y]), self.territory_radius
             )
@@ -1419,12 +1445,15 @@ class MinerEntity(BaseEntity):
 
         # Calculate radius as distance to furthest entity in main cluster
         main_cluster_points = points[clusters == main_cluster_idx]
-        distances = np.sqrt(((main_cluster_points - main_center) ** 2).sum(axis=1))
-        self.territory_radius = int(np.max(distances)) if len(distances) > 0 else 0
+        distances = np.sqrt(
+            ((main_cluster_points - main_center) ** 2).sum(axis=1))
+        self.territory_radius = int(
+            np.max(distances)) if len(distances) > 0 else 0
 
         # Calculate territory density
         area = math.pi * self.territory_radius**2
-        self.territory_density = len(main_cluster_points) / area if area > 0 else 0
+        self.territory_density = len(
+            main_cluster_points) / area if area > 0 else 0
 
     def _perform_clustering(self, points, k):
         """Perform KMeans clustering and find the main cluster.
@@ -1439,19 +1468,24 @@ class MinerEntity(BaseEntity):
         # Check if sklearn is available
         if not SKLEARN_AVAILABLE:
             # Fallback to simple centroid calculation if sklearn is not available
-            logging.warning("sklearn not available, using simple clustering fallback")
+            logging.warning(
+                "sklearn not available, using simple clustering fallback")
             return self._perform_simple_clustering(points, k)
-            
+
         # If race has the selective trait, try to use GPU acceleration for clustering
         if self.trait == "selective" and len(points) > 500:
             try:
                 # For selective races with many points, use GPU-accelerated clustering when available
                 from utils.gpu_utils import apply_kmeans_clustering_gpu
-                labels, centers = apply_kmeans_clustering_gpu(points, n_clusters=k)
+
+                labels, centers = apply_kmeans_clustering_gpu(
+                    points, n_clusters=k)
                 cluster_sizes = [np.sum(labels == i) for i in range(k)]
                 return self._get_main_cluster_info(cluster_sizes, centers, labels)
             except ImportError as e:
-                logging.warning(f"GPU-accelerated clustering failed due to import error: {e}, falling back to standard KMeans")
+                logging.warning(
+                    f"GPU-accelerated clustering failed due to import error: {e}, falling back to standard KMeans"
+                )
 
         try:
             return self._perform_kmeans_clustering(points, k)
@@ -1687,7 +1721,8 @@ class MinerEntity(BaseEntity):
                 _ /= total_prob
 
         # Choose behavior based on highest probability
-        new_behavior = max(behavior_probabilities, key=behavior_probabilities.get)
+        new_behavior = max(behavior_probabilities,
+                           key=behavior_probabilities.get)
 
         # Default to feeding if all probabilities are zero
         if behavior_probabilities[new_behavior] == 0:
@@ -1755,19 +1790,22 @@ class MinerEntity(BaseEntity):
             old_val = original_traits.get(key, 0)
             if abs(value - old_val) > 0.1:
                 direction = "increased" if value > old_val else "decreased"
-                logging.info(f"  - {key} {direction} from {old_val:.2f} to {value:.2f}")
+                logging.info(
+                    f"  - {key} {direction} from {old_val:.2f} to {value:.2f}")
 
         return metrics
 
     def _evolve_genome(self) -> None:
         """Evolve genome based on conditions and stage."""
         # Adjust mutation rate based on stage
-        self.genome["mutation_rate"] = min(0.05, self.genome["mutation_rate"] * 1.1)
+        self.genome["mutation_rate"] = min(
+            0.05, self.genome["mutation_rate"] * 1.1)
 
         # Specialize based on trait
         if self.trait == "adaptive":
             # Adaptive races improve adaptability and metabolism
-            self.genome["adaptability"] = min(2.0, self.genome["adaptability"] * 1.15)
+            self.genome["adaptability"] = min(
+                2.0, self.genome["adaptability"] * 1.15)
             self.genome["metabolism_rate"] = min(
                 2.0, self.genome["metabolism_rate"] * 1.1
             )
@@ -1783,7 +1821,8 @@ class MinerEntity(BaseEntity):
 
         elif self.trait == "selective":
             # Selective races improve intelligence and efficiency
-            self.genome["intelligence"] = min(2.0, self.genome["intelligence"] * 1.15)
+            self.genome["intelligence"] = min(
+                2.0, self.genome["intelligence"] * 1.15)
             self.mining_efficiency = min(0.9, self.mining_efficiency * 1.1)
 
         # Random mutations to other traits using scipy.stats distributions
@@ -1814,7 +1853,8 @@ class MinerEntity(BaseEntity):
         if self.territory_center:
             cx, cy = self.territory_center
             pygame.draw.circle(
-                surface, behavior_color, (cx * GRID_CELL_SIZE, cy * GRID_CELL_SIZE), 5
+                surface, behavior_color, (cx * GRID_CELL_SIZE,
+                                          cy * GRID_CELL_SIZE), 5
             )
 
         # Draw status bar at the top of the screen using WINDOW_WIDTH for positioning
@@ -1866,11 +1906,13 @@ class MinerEntity(BaseEntity):
 
         # Draw race color and behavior indicator
         pygame.draw.rect(surface, race_color, (x_offset, y_offset, 15, 15))
-        pygame.draw.rect(surface, behavior_color, (x_offset + 20, y_offset, 15, 15))
+        pygame.draw.rect(surface, behavior_color,
+                         (x_offset + 20, y_offset, 15, 15))
 
         # Population statistics using scipy.stats
         if len(points) > 10:
-            self._confidence_interval_handler(points, surface, x_offset, y_offset)
+            self._confidence_interval_handler(
+                points, surface, x_offset, y_offset)
 
     def _confidence_interval_handler(self, points, surface, x_offset, y_offset):
         # Calculate confidence intervals using scipy.stats
@@ -1901,7 +1943,8 @@ class MinerEntity(BaseEntity):
 
         # Draw background
         pygame.draw.rect(
-            surface, (50, 50, 50), (x_position, y_position, bar_width, bar_height)
+            surface, (50, 50, 50), (x_position,
+                                    y_position, bar_width, bar_height)
         )
 
         # Calculate metrics

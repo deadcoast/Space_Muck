@@ -19,7 +19,6 @@ from src.ui.ui_base.ascii_ui import ASCIIPanel
 
 # Third-party library imports
 
-
 # Type definitions for better type checking
 T = TypeVar("T")
 Color = Tuple[int, int, int]
@@ -58,7 +57,8 @@ class ASCIITable:
         self.data = data
         self.title = title
         self.style = (
-            UIStyle.get_style_for_converter(converter_type) if converter_type else style
+            UIStyle.get_style_for_converter(
+                converter_type) if converter_type else style
         )
         self.selectable = selectable
         self.sortable = sortable
@@ -124,7 +124,8 @@ class ASCIITable:
                 "selected_marker": "►",
             },
         }
-        self.chars = style_chars.get(self.style, style_chars[UIStyle.MECHANICAL])
+        self.chars = style_chars.get(
+            self.style, style_chars[UIStyle.MECHANICAL])
 
         # Animation state
         self.animation = {
@@ -150,7 +151,8 @@ class ASCIITable:
         # Update with data widths
         for row in self.data:
             for i, cell in enumerate(row[: len(self.column_widths)]):
-                self.column_widths[i] = max(self.column_widths[i], len(str(cell)))
+                self.column_widths[i] = max(
+                    self.column_widths[i], len(str(cell)))
 
         # Add padding
         self.column_widths = [w + 2 for w in self.column_widths]
@@ -216,7 +218,8 @@ class ASCIITable:
                 self.visible_rows > 0
                 and self.selected_row >= self.scroll_offset + self.visible_rows
             ):
-                self.scroll_offset = max(0, self.selected_row - self.visible_rows + 1)
+                self.scroll_offset = max(
+                    0, self.selected_row - self.visible_rows + 1)
             self._start_animation("select")
 
     def get_selected_row_data(self) -> Optional[List[Any]]:
@@ -319,7 +322,8 @@ class ASCIITable:
                 try:
                     # Sort the data using a stable sort
                     self.data.sort(
-                        key=lambda row: self._safe_sort_key(row, self.sort_column),
+                        key=lambda row: self._safe_sort_key(
+                            row, self.sort_column),
                         reverse=not self.sort_ascending,
                     )
                 except (TypeError, IndexError) as e:
@@ -461,7 +465,8 @@ class ASCIITable:
         # Draw header separator
         separator_y = y + header_height - 2
         separator_char = self.chars["header_sep"]
-        separator_text = separator_char * (self.rect.width - 20)  # Leave margin
+        separator_text = separator_char * \
+            (self.rect.width - 20)  # Leave margin
 
         draw_text(
             surface,
@@ -491,7 +496,8 @@ class ASCIITable:
         self.visible_rows = (max_y - y) // row_height
 
         # Determine visible row range
-        visible_count = min(self.visible_rows, len(self.data) - self.scroll_offset)
+        visible_count = min(self.visible_rows, len(
+            self.data) - self.scroll_offset)
 
         # Draw each visible row
         for i in range(visible_count):
@@ -504,7 +510,8 @@ class ASCIITable:
                 break
 
             # Draw row components
-            self._draw_row_highlight(surface, font, x, row_y, row_height, row_idx)
+            self._draw_row_highlight(
+                surface, font, x, row_y, row_height, row_idx)
             self._draw_row_cells(surface, font, x, row_y, row)
             self._draw_row_separator(
                 surface, font, x, row_y, row_height, i, row_idx, visible_count
@@ -656,7 +663,8 @@ class ASCIITable:
 
         separator_y = row_y + row_height - 1
         separator_char = self.chars["row_sep"]
-        separator_text = separator_char * (self.rect.width - 20)  # Leave margin
+        separator_text = separator_char * \
+            (self.rect.width - 20)  # Leave margin
 
         draw_text(
             surface,
@@ -682,7 +690,8 @@ class ASCIITable:
         scrollbar_height = self.rect.height - 80  # Leave space at top and bottom
 
         # Draw scrollbar track
-        track_rect = pygame.Rect(scrollbar_x, scrollbar_y, 10, scrollbar_height)
+        track_rect = pygame.Rect(
+            scrollbar_x, scrollbar_y, 10, scrollbar_height)
         track_surface = pygame.Surface(
             (track_rect.width, track_rect.height), pygame.SRCALPHA
         )
@@ -691,7 +700,8 @@ class ASCIITable:
 
         # Calculate thumb position and size
         total_rows = len(self.data)
-        thumb_height = max(20, scrollbar_height * self.visible_rows / total_rows)
+        thumb_height = max(20, scrollbar_height *
+                           self.visible_rows / total_rows)
         thumb_pos = scrollbar_y + (
             scrollbar_height - thumb_height
         ) * self.scroll_offset / max(1, total_rows - self.visible_rows)
@@ -815,7 +825,7 @@ class ASCIITable:
 
     @staticmethod
     def _initialize_ascii_table_font(
-        font: Optional[pygame.font.Font]
+        font: Optional[pygame.font.Font],
     ) -> pygame.font.Font:
         """Initialize font for ASCII table drawing.
 
@@ -935,9 +945,7 @@ class ASCIITable:
         return top_border
 
     @staticmethod
-    def _generate_header_row(
-        headers: List[str], col_widths: List[int], b: dict
-    ) -> str:
+    def _generate_header_row(headers: List[str], col_widths: List[int], b: dict) -> str:
         """Generate the header row of the table.
 
         Args:
@@ -1077,6 +1085,7 @@ class ASCIITable:
                 color=color,
             )
 
-            table_rect = table_rect.union(line_rect) if table_rect else line_rect
+            table_rect = table_rect.union(
+                line_rect) if table_rect else line_rect
 
         return table_rect or pygame.Rect(x, y, 0, 0)
